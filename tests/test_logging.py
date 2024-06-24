@@ -139,7 +139,7 @@ class TestLogging(TestCase):
         getLogger('ocrd.process.profile').setLevel('DEBUG')
         getLogger('ocrd.process.profile').addHandler(ch)
 
-        run_processor(DummyProcessor, resolver=Resolver(), mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        run_processor(DummyProcessor, input_file_grp='OCR-D-IMG', resolver=Resolver(), mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'))
 
         log_contents = log_capture_string.getvalue()
         log_capture_string.close()

@@ -112,7 +112,7 @@ class TestProcessor(TestCase):
 
     def test_run_agent(self):
         no_agents_before = len(self.workspace.mets.agents)
-        run_processor(DummyProcessor, workspace=self.workspace)
+        run_processor(DummyProcessor, workspace=self.workspace, input_file_grp="OCR-D-IMG")
         self.assertEqual(len(self.workspace.mets.agents), no_agents_before + 1, 'one more agent')
         #  print(self.workspace.mets.agents[no_agents_before])
 
@@ -153,7 +153,9 @@ class TestProcessor(TestCase):
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
-            run_processor(DummyProcessor, workspace=self.workspace)
+            run_processor(DummyProcessor, workspace=self.workspace,
+                          input_file_grp='OCR-D-IMG',
+                          output_file_grp='OUTPUT')
             run_cli(
                 'echo',
                 mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'),
