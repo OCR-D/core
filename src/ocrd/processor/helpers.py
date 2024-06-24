@@ -398,11 +398,13 @@ def get_processor(
             cached_processor.input_file_grp = input_file_grp
             cached_processor.output_file_grp = output_file_grp
             return cached_processor
-        return processor_class(
+        processor = processor_class(
             workspace=workspace,
             page_id=page_id,
             input_file_grp=input_file_grp,
             output_file_grp=output_file_grp,
             parameter=parameter
         )
+        processor.setup()
+        return processor
     raise ValueError("Processor class is not known")

@@ -184,6 +184,16 @@ class Processor():
         """
         return True
 
+    def setup(self) -> None:
+        """
+        Prepare the processor for actual data processing,
+        prior to changing to the workspace directory but
+        after parsing parameters.
+
+        (Override this to load models into memory etc.)
+        """
+        pass
+
     @deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')
     def process(self) -> None:
         """
@@ -196,7 +206,6 @@ class Processor():
         (This contains the main functionality and needs to be overridden by subclasses.)
         """
         raise NotImplementedError()
-
 
     def add_metadata(self, pcgts):
         """
