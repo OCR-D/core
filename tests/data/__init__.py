@@ -21,6 +21,7 @@ class DummyProcessor(Processor):
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = DUMMY_TOOL
         kwargs['version'] = '0.0.1'
+        kwargs['download_files'] = False
         super(DummyProcessor, self).__init__(*args, **kwargs)
 
     def process(self):
@@ -37,6 +38,7 @@ class DummyProcessorWithRequiredParameters(Processor):
                 'i-am-required': {'required': True}
             }
         }
+        kwargs['download_files'] = False
         super(DummyProcessorWithRequiredParameters, self).__init__(*args, **kwargs)
 
 class DummyProcessorWithOutput(Processor):
@@ -44,6 +46,7 @@ class DummyProcessorWithOutput(Processor):
     def __init__(self, *args, **kwargs):
         kwargs['ocrd_tool'] = DUMMY_TOOL
         kwargs['version'] = '0.0.1'
+        kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
 
     def process(self):
