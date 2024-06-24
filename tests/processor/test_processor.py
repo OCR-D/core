@@ -54,12 +54,13 @@ class TestProcessor(TestCase):
                                   input_file_grp='OCR-D-SEG-PAGE',
                                   resolver=self.resolver,
                                   workspace=self.workspace)
+        processor.workspace = self.workspace
         assert len(processor.input_files) == 2
         assert [f.mimetype for f in processor.input_files] == [MIMETYPE_PAGE, MIMETYPE_PAGE]
 
     def test_parameter(self):
         with TemporaryDirectory():
-            jsonpath = Path('params.json').name
+            jsonpath = 'params.json'
             with open(jsonpath, 'w') as f:
                 f.write('{"baz": "quux"}')
             with open(jsonpath, 'r') as f:
@@ -70,7 +71,7 @@ class TestProcessor(TestCase):
                     resolver=self.resolver,
                     workspace=self.workspace
                 )
-            self.assertEqual(len(processor.input_files), 3)
+                self.assertEqual(processor.parameter['baz'], 'quux')
 
     def test_verify(self):
         proc = DummyProcessor(self.workspace)
