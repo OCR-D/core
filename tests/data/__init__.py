@@ -27,6 +27,10 @@ class DummyProcessor(Processor):
     def process(self):
         print(json.dumps(self.parameter))
 
+    # override to prevent iterating over empty files
+    def process_workspace(self, workspace):
+        self.process()
+
 class DummyProcessorWithRequiredParameters(Processor):
     def process(self): pass
     def __init__(self, *args, **kwargs):
