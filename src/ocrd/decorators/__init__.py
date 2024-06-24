@@ -48,11 +48,11 @@ def ocrd_cli_wrap_processor(
     **kwargs
 ):
     if not sys.argv[1:]:
-        processorClass(workspace=None, show_help=True)
+        processorClass(None, show_help=True)
         sys.exit(1)
     if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
-            workspace=None,
+            None,
             dump_json=dump_json,
             dump_module_dir=dump_module_dir,
             show_help=help,
