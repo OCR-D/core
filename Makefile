@@ -367,30 +367,30 @@ DOCKER_BUILD ?= docker build --progress=plain
 
 # Build docker image
 docker: DOCKER_BASE_IMAGE = ubuntu:20.04
-docker: DOCKER_TAG = $(DOCKER_BASE_TAG)/core
+docker: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core)
 docker: DOCKER_FILE = Dockerfile
 
 # Build extended sets for maximal layer sharing
 docker-cuda: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core
-docker-cuda: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda)
 docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
 docker-cuda: docker
 
 docker-cuda-tf1: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
-docker-cuda-tf1: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda-tf1
+docker-cuda-tf1: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-tf1)
 docker-cuda-tf1: DOCKER_FILE = Dockerfile.cuda-tf1
 
 docker-cuda-tf1: docker-cuda
 
 docker-cuda-tf2: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
-docker-cuda-tf2: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda-tf2
+docker-cuda-tf2: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-tf2)
 docker-cuda-tf2: DOCKER_FILE = Dockerfile.cuda-tf2
 
 docker-cuda-tf2: docker-cuda
 
 docker-cuda-torch: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
-docker-cuda-torch: DOCKER_TAG = $(DOCKER_BASE_TAG)/core-cuda-torch
+docker-cuda-torch: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-torch)
 docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 
 docker-cuda-torch: docker-cuda
