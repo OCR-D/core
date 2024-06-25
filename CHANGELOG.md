@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * GHA Docker: build docker.io first, then tag ghcr.io
+
 ## [2.66.0] - 2024-06-07
 
 Fixed:
