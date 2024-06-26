@@ -417,7 +417,7 @@ def test_save_image_file_invalid_mimetype_raises_exception(plain_workspace):
 
     # act raise
     with pytest.raises(KeyError) as key_exc:
-        plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'ceci/nest/pas/une/mimetype')
+        plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='ceci/nest/pas/une/mimetype')
 
     assert "'ceci/nest/pas/une/mimetype'" == str(key_exc.value)
 
@@ -428,13 +428,16 @@ def test_save_image_file(plain_workspace):
     img = Image.new('RGB', (1000, 1000))
 
     # act
-    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg')
+    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg')
     assert exists(join(plain_workspace.directory, 'IMG', 'page1_img.jpg'))
     # should succeed
-    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg', force=True)
+    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg', force=True)
     # should also succeed
     plain_workspace.overwrite_mode = True
-    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg')
+    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg')
+    # check file_path kwarg
+    assert plain_workspace.save_image_file(img, 'page1_img2', 'IMG', page_id='page1', file_path='IMG/page1_img2.png')
+    assert exists(join(plain_workspace.directory, 'IMG', 'page1_img2.png'))
 
 
 @pytest.fixture(name='workspace_kant_aufklaerung')

@@ -1047,12 +1047,13 @@ class Workspace():
         return segment_image, segment_coords
 
     # pylint: disable=redefined-builtin
-    def save_image_file(self, image,
-                        file_id,
-                        file_grp,
-                        page_id=None,
-                        mimetype='image/png',
-                        force=False):
+    def save_image_file(self, image : Image,
+                        file_id : str,
+                        file_grp : str,
+                        file_path : Optional[str] = None,
+                        page_id : Optional[str] = None,
+                        mimetype : str = 'image/png',
+                        force : bool = False) -> str:
         """Store an image in the filesystem and reference it as new file in the METS.
 
         Args:
@@ -1060,12 +1061,14 @@ class Workspace():
             file_id (string): `@ID` of the METS `file` to use
             file_grp (string): `@USE` of the METS `fileGrp` to use
         Keyword Args:
+            file_path (string): `@href` of the METS `file/FLocat` to use.
             page_id (string): `@ID` in the METS physical `structMap` to use
             mimetype (string): MIME type of the image format to serialize as
             force (boolean): whether to replace any existing `file` with that `@ID`
 
         Serialize the image into the filesystem, and add a `file` for it in the METS.
-        Use a filename extension based on ``mimetype``.
+        Use ``file_grp`` as directory and ``file_id`` concatenated with extension
+        based on ``mimetype`` as file name, unless directly passing ``file_path``.
 
         Returns:
             The (absolute) path of the created file.
@@ -1075,7 +1078,8 @@ class Workspace():
             force = True
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=MIME_TO_PIL[mimetype])
-        file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
+        if file_path is None:
+            file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
             file_grp,
             file_id=file_id,
