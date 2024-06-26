@@ -276,33 +276,48 @@ class Processor():
         """
         log = getLogger('ocrd.processor.base')
         input_pcgts = [None] * len(input_files)
+        page_id = input_files[0].pageId
         for i, input_file in enumerate(input_files):
             # FIXME: what about non-PAGE input like image or JSON ???
             log.debug("parsing file %s for page %s", input_file.ID, input_file.pageId)
             try:
                 input_pcgts[i] = page_from_file(input_file)
             except ValueError as e:
-                log.info("non-PAGE input for page %s: %s", input_file.pageId, e)
-        output_pcgts = self.process_page_pcgts(*input_pcgts)
+                log.info("non-PAGE input for page %s: %s", page_id, e)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
+        output_pcgts = self.process_page_pcgts(*input_pcgts, output_file_id=output_file_id, page_id=page_id)
+        if isinstance(output_pcgts, (list, tuple)):
+            output_images = output_pcgts[1:]
+            output_pcgts = output_pcgts[0]
+            for output_image_pil, output_image_id, output_image_path in output_images:
+                self.workspace.save_image_file(
+                    output_image_pil,
+                    output_image_id,
+                    self.output_file_grp,
+                    page_id=page_id,
+                    file_path=output_image_path)
         output_pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(output_pcgts)
-        # FIXME: what about save_image_file in process_page ???
         # FIXME: what about non-PAGE output like JSON ???
         self.workspace.add_file(file_id=output_file_id,
                                 file_grp=self.output_file_grp,
-                                page_id=input_files[0].pageId,
+                                page_id=page_id,
                                 local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
                                 mimetype=MIMETYPE_PAGE,
                                 content=to_xml(output_pcgts))
 
-    def process_page_pcgts(self, *input_pcgts) -> OcrdPage:
+    def process_page_pcgts(self, *input_pcgts, output_file_id : str = None, page_id : str = None) -> OcrdPage:
         """
         Process the given ``input_pcgts`` of the :py:attr:`workspace`,
         representing one physical page (passed as one parsed
         :py:class:`~ocrd_models.OcrdPage` per input fileGrp)
         under the given :py:attr:`parameter`, and return the
         resulting :py:class:`~ocrd_models.OcrdPage`.
+
+        Optionally, return a list or tuple of the :py:class:`~ocrd_models.OcrdPage`
+        and one or more lists or tuples of :py:class:`PIL.Image` (image data),
+        :py:class:str (file ID) and :py:class:str (file path) of derived images
+        to be annotated along with the resulting PAGE file.
 
         (This contains the main functionality and must be overridden by subclasses.)
         """

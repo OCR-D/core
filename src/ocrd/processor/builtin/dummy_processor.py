@@ -24,7 +24,7 @@ class DummyProcessor(Processor):
     Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
     """
 
-    def process_page_pcgts(self, *input_pcgts):
+    def process_page_pcgts(self, *input_pcgts, output_file_id=None, page_id=None):
         # nothing to do here
         return input_pcgts[0]
 
