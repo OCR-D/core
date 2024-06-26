@@ -115,9 +115,9 @@ def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     return report
 
 
-def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
+def run_tasks(mets, log_level, page_id, task_strs, overwrite=False, mets_server_url=None):
     resolver = Resolver()
-    workspace = resolver.workspace_from_url(mets)
+    workspace = resolver.workspace_from_url(mets, mets_server_url=mets_server_url)
     log = getLogger('ocrd.task_sequence.run_tasks')
     tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
@@ -139,7 +139,8 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
             overwrite=overwrite,
             input_file_grp=','.join(task.input_file_grps),
             output_file_grp=','.join(task.output_file_grps),
-            parameter=json.dumps(task.parameters)
+            parameter=json.dumps(task.parameters),
+            mets_server_url=mets_server_url
         )
 
         # check return code
@@ -149,7 +150,8 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False):
         log.info("Finished processing task '%s'", task)
 
         # reload mets
-        workspace.reload_mets()
+        if mets_server_url is None:
+            workspace.reload_mets()
 
         # check output file groups are in mets
         for output_file_grp in task.output_file_grps:
