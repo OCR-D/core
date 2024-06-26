@@ -83,7 +83,6 @@ def run_processor(
     log = getLogger('ocrd.processor.helpers.run_processor')
     log.debug("Running processor %s", processorClass)
 
-    old_cwd = getcwd()
     processor = get_processor(
         processor_class=processorClass,
         parameter=parameter,
@@ -93,8 +92,6 @@ def run_processor(
         output_file_grp=output_file_grp,
         instance_caching=instance_caching
     )
-    processor.workspace = workspace
-    chdir(processor.workspace.directory)
 
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
@@ -107,7 +104,7 @@ def run_processor(
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
         from memory_profiler import memory_usage
         try:
-            mem_usage = memory_usage(proc=processor.process,
+            mem_usage = memory_usage(proc=processor.process_workspace(workspace),
                                      # only run process once
                                      max_iterations=1,
                                      interval=.1, timeout=None, timestamps=True,
@@ -118,8 +115,6 @@ def run_processor(
         except Exception as err:
             log.exception("Failure in processor '%s'" % ocrd_tool['executable'])
             raise err
-        finally:
-            chdir(old_cwd)
         mem_usage_values = [mem for mem, _ in mem_usage]
         mem_output = 'memory consumption: '
         mem_output += sparkline(mem_usage_values)
@@ -127,12 +122,10 @@ def run_processor(
         logProfile.info(mem_output)
     else:
         try:
-            processor.process()
+            processor.process_workspace(workspace)
         except Exception as err:
             log.exception("Failure in processor '%s'" % ocrd_tool['executable'])
             raise err
-        finally:
-            chdir(old_cwd)
 
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
@@ -398,11 +391,13 @@ def get_processor(
             cached_processor.input_file_grp = input_file_grp
             cached_processor.output_file_grp = output_file_grp
             return cached_processor
-        return processor_class(
+        processor = processor_class(
             workspace=workspace,
             page_id=page_id,
             input_file_grp=input_file_grp,
             output_file_grp=output_file_grp,
             parameter=parameter
         )
+        processor.setup()
+        return processor
     raise ValueError("Processor class is not known")
