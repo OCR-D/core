@@ -487,8 +487,10 @@ def test_image_from_page_basic(workspace_gutachten_data):
         pcgts = parseString(f.read().encode('utf8'), silence=True)
 
     # act + assert
-    _, info, _ = workspace_gutachten_data.image_from_page(pcgts.get_Page(), page_id='PHYS_0017', feature_selector='clipped', feature_filter='cropped')
-    assert info['features'] == 'binarized,clipped'
+    img, coords, _ = workspace_gutachten_data.image_from_page(pcgts.get_Page(), page_id='PHYS_0017', feature_selector='clipped', feature_filter='cropped')
+    assert coords['features'] == 'binarized,clipped'
+    assert isinstance(img.info.get('dpi', None), tuple)
+    assert img.info['dpi'][0] == coords['DPI']
     _, info, _ = workspace_gutachten_data.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
     assert info['features'] == 'binarized,clipped'
 
@@ -529,6 +531,7 @@ def test_deskewing(plain_workspace):
     skew = 4.625
     image = Image.new('L', size)
     image = polygon_mask(image, poly)
+    image.info['dpi'] = (300, 300)
     #image.show(title='image')
     pixels = np.count_nonzero(np.array(image) > 0)
     name = 'foo0'
@@ -539,9 +542,12 @@ def test_deskewing(plain_workspace):
                             Coords=CoordsType(points=points_from_polygon(poly)),
                             orientation=-skew)
     page.add_TextRegion(region)
-    page_image, page_coords, _ = plain_workspace.image_from_page(page, '')
+    page_image, page_coords, page_info = plain_workspace.image_from_page(page, '')
     #page_image.show(title='page_image')
     assert list(image.getdata()) == list(page_image.getdata())
+    assert 'dpi' in page_image.info
+    assert round(page_image.info['dpi'][0]) == 300
+    assert page_coords['DPI'] == 300
     assert np.all(page_coords['transform'] == np.eye(3))
     reg_image, reg_coords = plain_workspace.image_from_segment(region, page_image, page_coords,
                                                                feature_filter='deskewed', fill=0)
@@ -550,6 +556,7 @@ def test_deskewing(plain_workspace):
     assert reg_image.height == xywh['h'] == 335
     assert reg_coords['transform'][0, 2] == -xywh['x']
     assert reg_coords['transform'][1, 2] == -xywh['y']
+    assert round(reg_image.info['dpi'][0]) == 300
     # same fg after cropping to minimal bbox
     reg_pixels = np.count_nonzero(np.array(reg_image) > 0)
     assert pixels == reg_pixels
@@ -561,6 +568,7 @@ def test_deskewing(plain_workspace):
     assert reg_coords['transform'][0, 1] != 0
     assert reg_coords['transform'][1, 0] != 0
     assert 'deskewed' in reg_coords['features']
+    assert round(reg_image.info['dpi'][0]) == 300
     # same fg after cropping to minimal bbox (roughly - due to aliasing)
     reg_pixels = np.count_nonzero(np.array(reg_image) > 0)
     assert np.abs(pixels - reg_pixels) / pixels < 0.005
@@ -582,6 +590,7 @@ def test_deskewing(plain_workspace):
     assert reg_image2.height == reg_image.height
     assert np.allclose(reg_coords2['transform'], reg_coords['transform'])
     assert reg_coords2['features'] == reg_coords['features']
+    assert round(reg_image2.info['dpi'][0]) == 300
     # same fg after cropping to minimal bbox (roughly - due to aliasing)
     reg_pixels2 = np.count_nonzero(np.array(reg_image) > 0)
     assert reg_pixels2 == reg_pixels
