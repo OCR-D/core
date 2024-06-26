@@ -631,6 +631,7 @@ class Workspace():
                    i.e. after cropping to the page's border / bounding box (if any)
                    and deskewing with the page's orientation angle (if any)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
+               - `"DPI"`: the pixel density of the original image,
                - `"features"`: the `AlternativeImage` `@comments` for the image, i.e.
                  names of all applied operations that lead up to this result,
              * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with
@@ -672,6 +673,13 @@ class Workspace():
         page_coords['angle'] = 0 # nothing applied yet (depends on filters)
         log.debug("page '%s' has %s orientation=%d skew=%.2f",
                   page_id, "border," if border else "", orientation, skew)
+        if page_image_info.resolution != 1:
+            dpi = page_image_info.resolution
+            if page_image_info.resolutionUnit == 'cm':
+                dpi = round(dpi * 2.54)
+            dpi = int(dpi)
+            log.debug("page '%s' images will use %d DPI from image meta-data", page_id, dpi)
+            page_coords['DPI'] = dpi
 
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
@@ -790,6 +798,11 @@ class Workspace():
                             'filter="%s" in page "%s"' % (
                                 feature_filter, page_id))
         page_image.format = 'PNG' # workaround for tesserocr#194
+        # ensure DPI will be set in image meta-data again
+        if 'DPI' in page_coords:
+            dpi = page_coords['DPI']
+            if 'dpi' not in page_image.info:
+                page_image.info['dpi'] = (dpi, dpi)
         return page_image, page_coords, page_image_info
 
     def image_from_segment(self, segment, parent_image, parent_coords,
@@ -810,6 +823,7 @@ class Workspace():
                  converts from absolute coordinates to those relative to the image,
                  i.e. after applying all operations (starting with the original image)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
+               - `"DPI"`: the pixel density of the parent image,
                - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all operations that lead up to this result, and
         Keyword Args:
@@ -875,6 +889,7 @@ class Workspace():
                    the segment's bounding box, and deskewing with the segment's
                    orientation angle (if any)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
+               - `"DPI"`: the pixel density of this image,
                - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all applied operations that lead up to this result.
 
@@ -937,6 +952,8 @@ class Workspace():
             orientation = 0
             skew = 0
         segment_coords['angle'] = parent_coords['angle'] # nothing applied yet (depends on filters)
+        if 'DPI' in parent_coords:
+            segment_coords['DPI'] = parent_coords['DPI'] # not rescaled yet
 
         # initialize AlternativeImage@comments classes from parent, except
         # for those operations that can apply on multiple hierarchy levels:
@@ -1044,6 +1061,11 @@ class Workspace():
                             'filter="%s" in segment "%s"' % (
                                 feature_filter, segment.id))
         segment_image.format = 'PNG' # workaround for tesserocr#194
+        # ensure DPI will be set in image meta-data again
+        if 'DPI' in segment_coords:
+            dpi = segment_coords['DPI']
+            if 'dpi' not in segment_image.info:
+                segment_image.info['dpi'] = (dpi, dpi)
         return segment_image, segment_coords
 
     # pylint: disable=redefined-builtin
