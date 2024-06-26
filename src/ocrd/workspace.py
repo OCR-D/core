@@ -1076,8 +1076,11 @@ class Workspace():
         log = getLogger('ocrd.workspace.save_image_file')
         if self.overwrite_mode:
             force = True
+        saveargs = dict()
+        if 'dpi' in image.info:
+            saveargs['dpi'] = image.info['dpi']
         image_bytes = io.BytesIO()
-        image.save(image_bytes, format=MIME_TO_PIL[mimetype])
+        image.save(image_bytes, format=MIME_TO_PIL[mimetype], **saveargs)
         if file_path is None:
             file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
