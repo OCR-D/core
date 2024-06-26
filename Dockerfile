@@ -38,6 +38,8 @@ RUN python3 -m venv /usr/local \
     && hash -r \
     && make install-dev \
     && eval $FIXUP
+# Smoke Test
+RUN ocrd --version
 
 WORKDIR /data
 
