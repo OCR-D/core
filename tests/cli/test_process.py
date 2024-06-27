@@ -1,11 +1,18 @@
+from os.path import exists
+from os import remove, getcwd
+from time import sleep
 from contextlib import ExitStack
+from multiprocessing import Process, set_start_method
+# necessary for macos
+set_start_method("fork")
 
+from ocrd import Resolver, Workspace, OcrdMetsServer
 from ocrd.cli import process_cli
-from ocrd_utils import pushd_popd, disableLogging
+from ocrd_utils import pushd_popd
 
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
-class TestLogCli(TestCase):
+class TestCli(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -25,6 +32,28 @@ class TestLogCli(TestCase):
         code, out, err = self.invoke_cli(process_cli, ['dummy -I OCR-D-GT-PAGE -O OCR-D-DUMMY'])
         print(code, out, err)
         self.assertFalse(code)
+        self.assertTrue(exists('OCR-D-DUMMY'))
+
+    def test_cli_process_mets_server(self):
+        # stolen from test_mets_server.fixture_start_mets_server ...
+        def _start_mets_server(*args, **kwargs):
+            mets_server = OcrdMetsServer(*args, **kwargs)
+            mets_server.startup()
+        if exists('mets.sock'):
+            remove('mets.sock')
+        ws = Workspace(Resolver(), getcwd())
+        p = Process(target=_start_mets_server, kwargs={'workspace': ws, 'url': 'mets.sock'})
+        p.daemon = True
+        p.start()
+        sleep(1)  # sleep to start up server
+        self.assertTrue(exists('mets.sock'))
+        code, out, err = self.invoke_cli(process_cli, ['-U', 'mets.sock', 'dummy -I OCR-D-GT-PAGE -O OCR-D-DUMMY'])
+        print(code, out, err)
+        self.assertFalse(code)
+        self.assertTrue(exists('OCR-D-DUMMY'))
+        p.terminate()
+        ws.reload_mets()
+        self.assertIn('OCR-D-DUMMY', ws.mets.file_groups)
 
 if __name__ == '__main__':
     main(__file__)
