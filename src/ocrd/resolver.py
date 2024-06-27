@@ -174,6 +174,9 @@ class Resolver():
                 By default existing ``mets.xml`` will raise an exception.
             download (boolean, False): Whether to also download all the files referenced by the METS
             src_baseurl (string, None): Base URL for resolving relative file locations
+            mets_server_url (string, None): URI of TCP or local path of UDS for METS server handling
+                the `OcrdMets` of the workspace. By default the METS will be read from and written to
+                the filesystem directly.
             **kwargs (): Passed on to ``OcrdMets.find_files`` if download == True
 
         Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless 
