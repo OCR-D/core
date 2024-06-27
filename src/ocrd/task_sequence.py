@@ -117,7 +117,9 @@ def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
 
 def run_tasks(mets, log_level, page_id, task_strs, overwrite=False, mets_server_url=None):
     resolver = Resolver()
-    workspace = resolver.workspace_from_url(mets, mets_server_url=mets_server_url)
+    workdir, mets, basename, _ = resolver.resolve_mets_arguments(None, mets, None)
+    workspace = resolver.workspace_from_url(mets, workdir, mets_basename=basename,
+                                            mets_server_url=mets_server_url)
     log = getLogger('ocrd.task_sequence.run_tasks')
     tasks = [ProcessorTask.parse(task_str) for task_str in task_strs]
 
