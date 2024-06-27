@@ -35,7 +35,7 @@ class TestOsUtils(TestCase):
         self.assertEqual(cands, [join(x, fname) for x in [
             dehomify(join(getcwd())),
             dehomify(self.tempdir_path),
-            join(config.XDG_DATA_HOME, 'ocrd-resources', 'ocrd-dummy'),
+            dehomify(join(config.XDG_DATA_HOME, 'ocrd-resources', 'ocrd-dummy')),
             '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
 
