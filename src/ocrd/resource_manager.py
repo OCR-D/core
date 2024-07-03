@@ -220,14 +220,16 @@ class OcrdResourceManager:
                'cwd' if resource_path.startswith(getcwd()) else \
                resource_path
 
-    def parameter_usage(self, name, usage='as-is'):
+    @staticmethod
+    def parameter_usage(name, usage='as-is'):
         if usage == 'as-is':
             return name
         elif usage == 'without-extension':
             return Path(name).stem
         raise ValueError(f"No such usage '{usage}'")
 
-    def _download_impl(self, url, filename, progress_cb=None, size=None):
+    @staticmethod
+    def _download_impl(url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info(f"Downloading {url} to {filename}")
         with open(filename, 'wb') as f:
@@ -248,7 +250,8 @@ class OcrdResourceManager:
                         progress_cb(len(data))
                     f.write(data)
 
-    def _copy_impl(self, src_filename, filename, progress_cb=None):
+    @staticmethod
+    def _copy_impl(src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
         log.info(f"Copying {src_filename} to {filename}")
         if Path(src_filename).is_dir():
