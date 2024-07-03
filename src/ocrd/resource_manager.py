@@ -24,7 +24,8 @@ from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nt
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
-class OcrdResourceManager():
+
+class OcrdResourceManager:
 
     """
     Managing processor resources
@@ -81,7 +82,7 @@ class OcrdResourceManager():
             report = OcrdResourceListValidator.validate(list_loaded)
             if not report.is_valid:
                 self.log.error('\n'.join(report.errors))
-                raise ValueError("Resource list %s is invalid!" % (list_filename))
+                raise ValueError(f"Resource list {list_filename} is invalid!")
             for executable, resource_list in list_loaded.items():
                 if executable not in database:
                     database[executable] = []
@@ -176,7 +177,8 @@ class OcrdResourceManager():
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
-        self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", executable, res_name, str(res_filename), self.user_list)
+        self.log.info(f"{executable} resource '{res_name}' ({str(res_filename)}) not a known resource, "
+                      f"creating stub in {self.user_list}'")
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
@@ -190,7 +192,7 @@ class OcrdResourceManager():
             resdict = {
                 'name': res_name,
                 'url': url if url else '???',
-                'description': 'Found at %s on %s' % (self.resource_dir_to_location(res_filename), datetime.now()),
+                'description': f'Found at {self.resource_dir_to_location(res_filename)} on {datetime.now()}',
                 'version_range': '???',
                 'type': resource_type,
                 'size': res_size
@@ -223,11 +225,11 @@ class OcrdResourceManager():
             return name
         elif usage == 'without-extension':
             return Path(name).stem
-        raise ValueError("No such usage '%s'" % usage)
+        raise ValueError(f"No such usage '{usage}'")
 
     def _download_impl(self, url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')
-        log.info("Downloading %s to %s" % (url, filename))
+        log.info(f"Downloading {url} to {filename}")
         with open(filename, 'wb') as f:
             gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
             if gdrive_file_id:
@@ -248,7 +250,7 @@ class OcrdResourceManager():
 
     def _copy_impl(self, src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
-        log.info("Copying %s to %s", src_filename, filename)
+        log.info(f"Copying {src_filename} to {filename}")
         if Path(src_filename).is_dir():
             log.info(f"Copying recursively from {src_filename} to {filename}")
             for child in Path(src_filename).rglob('*'):
@@ -276,16 +278,8 @@ class OcrdResourceManager():
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(
-        self,
-        executable,
-        url,
-        basedir,
-        overwrite=False,
-        no_subdir=False,
-        name=None,
-        resource_type='file',
-        path_in_archive='.',
-        progress_cb=None,
+        self, executable, url, basedir, overwrite=False, no_subdir=False, name=None, resource_type='file',
+        path_in_archive='.', progress_cb=None,
     ):
         """
         Download a resource by URL
@@ -299,12 +293,13 @@ class OcrdResourceManager():
         is_url = url.startswith('https://') or url.startswith('http://')
         if fpath.exists():
             if not overwrite:
-                raise FileExistsError("%s %s already exists but --overwrite is not set" % ('Directory' if fpath.is_dir() else 'File', fpath))
+                fpath_type = 'Directory' if fpath.is_dir() else 'File'
+                raise FileExistsError(f"{fpath_type} {fpath} already exists but --overwrite is not set")
             if fpath.is_dir():
-                log.info("Removing existing target directory {fpath}")
+                log.info(f"Removing existing target directory {fpath}")
                 rmtree(str(fpath))
             else:
-                log.info("Removing existing target file {fpath}")
+                log.info(f"Removing existing target file {fpath}")
                 unlink(str(fpath))
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type in ('file', 'directory'):
@@ -322,7 +317,7 @@ class OcrdResourceManager():
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
-                    log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
+                    log.info(f"Extracting {mimetype} archive to {tempdir}/out")
                     if mimetype == 'application/zip':
                         with ZipFile(f'../{archive_fname}', 'r') as zipf:
                             zipf.extractall()
@@ -330,14 +325,14 @@ class OcrdResourceManager():
                         with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
                             tar.extractall()
                     else:
-                        raise RuntimeError("Unable to handle extraction of %s archive %s" % (mimetype, url))
-                    log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
+                        raise RuntimeError(f"Unable to handle extraction of {mimetype} archive {url}")
+                    log.info(f"Copying '{path_in_archive}' from archive to {fpath}")
                     if Path(path_in_archive).is_dir():
                         copytree(path_in_archive, str(fpath))
                     else:
                         copy(path_in_archive, str(fpath))
             if Path(tempdir).exists():
-                log.info("Removing temp dir: %s" % tempdir)
+                log.info(f"Removing temp dir {tempdir}")
                 rmtree(tempdir)
         return fpath
 
