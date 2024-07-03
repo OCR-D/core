@@ -236,7 +236,7 @@ class OcrdResourceManager:
             gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
             if gdrive_file_id:
                 if not is_gdrive_download_link:
-                    url = "https://drive.google.com/uc?id={id}".format(id=gdrive_file_id)
+                    url = f"https://drive.google.com/uc?id={gdrive_file_id}"
                 try:
                     with requests.get(url, stream=True) as r:
                         if "Content-Disposition" not in r.headers:
