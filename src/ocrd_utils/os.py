@@ -75,38 +75,27 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z.close()
 
 @lru_cache()
-def get_ocrd_tool_json(executable, skip_error_print: bool = False):
+def get_ocrd_tool_json(executable):
     """
     Get the ``ocrd-tool`` description of ``executable``.
     """
     ocrd_tool = {}
     executable_name = Path(executable).name
-    # TODO: Potentially these executables should be moved as a constant somewhere else
-    skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
-    if executable_name not in skip_executables:
-        try:
-            ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
-        except (JSONDecodeError, OSError) as e:
-            if not skip_error_print:
-                getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
-        except Exception as e:
-            if not skip_error_print:
-                getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json failed: {e}')
+    try:
+        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+    except (JSONDecodeError, OSError) as e:
+        getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
     return ocrd_tool
 
 @lru_cache()
-def get_moduledir(executable, skip_error_print: bool = False):
+def get_moduledir(executable):
     moduledir = None
     try:
         moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout.rstrip('\n')
     except (JSONDecodeError, OSError) as e:
-        if not skip_error_print:
-            getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
-    except Exception as e:
-        if not skip_error_print:
-            getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
+        getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
 
 def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):
