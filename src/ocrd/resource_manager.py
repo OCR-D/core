@@ -103,8 +103,7 @@ class OcrdResourceManager:
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
                     if not exec_path.name.startswith('ocrd-'):
-                        self.log.debug(f"Not in 'ocrd-*' format, skipping '{exec_path}'")
-                        continue
+                        self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
                     if exec_path.name in skip_executables:
                         self.log.debug(f"No dump json available, skipping '{exec_path}'")
                         continue
