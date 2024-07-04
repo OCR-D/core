@@ -102,7 +102,7 @@ class OcrdResourceManager:
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
                     self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
-                    ocrd_tool = get_ocrd_tool_json(exec_path, True)
+                    ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
                         if exec_path.name not in database:
                             database[exec_path.name] = []
