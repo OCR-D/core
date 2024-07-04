@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from shutil import rmtree
 # import pdb
 
 from ocrd.resource_manager import OcrdResourceManager
@@ -12,10 +13,12 @@ from tests.base import main
 CONST_RESOURCE_YML = 'resources.yml'
 CONST_RESOURCE_URL_LAYOUT = 'https://github.com/tesseract-ocr/tessdata_best/raw/main/bos.traineddata'
 
+
 @fixture(autouse=True)
 def drop_get_ocrd_tool_json_cache():
     get_ocrd_tool_json.cache_clear()
     yield
+
 
 def test_resources_manager_config_default(monkeypatch, tmp_path):
 
@@ -85,6 +88,7 @@ def test_resources_manager_config_explicite(tmp_path):
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
 
+
 def test_resources_manager_config_explicit_invalid(tmp_path):
 
     # act
@@ -94,6 +98,7 @@ def test_resources_manager_config_explicit_invalid(tmp_path):
     # assert
     with raises(ValueError, match='is invalid'):
         OcrdResourceManager(xdg_config_home=tmp_path)
+
 
 def test_find_resources(tmp_path):
 
@@ -109,6 +114,7 @@ def test_find_resources(tmp_path):
     assert 'ocrd-foo' in [x for x, _ in mgr.list_available()]
     assert 'ocrd-foo' in [x for x, _ in mgr.list_available(url='http://foo/bar')]
 
+
 def test_parameter_usage(tmp_path):
     mgr = OcrdResourceManager(xdg_config_home=tmp_path)
     assert mgr.parameter_usage('foo.bar') == 'foo.bar'
@@ -116,20 +122,24 @@ def test_parameter_usage(tmp_path):
     with raises(ValueError, match='No such usage'):
         mgr.parameter_usage('foo.bar', 'baz')
 
+
 def test_default_resource_dir(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     assert mgr.xdg_config_home != mgr.xdg_data_home
     assert mgr.default_resource_dir == str(mgr.xdg_data_home / 'ocrd-resources')
+
 
 def test_list_available0(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     res = mgr.list_available()
     assert len(res) > 0
 
+
 def test_list_available_with_unknown_executable(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     res = mgr.list_available(executable="ocrd-non-existing-processor")
     assert len(res[0][1]) == 0
+
 
 def test_date_as_string(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
@@ -147,6 +157,7 @@ def test_date_as_string(tmp_path):
     mgr.load_resource_list(test_list)
     mgr.list_available(executable='ocrd-eynollah-segment')
 
+
 def test_download_archive(tmp_path):
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     for archive_type in ('.zip', '.tar.gz', '.tar.xz'):
@@ -161,6 +172,33 @@ def test_download_archive(tmp_path):
         )
         filecontent_path =  Path(tmp_path / 'ocrd-resources/ocrd-foo/filename.ext')
         assert filecontent_path.read_text() == '1\n'
+
+
+def test_copy_impl(tmp_path):
+    root_dir = "./mgr_copy_impl_test"
+    root_dir_copied = "./mgr_copy_impl_test_copied"
+    rmtree(path=root_dir, ignore_errors=True)
+    rmtree(path=root_dir_copied, ignore_errors=True)
+
+    def _create_test_folder(test_dir: str, letter: str) -> str:
+        os.makedirs(name=f"./{test_dir}/{letter}", exist_ok=True)
+        file_path = f"./{test_dir}/{letter}/{letter}.txt"
+        with open(f"{file_path}", "w") as file:
+            file.write(f"{letter}")
+        return file_path
+
+    file1_path = _create_test_folder(test_dir=root_dir, letter="a")
+    file2_path = _create_test_folder(test_dir=root_dir, letter="b")
+    file3_path = _create_test_folder(test_dir=root_dir, letter="c")
+
+    mgr = OcrdResourceManager(xdg_data_home=tmp_path)
+    mgr._copy_impl(src_filename=root_dir, filename=root_dir_copied)
+
+    assert Path(file1_path).exists()
+    assert Path(file2_path).exists()
+    assert Path(file3_path).exists()
+    rmtree(path='./mgr_copy_impl_test', ignore_errors=True)
+    rmtree(path='./mgr_copy_impl_test_copied', ignore_errors=True)
 
 
 if __name__ == "__main__":
