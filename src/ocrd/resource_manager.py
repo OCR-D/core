@@ -334,9 +334,6 @@ class OcrdResourceManager:
                         copytree(path_in_archive, str(fpath))
                     else:
                         copy(path_in_archive, str(fpath))
-            if Path(tempdir).exists():
-                log.info(f"Removing temp dir {tempdir}")
-                rmtree(tempdir)
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):
