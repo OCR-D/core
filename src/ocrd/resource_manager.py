@@ -99,8 +99,15 @@ class OcrdResourceManager:
         if not executable:
             return database.items()
         if dynamic:
+            skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
+                    if not exec_path.name.startswith('ocrd-'):
+                        self.log.debug(f"Not in 'ocrd-*' format, skipping '{exec_path}'")
+                        continue
+                    if exec_path.name in skip_executables:
+                        self.log.debug(f"No dump json available, skipping '{exec_path}'")
+                        continue
                     self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
                     ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
