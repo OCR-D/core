@@ -175,30 +175,30 @@ def test_download_archive(tmp_path):
 
 
 def test_copy_impl(tmp_path):
-    root_dir = "./mgr_copy_impl_test"
-    root_dir_copied = "./mgr_copy_impl_test_copied"
+    root_dir = f"{tmp_path}/mgr_copy_impl_test"
+    root_dir_copied = f"{tmp_path}/mgr_copy_impl_test_copied"
     rmtree(path=root_dir, ignore_errors=True)
     rmtree(path=root_dir_copied, ignore_errors=True)
 
     def _create_test_folder(test_dir: str, letter: str) -> str:
-        os.makedirs(name=f"./{test_dir}/{letter}", exist_ok=True)
-        file_path = f"./{test_dir}/{letter}/{letter}.txt"
+        Path(f"{test_dir}/{letter}").mkdir(parents=True, exist_ok=True)
+        file_path = f"{test_dir}/{letter}/{letter}.txt"
         with open(f"{file_path}", "w") as file:
             file.write(f"{letter}")
         return file_path
 
-    file1_path = _create_test_folder(test_dir=root_dir, letter="a")
-    file2_path = _create_test_folder(test_dir=root_dir, letter="b")
-    file3_path = _create_test_folder(test_dir=root_dir, letter="c")
+    _create_test_folder(test_dir=root_dir, letter="a")
+    _create_test_folder(test_dir=root_dir, letter="b")
+    _create_test_folder(test_dir=root_dir, letter="c")
 
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     mgr._copy_impl(src_filename=root_dir, filename=root_dir_copied)
 
-    assert Path(file1_path).exists()
-    assert Path(file2_path).exists()
-    assert Path(file3_path).exists()
-    rmtree(path='./mgr_copy_impl_test', ignore_errors=True)
-    rmtree(path='./mgr_copy_impl_test_copied', ignore_errors=True)
+    assert Path(f"{root_dir_copied}/a/a.txt").exists()
+    assert Path(f"{root_dir_copied}/b/b.txt").exists()
+    assert Path(f"{root_dir_copied}/c/c.txt").exists()
+    rmtree(path=root_dir, ignore_errors=True)
+    rmtree(path=root_dir_copied, ignore_errors=True)
 
 
 if __name__ == "__main__":
