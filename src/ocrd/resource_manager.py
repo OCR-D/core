@@ -270,10 +270,9 @@ class OcrdResourceManager:
         log.info(f"Copying dir recursively from {src} to {dst}")
         if not Path(src).is_dir():
             raise ValueError(f"The source is not a directory: {src}")
-        makedirs(name=dst, exist_ok=True)
+        Path(dst).mkdir(parents=True, exist_ok=True)
         for child in Path(src).rglob('*'):
             child_dst = Path(dst) / child.relative_to(src)
-            child_dst.parent.mkdir(parents=True, exist_ok=True)
             if Path(child).is_dir():
                 OcrdResourceManager._copy_dir(child, child_dst, progress_cb)
             else:
