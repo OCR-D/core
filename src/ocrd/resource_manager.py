@@ -1,6 +1,6 @@
 from pathlib import Path
 from os.path import join
-from os import environ, listdir, getcwd, path, unlink
+from os import environ, listdir, makedirs, getcwd, path, unlink
 from shutil import copytree, rmtree, copy
 from fnmatch import filter as apply_glob
 from datetime import datetime
@@ -251,33 +251,42 @@ class OcrdResourceManager:
                     f.write(data)
 
     @staticmethod
+    def _copy_file(src, dst, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_file')
+        log.info(f"Copying file {src} to {dst}")
+        with open(dst, 'wb') as f_out, open(src, 'rb') as f_in:
+            while True:
+                chunk = f_in.read(4096)
+                if chunk:
+                    f_out.write(chunk)
+                    if progress_cb:
+                        progress_cb(len(chunk))
+                else:
+                    break
+
+    @staticmethod
+    def _copy_dir(src, dst, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_dir')
+        log.info(f"Copying dir recursively from {src} to {dst}")
+        if not Path(src).is_dir():
+            raise ValueError(f"The source is not a directory: {src}")
+        makedirs(name=dst, exist_ok=True)
+        for child in Path(src).rglob('*'):
+            child_dst = Path(dst) / child.relative_to(src)
+            child_dst.parent.mkdir(parents=True, exist_ok=True)
+            if Path(child).is_dir():
+                OcrdResourceManager._copy_dir(child, child_dst, progress_cb)
+            else:
+                OcrdResourceManager._copy_file(child, child_dst, progress_cb)
+
+    @staticmethod
     def _copy_impl(src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
         log.info(f"Copying {src_filename} to {filename}")
         if Path(src_filename).is_dir():
-            log.info(f"Copying recursively from {src_filename} to {filename}")
-            for child in Path(src_filename).rglob('*'):
-                child_dst = Path(filename) / child.relative_to(src_filename)
-                child_dst.parent.mkdir(parents=True, exist_ok=True)
-                with open(child_dst, 'wb') as f_out, open(child, 'rb') as f_in:
-                    while True:
-                        chunk = f_in.read(4096)
-                        if chunk:
-                            f_out.write(chunk)
-                            if progress_cb:
-                                progress_cb(len(chunk))
-                        else:
-                            break
+            OcrdResourceManager._copy_dir(src_filename, filename, progress_cb)
         else:
-            with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
-                while True:
-                    chunk = f_in.read(4096)
-                    if chunk:
-                        f_out.write(chunk)
-                        if progress_cb:
-                            progress_cb(len(chunk))
-                    else:
-                        break
+            OcrdResourceManager._copy_file(src_filename, filename, progress_cb)
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(
