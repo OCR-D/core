@@ -107,7 +107,7 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                       f"To download resources anyway, use the -a/--allow-uninstalled flag")
             sys.exit(1)
         else:
-            log.info(f"Executable '{executable}' is not installed, but downloading resources anyway", executable)
+            log.info(f"Executable '{executable}' is not installed, but downloading resources anyway")
     reslist = resmgr.list_available(executable=executable, dynamic=not no_dynamic, name=name)
     if not any(r[1] for r in reslist):
         log.info(f"No resources {name} found in registry for executable {executable}")
