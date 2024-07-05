@@ -242,13 +242,18 @@ class OcrdResourceManager:
                         url = get_url_from_gdrive_confirmation(r.text)
             except RuntimeError as e:
                 log.warning("Cannot unwrap Google Drive URL: ", e)
-        with open(filename, 'wb') as f:
-            with requests.get(url, stream=True) as r:
-                r.raise_for_status()
-                for data in r.iter_content(chunk_size=4096):
-                    if progress_cb:
-                        progress_cb(len(data))
-                    f.write(data)
+        try:
+            with open(filename, 'wb') as f:
+                with requests.get(url, stream=True) as r:
+                    r.raise_for_status()
+                    for data in r.iter_content(chunk_size=4096):
+                        if progress_cb:
+                            progress_cb(len(data))
+                        f.write(data)
+        except Exception as e:
+            rmtree(filename, ignore_errors=True)
+            Path(filename).unlink(missing_ok=True)
+            raise e
 
     @staticmethod
     def _copy_impl(src_filename, filename, progress_cb=None):
