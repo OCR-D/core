@@ -304,7 +304,7 @@ class OcrdResourceManager:
                 fpath_type = 'Directory' if fpath.is_dir() else 'File'
                 log.warning(f"{fpath_type} {fpath} already exists but --overwrite is not set, skipping the download")
                 # raise FileExistsError(f"{fpath_type} {fpath} already exists but --overwrite is not set")
-                return
+                return fpath
             if fpath.is_dir():
                 log.info(f"Removing existing target directory {fpath}")
                 rmtree(str(fpath))
