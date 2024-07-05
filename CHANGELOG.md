@@ -5,8 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [2.66.1] - 2024-06-26
+Changed:
 
+  - Additional docker base images with preinstalled tensorflow 1 (`core-cuda-tf1`), tensorflow 2 (`core-cuda-tf2`) and torch (`core-cuda-torch`), #1239
+
+Added:
+
+  - `ocrd process` does support `-U/--mets-server`, #1243
+
+Fixed:
+
+  - `ocrd process`-derived tasks are not run in a temporary directory when not called from within workspace, #1243
+
+## [2.66.1] - 2024-06-26
 
 Fixed:
 
