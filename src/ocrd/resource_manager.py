@@ -238,7 +238,7 @@ class OcrdResourceManager:
     def _download_impl(url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info(f"Downloading {url} to {filename}")
-        with open(filename, 'wb') as f:
+        try:
             gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
             if gdrive_file_id:
                 if not is_gdrive_download_link:
@@ -249,12 +249,17 @@ class OcrdResourceManager:
                             url = get_url_from_gdrive_confirmation(r.text)
                 except RuntimeError as e:
                     log.warning("Cannot unwrap Google Drive URL: ", e)
-            with requests.get(url, stream=True) as r:
-                r.raise_for_status()
-                for data in r.iter_content(chunk_size=4096):
-                    if progress_cb:
-                        progress_cb(len(data))
-                    f.write(data)
+            with open(filename, 'wb') as f:
+                with requests.get(url, stream=True) as r:
+                    r.raise_for_status()
+                    for data in r.iter_content(chunk_size=4096):
+                        if progress_cb:
+                            progress_cb(len(data))
+                        f.write(data)
+        except Exception as e:
+            rmtree(filename, ignore_errors=True)
+            Path(filename).unlink(missing_ok=True)
+            raise e
 
     @staticmethod
     def _copy_file(src, dst, progress_cb=None):
@@ -311,7 +316,9 @@ class OcrdResourceManager:
         if fpath.exists():
             if not overwrite:
                 fpath_type = 'Directory' if fpath.is_dir() else 'File'
-                raise FileExistsError(f"{fpath_type} {fpath} already exists but --overwrite is not set")
+                log.warning(f"{fpath_type} {fpath} already exists but --overwrite is not set, skipping the download")
+                # raise FileExistsError(f"{fpath_type} {fpath} already exists but --overwrite is not set")
+                return fpath
             if fpath.is_dir():
                 log.info(f"Removing existing target directory {fpath}")
                 rmtree(str(fpath))
@@ -348,9 +355,6 @@ class OcrdResourceManager:
                         copytree(path_in_archive, str(fpath))
                     else:
                         copy(path_in_archive, str(fpath))
-            if Path(tempdir).exists():
-                log.info(f"Removing temp dir {tempdir}")
-                rmtree(tempdir)
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):
