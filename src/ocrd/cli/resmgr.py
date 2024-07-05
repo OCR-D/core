@@ -13,17 +13,11 @@ from yaml import safe_load, safe_dump
 import requests
 import click
 
-from ocrd_utils import (
-    initLogging,
-    directory_size,
-    getLogger,
-    get_ocrd_tool_json,
-    get_moduledir,
-    RESOURCE_LOCATIONS,
-)
+from ocrd_utils import directory_size, getLogger, get_moduledir, get_ocrd_tool_json, initLogging, RESOURCE_LOCATIONS
 from ocrd.constants import RESOURCE_USER_LIST_COMMENT
 
 from ..resource_manager import OcrdResourceManager
+
 
 def print_resources(executable, reslist, resmgr):
     print('%s' % executable)
@@ -36,12 +30,14 @@ def print_resources(executable, reslist, resmgr):
         ))
     print()
 
+
 @click.group("resmgr")
 def resmgr_cli():
     """
     Managing processor resources
     """
     initLogging()
+
 
 @resmgr_cli.command('list-available')
 @click.option('-D', '--no-dynamic', is_flag=True, default=False, help="Whether to skip looking into each processor's --dump-{json,module-dir} for module-level resources")
@@ -54,6 +50,7 @@ def list_available(executable, no_dynamic):
     for executable, reslist in resmgr.list_available(executable=executable, dynamic=not no_dynamic):
         print_resources(executable, reslist, resmgr)
 
+
 @resmgr_cli.command('list-installed')
 @click.option('-e', '--executable', help='Show only resources for executable EXEC', metavar='EXEC')
 def list_installed(executable=None):
@@ -63,6 +60,7 @@ def list_installed(executable=None):
     resmgr = OcrdResourceManager()
     for executable, reslist in resmgr.list_installed(executable):
         print_resources(executable, reslist, resmgr)
+
 
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', help='URL of unregistered resource to download/copy from', default='')
@@ -171,6 +169,7 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
             except FileExistsError as exc:
                 log.info(str(exc))
             log.info("Use in parameters as '%s'", resmgr.parameter_usage(resdict['name'], usage=resdict.get('parameter_usage', 'as-is')))
+
 
 @resmgr_cli.command('migrate')
 @click.argument('migration', type=click.Choice(['2.37.0']))
