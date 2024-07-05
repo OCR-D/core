@@ -232,17 +232,17 @@ class OcrdResourceManager:
     def _download_impl(url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')
         log.info(f"Downloading {url} to {filename}")
+        gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
+        if gdrive_file_id:
+            if not is_gdrive_download_link:
+                url = f"https://drive.google.com/uc?id={gdrive_file_id}"
+            try:
+                with requests.get(url, stream=True) as r:
+                    if "Content-Disposition" not in r.headers:
+                        url = get_url_from_gdrive_confirmation(r.text)
+            except RuntimeError as e:
+                log.warning("Cannot unwrap Google Drive URL: ", e)
         with open(filename, 'wb') as f:
-            gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
-            if gdrive_file_id:
-                if not is_gdrive_download_link:
-                    url = f"https://drive.google.com/uc?id={gdrive_file_id}"
-                try:
-                    with requests.get(url, stream=True) as r:
-                        if "Content-Disposition" not in r.headers:
-                            url = get_url_from_gdrive_confirmation(r.text)
-                except RuntimeError as e:
-                    log.warning("Cannot unwrap Google Drive URL: ", e)
             with requests.get(url, stream=True) as r:
                 r.raise_for_status()
                 for data in r.iter_content(chunk_size=4096):
