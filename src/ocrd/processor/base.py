@@ -116,8 +116,6 @@ class Processor():
                  on stdout.
         """
         self.ocrd_tool = ocrd_tool
-        if parameter is None:
-            parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return
@@ -162,6 +160,8 @@ class Processor():
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
         self.page_id = None if page_id == [] or page_id is None else page_id
+        if parameter is None:
+            parameter = {}
         parameterValidator = ParameterValidator(ocrd_tool)
         report = parameterValidator.validate(parameter)
         if not report.is_valid:

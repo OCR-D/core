@@ -76,7 +76,11 @@ def ocrd_cli_wrap_processor(
     # LOG.info('kwargs=%s' % kwargs)
     if 'parameter' in kwargs:
         # Disambiguate parameter file/literal, and resolve file
-        disposable = processorClass(workspace=None)
+        # (but avoid entering processing context of constructor)
+        class DisposableSubclass(processorClass):
+            def show_version(self):
+                pass
+        disposable = DisposableSubclass(None, show_version=True)
         def resolve(name):
             try:
                 return disposable.resolve_resource(name)
