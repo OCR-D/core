@@ -17,6 +17,7 @@ from os import getcwd
 from pathlib import Path
 from typing import Optional
 import sys
+import inspect
 import tarfile
 import io
 from deprecated import deprecated
@@ -33,7 +34,9 @@ from ocrd_utils import (
     list_all_resources,
     get_processor_resource_types,
     resource_filename,
+    resource_string,
     make_file_id,
+    deprecation_warning
 )
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType, OcrdPage, to_xml
@@ -64,6 +67,38 @@ class Processor():
     and writes output files for them into the output fileGrp(s). It may take 
     a number of optional or mandatory parameters.
     """
+
+    @property
+    def metadata(self):
+        """the ocrd-tool.json dict of the package"""
+        if hasattr(self, '_metadata'):
+            return self._metadata
+        self._metadata = json.loads(resource_string(self.__module__.split('.')[0], 'ocrd-tool.json'))
+        return self._metadata
+
+    @property
+    def version(self):
+        """the version of the package"""
+        if hasattr(self, '_version'):
+            return self._version
+        self._version = self.metadata['version']
+        return self._version
+
+    @property
+    def executable(self):
+        """the executable name of this processor tool"""
+        if hasattr(self, '_executable'):
+            return self._executable
+        self._executable = os.path.basename(inspect.stack()[-1].filename)
+        return self._executable
+
+    @property
+    def ocrd_tool(self):
+        """the ocrd-tool.json dict of this processor tool"""
+        if hasattr(self, '_ocrd_tool'):
+            return self._ocrd_tool
+        self._ocrd_tool = self.metadata['tools'][self.executable]
+        return self._ocrd_tool
 
     def __init__(
             self,
@@ -97,8 +132,6 @@ class Processor():
                  Can be ``None`` even for processing (esp. on multiple workspaces), \
                  but then needs to be set before running.
         Keyword Args:
-             ocrd_tool (string): JSON of the ocrd-tool description for that processor. \
-                 Can be ``None`` for processing, but needs to be set before running.
              parameter (string): JSON of the runtime choices for ocrd-tool ``parameters``. \
                  Can be ``None`` even for processing, but then needs to be set before running.
              input_file_grp (string): comma-separated list of METS ``fileGrp``s used for input.
@@ -123,11 +156,17 @@ class Processor():
              dump_module_dir (boolean): If true, then instead of processing, print :py:attr:`moduledir` \
                  on stdout.
         """
-        self.ocrd_tool = ocrd_tool
-        if parameter is None:
-            parameter = {}
+        if ocrd_tool is not None:
+            deprecation_warning("Passing 'ocrd_tool' as keyword argument to Processor is deprecated - "
+                                "use or override metadata/executable/ocrd-tool properties instead")
+            self._ocrd_tool = ocrd_tool
+            self._executable = ocrd_tool['executable']
+        if version is not None:
+            deprecation_warning("Passing 'version' as keyword argument to Processor is deprecated - "
+                                "use or override metadata/version properties instead")
+            self._version = version
         if dump_json:
-            print(json.dumps(ocrd_tool, indent=True))
+            print(json.dumps(self.ocrd_tool, indent=True))
             return
         if dump_module_dir:
             print(self.moduledir)
@@ -156,7 +195,6 @@ class Processor():
         if show_help:
             self.show_help(subcommand=subcommand)
             return
-        self.version = version
         if show_version:
             self.show_version()
             return
@@ -172,7 +210,9 @@ class Processor():
         self.output_file_grp = output_file_grp
         self.page_id = None if page_id == [] or page_id is None else page_id
         self.download = download_files
-        parameterValidator = ParameterValidator(ocrd_tool)
+        if parameter is None:
+            parameter = {}
+        parameterValidator = ParameterValidator(self.ocrd_tool)
         report = parameterValidator.validate(parameter)
         if not report.is_valid:
             raise Exception("Invalid parameters %s" % report.errors)
