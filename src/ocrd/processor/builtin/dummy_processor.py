@@ -67,10 +67,17 @@ class DummyProcessor(Processor):
             # we can rely on base implementation verbatim
             super().process_page_file(input_file)
 
-    def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = OCRD_TOOL['tools']['ocrd-dummy']
-        kwargs['version'] = '0.0.3'
-        super(DummyProcessor, self).__init__(*args, **kwargs)
+    @property
+    def metadata(self):
+        return OCRD_TOOL
+
+    @property
+    def executable(self):
+        return 'ocrd-dummy'
+
+    @property
+    def version(self):
+        return '0.0.3'
 
     def setup(self):
         super().setup()
