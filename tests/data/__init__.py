@@ -17,12 +17,21 @@ DUMMY_TOOL = {
 }
 
 class DummyProcessor(Processor):
+    @property
+    def ocrd_tool(self):
+        return DUMMY_TOOL
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = DUMMY_TOOL
-        kwargs['version'] = '0.0.1'
         kwargs['download_files'] = False
-        super(DummyProcessor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def process(self):
         print(json.dumps(self.parameter))
@@ -32,24 +41,43 @@ class DummyProcessor(Processor):
         self.process()
 
 class DummyProcessorWithRequiredParameters(Processor):
-    def process(self): pass
-    def __init__(self, *args, **kwargs):
-        kwargs['version'] = '0.0.1'
-        kwargs['ocrd_tool'] = {
+    @property
+    def ocrd_tool(self):
+        return {
             'executable': 'ocrd-test',
             'steps': ['recognition/post-correction'],
             'parameters': {
                 'i-am-required': {'required': True}
             }
         }
-        kwargs['download_files'] = False
-        super(DummyProcessorWithRequiredParameters, self).__init__(*args, **kwargs)
+    @property
+    def version(self):
+        return '0.0.1'
 
-class DummyProcessorWithOutput(Processor):
+    @property
+    def executable(self):
+        return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['ocrd_tool'] = DUMMY_TOOL
-        kwargs['version'] = '0.0.1'
+        kwargs['download_files'] = False
+        super().__init__(*args, **kwargs)
+
+    def process(self): pass
+
+class DummyProcessorWithOutput(Processor):
+    @property
+    def ocrd_tool(self):
+        return DUMMY_TOOL
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
+
+    def __init__(self, *args, **kwargs):
         kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
 
@@ -67,6 +95,8 @@ class DummyProcessorWithOutput(Processor):
                 content='CONTENT')
 
 class IncompleteProcessor(Processor):
-    pass
+    @property
+    def ocrd_tool(self):
+        return {}
 
 
