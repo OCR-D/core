@@ -29,11 +29,8 @@ def ocrd_cli_options(f):
         option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME),
         option('-w', '--working-dir', help="Working Directory"),
         option('-U', '--mets-server-url', help="METS server URL. Starts with http:// then TCP, otherwise unix socket path"),
-        # TODO OCR-D/core#274
-        # option('-I', '--input-file-grp', required=True),
-        # option('-O', '--output-file-grp', required=True),
-        option('-I', '--input-file-grp', default='INPUT'),
-        option('-O', '--output-file-grp', default='OUTPUT'),
+        option('-I', '--input-file-grp', default=None),
+        option('-O', '--output-file-grp', default=None),
         option('-g', '--page-id'),
         option('--overwrite', is_flag=True, default=False),
         option('--profile', is_flag=True, default=False),

@@ -54,12 +54,13 @@ class TestProcessor(TestCase):
                                   input_file_grp='OCR-D-SEG-PAGE',
                                   resolver=self.resolver,
                                   workspace=self.workspace)
+        processor.workspace = self.workspace
         assert len(processor.input_files) == 2
         assert [f.mimetype for f in processor.input_files] == [MIMETYPE_PAGE, MIMETYPE_PAGE]
 
     def test_parameter(self):
         with TemporaryDirectory():
-            jsonpath = Path('params.json').name
+            jsonpath = 'params.json'
             with open(jsonpath, 'w') as f:
                 f.write('{"baz": "quux"}')
             with open(jsonpath, 'r') as f:
@@ -70,7 +71,7 @@ class TestProcessor(TestCase):
                     resolver=self.resolver,
                     workspace=self.workspace
                 )
-            self.assertEqual(len(processor.input_files), 3)
+                self.assertEqual(processor.parameter['baz'], 'quux')
 
     def test_verify(self):
         proc = DummyProcessor(self.workspace)
@@ -107,12 +108,16 @@ class TestProcessor(TestCase):
                                     overwrite=True)
 
     def test_params(self):
-        proc = Processor(workspace=self.workspace)
+        class ParamTestProcessor(Processor):
+            @property
+            def ocrd_tool(self):
+                return {}
+        proc = ParamTestProcessor(self.workspace)
         self.assertEqual(proc.parameter, {})
 
     def test_run_agent(self):
         no_agents_before = len(self.workspace.mets.agents)
-        run_processor(DummyProcessor, workspace=self.workspace)
+        run_processor(DummyProcessor, workspace=self.workspace, input_file_grp="OCR-D-IMG")
         self.assertEqual(len(self.workspace.mets.agents), no_agents_before + 1, 'one more agent')
         #  print(self.workspace.mets.agents[no_agents_before])
 
@@ -153,7 +158,9 @@ class TestProcessor(TestCase):
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
-            run_processor(DummyProcessor, workspace=self.workspace)
+            run_processor(DummyProcessor, workspace=self.workspace,
+                          input_file_grp='OCR-D-IMG',
+                          output_file_grp='OUTPUT')
             run_cli(
                 'echo',
                 mets_url=assets.url_of('SBB0000F29300010000/data/mets.xml'),
@@ -173,7 +180,10 @@ class TestProcessor(TestCase):
             )
 
     def test_zip_input_files(self):
-        class ZipTestProcessor(Processor): pass
+        class ZipTestProcessor(Processor):
+            @property
+            def ocrd_tool(self):
+                return {}
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
@@ -193,7 +203,10 @@ class TestProcessor(TestCase):
                     assert ('foobar3', 'foobar4') in tuples
 
     def test_zip_input_files_multi_mixed(self):
-        class ZipTestProcessor(Processor): pass
+        class ZipTestProcessor(Processor):
+            @property
+            def ocrd_tool(self):
+                return {}
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
@@ -231,7 +244,10 @@ class TestProcessor(TestCase):
                         tuples = proc.zip_input_files()
 
     def test_zip_input_files_require_first(self):
-        class ZipTestProcessor(Processor): pass
+        class ZipTestProcessor(Processor):
+            @property
+            def ocrd_tool(self):
+                return {}
         self.capture_out_err()
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)

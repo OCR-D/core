@@ -108,11 +108,17 @@ def bashlib_input_files(**kwargs):
         raise FileNotFoundError(msg)
     resolver = Resolver()
     workspace = resolver.workspace_from_url(mets, working_dir)
-    processor = Processor(workspace,
-                          ocrd_tool=None,
-                          page_id=kwargs['page_id'],
-                          input_file_grp=kwargs['input_file_grp'],
-                          output_file_grp=kwargs['output_file_grp'])
+    class BashlibProcessor(Processor):
+        @property
+        def ocrd_tool(self):
+            return {}
+        @property
+        def executable(self):
+            return ''
+    processor = BashlibProcessor(workspace,
+                                 page_id=kwargs['page_id'],
+                                 input_file_grp=kwargs['input_file_grp'],
+                                 output_file_grp=kwargs['output_file_grp'])
     for input_files in processor.zip_input_files(mimetype=None, on_error='abort'):
         # ensure all input files exist locally (without persisting them in the METS)
         # - this mimics the default behaviour of all Pythonic processors

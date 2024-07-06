@@ -100,10 +100,15 @@ def ocrd_tool_tool_description(ctx):
 def ocrd_tool_tool_list_resources(ctx):
     class BashProcessor(Processor):
         @property
+        def metadata(self):
+            return ctx.json
+        @property
+        def executable(self):
+            return ctx.tool_name
+        @property
         def moduledir(self):
             return os.path.dirname(ctx.filename)
-    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  list_resources=True)
+    BashProcessor(None, list_resources=True)
 
 @ocrd_tool_tool.command('resolve-resource', help="Get a tool's file resource full path name")
 @click.argument('res_name')
@@ -111,10 +116,15 @@ def ocrd_tool_tool_list_resources(ctx):
 def ocrd_tool_tool_resolve_resource(ctx, res_name):
     class BashProcessor(Processor):
         @property
+        def metadata(self):
+            return ctx.json
+        @property
+        def executable(self):
+            return ctx.tool_name
+        @property
         def moduledir(self):
             return os.path.dirname(ctx.filename)
-    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  resolve_resource=res_name)
+    BashProcessor(None, resolve_resource=res_name)
 
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
@@ -122,24 +132,34 @@ def ocrd_tool_tool_resolve_resource(ctx, res_name):
 def ocrd_tool_tool_show_resource(ctx, res_name):
     class BashProcessor(Processor):
         @property
+        def metadata(self):
+            return ctx.json
+        @property
+        def executable(self):
+            return ctx.tool_name
+        @property
         def moduledir(self):
             return os.path.dirname(ctx.filename)
-    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  show_resource=res_name)
+    BashProcessor(None, show_resource=res_name)
 
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @click.argument('subcommand', required=False)
 @pass_ocrd_tool
 def ocrd_tool_tool_params_help(ctx, subcommand):
     class BashProcessor(Processor):
+        @property
+        def metadata(self):
+            return ctx.json
+        @property
+        def executable(self):
+            return ctx.tool_name
         # set docstrings to empty
         __doc__ = None
         # HACK: override the module-level docstring, too
         getmodule(OcrdToolCtx).__doc__ = None
         def process(self):
             return super()
-    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  show_help=True, subcommand=subcommand)
+    BashProcessor(None, show_help=True, subcommand=subcommand)
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories
