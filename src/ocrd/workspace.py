@@ -212,7 +212,7 @@ class Workspace():
                               self.baseurl, f.local_filename)
                     url = '%s/%s' % (self.baseurl, f.local_filename)
                 else:
-                    raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file,"
+                    raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file, "
                                             "and no 'url' to download and no 'baseurl' set on workspace - nothing we can do.")
                 file_path = Path(f.local_filename)
                 self.resolver.download_to_directory(self.directory, url, subdir=file_path.parent, basename=file_path.name)
@@ -223,7 +223,7 @@ class Workspace():
                 f.local_filename = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
                 return f
             # If neither f.local_filename nor f.url is set, fail
-            raise ValueError("OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
+            raise ValueError(f"OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
 
     def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """

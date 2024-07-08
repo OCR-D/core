@@ -66,11 +66,8 @@ class Processor():
             workspace : Workspace,
             ocrd_tool=None,
             parameter=None,
-            # TODO OCR-D/core#274
-            # input_file_grp=None,
-            # output_file_grp=None,
-            input_file_grp="INPUT",
-            output_file_grp="OUTPUT",
+            input_file_grp=None,
+            output_file_grp=None,
             page_id=None,
             resolve_resource=None,
             show_resource=None,
@@ -119,8 +116,6 @@ class Processor():
                  on stdout.
         """
         self.ocrd_tool = ocrd_tool
-        if parameter is None:
-            parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return
@@ -131,27 +126,22 @@ class Processor():
             for res in self.list_all_resources():
                 print(res)
             return
-        if resolve_resource or show_resource:
-            initLogging()
+        if resolve_resource:
             try:
-                res_fname = self.resolve_resource(resolve_resource or show_resource)
+                res = self.resolve_resource(resolve_resource)
+                print(res)
             except ResourceNotFoundError as e:
                 log = getLogger('ocrd.processor.base')
                 log.critical(e.message)
                 sys.exit(1)
-            if resolve_resource:
-                print(res_fname)
-                return
-            fpath = Path(res_fname)
-            if fpath.is_dir():
-                with pushd_popd(fpath):
-                    fileobj = io.BytesIO()
-                    with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
-                        tarball.add('.')
-                    fileobj.seek(0)
-                    copyfileobj(fileobj, sys.stdout.buffer)
-            else:
-                sys.stdout.buffer.write(fpath.read_bytes())
+            return
+        if show_resource:
+            try:
+                self.show_resource(show_resource)
+            except ResourceNotFoundError as e:
+                log = getLogger('ocrd.processor.base')
+                log.critical(e.message)
+                sys.exit(1)
             return
         if show_help:
             self.show_help(subcommand=subcommand)
@@ -170,6 +160,8 @@ class Processor():
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
         self.page_id = None if page_id == [] or page_id is None else page_id
+        if parameter is None:
+            parameter = {}
         parameterValidator = ParameterValidator(ocrd_tool)
         report = parameterValidator.validate(parameter)
         if not report.is_valid:
@@ -233,6 +225,7 @@ class Processor():
         Args:
             val (string): resource value to resolve
         """
+        initLogging()
         executable = self.ocrd_tool['executable']
         log = getLogger('ocrd.processor.base')
         if exists(val):
@@ -249,6 +242,19 @@ class Processor():
             log.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
         raise ResourceNotFoundError(val, executable)
+
+    def show_resource(self, val):
+        res_fname = self.resolve_resource(val)
+        fpath = Path(res_fname)
+        if fpath.is_dir():
+            with pushd_popd(fpath):
+                fileobj = io.BytesIO()
+                with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
+                    tarball.add('.')
+                fileobj.seek(0)
+                copyfileobj(fileobj, sys.stdout.buffer)
+        else:
+            sys.stdout.buffer.write(fpath.read_bytes())
 
     def list_all_resources(self):
         """

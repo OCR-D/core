@@ -48,11 +48,11 @@ def ocrd_cli_wrap_processor(
     **kwargs
 ):
     if not sys.argv[1:]:
-        processorClass(workspace=None, show_help=True)
+        processorClass(None, show_help=True)
         sys.exit(1)
     if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
-            workspace=None,
+            None,
             dump_json=dump_json,
             dump_module_dir=dump_module_dir,
             show_help=help,
@@ -71,10 +71,16 @@ def ocrd_cli_wrap_processor(
     initLogging()
 
     LOG = getLogger('ocrd.cli_wrap_processor')
+    assert kwargs['input_file_grp'] is not None
+    assert kwargs['output_file_grp'] is not None
     # LOG.info('kwargs=%s' % kwargs)
     if 'parameter' in kwargs:
         # Disambiguate parameter file/literal, and resolve file
-        disposable = processorClass(workspace=None)
+        # (but avoid entering processing context of constructor)
+        class DisposableSubclass(processorClass):
+            def show_version(self):
+                pass
+        disposable = DisposableSubclass(None, show_version=True)
         def resolve(name):
             try:
                 return disposable.resolve_resource(name)
