@@ -16,6 +16,11 @@ Added:
 Fixed:
 
   - `ocrd process`-derived tasks are not run in a temporary directory when not called from within workspace, #1243
+  - regression from #1238 where processors failed that had required parameters, #1255, #1256
+
+Removed:
+
+  - Defaults for `-I/--input-file-grp`/`-O/--output-file-grp`, #1256, #274
 
 ## [2.66.1] - 2024-06-26
 
