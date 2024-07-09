@@ -555,5 +555,3 @@ def is_socket_in_use(socket_path):
             return False
         client.close()
         return True
-    else:
-        return False
