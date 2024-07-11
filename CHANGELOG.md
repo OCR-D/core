@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   - Additional docker base images with preinstalled tensorflow 1 (`core-cuda-tf1`), tensorflow 2 (`core-cuda-tf2`) and torch (`core-cuda-torch`), #1239
+  - Resource Manager: Skip instead of raise an exception download if target file already exists (unless `--overwrite`), #1246
 
 Added:
 
@@ -18,6 +19,7 @@ Fixed:
   - `ocrd process`-derived tasks are not run in a temporary directory when not called from within workspace, #1243
   - regression from #1238 where processors failed that had required parameters, #1255, #1256
   - METS Server: Unlink UDS sockert file if it exists before startup, #1244
+  - Resource Manager: Do not create zero-size files for failing downloads, #1201, #1246
 
 Removed:
 
