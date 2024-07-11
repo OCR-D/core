@@ -426,7 +426,7 @@ class Workspace():
                 # If the local filename has folder components, create those folders
                 local_filename_dir = str(kwargs['local_filename']).rsplit('/', 1)[0]
                 if local_filename_dir != str(kwargs['local_filename']) and not Path(local_filename_dir).is_dir():
-                    makedirs(local_filename_dir)
+                    makedirs(local_filename_dir, exist_ok=True)
 
             #  print(kwargs)
             kwargs["pageId"] = kwargs.pop("page_id")
