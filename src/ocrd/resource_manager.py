@@ -1,6 +1,6 @@
 from pathlib import Path
 from os.path import join
-from os import environ, listdir, getcwd, path, unlink
+from os import environ, listdir, makedirs, getcwd, path, unlink
 from shutil import copytree, rmtree, copy
 from fnmatch import filter as apply_glob
 from datetime import datetime
@@ -99,8 +99,14 @@ class OcrdResourceManager:
         if not executable:
             return database.items()
         if dynamic:
+            skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
+                    if not exec_path.name.startswith('ocrd-'):
+                        self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
+                    if exec_path.name in skip_executables:
+                        self.log.debug(f"Not an OCR-D processor CLI, skipping '{exec_path}'")
+                        continue
                     self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
                     ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
@@ -256,33 +262,41 @@ class OcrdResourceManager:
             raise e
 
     @staticmethod
+    def _copy_file(src, dst, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_file')
+        log.info(f"Copying file {src} to {dst}")
+        with open(dst, 'wb') as f_out, open(src, 'rb') as f_in:
+            while True:
+                chunk = f_in.read(4096)
+                if chunk:
+                    f_out.write(chunk)
+                    if progress_cb:
+                        progress_cb(len(chunk))
+                else:
+                    break
+
+    @staticmethod
+    def _copy_dir(src, dst, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_dir')
+        log.info(f"Copying dir recursively from {src} to {dst}")
+        if not Path(src).is_dir():
+            raise ValueError(f"The source is not a directory: {src}")
+        Path(dst).mkdir(parents=True, exist_ok=True)
+        for child in Path(src).rglob('*'):
+            child_dst = Path(dst) / child.relative_to(src)
+            if Path(child).is_dir():
+                OcrdResourceManager._copy_dir(child, child_dst, progress_cb)
+            else:
+                OcrdResourceManager._copy_file(child, child_dst, progress_cb)
+
+    @staticmethod
     def _copy_impl(src_filename, filename, progress_cb=None):
         log = getLogger('ocrd.resource_manager._copy_impl')
         log.info(f"Copying {src_filename} to {filename}")
         if Path(src_filename).is_dir():
-            log.info(f"Copying recursively from {src_filename} to {filename}")
-            for child in Path(src_filename).rglob('*'):
-                child_dst = Path(filename) / child.relative_to(src_filename)
-                child_dst.parent.mkdir(parents=True, exist_ok=True)
-                with open(child_dst, 'wb') as f_out, open(child, 'rb') as f_in:
-                    while True:
-                        chunk = f_in.read(4096)
-                        if chunk:
-                            f_out.write(chunk)
-                            if progress_cb:
-                                progress_cb(len(chunk))
-                        else:
-                            break
+            OcrdResourceManager._copy_dir(src_filename, filename, progress_cb)
         else:
-            with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
-                while True:
-                    chunk = f_in.read(4096)
-                    if chunk:
-                        f_out.write(chunk)
-                        if progress_cb:
-                            progress_cb(len(chunk))
-                    else:
-                        break
+            OcrdResourceManager._copy_file(src_filename, filename, progress_cb)
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(
