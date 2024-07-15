@@ -192,6 +192,7 @@ def test_download_archive(tmp_path):
 
 
 def test_copy_impl(tmp_path):
+    from ocrd.resource_manager import OcrdResourceManager
     root_dir = f"{tmp_path}/mgr_copy_impl_test"
     root_dir_copied = f"{tmp_path}/mgr_copy_impl_test_copied"
     rmtree(path=root_dir, ignore_errors=True)
