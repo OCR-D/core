@@ -9,6 +9,7 @@ Changed:
 
   - Additional docker base images with preinstalled tensorflow 1 (`core-cuda-tf1`), tensorflow 2 (`core-cuda-tf2`) and torch (`core-cuda-torch`), #1239
   - Resource Manager: Skip instead of raise an exception download if target file already exists (unless `--overwrite`), #1246
+  - Resource Manager: Try to use bundled `ocrd-all-tool.json` if available, #1250, OCR-D/all#444
 
 Added:
 
