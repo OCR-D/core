@@ -34,6 +34,7 @@ from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 from .constants import EXT_TO_MIME
 from .config import config
 from .logging import getLogger
+from .introspect import resource_string
 
 def abspath(url):
     """
@@ -79,12 +80,16 @@ def get_ocrd_tool_json(executable):
     """
     Get the ``ocrd-tool`` description of ``executable``.
     """
+    ocrd_tool = {}
     executable_name = Path(executable).name
     try:
-        ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
-    except (JSONDecodeError, OSError) as e:
-        getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
-        ocrd_tool = {}
+        ocrd_all_tool = loads(resource_string('ocrd', 'ocrd-all-tool.json'))
+        ocrd_tool = ocrd_all_tool[executable]
+    except (JSONDecodeError, OSError, KeyError):
+        try:
+            ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
+        except (JSONDecodeError, OSError) as e:
+            getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
     return ocrd_tool
@@ -93,9 +98,13 @@ def get_ocrd_tool_json(executable):
 def get_moduledir(executable):
     moduledir = None
     try:
-        moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout.rstrip('\n')
-    except (JSONDecodeError, OSError) as e:
-        getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
+        ocrd_all_moduledir = loads(resource_string('ocrd', 'ocrd-all-module-dir.json'))
+        moduledir = ocrd_all_moduledir[executable]
+    except (JSONDecodeError, OSError, KeyError):
+        try:
+            moduledir = run([executable, '--dump-module-dir'], encoding='utf-8', stdout=PIPE).stdout.rstrip('\n')
+        except (JSONDecodeError, OSError) as e:
+            getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
 
 def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):
