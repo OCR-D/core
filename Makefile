@@ -396,7 +396,7 @@ docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 docker-cuda-torch: docker-cuda
 
 docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
-	@echo $(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) --target ocrd_core_base --build-arg BASE_IMAGE=$(lastword $(DOCKER_BASE_IMAGE)) $(DOCKER_ARGS) .
+	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) --target ocrd_core_base --build-arg BASE_IMAGE=$(lastword $(DOCKER_BASE_IMAGE)) $(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build
