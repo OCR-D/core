@@ -27,6 +27,8 @@ class TestOsUtils(TestCase):
 
     def test_resolve_basic(self):
         def dehomify(s):
+            if ENV['HOME'] == '/' or expanduser('~') == '/':
+                return s
             return s.replace(ENV['HOME'], '$HOME').replace(expanduser('~'), '$HOME')
         fname = 'foo.bar'
         cands = list_resource_candidates('ocrd-dummy', fname)
