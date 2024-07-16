@@ -20,7 +20,9 @@ jobs:
       contents: read
     env:
       DOCKER_BASE_TAG: ghcr.io/ocr-d docker.io/ocrd
-      DOCKER_BUILD: docker buildx build --progress=plain --platform ${{ env.PLATFORMS }} --push
+      # TODO(kba): make the interpolation work correctly
+      # DOCKER_BUILD: docker buildx build --progress=plain --platform ${{ env.PLATFORMS }} --push
+      DOCKER_BUILD: docker buildx build --progress=plain --platform linux/amd64,linux/arm64/v8,linux/ppc64le --push
     steps:
     - name: Export variables
       run: |
