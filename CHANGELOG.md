@@ -24,6 +24,7 @@ Fixed:
   - Workspace.add_file: Allow multiple processors to create file group folders simultaneously, #1203, #1253
   - Resource Manager: Do not try to run `--dump-json` for known non-processors `ocrd-{cis-data,import,make}`, #1218, #1249
   - Resource Manager: Properly handle copying of directories, #1237, #1248
+  - bashlib: regression in parsing JSON from introducing parameter preset files, #1258
 
 Removed:
 
