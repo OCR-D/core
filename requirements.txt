@@ -27,7 +27,7 @@ pydantic==1.*
 python-magic
 python-multipart
 pyyaml
-requests < 2.30
+requests
 requests_unixsocket2
 shapely
 uvicorn
