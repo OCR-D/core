@@ -21,7 +21,7 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     """
     We should add a test for the -n URL TOOL NAME use-case as well (both as an unregistered resource and as URL-override).
     """
-    tmp_path, mgr, env = mgr_with_tmp_path
+    _, mgr, env = mgr_with_tmp_path
     print(mgr.list_installed(executable)[0][1])
     rsrcs_before = len(mgr.list_installed(executable)[0][1])
 
@@ -33,23 +33,28 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
 
     rsrcs = mgr.list_installed(executable)[0][1]
     assert len(rsrcs) == rsrcs_before + 1
-    assert rsrcs[0]['name'] == name
-    assert rsrcs[0]['url'] == url
+    assert rsrcs[-1]['name'] == name
+    assert rsrcs[-1]['url'] == url
 
     # add resource with different URL but same name
     url2 = url.replace('dzo', 'bos')
-    r = runner.invoke(resmgr_cli, ['download', '--allow-uninstalled', '--any-url', url2, executable, name], env=env)
-    assert 'already exists but --overwrite is not set' in r.output
+    #
+    # TODO(kba): Silently skipped since https://github.com/OCR-D/core/commit/d5173ada7d052c107c04da8732ccd30f61c4d9a1
+    #            so we'd need to check the log output which is not captured by
+    #            CliRunner, even though `mix_stderr == True`
+    #
+    # r = runner.invoke(resmgr_cli, ['download', '--allow-uninstalled', '--any-url', url2, executable, name], env=env)
+    # assert 'already exists but --overwrite is not set' in r.output
     r = runner.invoke(resmgr_cli, ['download', '--overwrite', '--allow-uninstalled', '--any-url', url2, executable, name], env=env)
-    assert 'already exists but --overwrite is not set' not in r.output
+    # assert 'already exists but --overwrite is not set' not in r.output
 
     mgr.load_resource_list(mgr.user_list)
 
     rsrcs = mgr.list_installed(executable)[0][1]
     print(rsrcs)
     assert len(rsrcs) == rsrcs_before + 1
-    assert rsrcs[0]['name'] == name
-    assert rsrcs[0]['url'] == url2
+    assert rsrcs[-1]['name'] == name
+    assert rsrcs[-1]['url'] == url2
 
 def test_directory_copy(mgr_with_tmp_path):
     """
@@ -76,13 +81,18 @@ def test_directory_copy(mgr_with_tmp_path):
         assert Path(mgr_path / 'ocrd-resources' / proc).exists()
         assert directory_size(mgr_path / 'ocrd-resources' / proc /  res_name) == 30
 
-        r = runner.invoke(
-            resmgr_cli,
-            ['download', '--allow-uninstalled', '--any-url', tmp_path, proc, res_name],
-            env=env,
-            catch_exceptions=False
-        )
-        assert 'already exists but --overwrite is not set' in r.output
+        #
+        # TODO(kba): Silently skipped since https://github.com/OCR-D/core/commit/d5173ada7d052c107c04da8732ccd30f61c4d9a1
+        #            so we'd need to check the log output which is not captured by
+        #            CliRunner, even though `mix_stderr == True`
+        #
+        # r = runner.invoke(
+        #     resmgr_cli,
+        #     ['download', '--allow-uninstalled', '--any-url', tmp_path, proc, res_name],
+        #     env=env,
+        #     catch_exceptions=False
+        # )
+        # assert 'already exists but --overwrite is not set' in r.output
         r = runner.invoke(
             resmgr_cli,
             ['download', '--overwrite', '--allow-uninstalled', '--any-url', tmp_path, proc, res_name],
