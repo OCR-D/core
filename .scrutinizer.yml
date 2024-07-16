@@ -13,9 +13,10 @@ build:
     analysis:
       dependencies:
         override:
-          - command: sudo make deps-ubuntu
-            idle_timeout: 600
-          - make install
+          - echo "Skipped"
+          # - command: sudo make deps-ubuntu
+          #   idle_timeout: 600
+          # - make install
       tests:
         override:
           - py-scrutinizer-run
