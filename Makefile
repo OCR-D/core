@@ -151,7 +151,7 @@ deps-tf1:
 	fi
 
 deps-tf2:
-	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8 && \
+	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8; then \
 	$(PIP) install tensorflow; \
 	else \
 	$(PIP) install "tensorflow[and-cuda]"; \
