@@ -28,7 +28,7 @@ python-magic
 python-multipart
 pyyaml
 requests < 2.30
-requests_unixsocket
+requests_unixsocket2
 shapely
 uvicorn
 uvicorn>=0.17.6
