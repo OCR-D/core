@@ -7,6 +7,8 @@ build:
     python:
       version: 3.8.2
       virtualenv: true
+    variables:
+      DEBIAN_FRONTEND: noninteractive
   nodes:
     analysis:
       dependencies:
