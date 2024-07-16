@@ -61,10 +61,11 @@ def test_unique_identifier_from_nothing():
 
 
 def test_str():
-    mets = OcrdMets(content='<mets/>', cache_flag=False)
-    assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
-    mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
-    assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
+    with temp_env_var('OCRD_METS_CACHING', None):
+        mets = OcrdMets(content='<mets/>', cache_flag=False)
+        assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
+        mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
+        assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
 
 
 def test_file_groups(sbb_sample_01):
@@ -383,12 +384,15 @@ def test_invalid_filegrp():
 @contextmanager
 def temp_env_var(k, v):
     v_before = environ.get(k, None)
-    environ[k] = v
+    if v == None:
+        environ.pop(k, None)
+    else:
+        environ[k] = v
     yield
     if v_before is not None:
         environ[k] = v_before
     else:
-        del environ[k]
+        environ.pop(k, None)
 
 def test_envvar():
     assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
