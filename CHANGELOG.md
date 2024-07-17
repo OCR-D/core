@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.67.1] - 2024-07-17
+
+Fixed:
+
+  - Build and tests fixed, no functional changes from #1258
+
 ## [2.67.0] - 2024-07-16
 
 Changed:
@@ -2127,6 +2133,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.67.1]: ../../compare/v2.67.1..v2.67.0
 [2.67.0]: ../../compare/v2.67.0..v2.66.1
 [2.66.1]: ../../compare/v2.66.1..v2.66.0
 [2.66.0]: ../../compare/v2.66.0..v2.65.0
