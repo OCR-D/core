@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import UploadFile
 from functools import wraps
 from hashlib import md5
+from json import loads
 from pathlib import Path
 from re import compile as re_compile, split as re_split
 from requests import get as requests_get, Session as Session_TCP
@@ -14,7 +15,8 @@ from uuid import uuid4
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 from ocrd.mets_server import MpxReq
-from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger
+from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger, resource_string
+from .constants import OCRD_ALL_TOOL_JSON
 from .rabbitmq_utils import OcrdResultMessage
 
 
@@ -92,14 +94,8 @@ def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3) -> bool:
     return False
 
 
-def download_ocrd_all_tool_json(ocrd_all_url: str):
-    if not ocrd_all_url:
-        raise ValueError(f"The URL of ocrd all tool json is empty")
-    headers = {"Accept": "application/json"}
-    response = Session_TCP().get(ocrd_all_url, headers=headers)
-    if not response.status_code == 200:
-        raise ValueError(f"Failed to download ocrd all tool json from: '{ocrd_all_url}'")
-    return response.json()
+def load_ocrd_all_tool_json():
+    return loads(resource_string('ocrd', OCRD_ALL_TOOL_JSON))
 
 
 def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMessage):
