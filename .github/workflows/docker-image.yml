@@ -23,7 +23,8 @@ jobs:
       # TODO(kba): make the interpolation work correctly
       # DOCKER_BUILD: docker buildx build --progress=plain --platform ${{ env.PLATFORMS }} --push
       # TODO(kba): Investigate why ppc64le build hangs on "Installing build dependencies"
-      DOCKER_BUILD: docker buildx build --progress=plain --platform linux/amd64,linux/arm64/v8 --push
+      # TODO(kba): Investigate why arm64 fails with .buildkit_qemu_emulator: /usr/local/bin/conda: Invalid ELF image for this architecture
+      DOCKER_BUILD: docker buildx build --progress=plain --platform linux/amd64 --push
     steps:
     - name: Export variables
       run: |
