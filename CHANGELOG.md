@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Run `multiprocessing.set_start_method('fork')` only for OSX, #1261
+
 ## [2.67.1] - 2024-07-17
 
 Fixed:
