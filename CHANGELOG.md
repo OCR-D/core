@@ -5,9 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.67.2] - 2024-07-19
+
 Fixed:
 
   * Run `multiprocessing.set_start_method('fork')` only for OSX, #1261
+  * Broken PyPI release, #1262
 
 ## [2.67.1] - 2024-07-17
 
@@ -2137,6 +2140,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0
 [2.67.0]: ../../compare/v2.67.0..v2.66.1
 [2.66.1]: ../../compare/v2.66.1..v2.66.0
