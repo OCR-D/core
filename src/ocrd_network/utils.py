@@ -94,16 +94,11 @@ def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3) -> bool:
     return False
 
 
-def load_ocrd_all_tool_json(download_if_missing: bool = True):
+def load_ocrd_all_tool_json():
     try:
         ocrd_all_tool_json = loads(resource_string('ocrd', OCRD_ALL_TOOL_JSON))
     except Exception as error:
-        if not download_if_missing:
-            raise Exception(error)
-        response = Session_TCP().get(OCRD_ALL_TOOL_JSON_URL, headers={"Accept": "application/json"})
-        if not response.status_code == 200:
-            raise ValueError(f"Failed to download ocrd all tool json from: '{OCRD_ALL_TOOL_JSON_URL}'")
-        ocrd_all_tool_json = response.json()
+        raise ValueError(f"Failed to load ocrd all tool json from: '{OCRD_ALL_TOOL_JSON}', {error}")
     return ocrd_all_tool_json
 
 
