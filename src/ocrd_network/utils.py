@@ -16,7 +16,7 @@ from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 from ocrd.mets_server import MpxReq
 from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger, resource_string
-from .constants import OCRD_ALL_TOOL_JSON
+from .constants import OCRD_ALL_TOOL_JSON, OCRD_ALL_TOOL_JSON_URL
 from .rabbitmq_utils import OcrdResultMessage
 
 
@@ -94,8 +94,17 @@ def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3) -> bool:
     return False
 
 
-def load_ocrd_all_tool_json():
-    return loads(resource_string('ocrd', OCRD_ALL_TOOL_JSON))
+def load_ocrd_all_tool_json(download_if_missing: bool = True):
+    try:
+        ocrd_all_tool_json = loads(resource_string('ocrd', OCRD_ALL_TOOL_JSON))
+    except Exception as error:
+        if not download_if_missing:
+            raise Exception(error)
+        response = Session_TCP().get(OCRD_ALL_TOOL_JSON_URL, headers={"Accept": "application/json"})
+        if not response.status_code == 200:
+            raise ValueError(f"Failed to download ocrd all tool json from: '{OCRD_ALL_TOOL_JSON_URL}'")
+        ocrd_all_tool_json = response.json()
+    return ocrd_all_tool_json
 
 
 def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMessage):
