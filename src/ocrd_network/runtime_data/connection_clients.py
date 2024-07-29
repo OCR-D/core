@@ -1,13 +1,7 @@
 from __future__ import annotations
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
-
-# TODO: A workaround to supress the annoying paramiko
-#  warnings which fail bash lib tests  - core #1260
-from warnings import catch_warnings
-from cryptography.utils import CryptographyDeprecationWarning
-with catch_warnings(action="ignore", category=CryptographyDeprecationWarning):
-    from paramiko import AutoAddPolicy, SSHClient
+from paramiko import AutoAddPolicy, SSHClient
 
 
 class CustomDockerClient(DockerClient):
