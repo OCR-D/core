@@ -4,7 +4,9 @@ from time import sleep
 from contextlib import ExitStack
 from multiprocessing import Process, set_start_method
 # necessary for macos
-set_start_method("fork")
+from sys import platform
+if platform == "darwin":
+    set_start_method("fork")
 
 from ocrd import Resolver, Workspace, OcrdMetsServer
 from ocrd.cli import process_cli

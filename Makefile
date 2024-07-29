@@ -400,7 +400,7 @@ docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
 
 # Build wheels and source dist and twine upload them
 pypi: build
-	twine upload dist/ocrd-$(VERSION)*{tar.gz,whl}
+	twine upload --verbose dist/ocrd-$(VERSION)*{tar.gz,whl}
 
 pypi-workaround: build-workaround
 	for dist in $(BUILD_ORDER);do twine upload dist/$$dist-$(VERSION)*{tar.gz,whl};done
