@@ -230,6 +230,8 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
             doc_help += '\n' + inspect.cleandoc(module.__doc__) + '\n'
         if processor_instance.__doc__:
             doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__) + '\n'
+        if processor_instance.process_workspace.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.process_workspace.__doc__) + '\n'
         if processor_instance.process.__doc__:
             doc_help += '\n' + inspect.cleandoc(processor_instance.process.__doc__) + '\n'
         if doc_help:
