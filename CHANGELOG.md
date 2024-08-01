@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * ocrd_network: Use `ocrd-all-tool.json` bundled by core instead of download from website, #1257, #1260
+
 ## [2.67.2] - 2024-07-19
 
 Fixed:
