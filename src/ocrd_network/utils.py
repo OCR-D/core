@@ -16,7 +16,7 @@ from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
 from ocrd.mets_server import MpxReq
 from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger, resource_string
-from .constants import OCRD_ALL_TOOL_JSON, OCRD_ALL_TOOL_JSON_URL
+from .constants import OCRD_ALL_TOOL_JSON
 from .rabbitmq_utils import OcrdResultMessage
 
 
