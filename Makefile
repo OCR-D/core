@@ -62,8 +62,9 @@ PIP_INSTALL_CONFIG_OPTION ?=
 deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
 deps-cuda: export CONDA_PREFIX ?= /conda
 deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+deps-cuda: ARCH != uname -p | sed 's/x86_64/64/'
 deps-cuda:
-	curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+	curl -Ls https://micro.mamba.pm/api/micromamba/linux-$(ARCH)/latest | tar -xvj bin/micromamba
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
