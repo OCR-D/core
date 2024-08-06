@@ -20,7 +20,7 @@ def test_client_processing_processor():
             "--mets", path_to_mets,
             "--input-file-grp", "OCR-D-IMG",
             "--output-file-grp", "OCR-D-DUMMY-TEST-CLIENT",
-            "--agent_type", AgentType.PROCESSING_WORKER
+            "--agent-type", AgentType.PROCESSING_WORKER
         ]
     )
     # TODO: Do a better result check
