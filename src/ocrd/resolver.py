@@ -95,12 +95,15 @@ class Resolver():
                 log.debug("Stop early, src_path and dst_path are the same: '%s' (url: '%s')" % (src_path, url))
                 return str(ret)
 
-        # Respect 'if_exists' arg
+        # Respect 'if_exists' kwarg
         if dst_path.exists():
             if if_exists == 'skip':
+                log.debug(f"File already exists but if_exists == {if_exists}, skipping.")
                 return str(ret)
-            if if_exists == 'raise':
-                raise FileExistsError(f"File already exists and if_exists == 'raise': {dst_path}")
+            elif if_exists == 'raise':
+                raise FileExistsError(f"File already exists and if_exists == '{if_exists}': {dst_path}")
+            else:
+                log.debug(f"File already exists but if_exists == {if_exists}, overwriting.")
 
         # Create dst_path parent dir
         dst_path.parent.mkdir(parents=True, exist_ok=True)
