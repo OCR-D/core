@@ -35,7 +35,7 @@ class ClientCallbackServer(HTTPServer):
     """
     def __init__(self):
         super().__init__(server_address=("0.0.0.0", 0), RequestHandlerClass=ClientCallbackHandler)
-        self.callback_url = f"http://{self.server_address[0]}:{self.server_address[1]}"
+        self.callback_url = f"http://172.17.0.1:{self.server_address[1]}"
 
 
 @click.group('client')
