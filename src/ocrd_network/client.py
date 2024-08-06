@@ -5,22 +5,13 @@ from ocrd_utils import config, getLogger, LOG_FORMAT
 from .constants import NETWORK_PROTOCOLS
 
 
-# TODO: This is just a conceptual implementation and first try to
-#  trigger further discussions on how this should look like.
 class Client:
-    def __init__(
-        self,
-        server_addr_processing: str = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING,
-        server_addr_workflow: str = config.OCRD_NETWORK_SERVER_ADDR_WORKFLOW,
-        server_addr_workspace: str = config.OCRD_NETWORK_SERVER_ADDR_WORKSPACE
-    ):
+    def __init__(self, server_addr_processing: str = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING):
         self.log = getLogger(f"ocrd_network.client")
         self.server_addr_processing = server_addr_processing
-        self.server_addr_workflow = server_addr_workflow
-        self.server_addr_workspace = server_addr_workspace
+        verify_server_protocol(self.server_addr_processing)
 
     def send_processing_request(self, processor_name: str, req_params: dict):
-        verify_server_protocol(self.server_addr_processing)
         req_url = f"{self.server_addr_processing}/processor/{processor_name}"
         req_headers = {"Content-Type": "application/json; charset=utf-8"}
         req_json = loads(dumps(req_params))
