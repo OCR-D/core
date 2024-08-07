@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * ocrd_network: Use `ocrd-all-tool.json` bundled by core instead of download from website, #1257, #1260
+  * `ocrd workspace clone`/`Resolver.workspace_from_url`: with `clobber_mets=False`, raise a FileExistsError for existing mets.xml on disk, #563, #1268
 
 ## [2.67.2] - 2024-07-19
 
