@@ -369,7 +369,9 @@ def get_cached_processor(parameter: dict, processor_class):
     """
     if processor_class:
         dict_params = dict(parameter) if parameter else None
-        return processor_class(workspace=None, parameter=dict_params)
+        processor = processor_class(workspace=None, parameter=dict_params)
+        processor.setup()
+        return processor
     return None
 
 
