@@ -1,41 +1,9 @@
 import click
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Optional
 
 from ocrd.decorators import parameter_option
 from ocrd_network import Client
 from ocrd_utils import DEFAULT_METS_BASENAME
-
-
-STOP_WAITING_CALLBACK = False
-
-
-class ClientCallbackHandler(BaseHTTPRequestHandler):
-    """
-    A simple callback handler for the network client to be invoked when the Processing Worker
-    sends requests to the `callback_url` set in the processing request submitted to the Processing Server.
-    """
-
-    def do_POST(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
-        self.end_headers()
-        self.wfile.write("finished".encode("utf-8"))
-        len = int(self.headers.get("Content-Length", 0))
-        data = self.rfile.read(len).decode("utf-8")
-        # TODO: how should the callback-content be handled/printed
-        print(f"Processor finished: {data}")
-        global STOP_WAITING_CALLBACK
-        STOP_WAITING_CALLBACK = True
-
-
-class ClientCallbackServer(HTTPServer):
-    """
-    A simple http-server that listens for callbacks from the Processing Server/Worker.
-    """
-    def __init__(self):
-        super().__init__(server_address=("0.0.0.0", 0), RequestHandlerClass=ClientCallbackHandler)
-        self.callback_url = f"http://172.17.0.1:{self.server_address[1]}"
 
 
 @click.group('client')
@@ -88,14 +56,12 @@ def send_processing_request(
     #  between the ProcessingWorker/ProcessorServer
     agent_type: Optional[str]
 ):
-    callback_server = ClientCallbackServer()
     req_params = {
         "path_to_mets": mets,
         "description": "OCR-D Network client request",
         "input_file_grps": input_file_grp.split(','),
         "parameters": parameter if parameter else {},
-        "agent_type": agent_type,
-        "callback_url": callback_server.callback_url
+        "agent_type": agent_type
     }
     if output_file_grp:
         req_params["output_file_grps"] = output_file_grp.split(',')
@@ -110,8 +76,6 @@ def send_processing_request(
     response = client.send_processing_request(processor_name=processor_name, req_params=req_params)
     processing_job_id = response.get('job_id', None)
     print(f"Processing job id: {processing_job_id}")
-    while not STOP_WAITING_CALLBACK:
-        callback_server.handle_request()
 
 
 @client_cli.group('workflow')

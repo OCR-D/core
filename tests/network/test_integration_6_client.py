@@ -24,9 +24,8 @@ def test_client_processing_processor():
         ]
     )
     # TODO: Do a better result check
-    assert result.output.count("finished") == 1
+    assert result.output.count("Processing job id:") == 1
 
 
 def test_client_processing_workflow():
     pass
-
