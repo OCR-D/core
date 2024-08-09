@@ -1,10 +1,13 @@
 from pathlib import Path
 from requests import get as request_get
+from src.ocrd_network.client_utils import (
+    poll_job_status_till_timeout_fail_or_success, poll_wf_status_till_timeout_fail_or_success,
+    post_ps_processing_request, post_ps_workflow_request)
 from src.ocrd_network.constants import AgentType, JobState
 from src.ocrd_network.logging_utils import get_processing_job_logging_file_path
 from tests.base import assets
 from tests.network.config import test_config
-from tests.network.utils import poll_till_timeout_fail_or_success, post_ps_processing_request, post_ps_workflow_request
+
 
 PROCESSING_SERVER_URL = test_config.PROCESSING_SERVER_URL
 
@@ -40,10 +43,8 @@ def test_processing_server_processing_request():
         "parameters": {}
     }
     test_processor = "ocrd-dummy"
-    processing_job_id = post_ps_processing_request(PROCESSING_SERVER_URL, test_processor, test_processing_job_input)
-    job_state = poll_till_timeout_fail_or_success(
-        test_url=f"{PROCESSING_SERVER_URL}/processor/job/{processing_job_id}", tries=10, wait=10
-    )
+    process_job_id = post_ps_processing_request(PROCESSING_SERVER_URL, test_processor, test_processing_job_input)
+    job_state = poll_job_status_till_timeout_fail_or_success(PROCESSING_SERVER_URL, process_job_id, tries=10, wait=10)
     assert job_state == JobState.success
 
     # Check the existence of the results locally
@@ -58,9 +59,7 @@ def test_processing_server_workflow_request():
     workspace_root = "kant_aufklaerung_1784/data"
     path_to_mets = assets.path_to(f"{workspace_root}/mets.xml")
     wf_job_id = post_ps_workflow_request(PROCESSING_SERVER_URL, path_to_dummy_wf, path_to_mets)
-    job_state = poll_till_timeout_fail_or_success(
-        test_url=f"{PROCESSING_SERVER_URL}/workflow/job-simple/{wf_job_id}", tries=30, wait=10
-    )
+    job_state = poll_wf_status_till_timeout_fail_or_success(PROCESSING_SERVER_URL, wf_job_id, tries=10, wait=10)
     assert job_state == JobState.success
 
     # Check the existence of the results locally

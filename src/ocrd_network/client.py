@@ -1,37 +1,39 @@
-from json import dumps, loads
-from requests import post as requests_post
 from ocrd_utils import config, getLogger, LOG_FORMAT
+from .client_utils import (
+    poll_job_status_till_timeout_fail_or_success,
+    poll_wf_status_till_timeout_fail_or_success,
+    post_ps_processing_request,
+    post_ps_workflow_request,
+    verify_server_protocol
+)
 
-from .constants import NETWORK_PROTOCOLS
 
-
-# TODO: This is just a conceptual implementation and first try to
-#  trigger further discussions on how this should look like.
 class Client:
     def __init__(
         self,
         server_addr_processing: str = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING,
-        server_addr_workflow: str = config.OCRD_NETWORK_SERVER_ADDR_WORKFLOW,
-        server_addr_workspace: str = config.OCRD_NETWORK_SERVER_ADDR_WORKSPACE
+        timeout: int = config.OCRD_NETWORK_CLIENT_POLLING_TIMEOUT,
+        wait: int = config.OCRD_NETWORK_CLIENT_POLLING_SLEEP
     ):
         self.log = getLogger(f"ocrd_network.client")
         self.server_addr_processing = server_addr_processing
-        self.server_addr_workflow = server_addr_workflow
-        self.server_addr_workspace = server_addr_workspace
-
-    def send_processing_request(self, processor_name: str, req_params: dict):
         verify_server_protocol(self.server_addr_processing)
-        req_url = f"{self.server_addr_processing}/processor/{processor_name}"
-        req_headers = {"Content-Type": "application/json; charset=utf-8"}
-        req_json = loads(dumps(req_params))
-        self.log.info(f"Sending processing request to: {req_url}")
-        self.log.debug(req_json)
-        response = requests_post(url=req_url, headers=req_headers, json=req_json)
-        return response.json()
+        self.polling_timeout = timeout
+        self.polling_wait = wait
+        self.polling_tries = int(timeout/wait)
 
+    def poll_job_status_till_timeout_fail_or_success(self, job_id: str) -> str:
+        return poll_job_status_till_timeout_fail_or_success(
+            ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait)
 
-def verify_server_protocol(address: str):
-    for protocol in NETWORK_PROTOCOLS:
-        if address.startswith(protocol):
-            return
-    raise ValueError(f"Wrong/Missing protocol in the server address: {address}, must be one of: {NETWORK_PROTOCOLS}")
+    def poll_wf_status_till_timeout_fail_or_success(self, job_id: str) -> str:
+        return poll_wf_status_till_timeout_fail_or_success(
+            ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait)
+
+    def send_processing_job_request(self, processor_name: str, req_params: dict) -> str:
+        return post_ps_processing_request(
+            ps_server_host=self.server_addr_processing, processor=processor_name, job_input=req_params)
+
+    def send_workflow_job_request(self, path_to_wf: str, path_to_mets: str):
+        return post_ps_workflow_request(
+            ps_server_host=self.server_addr_processing, path_to_wf=path_to_wf, path_to_mets=path_to_mets)
