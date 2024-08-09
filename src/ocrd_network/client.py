@@ -9,13 +9,18 @@ from .client_utils import (
 
 
 class Client:
-    def __init__(self, server_addr_processing: str = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING):
+    def __init__(
+        self,
+        server_addr_processing: str = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING,
+        timeout: int = config.OCRD_NETWORK_CLIENT_POLLING_TIMEOUT,
+        wait: int = config.OCRD_NETWORK_CLIENT_POLLING_SLEEP
+    ):
         self.log = getLogger(f"ocrd_network.client")
         self.server_addr_processing = server_addr_processing
         verify_server_protocol(self.server_addr_processing)
-        # TODO: Read these values from the environment config.
-        self.polling_tries = 900
-        self.polling_wait = 30
+        self.polling_timeout = timeout
+        self.polling_wait = wait
+        self.polling_tries = int(timeout/wait)
 
     def poll_job_status_till_timeout_fail_or_success(self, job_id: str) -> str:
         return poll_job_status_till_timeout_fail_or_success(
