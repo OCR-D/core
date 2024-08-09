@@ -79,7 +79,7 @@ def send_processing_job_request(
     assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
     if block_till_job_end:
-        client.poll_job_status_till_timeout_fail_or_success(processing_job_id)
+        client.poll_job_status_till_timeout_fail_or_success(job_id=processing_job_id)
 
 
 @client_cli.group('workflow')
@@ -88,6 +88,25 @@ def workflow_cli():
     The workflow endpoint of the WebAPI
     """
     pass
+
+
+@processing_cli.command('run')
+@click.option('--address')
+@click.option('-m', '--path-to-mets', required=True)
+@click.option('-w', '--path-to-workflow', required=True)
+@click.option('-b', '--block-till-job-end', default=False)
+def send_workflow_job_request(
+    address: Optional[str],
+    path_to_mets: str,
+    path_to_workflow: str,
+    block_till_job_end: Optional[bool]
+):
+    client = Client(server_addr_processing=address)
+    workflow_job_id = client.send_workflow_job_request(path_to_wf=path_to_workflow, path_to_mets=path_to_mets)
+    assert workflow_job_id
+    print(f"Workflow job id: {workflow_job_id}")
+    if block_till_job_end:
+        client.poll_wf_status_till_timeout_fail_or_success(job_id=workflow_job_id)
 
 
 @client_cli.group('workspace')
