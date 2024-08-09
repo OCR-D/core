@@ -1,8 +1,8 @@
-from json import dumps, loads
-from requests import post as requests_post
+
 from ocrd_utils import config, getLogger, LOG_FORMAT
 
-from .constants import NETWORK_PROTOCOLS
+from .client_utils import (
+    poll_job_status_till_timeout_fail_or_success, post_ps_processing_request, verify_server_protocol)
 
 
 class Client:
@@ -10,19 +10,13 @@ class Client:
         self.log = getLogger(f"ocrd_network.client")
         self.server_addr_processing = server_addr_processing
         verify_server_protocol(self.server_addr_processing)
+        self.polling_tries = 900
+        self.polling_wait = 30
 
-    def send_processing_request(self, processor_name: str, req_params: dict):
-        req_url = f"{self.server_addr_processing}/processor/{processor_name}"
-        req_headers = {"Content-Type": "application/json; charset=utf-8"}
-        req_json = loads(dumps(req_params))
-        self.log.info(f"Sending processing request to: {req_url}")
-        self.log.debug(req_json)
-        response = requests_post(url=req_url, headers=req_headers, json=req_json)
-        return response.json()
+    def poll_job_status_till_timeout_fail_or_success(self, job_id: str) -> str:
+        return poll_job_status_till_timeout_fail_or_success(
+            ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait)
 
-
-def verify_server_protocol(address: str):
-    for protocol in NETWORK_PROTOCOLS:
-        if address.startswith(protocol):
-            return
-    raise ValueError(f"Wrong/Missing protocol in the server address: {address}, must be one of: {NETWORK_PROTOCOLS}")
+    def send_processing_job_request(self, processor_name: str, req_params: dict) -> str:
+        return post_ps_processing_request(
+            ps_server_host=self.server_addr_processing, processor=processor_name, job_input=req_params)

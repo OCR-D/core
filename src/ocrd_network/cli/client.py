@@ -1,9 +1,9 @@
 import click
+from json import dumps, loads
 from typing import Optional
-
 from ocrd.decorators import parameter_option
-from ocrd_network import Client
 from ocrd_utils import DEFAULT_METS_BASENAME
+from ..client import Client
 
 
 @click.group('client')
@@ -43,7 +43,7 @@ def processing_cli():
 @click.option('--callback-url')
 @click.option('--agent-type', default='worker')
 @click.option('-b', '--block-till-job-end', default=False)
-def send_processing_request(
+def send_processing_job_request(
     address: Optional[str],
     processor_name: str,
     mets: str,
@@ -73,13 +73,13 @@ def send_processing_request(
         req_params["result_queue_name"] = result_queue_name
     if callback_url:
         req_params["callback_url"] = callback_url
-
     client = Client(server_addr_processing=address)
-    response = client.send_processing_request(processor_name=processor_name, req_params=req_params)
-    processing_job_id = response.get('job_id', None)
+    processing_job_id = client.send_processing_job_request(
+        processor_name=processor_name, req_params=loads(dumps(req_params)))
+    assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
     if block_till_job_end:
-        pass
+        client.poll_job_status_till_timeout_fail_or_success(processing_job_id)
 
 
 @client_cli.group('workflow')
