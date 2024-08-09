@@ -42,6 +42,7 @@ def processing_cli():
 @click.option('--result-queue-name')
 @click.option('--callback-url')
 @click.option('--agent-type', default='worker')
+@click.option('-b', '--block-till-job-end', default=False)
 def send_processing_request(
     address: Optional[str],
     processor_name: str,
@@ -54,7 +55,8 @@ def send_processing_request(
     callback_url: Optional[str],
     # TODO: This is temporally available to toggle
     #  between the ProcessingWorker/ProcessorServer
-    agent_type: Optional[str]
+    agent_type: Optional[str],
+    block_till_job_end: Optional[bool]
 ):
     req_params = {
         "path_to_mets": mets,
@@ -76,6 +78,8 @@ def send_processing_request(
     response = client.send_processing_request(processor_name=processor_name, req_params=req_params)
     processing_job_id = response.get('job_id', None)
     print(f"Processing job id: {processing_job_id}")
+    if block_till_job_end:
+        pass
 
 
 @client_cli.group('workflow')
