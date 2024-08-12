@@ -215,9 +215,9 @@ class Processor():
         parameterValidator = ParameterValidator(self.ocrd_tool)
         report = parameterValidator.validate(parameter)
         if not report.is_valid:
-            raise Exception("Invalid parameters %s" % report.errors)
+            raise ValueError("Invalid parameters %s" % report.errors)
         self.parameter = parameter
-        # workaround for deprecated#72 (deprecation does not work for subclasses):
+        # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
         setattr(self, 'process',
                 deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')(getattr(self, 'process')))
 
