@@ -145,15 +145,15 @@ config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
         description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
         default=(True, ''))
 
-config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
-           description="Timeout for a blocking ocrd network client (seconds)",
-           parser=int,
-           default=(True, 3600))
-
 config.add("OCRD_NETWORK_CLIENT_POLLING_SLEEP",
-           description="How many seconds to sleep before trying again (seconds)",
+           description="How many seconds to sleep before trying again.",
            parser=int,
            default=(True, 30))
+
+config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
+           description="Timeout for a blocking ocrd network client (in seconds).",
+           parser=int,
+           default=(True, 3600))
 
 config.add("OCRD_NETWORK_SERVER_ADDR_WORKFLOW",
         description="Default address of Workflow Server to connect to (for `ocrd network client workflow`).",
