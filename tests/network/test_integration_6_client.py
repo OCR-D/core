@@ -24,7 +24,7 @@ def test_client_processing_processor():
     processing_job_id = client.send_processing_job_request(processor_name="ocrd-dummy", req_params=req_params)
     assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
-    assert JobState.success == client.poll_job_status_till_timeout_fail_or_success(processing_job_id)
+    assert JobState.success == client.poll_job_status(processing_job_id)
 
 
 def test_client_processing_workflow():
@@ -35,4 +35,4 @@ def test_client_processing_workflow():
     client = Client(PROCESSING_SERVER_URL, timeout, wait)
     wf_job_id = client.send_workflow_job_request(path_to_dummy_wf, path_to_mets)
     print(f"Workflow job id: {wf_job_id}")
-    assert JobState.success == client.poll_wf_status_till_timeout_fail_or_success(wf_job_id)
+    assert JobState.success == client.poll_workflow_status(wf_job_id)

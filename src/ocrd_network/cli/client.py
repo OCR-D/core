@@ -79,7 +79,7 @@ def send_processing_job_request(
     assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
     if block_till_job_end:
-        client.poll_job_status_till_timeout_fail_or_success(job_id=processing_job_id)
+        client.poll_job_status(job_id=processing_job_id)
 
 
 @client_cli.group('workflow')
@@ -106,7 +106,7 @@ def send_workflow_job_request(
     assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block_till_job_end:
-        client.poll_wf_status_till_timeout_fail_or_success(job_id=workflow_job_id)
+        client.poll_workflow_status(job_id=workflow_job_id)
 
 
 @client_cli.group('workspace')
