@@ -129,8 +129,8 @@ class Processor():
 
         Args:
              workspace (:py:class:`~ocrd.Workspace`): The workspace to process. \
-                 Can be ``None`` even for processing (esp. on multiple workspaces), \
-                 but then needs to be set before running.
+                 Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
+                 before processing.
         Keyword Args:
              parameter (string): JSON of the runtime choices for ocrd-tool ``parameters``. \
                  Can be ``None`` even for processing, but then needs to be set before running.
@@ -200,10 +200,8 @@ class Processor():
             return
         self.workspace = workspace
         if self.workspace:
-            # FIXME deprecate setting this and calling process() over using process_workspace()
-            # which uses pushd_popd(self.workspace.directory)
-            # (because there is no way to do that in process() since it's an
-            # overridden method. chdir is almost always an anti-pattern.)
+            deprecation_warning("Passing a workspace argument other than 'None' to Processor "
+                                "is deprecated - pass as argument to process_workspace instead")
             self.old_pwd = getcwd()
             os.chdir(self.workspace.directory)
         self.input_file_grp = input_file_grp
