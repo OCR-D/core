@@ -104,7 +104,7 @@ def run_processor(
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
         from memory_profiler import memory_usage
         try:
-            mem_usage = memory_usage(proc=processor.process_workspace(workspace),
+            mem_usage = memory_usage(proc=(processor.process_workspace, [workspace], {})),
                                      # only run process once
                                      max_iterations=1,
                                      interval=.1, timeout=None, timestamps=True,
