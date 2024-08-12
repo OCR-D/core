@@ -246,12 +246,12 @@ class Processor():
     @deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')
     def process(self) -> None:
         """
-        Process all files of the :py:attr:`workspace` 
+        Process all files of the :py:attr:`workspace`
         from the given :py:attr:`input_file_grp`
         to the given :py:attr:`output_file_grp`
         for the given :py:attr:`page_id` (or all pages)
         under the given :py:attr:`parameter`.
-        
+
         (This contains the main functionality and needs to be overridden by subclasses.)
         """
         raise NotImplementedError()
@@ -267,11 +267,11 @@ class Processor():
         (This will iterate over pages and files, calling
         :py:meth:`process_page`, handling exceptions.)
         """
-        # assert self.input_file_grp is not None
-        # assert self.output_file_grp is not None
-        # input_file_grps = self.input_file_grp.split(',')
-        # for input_file_grp in input_file_grps:
-        #     assert input_file_grp in workspace.mets.file_groups
+        assert self.input_file_grp is not None
+        assert self.output_file_grp is not None
+        input_file_grps = self.input_file_grp.split(',')
+        for input_file_grp in input_file_grps:
+            assert input_file_grp in workspace.mets.file_groups
         log = getLogger('ocrd.processor.base')
         with pushd_popd(workspace.directory):
             self.workspace = workspace
