@@ -5,7 +5,7 @@ from .constants import JobState, NETWORK_PROTOCOLS
 
 def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int):
     if job_type not in ["workflow", "processor"]:
-        raise ValueError("Unknown job type, expected 'workflow' or 'processor'")
+        raise ValueError(f"Unknown job type '{job_type}', expected 'workflow' or 'processor'")
     job_state = JobState.unset
     while tries > 0:
         sleep(wait)
