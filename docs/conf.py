@@ -15,7 +15,7 @@
 # import os
 # import sys
 # # sys.path.insert(0, os.path.abspath('..'))
-with open('VERSION', encoding='utf-8') as f:
+with open('../VERSION', encoding='utf-8') as f:
     VERSION = f.read()
 
 
