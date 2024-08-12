@@ -346,7 +346,7 @@ class Processor():
                                 mimetype=MIMETYPE_PAGE,
                                 content=to_xml(output_pcgts))
 
-    def process_page_pcgts(self, *input_pcgts, output_file_id : str = None, page_id : str = None) -> OcrdPage:
+    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdPage:
         """
         Process the given ``input_pcgts`` of the :py:attr:`workspace`,
         representing one physical page (passed as one parsed
