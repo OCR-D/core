@@ -1,5 +1,7 @@
 from ocrd_utils import config, getLogger, LOG_FORMAT
 from .client_utils import (
+    get_ps_deployed_processors,
+    get_ps_deployed_processor_ocrd_tool,
     get_ps_processing_job_status,
     get_ps_workflow_job_status,
     poll_job_status_till_timeout_fail_or_success,
@@ -25,6 +27,13 @@ class Client:
         self.polling_timeout = timeout
         self.polling_wait = wait
         self.polling_tries = int(timeout/wait)
+
+    def check_deployed_processors(self):
+        return get_ps_deployed_processors(ps_server_host=self.server_addr_processing)
+
+    def check_deployed_processor_ocrd_tool(self, processor_name: str):
+        return get_ps_deployed_processor_ocrd_tool(
+            ps_server_host=self.server_addr_processing, processor_name=processor_name)
 
     def check_job_status(self, job_id: str):
         return get_ps_processing_job_status(self.server_addr_processing, processing_job_id=job_id)

@@ -651,7 +651,7 @@ class ProcessingServer(FastAPI):
         # There is no caching on the Processing Server side
         processor_names_list = self.deployer.find_matching_network_agents(
             docker_only=False, native_only=False, worker_only=False, server_only=False,
-            str_names_only=True, unique_only=True
+            str_names_only=True, unique_only=True, sort=True
         )
         return processor_names_list
 

@@ -1,5 +1,5 @@
 import click
-from json import dumps, loads
+from json import dumps
 from typing import Optional
 from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
 from ocrd_utils import DEFAULT_METS_BASENAME
@@ -23,6 +23,34 @@ def discovery_cli():
     pass
 
 
+@discovery_cli.command('processors')
+@click.option('--address',
+              help='The address of the Processing Server. If not provided, '
+                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+def check_deployed_processors(address: Optional[str]):
+    """
+    Get a list of deployed processing workers/processor servers.
+    Each processor is shown only once regardless of the amount of deployed instances.
+    """
+    client = Client(server_addr_processing=address)
+    processors_list = client.check_deployed_processors()
+    print(dumps(processors_list, indent=4))
+
+
+@discovery_cli.command('processor')
+@click.option('--address',
+              help='The address of the Processing Server. If not provided, '
+                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.argument('processor_name', required=True, type=click.STRING)
+def check_processor_ocrd_tool(address: Optional[str], processor_name: str):
+    """
+    Get the json tool of a deployed processor specified with `processor_name`
+    """
+    client = Client(server_addr_processing=address)
+    ocrd_tool = client.check_deployed_processor_ocrd_tool(processor_name=processor_name)
+    print(dumps(ocrd_tool, indent=4))
+
+
 @client_cli.group('processing')
 def processing_cli():
     """
@@ -32,8 +60,9 @@ def processing_cli():
 
 
 @processing_cli.command('check-status')
-@click.option('--address', help='The address of the Processing Server. If not provided, '
-                                'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address',
+              help='The address of the Processing Server. If not provided, '
+                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-j', '--processing-job-id', required=True)
 def check_processing_job_status(address: Optional[str], processing_job_id: str):
     """
@@ -47,8 +76,9 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 
 @processing_cli.command('processor')
 @click.argument('processor_name', required=True, type=click.STRING)
-@click.option('--address', help='The address of the Processing Server. If not provided, '
-                                'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address',
+              help='The address of the Processing Server. If not provided, '
+                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-m', '--mets', required=True, default=DEFAULT_METS_BASENAME)
 @click.option('-I', '--input-file-grp', default='OCR-D-INPUT')
 @click.option('-O', '--output-file-grp', default='OCR-D-OUTPUT')
