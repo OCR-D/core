@@ -467,19 +467,18 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
                 include_fileGrp=include_fileGrp,
                 exclude_fileGrp=exclude_fileGrp,
             ):
-            ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
             if download and not f.local_filename:
                 workspace.download_file(f)
                 modified_mets = True
                 if wait:
                     time.sleep(wait)
             if undo_download and f.url and f.local_filename:
-                ret_entry = [f'Removed local_filename {f.local_filename}']
                 f.local_filename = None
                 modified_mets = True
                 if not keep_files:
                     ctx.log.debug("rm %s [cwd=%s]", f.local_filename, workspace.directory)
                     unlink(f.local_filename)
+            ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
             ret.append(ret_entry)
     if modified_mets:
         workspace.save_mets()
