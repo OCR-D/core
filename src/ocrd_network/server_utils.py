@@ -193,7 +193,9 @@ def parse_workflow_tasks(logger: Logger, workflow_content: str) -> List[Processo
 
 
 def raise_http_exception(logger: Logger, status_code: int, message: str, error: Exception = None) -> None:
-    logger.exception(f"{message} {error}")
+    if error:
+        message = f"{message} {error}"
+    logger.exception(f"{message}")
     raise HTTPException(status_code=status_code, detail=message)
 
 
@@ -210,12 +212,12 @@ def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
     try:
         report = ParameterValidator(ocrd_tool).validate(dict(job_input.parameters))
-        if not report.is_valid:
-            message = f"Failed to validate processing job input against the tool json of processor: {processor_name}\n"
-            raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, message + report.errors)
     except Exception as error:
         message = f"Failed to validate processing job input against the ocrd tool json of processor: {processor_name}"
         raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, message, error)
+    if report and not report.is_valid:
+        message = f"Failed to validate processing job input against the tool json of processor: {processor_name}\n"
+        raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, f"{message}{report.errors}")
 
 
 def validate_workflow(logger: Logger, workflow: str) -> None:
