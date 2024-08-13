@@ -1,5 +1,6 @@
 import json
 import os
+from pytest import warns
 from ocrd import Processor
 from ocrd_utils import make_file_id
 
@@ -38,7 +39,8 @@ class DummyProcessor(Processor):
 
     # override to prevent iterating over empty files
     def process_workspace(self, workspace):
-        self.process()
+        with warns(DeprecationWarning, match='should be replaced with process_page'):
+            self.process()
 
 class DummyProcessorWithRequiredParameters(Processor):
     @property
