@@ -31,18 +31,21 @@ def processing_cli():
     pass
 
 
-@processing_cli.command('check-status', help='Check the status of a previously submitted processing job.')
+@processing_cli.command('check-status')
 @click.option('--address', help='The address of the Processing Server. If not provided, '
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-j', '--processing-job-id', required=True)
 def check_processing_job_status(address: Optional[str], processing_job_id: str):
+    """
+    Check the status of a previously submitted processing job.
+    """
     client = Client(server_addr_processing=address)
     job_status = client.check_job_status(processing_job_id)
     assert job_status
     print(f"Processing job status: {job_status}")
 
 
-@processing_cli.command('processor', help='Submit a processing job to the processing server.')
+@processing_cli.command('processor')
 @click.argument('processor_name', required=True, type=click.STRING)
 @click.option('--address', help='The address of the Processing Server. If not provided, '
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
@@ -71,6 +74,9 @@ def send_processing_job_request(
     agent_type: Optional[str],
     block_till_job_end: Optional[bool]
 ):
+    """
+    Submit a processing job to the processing server.
+    """
     req_params = {
         "path_to_mets": mets,
         "description": "OCR-D Network client request",
@@ -103,18 +109,21 @@ def workflow_cli():
     pass
 
 
-@workflow_cli.command('check-status', help='Check the status of a previously submitted workflow job.')
+@workflow_cli.command('check-status')
 @click.option('--address', help='The address of the Processing Server. If not provided, '
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-j', '--workflow-job-id', required=True)
 def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
+    """
+    Check the status of a previously submitted workflow job.
+    """
     client = Client(server_addr_processing=address)
     job_status = client.check_workflow_status(workflow_job_id)
     assert job_status
     print(f"Workflow job status: {job_status}")
 
 
-@workflow_cli.command('run', help='Submit a workflow job to the processing server.')
+@workflow_cli.command('run')
 @click.option('--address', help='The address of the Processing Server. If not provided, '
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-m', '--path-to-mets', required=True)
@@ -127,6 +136,9 @@ def send_workflow_job_request(
     path_to_workflow: str,
     block: Optional[bool]
 ):
+    """
+    Submit a workflow job to the processing server.
+    """
     client = Client(server_addr_processing=address)
     workflow_job_id = client.send_workflow_job_request(path_to_wf=path_to_workflow, path_to_mets=path_to_mets)
     assert workflow_job_id
