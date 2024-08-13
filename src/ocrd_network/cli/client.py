@@ -72,7 +72,7 @@ def send_processing_job_request(
     # TODO: This is temporally available to toggle
     #  between the ProcessingWorker/ProcessorServer
     agent_type: Optional[str],
-    block_till_job_end: Optional[bool]
+    block: Optional[bool]
 ):
     """
     Submit a processing job to the processing server.
@@ -97,7 +97,7 @@ def send_processing_job_request(
         processor_name=processor_name, req_params=loads(dumps(req_params)))
     assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
-    if block_till_job_end:
+    if block:
         client.poll_job_status(job_id=processing_job_id)
 
 
