@@ -212,10 +212,10 @@ def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job
         report = ParameterValidator(ocrd_tool).validate(dict(job_input.parameters))
         if not report.is_valid:
             message = f"Failed to validate processing job input against the tool json of processor: {processor_name}\n"
-            raise_http_exception(logger, status.HTTP_404_BAD_REQUEST, message + report.errors)
+            raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, message + report.errors)
     except Exception as error:
         message = f"Failed to validate processing job input against the ocrd tool json of processor: {processor_name}"
-        raise_http_exception(logger, status.HTTP_404_BAD_REQUEST, message, error)
+        raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, message, error)
 
 
 def validate_workflow(logger: Logger, workflow: str) -> None:
