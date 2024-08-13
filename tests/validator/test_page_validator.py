@@ -16,9 +16,10 @@ class TestPageValidator(TestCase):
             PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_strategy='best')
         # test with deprecated name
         with self.assertRaisesRegex(Exception, 'page_textequiv_strategy best not implemented'):
-            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, strategy='best')
+            with self.assertWarnsRegex(DeprecationWarning, r'use page_textequiv_strategy'):
+                PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, strategy='best')
         with self.assertRaisesRegex(Exception, 'page_textequiv_consistency level superstrictest not implemented'):
-            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_consistency='superstrictest', strategy='first')
+            PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME, page_textequiv_consistency='superstrictest', page_textequiv_strategy='first')
 
     def test_validate_filename(self):
         report = PageValidator.validate(filename=FAULTY_GLYPH_PAGE_FILENAME)
@@ -44,7 +45,7 @@ class TestPageValidator(TestCase):
 
         report = PageValidator.validate(ocrd_page=ocrd_page)
         self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 26, '26 textequiv consistency errors - strict')
-        report = PageValidator.validate(ocrd_page=ocrd_page, strictness='lax')
+        report = PageValidator.validate(ocrd_page=ocrd_page, page_textequiv_consistency='lax')
         self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 1, '1 textequiv consistency errors - lax')
 
     def test_validate_multi_textequiv_first(self):
@@ -89,7 +90,7 @@ class TestPageValidator(TestCase):
         ocrd_page = parse(FAULTY_GLYPH_PAGE_FILENAME, silence=True)
         report = PageValidator.validate(ocrd_page=ocrd_page)
         self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 17, '17 textequiv consistency errors')
-        PageValidator.validate(ocrd_page=ocrd_page, strictness='fix')
+        PageValidator.validate(ocrd_page=ocrd_page, page_textequiv_consistency='fix')
         report = PageValidator.validate(ocrd_page=ocrd_page)
         self.assertEqual(len([e for e in report.errors if isinstance(e, ConsistencyError)]), 0, 'no more textequiv consistency errors')
 
