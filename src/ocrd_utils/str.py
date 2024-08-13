@@ -7,6 +7,7 @@ import json
 from typing import List, Union
 from .constants import REGEX_FILE_ID, SPARKLINE_CHARS
 from .deprecate import deprecation_warning
+from deprecated import deprecated
 from warnings import warn
 from numpy import array_split
 
@@ -26,6 +27,7 @@ __all__ = [
 ]
 
 
+@deprecated(version='3.0', reason='specify input and output file_grp_cardinality in ocrd-tool.json instead')
 def assert_file_grp_cardinality(grps, n, msg=None):
     """
     Assert that a string of comma-separated fileGrps contains exactly ``n`` entries.

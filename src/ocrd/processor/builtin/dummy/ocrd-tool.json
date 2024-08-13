@@ -1,12 +1,14 @@
 {
+  "version": "1.0.0",
+  "git_url": "https://github.com/OCR-D/core",
   "tools": {
     "ocrd-dummy": {
       "executable": "ocrd-dummy",
       "description": "Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group",
       "steps": ["preprocessing/optimization"],
       "categories": ["Image preprocessing"],
-      "input_file_grp": "DUMMY_INPUT",
-      "output_file_grp": "DUMMY_OUTPUT",
+      "input_file_grp_cardinality": 1,
+      "output_file_grp_cardinality": 1,
       "parameters": {
         "copy_files": {
           "type": "boolean",

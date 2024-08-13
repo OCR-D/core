@@ -191,8 +191,33 @@ class Processor():
 
     def verify(self):
         """
-        Verify that the :py:attr:`input_file_grp` fulfills the processor's requirements.
+        Verify that :py:attr:`input_file_grp` and :py:attr:`output_file_grp` fulfill the processor's requirements.
         """
+        assert self.input_file_grp is not None
+        assert self.output_file_grp is not None
+        input_file_grps = self.input_file_grp.split(',')
+        output_file_grps = self.output_file_grp.split(',')
+        def assert_file_grp_cardinality(grps, spec, msg):
+            if isinstance(spec, int) and spec > 0:
+                assert len(grps) == spec, msg % (len(grps), str(spec))
+            else:
+                minimum = spec[0]
+                maximum = spec[1]
+                if minimum > 0:
+                    assert len(grps) >= minimum, msg % (len(grps), str(spec))
+                if maximum > 0:
+                    assert len(grps) <= maximum, msg % (len(grps), str(spec))
+        # FIXME: maybe we should enforce the cardinality properties to be specified or apply default=1 here
+        # (but we already have ocrd-tool validation, and these first need to be adopted by implementors)
+        if 'input_file_grp_cardinality' in self.ocrd_tool:
+            assert_file_grp_cardinality(input_file_grps, self.ocrd_tool['input_file_grp_cardinality'],
+                                        "Unexpected number of input file groups %d vs %s")
+        if 'output_file_grp_cardinality' in self.ocrd_tool:
+            assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
+                                        "Unexpected number of output file groups %d vs %s")
+        for input_file_grp in input_file_grps:
+            assert input_file_grp in self.workspace.mets.file_groups
+        # keep this for backwards compatibility:
         return True
 
     def dump_json(self):

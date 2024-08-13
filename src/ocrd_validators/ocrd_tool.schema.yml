@@ -29,28 +29,59 @@ properties:
           - steps
           - executable
           - categories
-          - input_file_grp
-          # Not required because not all processors produce output files
-          # - output_file_grp
+          - input_file_grp_cardinality
+          - output_file_grp_cardinality
         properties:
           executable:
             description: The name of the CLI executable in $PATH
             type: string
           input_file_grp:
+            deprecated: true
             description: Input fileGrp@USE this tool expects by default
             type: array
             items:
               type: string
               # pattern: '^OCR-D-[A-Z0-9-]+$'
           output_file_grp:
+            deprecated: true
             description: Output fileGrp@USE this tool produces by default
             type: array
             items:
               type: string
               # pattern: '^OCR-D-[A-Z0-9-]+$'
+          input_file_grp_cardinality:
+            description: Number of (comma-separated) input fileGrp@USE this tool expects (either an exact value or a minimum,maximum list with -1 for unlimited)
+            oneOf:
+              - items:
+                  type: number
+                  multipleOf: 1
+              - items:
+                  type: array
+                  items:
+                    type: number
+                    multipleOf: 1
+                  minItems: 2
+                  maxItems: 2
+            default: 1
+            additionalProperties: false
+          output_file_grp_cardinality:
+            description: Number of (comma-separated) output fileGrp@USE this tool expects (either an exact value or a minimum,maximum list with -1 for unlimited)
+            oneOf:
+              - items:
+                  type: number
+                  multipleOf: 1
+              - items:
+                  type: array
+                  items:
+                    type: number
+                    multipleOf: 1
+                  minItems: 2
+                  maxItems: 2
+            default: 1
           parameters:
             description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
             type: object
+            default: {}
             patternProperties:
               ".*":
                 type: object
