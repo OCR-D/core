@@ -247,11 +247,9 @@ class ClientSideOcrdMets:
             ).json()
             return OcrdAgentModel.create(**kwargs)
 
-    @deprecated_alias(ID="file_id")
-    @deprecated_alias(pageId="page_id")
-    @deprecated_alias(fileGrp="file_grp")
     def find_files(self, **kwargs):
         self.log.debug("find_files(%s)", kwargs)
+        # translate from native OcrdMets kwargs to OcrdMetsServer REST params
         if "pageId" in kwargs:
             kwargs["page_id"] = kwargs.pop("pageId")
         if "ID" in kwargs:
@@ -277,14 +275,14 @@ class ClientSideOcrdMets:
     def find_all_files(self, *args, **kwargs):
         return list(self.find_files(*args, **kwargs))
 
-    @deprecated_alias(pageId="page_id")
-    @deprecated_alias(ID="file_id")
     def add_file(
-        self, file_grp, content=None, file_id=None, url=None, local_filename=None, mimetype=None, page_id=None, **kwargs
+        self, file_grp, content=None, ID=None, url=None, local_filename=None, mimetype=None, pageId=None, **kwargs
     ):
         data = OcrdFileModel.create(
-            file_id=file_id, file_grp=file_grp, page_id=page_id, mimetype=mimetype, url=url,
-            local_filename=local_filename
+            file_grp=file_grp,
+            # translate from native OcrdMets kwargs to OcrdMetsServer REST params
+            file_id=ID, page_id=pageId,
+            mimetype=mimetype, url=url, local_filename=local_filename
         )
 
         if not self.multiplexing_mode:
@@ -297,8 +295,9 @@ class ClientSideOcrdMets:
                 raise RuntimeError(f"Add file failed: Msg: {r['error']}")
 
         return ClientSideOcrdFile(
-            None, ID=file_id, fileGrp=file_grp, url=url, pageId=page_id, mimetype=mimetype,
-            local_filename=local_filename
+            None, fileGrp=file_grp,
+            ID=ID, pageId=pageId,
+            url=url, mimetype=mimetype, local_filename=local_filename
         )
 
 
