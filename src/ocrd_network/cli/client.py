@@ -81,20 +81,24 @@ def send_processing_job_request(
         "path_to_mets": mets,
         "description": "OCR-D Network client request",
         "input_file_grps": input_file_grp.split(','),
-        "parameters": parameter if parameter else {},
         "agent_type": agent_type
     }
     if output_file_grp:
         req_params["output_file_grps"] = output_file_grp.split(',')
     if page_id:
         req_params["page_id"] = page_id
+    if parameter:
+        if parameter == ['{}']:
+            req_params["parameters"] = {}
+        else:
+            req_params["parameters"] = parameter
     if result_queue_name:
         req_params["result_queue_name"] = result_queue_name
     if callback_url:
         req_params["callback_url"] = callback_url
     client = Client(server_addr_processing=address)
     processing_job_id = client.send_processing_job_request(
-        processor_name=processor_name, req_params=loads(dumps(req_params)))
+        processor_name=processor_name, req_params=req_params)
     assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
     if block:

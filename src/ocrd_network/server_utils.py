@@ -200,6 +200,7 @@ def raise_http_exception(logger: Logger, status_code: int, message: str, error: 
 
 
 def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
+    # logger.warning(f"Job input: {job_input}")
     if bool(job_input.path_to_mets) == bool(job_input.workspace_id):
         message = (
             "Wrong processing job input format. "
