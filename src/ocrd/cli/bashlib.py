@@ -115,10 +115,12 @@ def bashlib_input_files(**kwargs):
         @property
         def executable(self):
             return ''
-    processor = BashlibProcessor(workspace,
-                                 page_id=kwargs['page_id'],
-                                 input_file_grp=kwargs['input_file_grp'],
-                                 output_file_grp=kwargs['output_file_grp'])
+    processor = BashlibProcessor(None)
+    # go half way of the normal run_processor / process_workspace call tree
+    processor.workspace = workspace
+    processor.page_id = kwargs['page_id']
+    processor.input_file_grp = kwargs['input_file_grp']
+    processor.output_file_grp = kwargs['output_file_grp']
     for input_files in processor.zip_input_files(mimetype=None, on_error='abort'):
         # ensure all input files exist locally (without persisting them in the METS)
         # - this mimics the default behaviour of all Pythonic processors

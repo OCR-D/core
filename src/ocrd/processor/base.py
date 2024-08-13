@@ -110,15 +110,6 @@ class Processor():
             output_file_grp=None,
             page_id=None,
             download_files=True,
-            # FIXME: deprecate all the following in favor of respective methods
-            resolve_resource=None,
-            show_resource=None,
-            list_resources=False,
-            show_help=False,
-            subcommand=None,
-            show_version=False,
-            dump_json=False,
-            dump_module_dir=False,
             version=None
     ):
         """
@@ -134,27 +125,17 @@ class Processor():
         Keyword Args:
              parameter (string): JSON of the runtime choices for ocrd-tool ``parameters``. \
                  Can be ``None`` even for processing, but then needs to be set before running.
-             input_file_grp (string): comma-separated list of METS ``fileGrp``s used for input.
-             output_file_grp (string): comma-separated list of METS ``fileGrp``s used for output.
+             input_file_grp (string): comma-separated list of METS ``fileGrp``s used for input. \
+                 Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
+                 before processing.
+             output_file_grp (string): comma-separated list of METS ``fileGrp``s used for output. \
+                 Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
+                 before processing.
              page_id (string): comma-separated list of METS physical ``page`` IDs to process \
-                 (or empty for all pages).
+                 (or empty for all pages). \
+                 Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
+                 before processing.
              download_files (boolean): Whether input files will be downloaded prior to processing.
-             resolve_resource (string): If not ``None``, then instead of processing, resolve \
-                 given resource by name and print its full path to stdout.
-             show_resource (string): If not ``None``, then instead of processing, resolve \
-                 given resource by name and print its contents to stdout.
-             list_resources (boolean): If true, then instead of processing, find all installed \
-                 resource files in the search paths and print their path names.
-             show_help (boolean): If true, then instead of processing, print a usage description \
-                 including the standard CLI and all of this processor's ocrd-tool parameters and \
-                 docstrings.
-             subcommand (string): 'worker' or 'server', only used here for the right --help output
-             show_version (boolean): If true, then instead of processing, print information on \
-                 this processor's version and OCR-D version. Exit afterwards.
-             dump_json (boolean): If true, then instead of processing, print :py:attr:`ocrd_tool` \
-                 on stdout.
-             dump_module_dir (boolean): If true, then instead of processing, print :py:attr:`moduledir` \
-                 on stdout.
         """
         if ocrd_tool is not None:
             deprecation_warning("Passing 'ocrd_tool' as keyword argument to Processor is deprecated - "
@@ -165,48 +146,24 @@ class Processor():
             deprecation_warning("Passing 'version' as keyword argument to Processor is deprecated - "
                                 "use or override metadata/version properties instead")
             self._version = version
-        if dump_json:
-            print(json.dumps(self.ocrd_tool, indent=True))
-            return
-        if dump_module_dir:
-            print(self.moduledir)
-            return
-        if list_resources:
-            for res in self.list_all_resources():
-                print(res)
-            return
-        if resolve_resource:
-            try:
-                res = self.resolve_resource(resolve_resource)
-                print(res)
-            except ResourceNotFoundError as e:
-                log = getLogger('ocrd.processor.base')
-                log.critical(e.message)
-                sys.exit(1)
-            return
-        if show_resource:
-            try:
-                self.show_resource(show_resource)
-            except ResourceNotFoundError as e:
-                log = getLogger('ocrd.processor.base')
-                log.critical(e.message)
-                sys.exit(1)
-            return
-        if show_help:
-            self.show_help(subcommand=subcommand)
-            return
-        if show_version:
-            self.show_version()
-            return
-        self.workspace = workspace
-        if self.workspace:
+        if workspace is not None:
             deprecation_warning("Passing a workspace argument other than 'None' to Processor "
                                 "is deprecated - pass as argument to process_workspace instead")
+            self.workspace = workspace
             self.old_pwd = getcwd()
             os.chdir(self.workspace.directory)
-        self.input_file_grp = input_file_grp
-        self.output_file_grp = output_file_grp
-        self.page_id = None if page_id == [] or page_id is None else page_id
+        if input_file_grp is not None:
+            deprecation_warning("Passing an input_file_grp kwarg other than 'None' to Processor "
+                                "is deprecated - pass as argument to process_workspace instead")
+            self.input_file_grp = input_file_grp
+        if output_file_grp is not None:
+            deprecation_warning("Passing an output_file_grp kwarg other than 'None' to Processor "
+                                "is deprecated - pass as argument to process_workspace instead")
+            self.output_file_grp = output_file_grp
+        if page_id is not None:
+            deprecation_warning("Passing a page_id kwarg other than 'None' to Processor "
+                                "is deprecated - pass as argument to process_workspace instead")
+            self.page_id = page_id or None
         self.download = download_files
         if parameter is None:
             parameter = {}
@@ -220,9 +177,16 @@ class Processor():
                 deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')(getattr(self, 'process')))
 
     def show_help(self, subcommand=None):
+        """
+        Print a usage description including the standard CLI and all of this processor's ocrd-tool
+        parameters and docstrings.
+        """
         print(generate_processor_help(self.ocrd_tool, processor_instance=self, subcommand=subcommand))
 
     def show_version(self):
+        """
+        Print information on this processor's version and OCR-D version.
+        """
         print("Version %s, ocrd/core %s" % (self.version, OCRD_VERSION))
 
     def verify(self):
@@ -230,6 +194,28 @@ class Processor():
         Verify that the :py:attr:`input_file_grp` fulfills the processor's requirements.
         """
         return True
+
+    def dump_json(self):
+        """
+        Print :py:attr:`ocrd_tool` on stdout.
+        """
+        print(json.dumps(self.ocrd_tool, indent=True))
+        return
+
+    def dump_module_dir(self):
+        """
+        Print :py:attr:`moduledir` on stdout.
+        """
+        print(self.moduledir)
+        return
+
+    def list_resources(self):
+        """
+        Find all installed resource files in the search paths and print their path names.
+        """
+        for res in self.list_all_resources():
+            print(res)
+        return
 
     def setup(self) -> None:
         """
@@ -265,14 +251,10 @@ class Processor():
         (This will iterate over pages and files, calling
         :py:meth:`process_page`, handling exceptions.)
         """
-        assert self.input_file_grp is not None
-        assert self.output_file_grp is not None
-        input_file_grps = self.input_file_grp.split(',')
-        for input_file_grp in input_file_grps:
-            assert input_file_grp in workspace.mets.file_groups
         log = getLogger('ocrd.processor.base')
         with pushd_popd(workspace.directory):
             self.workspace = workspace
+            self.verify()
             try:
                 # FIXME: add page parallelization by running multiprocessing.Pool (#322)
                 for input_file_tuple in self.zip_input_files(on_error='abort'):
@@ -412,6 +394,14 @@ class Processor():
         raise ResourceNotFoundError(val, executable)
 
     def show_resource(self, val):
+        """
+        Resolve a resource name to a file path with the algorithm in
+        https://ocr-d.de/en/spec/ocrd_tool#file-parameters,
+        then print its contents to stdout.
+
+        Args:
+            val (string): resource value to show
+        """
         res_fname = self.resolve_resource(val)
         fpath = Path(res_fname)
         if fpath.is_dir():
@@ -477,7 +467,7 @@ class Processor():
         - Otherwise raise an error (complaining that only PAGE-XML warrants
           having multiple images for a single page)
         Algorithm <https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593>_
-        
+
         Returns:
             A list of :py:class:`ocrd_models.ocrd_file.OcrdFile` objects.
         """

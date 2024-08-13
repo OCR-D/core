@@ -369,7 +369,7 @@ def get_cached_processor(parameter: dict, processor_class):
     """
     if processor_class:
         dict_params = dict(parameter) if parameter else None
-        processor = processor_class(workspace=None, parameter=dict_params)
+        processor = processor_class(None, parameter=dict_params)
         processor.setup()
         return processor
     return None
@@ -386,22 +386,13 @@ def get_processor(
 ):
     if processor_class:
         if instance_caching:
-            cached_processor = get_cached_processor(
-                parameter=parameter,
-                processor_class=processor_class
-            )
-            cached_processor.workspace = workspace
-            cached_processor.page_id = page_id
-            cached_processor.input_file_grp = input_file_grp
-            cached_processor.output_file_grp = output_file_grp
-            return cached_processor
-        processor = processor_class(
-            workspace=workspace,
-            page_id=page_id,
-            input_file_grp=input_file_grp,
-            output_file_grp=output_file_grp,
-            parameter=parameter
-        )
-        processor.setup()
+            processor = get_cached_processor(parameter, processor_class)
+        else:
+            processor = processor_class(None, parameter=parameter)
+            processor.setup()
+        processor.workspace = workspace
+        processor.page_id = page_id
+        processor.input_file_grp = input_file_grp
+        processor.output_file_grp = output_file_grp
         return processor
     raise ValueError("Processor class is not known")

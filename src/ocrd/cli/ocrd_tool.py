@@ -117,25 +117,25 @@ def ocrd_tool_tool_description(ctx):
 @ocrd_tool_tool.command('list-resources', help="List tool's file resources")
 @pass_ocrd_tool
 def ocrd_tool_tool_list_resources(ctx):
-    ctx.processor(None, list_resources=True)
+    ctx.processor(None).list_resources()
 
 @ocrd_tool_tool.command('resolve-resource', help="Get a tool's file resource full path name")
 @click.argument('res_name')
 @pass_ocrd_tool
 def ocrd_tool_tool_resolve_resource(ctx, res_name):
-    ctx.processor(None, resolve_resource=res_name)
+    ctx.processor(None).resolve_resource(res_name)
 
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
 @pass_ocrd_tool
 def ocrd_tool_tool_show_resource(ctx, res_name):
-    ctx.processor(None, show_resource=res_name)
+    ctx.processor(None).show_resource(res_name)
 
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @click.argument('subcommand', required=False)
 @pass_ocrd_tool
 def ocrd_tool_tool_params_help(ctx, subcommand):
-    ctx.processor(None, show_help=True, subcommand=subcommand)
+    ctx.processor(None).show_help(subcommand=subcommand)
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories

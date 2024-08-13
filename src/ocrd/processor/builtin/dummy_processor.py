@@ -79,11 +79,6 @@ class DummyProcessor(Processor):
     def version(self):
         return '0.0.3'
 
-    def setup(self):
-        super().setup()
-        assert_file_grp_cardinality(self.input_file_grp, 1)
-        assert_file_grp_cardinality(self.output_file_grp, 1)
-
 @click.command()
 @ocrd_cli_options
 def cli(*args, **kwargs):
