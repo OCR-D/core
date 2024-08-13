@@ -236,7 +236,7 @@ def test_reload(start_mets_server : Tuple[str, Workspace]):
     assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'
     assert len(workspace_server_copy.mets.find_all_files()) == 35, '35 files total'
 
-    workspace_server_copy.add_file('FOO', ID='foo', mimetype='foo/bar', local_filename='mets.xml', pageId='foo')
+    workspace_server_copy.add_file('FOO', file_id='foo', mimetype='foo/bar', local_filename='mets.xml', page_id='foo')
     assert len(workspace_server.mets.find_all_files()) == 35, '35 files total'
     assert len(workspace_server_copy.mets.find_all_files()) == 36, '36 files total'
 
