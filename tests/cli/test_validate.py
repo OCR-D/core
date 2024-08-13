@@ -57,24 +57,24 @@ class TestCli(TestCase):
             json_path.write_text(OCRD_TOOL)
 
             # normal call
-            code, _, _ = self.invoke_cli(validate_cli, ['tool-json', str(json_path)])
-            self.assertEqual(code, 0)
+            code, _, err = self.invoke_cli(validate_cli, ['tool-json', str(json_path)])
+            self.assertEqual(code, 0, err)
             # relative path
             with pushd_popd(tempdir):
-                code, _, _ = self.invoke_cli(validate_cli, ['tool-json', 'ocrd-tool.json'])
-                self.assertEqual(code, 0)
+                code, _, err = self.invoke_cli(validate_cli, ['tool-json', 'ocrd-tool.json'])
+                self.assertEqual(code, 0, err)
             # default path
             with pushd_popd(tempdir):
-                code, _, _ = self.invoke_cli(validate_cli, ['tool-json'])
-                self.assertEqual(code, 0)
+                code, _, err = self.invoke_cli(validate_cli, ['tool-json'])
+                self.assertEqual(code, 0, err)
 
     def test_validate_parameter(self):
         with TemporaryDirectory() as tempdir:
             json_path = Path(tempdir, 'ocrd-tool.json')
             json_path.write_text(OCRD_TOOL)
             with pushd_popd(tempdir):
-                code, _, _ = self.invoke_cli(validate_cli, ['parameters', 'ocrd-tool.json', 'ocrd-xyz', dumps({"baz": "foo"})])
-                self.assertEqual(code, 0)
+                code, _, err = self.invoke_cli(validate_cli, ['parameters', 'ocrd-tool.json', 'ocrd-xyz', dumps({"baz": "foo"})])
+                self.assertEqual(code, 0, err)
 
     def test_validate_page(self):
         page_path = assets.path_to('glyph-consistency/data/OCR-D-GT-PAGE/FAULTY_GLYPHS.xml')
@@ -84,11 +84,11 @@ class TestCli(TestCase):
 
     def test_validate_tasks(self):
         # simple
-        code, _, _ = self.invoke_cli(validate_cli, ['tasks',
+        code, _, err = self.invoke_cli(validate_cli, ['tasks',
             "sample-processor-required-param -I FOO -O OUT1 -p '{\"param1\": true}'",
             "sample-processor-required-param -I FOO -O OUT2 -p '{\"param1\": true}'",
         ])
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 0, err)
 
         # with workspace
         code, out, err = self.invoke_cli(validate_cli, ['tasks', '--workspace', assets.path_to('kant_aufklaerung_1784/data'),
@@ -96,7 +96,7 @@ class TestCli(TestCase):
             "sample-processor-required-param -I OCR-D-IMG,OCR-D-GT-PAGE -O OUT2 -p '{\"param1\": true}'",
         ])
         print('code=%s out=%s err=%s' % (code, out, err))
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 0, err)
 
 
 if __name__ == '__main__':
