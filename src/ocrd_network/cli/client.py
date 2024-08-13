@@ -31,6 +31,19 @@ def processing_cli():
     pass
 
 
+@processing_cli.command('check-status')
+@click.option('--address')
+@click.option('-j', '--processing-job-id', required=True)
+def check_processing_job_status(
+    address: Optional[str],
+    processing_job_id: str
+):
+    client = Client(server_addr_processing=address)
+    job_status = client.check_job_status(processing_job_id)
+    assert job_status
+    print(f"Processing job status: {job_status}")
+
+
 @processing_cli.command('processor')
 @click.argument('processor_name', required=True, type=click.STRING)
 @click.option('--address')
@@ -90,7 +103,20 @@ def workflow_cli():
     pass
 
 
-@processing_cli.command('run')
+@workflow_cli.command('check-status')
+@click.option('--address')
+@click.option('-j', '--workflow-job-id', required=True)
+def check_workflow_job_status(
+    address: Optional[str],
+    workflow_job_id: str
+):
+    client = Client(server_addr_processing=address)
+    job_status = client.check_workflow_status(workflow_job_id)
+    assert job_status
+    print(f"Workflow job status: {job_status}")
+
+
+@workflow_cli.command('run')
 @click.option('--address')
 @click.option('-m', '--path-to-mets', required=True)
 @click.option('-w', '--path-to-workflow', required=True)

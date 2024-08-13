@@ -1,5 +1,7 @@
 from ocrd_utils import config, getLogger, LOG_FORMAT
 from .client_utils import (
+    get_ps_processing_job_status,
+    get_ps_workflow_job_status,
     poll_job_status_till_timeout_fail_or_success,
     poll_wf_status_till_timeout_fail_or_success,
     post_ps_processing_request,
@@ -21,6 +23,12 @@ class Client:
         self.polling_timeout = timeout
         self.polling_wait = wait
         self.polling_tries = int(timeout/wait)
+
+    def check_job_status(self, job_id: str):
+        return get_ps_processing_job_status(self.server_addr_processing, processing_job_id=job_id)
+
+    def check_workflow_status(self, workflow_job_id: str):
+        return get_ps_workflow_job_status(self.server_addr_processing, workflow_job_id=workflow_job_id)
 
     def poll_job_status(self, job_id: str) -> str:
         return poll_job_status_till_timeout_fail_or_success(
