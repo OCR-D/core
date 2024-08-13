@@ -50,7 +50,7 @@ class TestBashlibCli(TestCase):
             return -1, "", str(e)
         finally:
             os.remove(scriptfile.name)
-            
+
     def setUp(self):
         self.maxDiff = None
         super().setUp()
