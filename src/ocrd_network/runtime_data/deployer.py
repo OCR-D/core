@@ -35,7 +35,7 @@ class Deployer:
     # TODO: Reconsider this.
     def find_matching_network_agents(
         self, worker_only: bool = False, server_only: bool = False, docker_only: bool = False,
-        native_only: bool = False, str_names_only: bool = False, unique_only: bool = False
+        native_only: bool = False, str_names_only: bool = False, unique_only: bool = False, sort: bool = False
     ) -> Union[List[str], List[object]]:
         """Finds and returns a list of matching data objects of type:
         `DataProcessingWorker` and `DataProcessorServer`.
@@ -46,6 +46,7 @@ class Deployer:
         :py:attr:`native_only` match only native network agents (DataProcessingWorker and DataProcessorServer)
         :py:attr:`str_names_only` returns the processor_name filed instead of the Data* object
         :py:attr:`unique_only` remove duplicate names from the matches
+        :py:attr:`sort` sort the result
 
         `worker_only` and `server_only` are mutually exclusive to each other
         `docker_only` and `native_only` are mutually exclusive to each other
@@ -62,6 +63,10 @@ class Deployer:
             raise ValueError(msg)
         if not str_names_only and unique_only:
             msg = f"Value 'unique_only' is allowed only together with 'str_names_only'"
+            self.log.exception(msg)
+            raise ValueError(msg)
+        if sort and not str_names_only:
+            msg = f"Value 'sort' is allowed only together with 'str_names_only'"
             self.log.exception(msg)
             raise ValueError(msg)
 
@@ -88,8 +93,12 @@ class Deployer:
         matched_names = [match.processor_name for match in matched_objects]
         if not unique_only:
             return matched_names
-        # Removes any duplicate entries from matched names
-        return list(dict.fromkeys(matched_names))
+        list_matched = list(dict.fromkeys(matched_names))
+        if not sort:
+            # Removes any duplicate entries from matched names
+            return list_matched
+        list_matched.sort()
+        return list_matched
 
     def resolve_processor_server_url(self, processor_name) -> str:
         processor_server_url = ''
