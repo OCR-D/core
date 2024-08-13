@@ -13,11 +13,13 @@ from .client_utils import (
 class Client:
     def __init__(
         self,
-        server_addr_processing: str = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING,
+        server_addr_processing: str,
         timeout: int = config.OCRD_NETWORK_CLIENT_POLLING_TIMEOUT,
         wait: int = config.OCRD_NETWORK_CLIENT_POLLING_SLEEP
     ):
         self.log = getLogger(f"ocrd_network.client")
+        if not server_addr_processing:
+            server_addr_processing = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING
         self.server_addr_processing = server_addr_processing
         verify_server_protocol(self.server_addr_processing)
         self.polling_timeout = timeout
