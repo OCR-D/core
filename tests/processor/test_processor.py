@@ -138,8 +138,8 @@ class TestProcessor(TestCase):
     def test_run_output0(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
@@ -148,10 +148,10 @@ class TestProcessor(TestCase):
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
             ws.overwrite_mode = True
-            ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, ID='OCR-D-OUT_phys_0001', pageId='phys_0001')
+            ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, file_id='OCR-D-OUT_phys_0001', page_id='phys_0001')
             ws.overwrite_mode = False
             with pytest.raises(Exception) as exc:
                 run_processor(DummyProcessorWithOutput, workspace=ws,
