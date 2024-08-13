@@ -59,6 +59,20 @@ def processing_cli():
     pass
 
 
+@processing_cli.command('check-log')
+@click.option('--address',
+              help='The address of the Processing Server. If not provided, '
+                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('-j', '--processing-job-id', required=True)
+def check_processing_job_status(address: Optional[str], processing_job_id: str):
+    """
+    Check the log of a previously submitted processing job.
+    """
+    client = Client(server_addr_processing=address)
+    response = client.check_job_log(job_id=processing_job_id)
+    print(response._content.decode(encoding='utf-8'))
+
+
 @processing_cli.command('check-status')
 @click.option('--address',
               help='The address of the Processing Server. If not provided, '

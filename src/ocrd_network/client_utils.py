@@ -41,6 +41,12 @@ def get_ps_deployed_processor_ocrd_tool(ps_server_host: str, processor_name: str
     return response.json()
 
 
+def get_ps_processing_job_log(ps_server_host: str, processing_job_id: str):
+    request_url = f"{ps_server_host}/processor/log/{processing_job_id}"
+    response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
+    return response
+
+
 def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) -> str:
     request_url = f"{ps_server_host}/processor/job/{processing_job_id}"
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
