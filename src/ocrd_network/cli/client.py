@@ -1,7 +1,7 @@
 import click
 from json import dumps, loads
 from typing import Optional
-from ocrd.decorators import parameter_option
+from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
 from ocrd_utils import DEFAULT_METS_BASENAME
 from ..client import Client
 
@@ -54,6 +54,7 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 @click.option('-O', '--output-file-grp', default='OCR-D-OUTPUT')
 @click.option('-g', '--page-id')
 @parameter_option
+@parameter_override_option
 @click.option('--result-queue-name')
 @click.option('--callback-url')
 @click.option('--agent-type', default='worker')
@@ -67,6 +68,7 @@ def send_processing_job_request(
     output_file_grp: Optional[str],
     page_id: Optional[str],
     parameter: Optional[dict],
+    parameter_override: Optional[dict],
     result_queue_name: Optional[str],
     callback_url: Optional[str],
     # TODO: This is temporally available to toggle
@@ -92,6 +94,8 @@ def send_processing_job_request(
             req_params["parameters"] = {}
         else:
             req_params["parameters"] = parameter
+    if parameter_override:
+        req_params["parameters"] = parameter_override
     if result_queue_name:
         req_params["result_queue_name"] = result_queue_name
     if callback_url:
