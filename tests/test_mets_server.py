@@ -55,10 +55,10 @@ def add_file_server(x):
     mets_server_url, i = x
     workspace_server = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
     workspace_server.add_file(
+        'FOO',
         local_filename=f'local_filename{i}',
         mimetype=MIMETYPE_PAGE,
         page_id=f'page{i}',
-        file_grp='FOO',
         file_id=f'FOO_page{i}_foo{i}',
         # url=f'url{i}'
     )
