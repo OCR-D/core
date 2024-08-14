@@ -6,7 +6,7 @@ DOCKER_IMAGE_RABBIT_MQ = "rabbitmq:3.12-management"
 DOCKER_RABBIT_MQ_FEATURES = "quorum_queue,implicit_default_bindings,classic_mirrored_queue_version"
 
 NETWORK_PROTOCOLS = ["http://", "https://"]
-OCRD_ALL_JSON_TOOLS_URL = "https://ocr-d.de/js/ocrd-all-tool.json"
+OCRD_ALL_TOOL_JSON = "ocrd-all-tool.json"
 # Used as a placeholder to lock all pages when no page_id is specified
 SERVER_ALL_PAGES_PLACEHOLDER = "all_pages"
 

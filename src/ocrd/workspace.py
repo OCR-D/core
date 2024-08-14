@@ -64,13 +64,17 @@ class Workspace():
     :py:class:`ocrd.resolver.Resolver`.
 
     Args:
-
-        directory (string) : Filesystem folder to work in
+        resolver (:py:class:`ocrd.Resolver`) : `Resolver` instance
+        directory (string) : Filesystem path to work in
         mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace.
-            Loaded from `'mets.xml'` if `None`.
-        mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
-        overwrite_mode (boolean) : Whether to force add operations on this workspace globally
-        baseurl (string) : Base URL to prefix to relative URL.
+            If `None`, then loaded from ``directory``/``mets_basename``
+            or delegated to ``mets_server_url``.
+        mets_basename (string, mets.xml) : Basename of the METS XML file in the workspace directory.
+        mets_server_url (string, None) : URI of TCP or local path of UDS for METS server handling the
+            `OcrdMets` of this workspace. If `None`, then the METS will be read from and written to
+            the filesystem directly.
+        baseurl (string, None) : Base URL to prefix to relative URL.
+        overwrite_mode (boolean, False) : Whether to force add operations on this workspace globally
     """
 
     def __init__(
@@ -422,7 +426,7 @@ class Workspace():
                 # If the local filename has folder components, create those folders
                 local_filename_dir = str(kwargs['local_filename']).rsplit('/', 1)[0]
                 if local_filename_dir != str(kwargs['local_filename']) and not Path(local_filename_dir).is_dir():
-                    makedirs(local_filename_dir)
+                    makedirs(local_filename_dir, exist_ok=True)
 
             #  print(kwargs)
             kwargs["pageId"] = kwargs.pop("page_id")

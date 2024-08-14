@@ -125,7 +125,7 @@ config.add("OCRD_PROFILE_FILE",
     description="If set, then the CPU profile is written to this file for later peruse with a analysis tools like snakeviz")
 
 config.add("OCRD_DOWNLOAD_RETRIES",
-    description="Number of times to retry failed attempts for downloads of workspace files.",
+    description="Number of times to retry failed attempts for downloads of resource or workspace files.",
     validator=int,
     parser=int)
 
@@ -178,12 +178,12 @@ config.add("HOME",
     default=(True, lambda: Path.home()))
 
 config.add("XDG_DATA_HOME",
-    description="Directory to look for `./ocrd/resources.yml` (i.e. `ocrd resmgr` user database)",
+    description="Directory to look for `./ocrd-resources/*` (i.e. `ocrd resmgr` data location)",
     parser=lambda val: Path(val),
     default=(True, lambda: Path(config.HOME, '.local/share')))
 
 config.add("XDG_CONFIG_HOME",
-    description="Directory to look for `./ocrd-resources/*` (i.e. `ocrd resmgr` data location)",
+    description="Directory to look for `./ocrd/resources.yml` (i.e. `ocrd resmgr` user database)",
     parser=lambda val: Path(val),
     default=(True, lambda: Path(config.HOME, '.config')))
 

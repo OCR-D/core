@@ -15,7 +15,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging, get_logging_config_files
 
 @click.command()
 @ocrd_cli_options
@@ -60,6 +60,8 @@ class TestDecorators(TestCase):
             assert "'foo' is not one of" in err
 
     def test_loglevel_override(self):
+        if get_logging_config_files():
+            pytest.skip(f"ocrd_logging.conf found at {get_logging_config_files()}, skipping logging test")
         import logging
         disableLogging()
         assert logging.getLogger('ocrd').getEffectiveLevel() == logging.WARNING

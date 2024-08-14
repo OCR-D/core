@@ -5,6 +5,58 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * ocrd_network: Use `ocrd-all-tool.json` bundled by core instead of download from website, #1257, #1260
+  * `ocrd workspace clone`/`Resolver.workspace_from_url`: with `clobber_mets=False`, raise a FileExistsError for existing mets.xml on disk, #563, #1268
+  * `ocrd workspace find --download`: print the the correct, up-to-date field, not `None`, #1202, #1266
+
+## [2.67.2] - 2024-07-19
+
+Fixed:
+
+  * Run `multiprocessing.set_start_method('fork')` only for OSX, #1261
+  * Broken PyPI release, #1262
+
+## [2.67.1] - 2024-07-17
+
+Fixed:
+
+  - Build and tests fixed, no functional changes from #1258
+
+## [2.67.0] - 2024-07-16
+
+Changed:
+
+  - Additional docker base images with preinstalled tensorflow 1 (`core-cuda-tf1`), tensorflow 2 (`core-cuda-tf2`) and torch (`core-cuda-torch`), #1239
+  - Resource Manager: Skip instead of raise an exception download if target file already exists (unless `--overwrite`), #1246
+  - Resource Manager: Try to use bundled `ocrd-all-tool.json` if available, #1250, OCR-D/all#444
+
+Added:
+
+  - `ocrd process` does support `-U/--mets-server`, #1243
+
+Fixed:
+
+  - `ocrd process`-derived tasks are not run in a temporary directory when not called from within workspace, #1243
+  - regression from #1238 where processors failed that had required parameters, #1255, #1256
+  - METS Server: Unlink UDS sockert file if it exists before startup, #1244
+  - Resource Manager: Do not create zero-size files for failing downloads, #1201, #1246
+  - Workspace.add_file: Allow multiple processors to create file group folders simultaneously, #1203, #1253
+  - Resource Manager: Do not try to run `--dump-json` for known non-processors `ocrd-{cis-data,import,make}`, #1218, #1249
+  - Resource Manager: Properly handle copying of directories, #1237, #1248
+  - bashlib: regression in parsing JSON from introducing parameter preset files, #1258
+
+Removed:
+
+  - Defaults for `-I/--input-file-grp`/`-O/--output-file-grp`, #1256, #274
+
+## [2.66.1] - 2024-06-26
+
+Fixed:
+
+  * GHA Docker: build docker.io first, then tag ghcr.io
+
 ## [2.66.0] - 2024-06-07
 
 Fixed:
@@ -2092,8 +2144,12 @@ Fixed
 ## [0.0.1] - 2018-04-17
 
 Initial Release
-]
+
 <!-- link-labels -->
+[2.67.2]: ../../compare/v2.67.2..v2.67.1
+[2.67.1]: ../../compare/v2.67.1..v2.67.0
+[2.67.0]: ../../compare/v2.67.0..v2.66.1
+[2.66.1]: ../../compare/v2.66.1..v2.66.0
 [2.66.0]: ../../compare/v2.66.0..v2.65.0
 [2.65.0]: ../../compare/v2.65.0..v2.64.1
 [2.64.1]: ../../compare/v2.64.1..v2.64.0

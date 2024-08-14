@@ -168,6 +168,7 @@ class Processor():
         if parameter is None:
             parameter = {}
         parameterValidator = ParameterValidator(self.ocrd_tool)
+
         report = parameterValidator.validate(parameter)
         if not report.is_valid:
             raise ValueError("Invalid parameters %s" % report.errors)
@@ -427,6 +428,7 @@ class Processor():
         Args:
             val (string): resource value to show
         """
+
         res_fname = self.resolve_resource(val)
         fpath = Path(res_fname)
         if fpath.is_dir():

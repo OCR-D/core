@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger
-from .constants import AgentType, JobState, OCRD_ALL_JSON_TOOLS_URL, ServerApiTags
+from .constants import AgentType, JobState, ServerApiTags
 from .database import (
     initiate_database,
     db_get_processing_job,
@@ -58,7 +58,7 @@ from .server_utils import (
 )
 from .tcp_to_uds_mets_proxy import MetsServerProxy
 from .utils import (
-    download_ocrd_all_tool_json,
+    load_ocrd_all_tool_json,
     expand_page_ids,
     generate_id,
     generate_workflow_content,
@@ -90,8 +90,8 @@ class ProcessingServer(FastAPI):
         log_file = get_processing_server_logging_file_path(pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
-        self.log.info(f"Downloading ocrd all tool json")
-        self.ocrd_all_tool_json = download_ocrd_all_tool_json(ocrd_all_url=OCRD_ALL_JSON_TOOLS_URL)
+        self.log.info(f"Loading ocrd all tool json")
+        self.ocrd_all_tool_json = load_ocrd_all_tool_json()
         self.hostname = host
         self.port = port
 

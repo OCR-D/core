@@ -29,7 +29,7 @@ class TestOcrdToolValidator(TestCase):
 
     def test_smoke(self):
         report = OcrdToolValidator.validate(self.ocrd_tool)
-        self.assertTrue(report.is_valid, report)
+        self.assertTrue(report.is_valid, str(report.errors))
 
     def test_additional_props(self):
         self.ocrd_tool['not-allowed'] = 'YUP'
@@ -48,7 +48,7 @@ class TestOcrdToolValidator(TestCase):
         ocrd_tool = json.loads(skeleton)
         ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": 'application/rdf+xml'}}
         report = OcrdToolValidator.validate(ocrd_tool)
-        self.assertTrue(report.is_valid, report)
+        self.assertTrue(report.is_valid, str(report.errors))
 
     # Not restricted anymore since spec 3.3.0
     #  def test_file_param_bad_content_types(self):

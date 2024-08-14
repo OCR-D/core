@@ -104,10 +104,8 @@ class TestBashlibCli(TestCase):
         exit_code, out, err = self.invoke_bash(
             "source $(ocrd bashlib filename) && ocrd__minversion 2.29.0")
         assert exit_code == 0
-        (major, minor, patch) = map(int, str(VERSION).split('.'))
-        version = "%d.%d.%d" % (major, minor + 1, patch)
         exit_code, out, err = self.invoke_bash(
-            "source $(ocrd bashlib filename) && ocrd__minversion " + version)
+            "source $(ocrd bashlib filename) && ocrd__minversion " + VERSION)
         assert exit_code > 0
         assert "ERROR: ocrd/core is too old" in err
 
