@@ -169,6 +169,7 @@ from .logging import (
     disableLogging,
     getLevelName,
     getLogger,
+    get_logging_config_files,
     initLogging,
     setOverrideLogLevel,
     )

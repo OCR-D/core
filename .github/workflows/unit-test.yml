@@ -50,14 +50,18 @@ jobs:
         make install deps-test
     - name: Test with pytest
       run: |
-        make test benchmark
+        mkdir -p test-results
+        make test benchmark PYTEST_ARGS=--junitxml=test-results/test.xml
+    - uses: test-summary/action@v2
+      with:
+        paths: "test-results/test.xml"
     - name: test to ensure that --editable install works
       run: |
         make install-dev; ocrd --version
     - name: Lint with flake8
       run: |
-        python -m pip install flake8
+        python -m pip install flake8 flake8-github
         # stop the build if there are Python syntax errors or undefined names
-        flake8 src --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics --format=github
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --format=github

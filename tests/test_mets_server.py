@@ -6,8 +6,11 @@ from tests.base import assets
 
 from itertools import repeat
 from multiprocessing import Process, Pool, Pipe, set_start_method
-# necessary for macos
-set_start_method("fork")
+try:
+    # necessary for macos
+    set_start_method("fork")
+except RuntimeError:
+    pass
 from shutil import rmtree, copytree
 from os import remove, stat as os_stat
 from os.path import exists

@@ -128,6 +128,19 @@ def setOverrideLogLevel(lvl, silent=not config.OCRD_LOGGING_DEBUG):
             print(f'[LOGGING] Overriding ocrd log level to {lvl}', file=sys.stderr)
         ocrd_logger.setLevel(lvl)
 
+def get_logging_config_files():
+    """
+    Return a list of all ``ocrd_logging.conf`` files found in CWD, HOME or /etc.
+    """
+    CONFIG_PATHS = [
+        Path.cwd(),
+        Path.home(),
+        Path('/etc'),
+    ]
+    return [f for f \
+            in [p / 'ocrd_logging.conf' for p in CONFIG_PATHS] \
+            if f.exists()]
+
 def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_LOGGING_DEBUG):
     """
     Reset ``ocrd`` logger, read logging configuration if exists, otherwise use basicConfig
@@ -164,14 +177,7 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
 
     config_file = None
     if not builtin_only:
-        CONFIG_PATHS = [
-            Path.cwd(),
-            Path.home(),
-            Path('/etc'),
-        ]
-        config_file = [f for f \
-                in [p / 'ocrd_logging.conf' for p in CONFIG_PATHS] \
-                if f.exists()]
+        config_file = get_logging_config_files()
     if config_file:
         if len(config_file) > 1 and not silent:
             print(f"[LOGGING] Multiple logging configuration files found at {config_file}, using first one", file=sys.stderr)

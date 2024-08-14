@@ -48,7 +48,7 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location [default: METS_URL directory or .]"')
 @click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
 @click.option('-m', '--mets', default=None, help='The path/URL of the METS file [default: WORKSPACE_DIR/mets.xml]', metavar="METS_URL")
-@click.option('-U', '--mets-server-url', 'mets_server_url', help="TCP host of METS server")
+@click.option('-U', '--mets-server-url', 'mets_server_url', help="TCP host URI or UDS path of METS server")
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
 def workspace_cli(ctx, directory, mets, mets_basename, mets_server_url, backup):
@@ -467,19 +467,18 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
                 include_fileGrp=include_fileGrp,
                 exclude_fileGrp=exclude_fileGrp,
             ):
-            ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
             if download and not f.local_filename:
                 workspace.download_file(f)
                 modified_mets = True
                 if wait:
                     time.sleep(wait)
             if undo_download and f.url and f.local_filename:
-                ret_entry = [f'Removed local_filename {f.local_filename}']
                 f.local_filename = None
                 modified_mets = True
                 if not keep_files:
                     ctx.log.debug("rm %s [cwd=%s]", f.local_filename, workspace.directory)
                     unlink(f.local_filename)
+            ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
             ret.append(ret_entry)
     if modified_mets:
         workspace.save_mets()

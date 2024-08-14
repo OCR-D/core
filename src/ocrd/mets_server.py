@@ -527,6 +527,9 @@ class OcrdMetsServer:
             # Create socket and change to world-readable and -writable to avoid permission errors
             self.log.debug(f"chmod 0o677 {self.url}")
             server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            if Path(self.url).exists() and not is_socket_in_use(self.url):
+                # remove leftover unused socket which blocks startup
+                Path(self.url).unlink()
             server.bind(self.url)  # creates the socket file
             atexit.register(self.shutdown)
             server.close()
@@ -540,3 +543,14 @@ class OcrdMetsServer:
 
         self.log.debug("Starting uvicorn")
         uvicorn.run(app, **uvicorn_kwargs)
+
+
+def is_socket_in_use(socket_path):
+    if Path(socket_path).exists():
+        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        try:
+            client.connect(socket_path)
+        except OSError:
+            return False
+        client.close()
+        return True
