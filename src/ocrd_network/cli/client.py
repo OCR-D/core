@@ -1,8 +1,10 @@
 import click
 from json import dumps
-from typing import Optional
+from typing import List, Optional, Tuple
 from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
 from ocrd_utils import DEFAULT_METS_BASENAME
+from ocrd_utils.introspect import set_json_key_value_overrides
+from ocrd_utils.str import parse_json_string_or_file
 from ..client import Client
 
 
@@ -111,8 +113,8 @@ def send_processing_job_request(
     input_file_grp: str,
     output_file_grp: Optional[str],
     page_id: Optional[str],
-    parameter: Optional[dict],
-    parameter_override: Optional[dict],
+    parameter: List[str],
+    parameter_override: List[Tuple[str, str]],
     result_queue_name: Optional[str],
     callback_url: Optional[str],
     # TODO: This is temporally available to toggle
@@ -133,11 +135,7 @@ def send_processing_job_request(
         req_params["output_file_grps"] = output_file_grp.split(',')
     if page_id:
         req_params["page_id"] = page_id
-    if parameter:
-        if parameter == ['{}']:
-            req_params["parameters"] = {}
-        else:
-            req_params["parameters"] = parameter
+    req_params["parameters"] = set_json_key_value_overrides(parse_json_string_or_file(*parameter), *parameter_override)
     if parameter_override:
         req_params["parameters"] = parameter_override
     if result_queue_name:
