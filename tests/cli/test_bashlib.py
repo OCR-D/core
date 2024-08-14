@@ -1,4 +1,6 @@
 from contextlib import contextmanager
+import re
+from typing import Tuple, Union
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 import os, sys
@@ -19,6 +21,13 @@ from ocrd_validators.constants import BAGIT_TXT
 from ocrd_models.constants import TAG_MODS_IDENTIFIER
 
 from ocrd_utils import pushd_popd
+
+def parse_version(v : str) -> Union[Tuple[int, int, int], Tuple[int, int, int, str]]:
+    tokens = re.split('((?:a|b|rc)[0-9]+)', v, 1)
+    version_wo_suffix = tokens[0]
+    prerelease_suffix = tokens[1] if len(tokens) > 1 else ''
+    (major, minor, patch) = map(int, version_wo_suffix.split('.'))
+    return (major, minor, patch, prerelease_suffix)
 
 class TestBashlibCli(TestCase):
 
@@ -101,13 +110,22 @@ class TestBashlibCli(TestCase):
         assert 'function' in out
 
     def test_bashlib_minversion(self):
-        exit_code, out, err = self.invoke_bash(
-            "source $(ocrd bashlib filename) && ocrd__minversion 2.29.0")
+        exit_code, out, err = self.invoke_bash("source $(ocrd bashlib filename) && ocrd__minversion 2.29.0")
         assert exit_code == 0
-        exit_code, out, err = self.invoke_bash(
-            "source $(ocrd bashlib filename) && ocrd__minversion " + VERSION)
+        major, minor, patch, prerelease_suffix = parse_version(VERSION)
+
+        # test normal version with impossible minimum minor version
+        version = "%d.%d.%d" % (major, minor + 1, patch)
+        exit_code, out, err = self.invoke_bash("source $(ocrd bashlib filename) && ocrd__minversion " + version)
         assert exit_code > 0
-        assert "ERROR: ocrd/core is too old" in err
+        assert f"ERROR: ocrd/core is too old ({VERSION} < {version})" in err
+
+        # test non-matching prerelease (the 99th alpha pre-release here)
+        version = "%d.%d.%da99" % (major, minor, patch)
+        assert VERSION != version # assuming we will never have 99 alpha prereleases ^^
+        exit_code, out, err = self.invoke_bash("source $(ocrd bashlib filename) && ocrd__minversion " + version)
+        assert exit_code > 0
+        assert f"ERROR: ocrd/core is too old ({VERSION} < {version})" in err
 
     def test_bashlib_cp_processor(self):
         # script = (Path(__file__).parent.parent / 'data/bashlib_cp_processor.sh').read_text()
