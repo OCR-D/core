@@ -1,3 +1,4 @@
+from typing import Optional
 from ocrd_utils import config, getLogger, LOG_FORMAT
 from .client_utils import (
     get_ps_deployed_processors,
@@ -16,7 +17,7 @@ from .client_utils import (
 class Client:
     def __init__(
         self,
-        server_addr_processing: str,
+        server_addr_processing: Optional[str],
         timeout: int = config.OCRD_NETWORK_CLIENT_POLLING_TIMEOUT,
         wait: int = config.OCRD_NETWORK_CLIENT_POLLING_SLEEP
     ):

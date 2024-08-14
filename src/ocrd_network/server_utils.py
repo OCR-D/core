@@ -125,14 +125,13 @@ def request_processor_server_tool_json(logger: Logger, processor_server_base_url
             urljoin(base=processor_server_base_url, url="info"),
             headers={"Content-Type": "application/json"}
         )
-        if response.status_code != 200:
-            message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
-            raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
-        return response.json()
     except Exception as error:
         message = f"Failed to retrieve ocrd tool json from: {processor_server_base_url}"
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message, error)
-
+    if response.status_code != 200:
+        message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
+        raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
+    return response.json()
 
 async def forward_job_to_processor_server(
     logger: Logger, job_input: PYJobInput, processor_server_base_url: str
