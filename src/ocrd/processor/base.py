@@ -15,7 +15,7 @@ import json
 import os
 from os import getcwd
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 import sys
 import inspect
 import tarfile
@@ -23,6 +23,8 @@ import io
 from deprecated import deprecated
 
 from ocrd.workspace import Workspace
+from ocrd_models.ocrd_file import OcrdFile
+from ocrd_models.ocrd_process_result import OcrdProcessResult
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
@@ -309,7 +311,7 @@ class Processor():
                 # fall back to deprecated method
                 self.process()
 
-    def process_page_file(self, *input_files) -> None:
+    def process_page_file(self, *input_files : OcrdFile) -> None:
         """
         Process the given ``input_files`` of the :py:attr:`workspace`,
         representing one physical page (passed as one opened
@@ -321,7 +323,7 @@ class Processor():
         to handle cases like multiple fileGrps, non-PAGE input etc.)
         """
         log = getLogger('ocrd.processor.base')
-        input_pcgts = [None] * len(input_files)
+        input_pcgts : List[OcrdPage] = [None] * len(input_files)
         page_id = input_files[0].pageId
         for i, input_file in enumerate(input_files):
             # FIXME: what about non-PAGE input like image or JSON ???
@@ -331,28 +333,25 @@ class Processor():
             except ValueError as e:
                 log.info("non-PAGE input for page %s: %s", page_id, e)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
-        output_pcgts = self.process_page_pcgts(*input_pcgts, output_file_id=output_file_id, page_id=page_id)
-        if isinstance(output_pcgts, (list, tuple)):
-            output_images = output_pcgts[1:]
-            output_pcgts = output_pcgts[0]
-            for output_image_pil, output_image_id, output_image_path in output_images:
-                self.workspace.save_image_file(
-                    output_image_pil,
-                    output_image_id,
-                    self.output_file_grp,
-                    page_id=page_id,
-                    file_path=output_image_path)
-        output_pcgts.set_pcGtsId(output_file_id)
-        self.add_metadata(output_pcgts)
+        result = self.process_page_pcgts(*input_pcgts, output_file_id=output_file_id, page_id=page_id)
+        for output_image_pil, output_image_id, output_image_path in result.images:
+            self.workspace.save_image_file(
+                output_image_pil,
+                output_image_id,
+                self.output_file_grp,
+                page_id=page_id,
+                file_path=output_image_path)
+        result.pcgts.set_pcGtsId(output_file_id)
+        self.add_metadata(result.pcgts)
         # FIXME: what about non-PAGE output like JSON ???
         self.workspace.add_file(file_id=output_file_id,
                                 file_grp=self.output_file_grp,
                                 page_id=page_id,
                                 local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
                                 mimetype=MIMETYPE_PAGE,
-                                content=to_xml(output_pcgts))
+                                content=to_xml(result.pcgts))
 
-    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdPage:
+    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdProcessResult:
         """
         Process the given ``input_pcgts`` of the :py:attr:`workspace`,
         representing one physical page (passed as one parsed
@@ -374,7 +373,9 @@ class Processor():
         Add PAGE-XML :py:class:`~ocrd_models.ocrd_page.MetadataItemType` ``MetadataItem`` describing
         the processing step and runtime parameters to :py:class:`~ocrd_models.ocrd_page.PcGtsType` ``pcgts``.
         """
-        pcgts.get_Metadata().add_MetadataItem(
+        metadata_obj = pcgts.get_Metadata()
+        assert metadata_obj is not None
+        metadata_obj.add_MetadataItem(
                 MetadataItemType(type_="processingStep",
                     name=self.ocrd_tool['steps'][0],
                     value=self.ocrd_tool['executable'],

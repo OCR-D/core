@@ -1073,7 +1073,7 @@ class Workspace():
         return segment_image, segment_coords
 
     # pylint: disable=redefined-builtin
-    def save_image_file(self, image : Image,
+    def save_image_file(self, image : Image.Image,
                         file_id : str,
                         file_grp : str,
                         file_path : Optional[str] = None,

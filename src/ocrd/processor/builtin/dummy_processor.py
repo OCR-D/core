@@ -1,11 +1,13 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from os.path import join, basename
+from typing import Optional
 
 import click
 
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
-from ocrd_models.ocrd_page import to_xml
+from ocrd_models.ocrd_page import OcrdPage, to_xml
+from ocrd_models.ocrd_process_result import OcrdProcessResult
 from ocrd_utils import (
     getLogger,
     assert_file_grp_cardinality,
@@ -24,9 +26,9 @@ class DummyProcessor(Processor):
     Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
     """
 
-    def process_page_pcgts(self, *input_pcgts, output_file_id=None, page_id=None):
+    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdProcessResult:
         # nothing to do here
-        return input_pcgts[0]
+        return OcrdProcessResult(input_pcgts[0])
 
     def process_page_file(self, *input_files):
         LOG = getLogger('ocrd.dummy')
@@ -48,7 +50,7 @@ class DummyProcessor(Processor):
                     content=content)
             file_id = file_id + '_PAGE'
             pcgts = page_from_file(output_file)
-            pcgts = self.process_page_pcgts(pcgts)
+            pcgts = self.process_page_pcgts(pcgts).pcgts
             pcgts.set_pcGtsId(file_id)
             self.add_metadata(pcgts)
             LOG.info("Add PAGE-XML %s generated for %s", file_id, output_file)
