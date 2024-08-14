@@ -125,7 +125,7 @@ config.add("OCRD_PROFILE_FILE",
     description="If set, then the CPU profile is written to this file for later peruse with a analysis tools like snakeviz")
 
 config.add("OCRD_DOWNLOAD_RETRIES",
-    description="Number of times to retry failed attempts for downloads of workspace files.",
+    description="Number of times to retry failed attempts for downloads of resource or workspace files.",
     validator=int,
     parser=int)
 
