@@ -136,8 +136,6 @@ def send_processing_job_request(
     if page_id:
         req_params["page_id"] = page_id
     req_params["parameters"] = set_json_key_value_overrides(parse_json_string_or_file(*parameter), *parameter_override)
-    if parameter_override:
-        req_params["parameters"] = parameter_override
     if result_queue_name:
         req_params["result_queue_name"] = result_queue_name
     if callback_url:
