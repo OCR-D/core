@@ -11,7 +11,7 @@ properties:
     type: string
     pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
   git_url:
-    description: Github/Gitlab URL
+    description: GitHub/GitLab URL
     type: string
     format: url
   dockerhub:
@@ -37,14 +37,14 @@ properties:
             type: string
           input_file_grp:
             deprecated: true
-            description: Input fileGrp@USE this tool expects by default
+            description: (DEPRECATED) Input fileGrp@USE this tool expects by default
             type: array
             items:
               type: string
               # pattern: '^OCR-D-[A-Z0-9-]+$'
           output_file_grp:
             deprecated: true
-            description: Output fileGrp@USE this tool produces by default
+            description: (DEPRECATED) Output fileGrp@USE this tool produces by default
             type: array
             items:
               type: string
@@ -52,31 +52,26 @@ properties:
           input_file_grp_cardinality:
             description: Number of (comma-separated) input fileGrp@USE this tool expects (either an exact value or a minimum,maximum list with -1 for unlimited)
             oneOf:
-              - items:
+              - type: number
+                multipleOf: 1
+              - type: array
+                items:
                   type: number
                   multipleOf: 1
-              - items:
-                  type: array
-                  items:
-                    type: number
-                    multipleOf: 1
-                  minItems: 2
-                  maxItems: 2
+                minItems: 2
+                maxItems: 2
             default: 1
-            additionalProperties: false
           output_file_grp_cardinality:
             description: Number of (comma-separated) output fileGrp@USE this tool expects (either an exact value or a minimum,maximum list with -1 for unlimited)
             oneOf:
-              - items:
+              - type: number
+                multipleOf: 1
+              - type: array
+                items:
                   type: number
                   multipleOf: 1
-              - items:
-                  type: array
-                  items:
-                    type: number
-                    multipleOf: 1
-                  minItems: 2
-                  maxItems: 2
+                minItems: 2
+                maxItems: 2
             default: 1
           parameters:
             description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
@@ -152,9 +147,9 @@ properties:
                     description: "If parameter is reference to file: Whether the file should be cached, e.g. because it is large and won't change."
                     default: false
           description:
-            description: Concise description what the tool does
+            description: Concise description of what the tool does
           categories:
-            description: Tools belong to this categories, representing modules within the OCR-D project structure
+            description: Tools belong to these categories, representing modules within the OCR-D project structure
             type: array
             items:
               type: string
@@ -229,7 +224,7 @@ properties:
                   default: 'as-is'
                 path_in_archive:
                   type: string
-                  description: if type is archive, the resource is at this location in the archive
+                  description: If type is archive, the resource is at this location in the archive
                   default: '.'
                 version_range:
                   type: string
@@ -237,4 +232,4 @@ properties:
                   default: '>= 0.0.1'
                 size:
                   type: number
-                  description: Size of the resource in bytes
+                  description: "Size of the resource in bytes to be retrieved (for archives: size of the archive)"
