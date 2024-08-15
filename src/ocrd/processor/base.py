@@ -334,13 +334,13 @@ class Processor():
                 log.info("non-PAGE input for page %s: %s", page_id, e)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
         result = self.process_page_pcgts(*input_pcgts, output_file_id=output_file_id, page_id=page_id)
-        for output_image_pil, output_image_id, output_image_path in result.images:
+        for image in result.images:
             self.workspace.save_image_file(
-                output_image_pil,
-                output_image_id,
+                image.pil,
+                image.file_id,
                 self.output_file_grp,
                 page_id=page_id,
-                file_path=output_image_path)
+                file_path=image.file_path)
         result.pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(result.pcgts)
         # FIXME: what about non-PAGE output like JSON ???
