@@ -202,8 +202,9 @@ class Processor():
         input_file_grps = self.input_file_grp.split(',')
         output_file_grps = self.output_file_grp.split(',')
         def assert_file_grp_cardinality(grps : List[str], spec : Union[int, List[int]], msg):
-            if isinstance(spec, int) and spec > 0:
-                assert len(grps) == spec, msg % (len(grps), str(spec))
+            if isinstance(spec, int):
+                if spec > 0:
+                    assert len(grps) == spec, msg % (len(grps), str(spec))
             else:
                 assert isinstance(spec, list)
                 minimum = spec[0]
