@@ -24,7 +24,7 @@ from deprecated import deprecated
 
 from ocrd.workspace import Workspace
 from ocrd_models.ocrd_file import OcrdFile
-from ocrd_models.ocrd_process_result import OcrdProcessResult
+from ocrd.processor.ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
@@ -351,7 +351,7 @@ class Processor():
                                 mimetype=MIMETYPE_PAGE,
                                 content=to_xml(result.pcgts))
 
-    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdProcessResult:
+    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdPageResult:
         """
         Process the given ``input_pcgts`` of the :py:attr:`workspace`,
         representing one physical page (passed as one parsed

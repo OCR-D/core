@@ -7,4 +7,3 @@ from .ocrd_file import OcrdFile, ClientSideOcrdFile
 from .ocrd_mets import OcrdMets
 from .ocrd_xml_base import OcrdXmlDocument
 from .report import ValidationReport
-from .ocrd_process_result import OcrdProcessResult

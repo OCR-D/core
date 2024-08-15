@@ -6,11 +6,10 @@ import click
 
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
+from ocrd.processor.ocrd_page_result import OcrdPageResult
 from ocrd_models.ocrd_page import OcrdPage, to_xml
-from ocrd_models.ocrd_process_result import OcrdProcessResult
 from ocrd_utils import (
     getLogger,
-    assert_file_grp_cardinality,
     make_file_id,
     MIME_TO_EXT,
     MIMETYPE_PAGE,
@@ -26,9 +25,9 @@ class DummyProcessor(Processor):
     Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
     """
 
-    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdProcessResult:
+    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdPageResult:
         # nothing to do here
-        return OcrdProcessResult(input_pcgts[0])
+        return OcrdPageResult(input_pcgts[0])
 
     def process_page_file(self, *input_files):
         LOG = getLogger('ocrd.dummy')
