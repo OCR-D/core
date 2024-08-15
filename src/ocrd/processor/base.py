@@ -9,7 +9,7 @@ __all__ = [
     'run_processor'
 ]
 
-from os.path import exists
+from os.path import exists, join
 from shutil import copyfileobj
 import json
 import os
@@ -340,13 +340,16 @@ class Processor():
                 log.info("non-PAGE input for page %s: %s", page_id, e)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
         result = self.process_page_pcgts(*input_pcgts, page_id=page_id)
-        for image in result.images:
+        for image_result in result.images:
+            image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
+            image_file_path = join(self.output_file_grp, f'{image_file_id}.png')
+            image_result.alternative_image.set_filename(image_file_path)
             self.workspace.save_image_file(
-                image.pil,
-                f'{output_file_id}_{image.file_id_suffix}',
+                image_result.pil,
+                image_file_id,
                 self.output_file_grp,
                 page_id=page_id,
-                file_path=image.file_path)
+                file_path=image_file_path)
         result.pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(result.pcgts)
         # FIXME: what about non-PAGE output like JSON ???
