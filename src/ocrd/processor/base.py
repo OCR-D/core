@@ -202,8 +202,9 @@ class Processor():
         input_file_grps = self.input_file_grp.split(',')
         output_file_grps = self.output_file_grp.split(',')
         def assert_file_grp_cardinality(grps : List[str], spec : Union[int, List[int]], msg):
-            if isinstance(spec, int) and spec > 0:
-                assert len(grps) == spec, msg % (len(grps), str(spec))
+            if isinstance(spec, int):
+                if spec > 0:
+                    assert len(grps) == spec, msg % (len(grps), str(spec))
             else:
                 assert isinstance(spec, list)
                 minimum = spec[0]
@@ -330,7 +331,6 @@ class Processor():
         page_id = input_files[0].pageId
         for i, input_file in enumerate(input_files):
             assert isinstance(input_file, (OcrdFile, ClientSideOcrdFile))
-            # FIXME: what about non-PAGE input like image or JSON ???
             log.debug("parsing file %s for page %s", input_file.ID, input_file.pageId)
             try:
                 page_ = page_from_file(input_file)
@@ -372,9 +372,9 @@ class Processor():
         :py:class:`~ocrd.processor.OcrdPageResult` instances
         of :py:class:`~ocrd.processor.OcrdPageResultImage`,
         which have required fields for ``pil`` (:py:class:`PIL.Image` image data),
-        ``file_id_suffix`` (used for generating IDs of saved images) and
-        ``file_path`` (the path used in the AlternativeImage and for saving the
-        file).
+        ``file_id_suffix`` (used for generating IDs of the saved image) and
+        ``alternative_image`` (reference of the :py:class:`ocrd_models.ocrd_page.AlternativeImageType`
+        for setting the filename of the saved image).
 
         (This contains the main functionality and must be overridden by subclasses.)
         """
