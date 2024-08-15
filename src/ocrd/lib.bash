@@ -57,8 +57,8 @@ ocrd__minversion () {
             if (( ${version[2]} > ${minversion[2]} ));then
                 return
             elif (( ${version[2]} == ${minversion[2]}));then
-              # Match prerelease suffix like a1, b1 only literally
-              if [[ $version_prerelease_suffix == $minversion_prerelease_suffix ]];then
+              # Match prerelease suffix like a1, b1 alphabetically
+              if [[ $version_prerelease_suffix = $minversion_prerelease_suffix -o $version_prerelease_suffix > $minversion_prerelease_suffix ]]; then
                 return
               fi
             fi
