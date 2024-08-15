@@ -1,13 +1,15 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from os.path import join, basename
-from typing import Optional
+from typing import Optional, Union
 
 import click
 
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
 from ocrd.processor.ocrd_page_result import OcrdPageResult
+from ocrd_models.ocrd_file import ClientSideOcrdFile, OcrdFile
 from ocrd_models.ocrd_page import OcrdPage, to_xml
+from ocrd_models.ocrd_page_generateds import PcGtsType
 from ocrd_utils import (
     getLogger,
     make_file_id,
@@ -25,13 +27,16 @@ class DummyProcessor(Processor):
     Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
     """
 
-    def process_page_pcgts(self, *input_pcgts: OcrdPage, output_file_id: Optional[str] = None, page_id: Optional[str] = None) -> OcrdPageResult:
+    def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
+        assert input_pcgts[0]
         # nothing to do here
         return OcrdPageResult(input_pcgts[0])
 
-    def process_page_file(self, *input_files):
+    def process_page_file(self, *input_files: Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
         LOG = getLogger('ocrd.dummy')
         input_file = input_files[0]
+        assert input_file
+        assert input_file.local_filename
         if self.parameter['copy_files'] and input_file.mimetype != MIMETYPE_PAGE:
             # we need to mimic the actual copying in addition to the PAGE boilerplate
             file_id = make_file_id(input_file, self.output_file_grp)
@@ -49,6 +54,7 @@ class DummyProcessor(Processor):
                     content=content)
             file_id = file_id + '_PAGE'
             pcgts = page_from_file(output_file)
+            assert isinstance(pcgts, PcGtsType)
             pcgts = self.process_page_pcgts(pcgts).pcgts
             pcgts.set_pcGtsId(file_id)
             self.add_metadata(pcgts)

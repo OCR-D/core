@@ -6,7 +6,7 @@ from PIL.Image import Image
 @dataclass
 class OcrdPageResultImage():
     pil : Image
-    file_id : str
+    file_id_suffix : str
     file_path : str
 
 @dataclass
