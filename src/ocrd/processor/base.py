@@ -9,13 +9,13 @@ __all__ = [
     'run_processor'
 ]
 
-from os.path import exists
+from os.path import exists, join
 from shutil import copyfileobj
 import json
 import os
 from os import getcwd
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional, Union
 import sys
 import inspect
 import tarfile
@@ -23,6 +23,9 @@ import io
 from deprecated import deprecated
 
 from ocrd.workspace import Workspace
+from ocrd_models.ocrd_file import ClientSideOcrdFile, OcrdFile
+from ocrd.processor.ocrd_page_result import OcrdPageResult
+from ocrd_models.ocrd_page_generateds import PcGtsType
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
@@ -198,10 +201,12 @@ class Processor():
         assert self.output_file_grp is not None
         input_file_grps = self.input_file_grp.split(',')
         output_file_grps = self.output_file_grp.split(',')
-        def assert_file_grp_cardinality(grps, spec, msg):
-            if isinstance(spec, int) and spec > 0:
-                assert len(grps) == spec, msg % (len(grps), str(spec))
+        def assert_file_grp_cardinality(grps : List[str], spec : Union[int, List[int]], msg):
+            if isinstance(spec, int):
+                if spec > 0:
+                    assert len(grps) == spec, msg % (len(grps), str(spec))
             else:
+                assert isinstance(spec, list)
                 minimum = spec[0]
                 maximum = spec[1]
                 if minimum > 0:
@@ -289,7 +294,7 @@ class Processor():
                     # - ResourceNotFoundError → use ResourceManager to download (once), then retry
                     # - transient (I/O or OOM) error → maybe sleep, retry
                     # - persistent (data) error → skip / dummy / raise
-                    input_files = [None] * len(input_file_tuple)
+                    input_files : List[Optional[Union[OcrdFile, ClientSideOcrdFile]]] = [None] * len(input_file_tuple)
                     for i, input_file in enumerate(input_file_tuple):
                         if i == 0:
                             log.info("processing page %s", input_file.pageId)
@@ -309,7 +314,7 @@ class Processor():
                 # fall back to deprecated method
                 self.process()
 
-    def process_page_file(self, *input_files) -> None:
+    def process_page_file(self, *input_files : Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
         """
         Process the given ``input_files`` of the :py:attr:`workspace`,
         representing one physical page (passed as one opened
@@ -321,49 +326,55 @@ class Processor():
         to handle cases like multiple fileGrps, non-PAGE input etc.)
         """
         log = getLogger('ocrd.processor.base')
-        input_pcgts = [None] * len(input_files)
+        input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
+        assert isinstance(input_files[0], (OcrdFile, ClientSideOcrdFile))
         page_id = input_files[0].pageId
         for i, input_file in enumerate(input_files):
-            # FIXME: what about non-PAGE input like image or JSON ???
+            assert isinstance(input_file, (OcrdFile, ClientSideOcrdFile))
             log.debug("parsing file %s for page %s", input_file.ID, input_file.pageId)
             try:
-                input_pcgts[i] = page_from_file(input_file)
+                page_ = page_from_file(input_file)
+                assert isinstance(page_, PcGtsType)
+                input_pcgts[i] = page_
             except ValueError as e:
                 log.info("non-PAGE input for page %s: %s", page_id, e)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
-        output_pcgts = self.process_page_pcgts(*input_pcgts, output_file_id=output_file_id, page_id=page_id)
-        if isinstance(output_pcgts, (list, tuple)):
-            output_images = output_pcgts[1:]
-            output_pcgts = output_pcgts[0]
-            for output_image_pil, output_image_id, output_image_path in output_images:
-                self.workspace.save_image_file(
-                    output_image_pil,
-                    output_image_id,
-                    self.output_file_grp,
-                    page_id=page_id,
-                    file_path=output_image_path)
-        output_pcgts.set_pcGtsId(output_file_id)
-        self.add_metadata(output_pcgts)
+        result = self.process_page_pcgts(*input_pcgts, page_id=page_id)
+        for image_result in result.images:
+            image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
+            image_file_path = join(self.output_file_grp, f'{image_file_id}.png')
+            image_result.alternative_image.set_filename(image_file_path)
+            self.workspace.save_image_file(
+                image_result.pil,
+                image_file_id,
+                self.output_file_grp,
+                page_id=page_id,
+                file_path=image_file_path)
+        result.pcgts.set_pcGtsId(output_file_id)
+        self.add_metadata(result.pcgts)
         # FIXME: what about non-PAGE output like JSON ???
         self.workspace.add_file(file_id=output_file_id,
                                 file_grp=self.output_file_grp,
                                 page_id=page_id,
                                 local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
                                 mimetype=MIMETYPE_PAGE,
-                                content=to_xml(output_pcgts))
+                                content=to_xml(result.pcgts))
 
-    def process_page_pcgts(self, *input_pcgts : OcrdPage, output_file_id : Optional[str] = None, page_id : Optional[str] = None) -> OcrdPage:
+    def process_page_pcgts(self, *input_pcgts : Optional[OcrdPage], page_id : Optional[str] = None) -> OcrdPageResult:
         """
         Process the given ``input_pcgts`` of the :py:attr:`workspace`,
         representing one physical page (passed as one parsed
         :py:class:`~ocrd_models.OcrdPage` per input fileGrp)
         under the given :py:attr:`parameter`, and return the
-        resulting :py:class:`~ocrd_models.OcrdPage`.
+        resulting :py:class:`~ocrd.processor.OcrdPageResult`.
 
-        Optionally, return a list or tuple of the :py:class:`~ocrd_models.OcrdPage`
-        and one or more lists or tuples of :py:class:`PIL.Image` (image data),
-        :py:class:str (file ID) and :py:class:str (file path) of derived images
-        to be annotated along with the resulting PAGE file.
+        Optionally, add to the ``images`` attribute of the resulting
+        :py:class:`~ocrd.processor.OcrdPageResult` instances
+        of :py:class:`~ocrd.processor.OcrdPageResultImage`,
+        which have required fields for ``pil`` (:py:class:`PIL.Image` image data),
+        ``file_id_suffix`` (used for generating IDs of the saved image) and
+        ``alternative_image`` (reference of the :py:class:`ocrd_models.ocrd_page.AlternativeImageType`
+        for setting the filename of the saved image).
 
         (This contains the main functionality and must be overridden by subclasses.)
         """
@@ -374,7 +385,9 @@ class Processor():
         Add PAGE-XML :py:class:`~ocrd_models.ocrd_page.MetadataItemType` ``MetadataItem`` describing
         the processing step and runtime parameters to :py:class:`~ocrd_models.ocrd_page.PcGtsType` ``pcgts``.
         """
-        pcgts.get_Metadata().add_MetadataItem(
+        metadata_obj = pcgts.get_Metadata()
+        assert metadata_obj is not None
+        metadata_obj.add_MetadataItem(
                 MetadataItemType(type_="processingStep",
                     name=self.ocrd_tool['steps'][0],
                     value=self.ocrd_tool['executable'],

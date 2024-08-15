@@ -79,7 +79,7 @@ def page_from_image(input_file, with_tree=False):
     revmap = dict(((node, element) for element, node in mapping.items()))
     return pcgts, etree, mapping, revmap
 
-def page_from_file(input_file, with_tree=False) -> Union[PcGtsType, Tuple[PcGtsType, ET.Element, dict, dict]]:
+def page_from_file(input_file, with_tree=False) -> Union[PcGtsType, Tuple[PcGtsType, ET._Element, dict, dict]]:
     """
     Create :py:class:`~ocrd_models.ocrd_page.OcrdPage`
     from an :py:class:`~ocrd_models.ocrd_file.OcrdFile` or a file path
