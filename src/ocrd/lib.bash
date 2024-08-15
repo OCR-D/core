@@ -27,12 +27,22 @@ ocrd__log () {
 ## Ensure minimum version
 # ht https://stackoverflow.com/posts/4025065
 ocrd__minversion () {
-    local minversion="$1"
-    local version=$(ocrd --version|sed 's/ocrd, version //')
-    #echo "$minversion < $version?"
-    local IFS=.
-    version=($version)
-    minversion=($minversion)
+    local minversion_raw="$1"
+    set -e
+    local version_raw=$(ocrd --version|sed 's/ocrd, version //')
+    local version_mmp=$(echo "$version_raw" | grep -Eo '([0-9]+\.?){3}')
+    local version_prerelease_suffix="${version_raw#$version_mmp}"
+    if [[ -z $version_prerelease_suffix ]];then
+      version_prerelease_suffix=0
+    fi
+    local minversion_mmp=$(echo "$minversion_raw" | grep -Eo '([0-9]+\.?){3}')
+    local minversion_prerelease_suffix="${minversion_raw#$minversion_mmp}"
+    if [[ -z $minversion_prerelease_suffix ]];then
+      minversion_prerelease_suffix=0
+    fi
+    local IFS='.'
+    version=($version_mmp)
+    minversion=($minversion_mmp)
     # MAJOR > MAJOR
     if (( ${version[0]} > ${minversion[0]} ));then
         return
@@ -44,12 +54,17 @@ ocrd__minversion () {
         # MINOR == MINOR
         elif (( ${version[1]} == ${minversion[1]} ));then
             # PATCH > PATCH
-            if (( ${version[2]} >= ${minversion[2]} ));then
+            if (( ${version[2]} > ${minversion[2]} ));then
                 return
+            elif (( ${version[2]} == ${minversion[2]}));then
+              # Match prerelease suffix like a1, b1 alphabetically
+              if [[ $version_prerelease_suffix = $minversion_prerelease_suffix -o $version_prerelease_suffix > $minversion_prerelease_suffix ]]; then
+                return
+              fi
             fi
         fi
     fi
-    ocrd__raise "ocrd/core is too old (${version[*]} < ${minversion[*]}). Please update OCR-D/core"
+    ocrd__raise "ocrd/core is too old ($version_raw < $minversion_raw). Please update OCR-D/core"
 }
 
 ## ### `ocrd__dumpjson`

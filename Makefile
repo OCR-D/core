@@ -238,9 +238,9 @@ repo/assets repo/spec: always-update
 
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
-spec: repo/spec
-	cp repo/spec/ocrd_tool.schema.yml ocrd_validators/ocrd_validators/ocrd_tool.schema.yml
-	cp repo/spec/bagit-profile.yml ocrd_validators/ocrd_validators/bagit-profile.yml
+spec: # repo/spec
+	cp repo/spec/ocrd_tool.schema.yml src/ocrd_validators/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml src/ocrd_validators/bagit-profile.yml
 
 #
 # Assets
