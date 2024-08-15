@@ -331,7 +331,6 @@ class Processor():
         page_id = input_files[0].pageId
         for i, input_file in enumerate(input_files):
             assert isinstance(input_file, (OcrdFile, ClientSideOcrdFile))
-            # FIXME: what about non-PAGE input like image or JSON ???
             log.debug("parsing file %s for page %s", input_file.ID, input_file.pageId)
             try:
                 page_ = page_from_file(input_file)
