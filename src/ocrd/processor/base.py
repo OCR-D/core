@@ -372,9 +372,9 @@ class Processor():
         :py:class:`~ocrd.processor.ocrd_page_result.OcrdPageResult` instances
         of :py:class:`~ocrd.processor.ocrd_page_result.OcrdPageResultImage`,
         which have required fields for ``pil`` (:py:class:`PIL.Image` image data),
-        ``file_id_suffix`` (used for generating IDs of saved images) and
-        ``file_path`` (the path used in the AlternativeImage and for saving the
-        file).
+        ``file_id_suffix`` (used for generating IDs of the saved image) and
+        ``alternative_image`` (reference of the :py:class:`ocrd_models.ocrd_page.AlternativeImageType`
+        for setting the filename of the saved image).
 
         (This contains the main functionality and must be overridden by subclasses.)
         """
