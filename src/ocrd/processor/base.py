@@ -366,11 +366,11 @@ class Processor():
         representing one physical page (passed as one parsed
         :py:class:`~ocrd_models.OcrdPage` per input fileGrp)
         under the given :py:attr:`parameter`, and return the
-        resulting :py:class:`~ocrd.processor.ocrd_page_result.OcrdPageResult`.
+        resulting :py:class:`~ocrd.processor.OcrdPageResult`.
 
         Optionally, add to the ``images`` attribute of the resulting
-        :py:class:`~ocrd.processor.ocrd_page_result.OcrdPageResult` instances
-        of :py:class:`~ocrd.processor.ocrd_page_result.OcrdPageResultImage`,
+        :py:class:`~ocrd.processor.OcrdPageResult` instances
+        of :py:class:`~ocrd.processor.OcrdPageResultImage`,
         which have required fields for ``pil`` (:py:class:`PIL.Image` image data),
         ``file_id_suffix`` (used for generating IDs of saved images) and
         ``file_path`` (the path used in the AlternativeImage and for saving the
