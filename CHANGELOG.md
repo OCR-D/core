@@ -3,6 +3,20 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
+## [3.0.0a1] - 2024-08-15
+
+Changed:
+  - :fire: Deprecate `Processor.process`
+  - update spec to v3.25.0, which allows annotating fileGrp cardinality in `ocrd-tool.json`
+  - `ocrd.processor`: Handle loading of bundled `ocrd-tool.json` generically
+
+Added:
+  - `Processor.process_workspace`: process a complete workspace, with default implementation
+  - `Processor.process_page_file`: process an OcrdFile, with default implementation
+  - `Processor.process_page_pcgts`: process a single OcrdPage, produce a single OcrdPage, required to implement
+  - `Processor.verify`: handle fileGrp cardinality verification, with default implementation
+  - `Processor.setup`: to set up processor before processing, optional
+
 ## Unreleased
 
 Changed:
