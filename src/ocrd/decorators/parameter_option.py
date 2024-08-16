@@ -1,10 +1,10 @@
 from click import option
-#from ocrd_utils import parse_json_string_or_file
 
 __all__ = ['parameter_option', 'parameter_override_option']
 
 
 def _handle_param_option(ctx, param, value):
+    from ocrd_utils import parse_json_string_or_file
     return parse_json_string_or_file(*list(value))
 
 parameter_option = option('-p', '--parameter',
