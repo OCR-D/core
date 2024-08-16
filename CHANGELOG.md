@@ -7,7 +7,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Changed:
   - :fire: Deprecate `Processor.process`
-  - update spec to v3.25.0, which allows annotating fileGrp cardinality in `ocrd-tool.json`
+  - update spec to v3.25.0, which requires annotating fileGrp cardinality in `ocrd-tool.json`
+  - :fire: Remove passing non-processing kwargs to `Processor` constructor, add as members  
+     (i.e. `show_help`, `dump_json`, `dump_module_dir`, `list_resources`, `show_resource`, `resolve_resource`)
+  - :fire: Deprecate passing processing arg / kwargs to `Processor` constructor  
+     (i.e. `workspace`, `page_id`, `input_file_grp`, `output_file_grp`; now all set by `run_processor`)
+  - :fire: Deprecate passing `ocrd-tool.json` metadata to `Processor` constructor
   - `ocrd.processor`: Handle loading of bundled `ocrd-tool.json` generically
 
 Added:
