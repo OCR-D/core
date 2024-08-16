@@ -15,7 +15,8 @@ Related (and dependent) packages:
 """
 
 from ocrd.processor.base import run_processor, run_cli, Processor, ResourceNotFoundError
-from ocrd_models import OcrdMets, OcrdExif, OcrdFile, OcrdAgent
+from ocrd.processor.ocrd_page_result import OcrdPageResult, OcrdPageResultImage
+from ocrd_models import OcrdMets, OcrdPage, OcrdExif, OcrdFile, OcrdAgent
 from ocrd.resolver import Resolver
 from ocrd_validators import *
 from ocrd.workspace import Workspace
