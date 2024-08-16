@@ -383,7 +383,7 @@ class Processor():
     def add_metadata(self, pcgts: OcrdPage) -> None:
         """
         Add PAGE-XML :py:class:`~ocrd_models.ocrd_page.MetadataItemType` ``MetadataItem`` describing
-        the processing step and runtime parameters to :py:class:`~ocrd_models.ocrd_page.PcGtsType` ``pcgts``.
+        the processing step and runtime parameters to :py:class:`~ocrd_models.OcrdPage` ``pcgts``.
         """
         metadata_obj = pcgts.get_Metadata()
         assert metadata_obj is not None
