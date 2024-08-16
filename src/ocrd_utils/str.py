@@ -99,6 +99,9 @@ def make_file_id(ocrd_file, output_file_grp):
     return make_xml_id(ret)
 
 def make_xml_id(idstr: str) -> str:
+    """
+    Turn ``idstr`` into a valid ``xml:id`` literal by replacing ``:`` with ``_``, removing everything non-alphanumeric, ``.`` and ``-`` and prepending `id_` if ``idstr`` starts with a number.
+    """
     ret = idstr
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
