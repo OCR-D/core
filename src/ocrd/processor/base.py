@@ -25,7 +25,6 @@ from deprecated import deprecated
 from ocrd.workspace import Workspace
 from ocrd_models.ocrd_file import ClientSideOcrdFile, OcrdFile
 from ocrd.processor.ocrd_page_result import OcrdPageResult
-from ocrd_models.ocrd_page_generateds import PcGtsType
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
@@ -334,9 +333,10 @@ class Processor():
             log.debug("parsing file %s for page %s", input_file.ID, input_file.pageId)
             try:
                 page_ = page_from_file(input_file)
-                assert isinstance(page_, PcGtsType)
+                assert isinstance(page_, OcrdPage)
                 input_pcgts[i] = page_
             except ValueError as e:
+                # not PAGE and not an image to generate PAGE for
                 log.info("non-PAGE input for page %s: %s", page_id, e)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
         result = self.process_page_pcgts(*input_pcgts, page_id=page_id)
