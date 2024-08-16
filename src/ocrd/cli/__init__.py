@@ -10,7 +10,18 @@ import click
 
 from ocrd_utils import config
 
-__all__ = ['cli']
+from ..decorators import ocrd_loglevel
+from .ocrd_tool import ocrd_tool_cli
+from .workspace import workspace_cli
+from .process import process_cli
+from .bashlib import bashlib_cli
+from .validate import validate_cli
+from .resmgr import resmgr_cli
+from .zip import zip_cli
+from .log import log_cli
+from .network import network_cli
+
+__all__ = ['cli', 'command_with_replaced_help']
 
 _epilog = f"""
 
@@ -54,6 +65,7 @@ Variables:
 {config.describe('OCRD_LOGGING_DEBUG')}
 """
 
+
 def command_with_replaced_help(*replacements):
 
     class CommandWithReplacedHelp(click.Command):
@@ -65,17 +77,6 @@ def command_with_replaced_help(*replacements):
             return help
 
     return CommandWithReplacedHelp
-
-from ocrd.cli.ocrd_tool import ocrd_tool_cli
-from ocrd.cli.workspace import workspace_cli
-from ocrd.cli.process import process_cli
-from ocrd.cli.bashlib import bashlib_cli
-from ocrd.cli.validate import validate_cli
-from ocrd.cli.resmgr import resmgr_cli
-from ocrd.decorators import ocrd_loglevel
-from .zip import zip_cli
-from .log import log_cli
-from .network import network_cli
 
 
 @click.group(epilog=_epilog)
