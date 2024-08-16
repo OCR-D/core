@@ -24,6 +24,7 @@ from ocrd_utils import (
     coordinates_of_segment,
     adjust_canvas_to_rotation,
     adjust_canvas_to_transposition,
+    scale_coordinates,
     shift_coordinates,
     rotate_coordinates,
     transform_coordinates,
