@@ -21,7 +21,7 @@ from .zip import zip_cli
 from .log import log_cli
 from .network import network_cli
 
-__all__ = ['cli', 'command_with_replaced_help']
+__all__ = ['cli']
 
 _epilog = f"""
 
