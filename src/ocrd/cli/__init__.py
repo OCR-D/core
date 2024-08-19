@@ -29,6 +29,8 @@ Variables:
 \b
 {config.describe('OCRD_DOWNLOAD_TIMEOUT')}
 \b
+{config.describe('OCRD_DOWNLOAD_INPUT')}
+\b
 {config.describe('OCRD_METS_CACHING')}
 \b
 {config.describe('OCRD_MAX_PROCESSOR_CACHE')}
