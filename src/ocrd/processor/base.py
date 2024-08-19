@@ -47,7 +47,6 @@ from ocrd_modelfactory import page_from_file
 # XXX imports must remain for backwards-compatibility
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
 
-_logger = getLogger('ocrd.processor.base')
 
 class ResourceNotFoundError(FileNotFoundError):
     """
@@ -178,8 +177,10 @@ class Processor():
             raise ValueError("Invalid parameters %s" % report.errors)
         self.parameter = parameter
         # NOTE: this is the logger to be used by processor implementations,
-        # `processor.base` default implementations should use :py:attr:`_logger`
+        # `processor.base` default implementations should use
+        # :py:attr:`self._base_logger`
         self.logger = getLogger(f'ocrd.processor.{self.__class__.__name__}')
+        self._base_logger = getLogger('ocrd.processor.base')
         # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
         setattr(self, 'process',
                 deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')(getattr(self, 'process')))
@@ -586,13 +587,13 @@ class Processor():
                        f"compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
                 if on_error == 'abort':
                     raise ValueError(msg)
-                _logger.warning(msg)
+                self._base_logger.warning(msg)
             for file_ in files_:
                 if not file_.pageId:
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
                 if ift[i]:
-                    _logger.debug("another file %s for page %s in input file group %s", file_.ID, file_.pageId, ifg)
+                    self._base_logger.debug("another file %s for page %s in input file group %s", file_.ID, file_.pageId, ifg)
                     # fileGrp has multiple files for this page ID
                     if mimetype:
                         # filter was active, this must not happen
@@ -631,14 +632,14 @@ class Processor():
                         else:
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                 else:
-                    _logger.debug("adding file %s for page %s to input file group %s", file_.ID, file_.pageId, ifg)
+                    self._base_logger.debug("adding file %s for page %s to input file group %s", file_.ID, file_.pageId, ifg)
                     ift[i] = file_
         ifts = list()
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:
                     # other fallback options?
-                    _logger.error('found no page %s in file group %s',
+                    self._base_logger.error('found no page %s in file group %s',
                               page, ifg)
             if ifiles[0] or not require_first:
                 ifts.append(tuple(ifiles))
