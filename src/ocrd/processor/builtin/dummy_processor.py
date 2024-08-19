@@ -32,7 +32,6 @@ class DummyProcessor(Processor):
         return OcrdPageResult(input_pcgts[0])
 
     def process_page_file(self, *input_files: Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
-        LOG = getLogger('ocrd.dummy')
         input_file = input_files[0]
         assert input_file
         assert input_file.local_filename
@@ -57,7 +56,7 @@ class DummyProcessor(Processor):
             pcgts = self.process_page_pcgts(pcgts).pcgts
             pcgts.set_pcGtsId(file_id)
             self.add_metadata(pcgts)
-            LOG.info("Add PAGE-XML %s generated for %s", file_id, output_file)
+            self.logger.info("Add PAGE-XML %s generated for %s", file_id, output_file)
             self.workspace.add_file(file_id=file_id,
                                     file_grp=self.output_file_grp,
                                     page_id=input_file.pageId,
