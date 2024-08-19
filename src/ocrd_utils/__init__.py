@@ -80,6 +80,7 @@ Utility functions and constants usable in various circumstances.
   :py:func:`set_json_key_value_overrides`,
   :py:func:`assert_file_grp_cardinality`,
   :py:func:`make_file_id`
+  :py:func:`make_xml_id`
   :py:func:`generate_range`
 
     String and OOP utilities
@@ -200,6 +201,7 @@ from .str import (
     is_local_filename,
     is_string,
     make_file_id,
+    make_xml_id,
     nth_url_segment,
     partition_list,
     parse_json_string_or_file,
