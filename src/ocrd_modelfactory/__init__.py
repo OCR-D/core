@@ -14,9 +14,10 @@ from lxml import etree as ET
 from ocrd_utils import VERSION, MIMETYPE_PAGE, guess_media_type
 from ocrd_models import OcrdExif, OcrdFile, ClientSideOcrdFile
 from ocrd_models.ocrd_page import (
-    PcGtsType, PageType, MetadataType,
+    OcrdPage, PcGtsType, PageType, MetadataType,
     parse, parseEtree
 )
+from ocrd_utils.deprecate import deprecation_warning
 
 __all__ = [
     'exif_from_filename',
@@ -39,7 +40,7 @@ def exif_from_filename(image_filename):
         ocrd_exif = OcrdExif(pil_img)
     return ocrd_exif
 
-def page_from_image(input_file, with_tree=False):
+def page_from_image(input_file : Union[OcrdFile, ClientSideOcrdFile], **kwargs) -> OcrdPage:
     """
     Create :py:class:`~ocrd_models.ocrd_page.OcrdPage`
     from an :py:class:`~ocrd_models.ocrd_file.OcrdFile`
@@ -48,10 +49,9 @@ def page_from_image(input_file, with_tree=False):
     Arguments:
         input_file (:py:class:`~ocrd_models.ocrd_file.OcrdFile`): file to open \
             and produce a PAGE DOM for
-    Keyword arguments:
-        with_tree (boolean): whether to return XML node tree, element-node mapping \
-            and reverse mapping, too (cf. :py:func:`ocrd_models.ocrd_page.parseEtree`)
     """
+    if 'with_etree' in kwargs:
+        deprecation_warning('kwarg "with_etree" is obsolete now, we always return OcrdPage including etree')
     if not input_file.local_filename:
         raise ValueError("input_file must have 'local_filename' property")
     if not Path(input_file.local_filename).exists():
@@ -72,14 +72,12 @@ def page_from_image(input_file, with_tree=False):
         ),
         pcGtsId=input_file.ID
     )
-    if not with_tree:
-        return pcgts
     mapping = dict()
-    etree = pcgts.to_etree(mapping_=mapping)
+    etree : ET._Element = pcgts.to_etree(mapping_=mapping)
     revmap = dict(((node, element) for element, node in mapping.items()))
-    return pcgts, etree, mapping, revmap
+    return OcrdPage(pcgts, etree, mapping, revmap)
 
-def page_from_file(input_file, with_tree=False) -> Union[PcGtsType, Tuple[PcGtsType, ET._Element, dict, dict]]:
+def page_from_file(input_file, **kwargs) -> OcrdPage:
     """
     Create :py:class:`~ocrd_models.ocrd_page.OcrdPage`
     from an :py:class:`~ocrd_models.ocrd_file.OcrdFile` or a file path
@@ -88,10 +86,9 @@ def page_from_file(input_file, with_tree=False) -> Union[PcGtsType, Tuple[PcGtsT
     Arguments:
         input_file (:py:class:`~ocrd_models.ocrd_file.OcrdFile` or `str`): file to open \
             and produce a PAGE DOM for
-    Keyword arguments:
-        with_tree (boolean): whether to return XML node tree, element-node mapping \
-            and reverse mapping, too (cf. :py:func:`ocrd_models.ocrd_page.parseEtree`)
     """
+    if 'with_etree' in kwargs:
+        deprecation_warning('kwarg "with_etree" is obsolete now, we always return OcrdPage including etree')
     if not isinstance(input_file, (OcrdFile, ClientSideOcrdFile)):
         mimetype = guess_media_type(input_file, application_xml=MIMETYPE_PAGE)
         input_file = OcrdFile(ET.Element("dummy"),
@@ -102,7 +99,7 @@ def page_from_file(input_file, with_tree=False) -> Union[PcGtsType, Tuple[PcGtsT
     if not Path(input_file.local_filename).exists():
         raise FileNotFoundError("File not found: '%s' (%s)" % (input_file.local_filename, input_file))
     if input_file.mimetype.startswith('image'):
-        return page_from_image(input_file, with_tree=with_tree)
+        return page_from_image(input_file)
     if input_file.mimetype == MIMETYPE_PAGE:
-        return (parseEtree if with_tree else parse)(input_file.local_filename, silence=True)
+        return OcrdPage(*parseEtree(input_file.local_filename, silence=True))
     raise ValueError("Unsupported mimetype '%s'" % input_file.mimetype)
