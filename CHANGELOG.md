@@ -11,6 +11,10 @@ Changed:
   * `ocrd workspace clone`/`Resolver.workspace_from_url`: with `clobber_mets=False`, raise a FileExistsError for existing mets.xml on disk, #563, #1268
   * `ocrd workspace find --download`: print the the correct, up-to-date field, not `None`, #1202, #1266
 
+Fixed:
+
+  * Sanitize `self.imageFilename` for the `pcGtsId` to ensure it is a valid `xml:id`, #1271
+
 ## [2.67.2] - 2024-07-19
 
 Fixed:
