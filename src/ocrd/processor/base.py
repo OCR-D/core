@@ -377,16 +377,9 @@ class Processor():
                     pageId=self.page_id, fileGrp=ifg, mimetype=mimetype),
                                 # sort by MIME type so PAGE comes before images
                                 key=lambda file_: file_.mimetype)
-            # Warn if no files found but pageId was specified because that
-            # might be because of invalid page_id (range)
-            if self.page_id and not files_:
-                msg = (f"Could not find any files for --page-id {self.page_id} - "
-                       f"compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
-                if on_error == 'abort':
-                    raise ValueError(msg)
-                LOG.warning(msg)
             for file_ in files_:
                 if not file_.pageId:
+                    # ignore document-global files
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
                 if ift[i]:
@@ -431,13 +424,15 @@ class Processor():
                 else:
                     LOG.debug("adding file %s for page %s to input file group %s", file_.ID, file_.pageId, ifg)
                     ift[i] = file_
+        # Warn if no files found but pageId was specified, because that might be due to invalid page_id (range)
+        if self.page_id and not any(pages):
+            LOG.critical(f"Could not find any files for selected pageId {self.page_id}")
         ifts = list()
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:
                     # other fallback options?
-                    LOG.error('found no page %s in file group %s',
-                              page, ifg)
+                    LOG.error(f'Found no page {page} in file group {ifg}')
             if ifiles[0] or not require_first:
                 ifts.append(tuple(ifiles))
         return ifts
