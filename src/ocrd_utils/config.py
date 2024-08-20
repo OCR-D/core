@@ -12,6 +12,8 @@ from pathlib import Path
 from tempfile import gettempdir
 from textwrap import fill, indent
 
+_validator_boolean = lambda val: isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1')
+_parser_boolean = lambda val: bool(val) if isinstance(val, (int, bool)) else str.lower(val) in ('true', '1')
 
 class OcrdEnvVariable():
 
@@ -102,8 +104,8 @@ config = OcrdEnvConfig()
 
 config.add('OCRD_METS_CACHING',
     description='If set to `true`, access to the METS file is cached, speeding in-memory search and modification.',
-    validator=lambda val: val in ('true', 'false', '0', '1'),
-    parser=lambda val: val in ('true', '1'))
+    validator=_validator_boolean,
+    parser=_parser_boolean)
 
 config.add('OCRD_MAX_PROCESSOR_CACHE',
     description="Maximum number of processor instances (for each set of parameters) to be kept in memory (including loaded models) for processing workers or processor servers.",
@@ -125,7 +127,7 @@ config.add("OCRD_PROFILE_FILE",
     description="If set, then the CPU profile is written to this file for later peruse with a analysis tools like snakeviz")
 
 config.add("OCRD_DOWNLOAD_RETRIES",
-    description="Number of times to retry failed attempts for downloads of resource or workspace files.",
+    description="Number of times to retry failed attempts for downloads of resources or workspace files.",
     validator=int,
     parser=int)
 
@@ -140,6 +142,12 @@ def _ocrd_download_timeout_parser(val):
 config.add("OCRD_DOWNLOAD_TIMEOUT",
     description="Timeout in seconds for connecting or reading (comma-separated) when downloading.",
     parser=_ocrd_download_timeout_parser)
+
+config.add("OCRD_DOWNLOAD_INPUT",
+    description="Whether to download files not present locally during processing",
+    default=(True, True),
+    validator=_validator_boolean,
+    parser=_parser_boolean)
 
 config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
         description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
@@ -190,5 +198,5 @@ config.add("XDG_CONFIG_HOME",
 config.add("OCRD_LOGGING_DEBUG",
     description="Print information about the logging setup to STDERR",
     default=(True, False),
-    validator=lambda val: isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1'),
-    parser=lambda val:  val if isinstance(val, (int, bool)) else str.lower(val) in ('true', '1'))
+    validator=_validator_boolean,
+    parser=_parser_boolean)

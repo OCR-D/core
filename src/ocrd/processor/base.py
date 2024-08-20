@@ -29,6 +29,7 @@ from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
     MIME_TO_EXT,
+    config,
     getLogger,
     initLogging,
     list_resource_candidates,
@@ -138,7 +139,7 @@ class Processor():
             input_file_grp=None,
             output_file_grp=None,
             page_id=None,
-            download_files=True,
+            download_files=config.OCRD_DOWNLOAD_INPUT,
             version=None
     ):
         """
@@ -164,7 +165,8 @@ class Processor():
                  (or empty for all pages). \
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
-             download_files (boolean): Whether input files will be downloaded prior to processing.
+             download_files (boolean): Whether input files will be downloaded prior to processing, \
+                 defaults to :py:attr:`ocrd_utils.config.OCRD_DOWNLOAD_INPUT` which is ``True`` by default
         """
         if ocrd_tool is not None:
             deprecation_warning("Passing 'ocrd_tool' as keyword argument to Processor is deprecated - "
