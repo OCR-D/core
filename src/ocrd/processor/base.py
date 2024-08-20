@@ -55,9 +55,36 @@ class ResourceNotFoundError(FileNotFoundError):
     def __init__(self, name, executable):
         self.name = name
         self.executable = executable
-        self.message = "Could not find resource '%s' for executable '%s'. " \
-                       "Try 'ocrd resmgr download %s %s' to download this resource." \
-                       % (name, executable, executable, name)
+        self.message = (f"Could not find resource '{name}' for executable '{executable}'. "
+                        f"Try 'ocrd resmgr download {executable} {name}' to download this resource.")
+        super().__init__(self.message)
+
+class NonUniqueInputFile(ValueError):
+    """
+    An exception signifying the specified fileGrp / pageId / mimetype
+    selector yields multiple PAGE files, or no PAGE files but multiple images,
+    or multiple files of that mimetype.
+    """
+    def __init__(self, fileGrp, pageId, mimetype):
+        self.fileGrp = fileGrp
+        self.pageId = pageId
+        self.mimetype = mimetype
+        self.message = (f"Could not determine unique input file for fileGrp {fileGrp} "
+                        f"and pageId {pageId} under mimetype {mimetype or 'PAGE+image(s)'}")
+        super().__init__(self.message)
+
+class MissingInputFile(ValueError):
+    """
+    An exception signifying the specified fileGrp / pageId / mimetype
+    selector yields no PAGE files, or no PAGE and no image files,
+    or no files of that mimetype.
+    """
+    def __init__(self, fileGrp, pageId, mimetype):
+        self.fileGrp = fileGrp
+        self.pageId = pageId
+        self.mimetype = mimetype
+        self.message = (f"Could not find input file for fileGrp {fileGrp} "
+                        f"and pageId {pageId} under mimetype {mimetype or 'PAGE+image(s)'}")
         super().__init__(self.message)
 
 class Processor():
@@ -352,7 +379,6 @@ class Processor():
                 file_path=image_file_path)
         result.pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(result.pcgts)
-        # FIXME: what about non-PAGE output like JSON ???
         self.workspace.add_file(file_id=output_file_id,
                                 file_grp=self.output_file_grp,
                                 page_id=page_id,
@@ -592,9 +618,7 @@ class Processor():
                         elif on_error == 'last':
                             ift[i] = file_
                         elif on_error == 'abort':
-                            raise ValueError(
-                                "Multiple '%s' matches for page '%s' in fileGrp '%s'." % (
-                                    mimetype, file_.pageId, ifg))
+                            raise NonUniqueInputFile(ifg, file_.pageId, mimetype)
                         else:
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                     elif (ift[i].mimetype == MIMETYPE_PAGE and
@@ -602,9 +626,7 @@ class Processor():
                         pass # keep PAGE match
                     elif (ift[i].mimetype == MIMETYPE_PAGE and
                           file_.mimetype == MIMETYPE_PAGE):
-                        raise ValueError(
-                            "Multiple PAGE-XML matches for page '%s' in fileGrp '%s'." % (
-                                file_.pageId, ifg))
+                        raise NonUniqueInputFile(ifg, file_.pageId, None)
                     else:
                         # filter was inactive but no PAGE is in control, this must not happen
                         if on_error == 'skip':
@@ -614,9 +636,7 @@ class Processor():
                         elif on_error == 'last':
                             ift[i] = file_
                         elif on_error == 'abort':
-                            raise ValueError(
-                                "No PAGE-XML for page '%s' in fileGrp '%s' but multiple matches." % (
-                                    file_.pageId, ifg))
+                            raise NonUniqueInputFile(ifg, file_.pageId, None)
                         else:
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                 else:
