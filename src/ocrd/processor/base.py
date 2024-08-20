@@ -314,17 +314,19 @@ class Processor():
             self.verify()
             try:
                 # FIXME: add page parallelization by running multiprocessing.Pool (#322)
-                for input_file_tuple in self.zip_input_files(on_error='abort'):
+                for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
                     # FIXME: add error handling by catching exceptions in various ways (#579)
                     # for example:
                     # - ResourceNotFoundError → use ResourceManager to download (once), then retry
                     # - transient (I/O or OOM) error → maybe sleep, retry
                     # - persistent (data) error → skip / dummy / raise
                     input_files : List[Optional[Union[OcrdFile, ClientSideOcrdFile]]] = [None] * len(input_file_tuple)
+                    log.info("processing page %s",
+                             next(input_file.pageId
+                                  for input_file in input_file_tuple
+                                  if input_file))
                     for i, input_file in enumerate(input_file_tuple):
-                        if i == 0:
-                            log.info("processing page %s", input_file.pageId)
-                        elif input_file is None:
+                        if input_file is None:
                             # file/page not found in this file grp
                             continue
                         input_files[i] = input_file
