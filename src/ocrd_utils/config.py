@@ -149,6 +149,12 @@ config.add("OCRD_DOWNLOAD_INPUT",
     validator=_validator_boolean,
     parser=_parser_boolean)
 
+config.add("OCRD_MISSING_INPUT",
+    description="How to deal with missing input files (for some fileGrp/pageId) during processing [SKIP|ABORT]",
+    default=(True, 'SKIP'),
+    validator=lambda val: val in ['SKIP', 'ABORT'],
+    parser=str)
+
 config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
         description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
         default=(True, ''))

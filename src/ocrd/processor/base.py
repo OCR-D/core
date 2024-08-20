@@ -338,7 +338,7 @@ class Processor():
                             input_files[i] = self.workspace.download_file(input_file)
                         except ValueError as e:
                             log.error(repr(e))
-                            log.warning("skipping file %s for page %s", input_file, input_file.pageId)
+                            log.warning(f"failed downloading file {input_file} for page {input_file.pageId}")
                     self.process_page_file(*input_files)
             except NotImplementedError:
                 # fall back to deprecated method
@@ -611,10 +611,12 @@ class Processor():
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
                 if ift[i]:
-                    LOG.debug("another file %s for page %s in input file group %s", file_.ID, file_.pageId, ifg)
+                    LOG.debug(f"another file {file_.ID} for page {file_.pageId} in input file group {ifg}")
                     # fileGrp has multiple files for this page ID
                     if mimetype:
                         # filter was active, this must not happen
+                        LOG.warning(f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
+                                    f"conflicts with file {ift[i].ID} of same MIME type {mimetype} - on_error={on_error}")
                         if on_error == 'skip':
                             ift[i] = None
                         elif on_error == 'first':
@@ -633,6 +635,8 @@ class Processor():
                         raise NonUniqueInputFile(ifg, file_.pageId, None)
                     else:
                         # filter was inactive but no PAGE is in control, this must not happen
+                        LOG.warning(f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
+                                    f"conflicts with file {ift[i].ID} but no PAGE available - on_error={on_error}")
                         if on_error == 'skip':
                             ift[i] = None
                         elif on_error == 'first':
@@ -644,7 +648,7 @@ class Processor():
                         else:
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                 else:
-                    LOG.debug("adding file %s for page %s to input file group %s", file_.ID, file_.pageId, ifg)
+                    LOG.debug(f"adding file {file_.ID} for page {file_.pageId} to input file group {ifg}")
                     ift[i] = file_
         # Warn if no files found but pageId was specified, because that might be due to invalid page_id (range)
         if self.page_id and not any(pages):
@@ -653,8 +657,14 @@ class Processor():
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:
-                    # other fallback options?
-                    LOG.error(f'Found no page {page} in file group {ifg}')
+                    # could be from non-unique with on_error=skip or from true gap
+                    LOG.error(f'Found no file for page {page} in file group {ifg}')
+                    if config.OCRD_MISSING_INPUT == 'abort':
+                        raise MissingInputFile(ifg, page, mimetype)
+            if not any(ifiles):
+                # must be from non-unique with on_error=skip
+                LOG.warning(f'Found no files for {page} - skipping')
+                continue
             if ifiles[0] or not require_first:
                 ifts.append(tuple(ifiles))
         return ifts

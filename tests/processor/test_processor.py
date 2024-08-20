@@ -281,7 +281,7 @@ class TestProcessor(TestCase):
                     proc.page_id = page_id
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
         r = self.capture_out_err()
-        assert 'ERROR ocrd.processor.base - Found no page phys_0001 in file group GRP1' in r.err
+        assert 'ERROR ocrd.processor.base - Found no file for page phys_0001 in file group GRP1' in r.err
 
 if __name__ == "__main__":
     main(__file__)
