@@ -178,7 +178,8 @@ parseString.__doc__ = (
 
 class OcrdPage():
     """
-    Proxy object for :py:class:`ocrd_models.PcGtsType` that also offers access
+    Proxy object for :py:class:`ocrd_models.PcGtsType` (i.e. PRImA PAGE-XML
+    for page content, rendered as object model by generateDS) that also offers access
     to the underlying etree, element-node mapping and reverse mapping, too (cf.
     :py:func:`ocrd_models.ocrd_page.parseEtree`)
     """
