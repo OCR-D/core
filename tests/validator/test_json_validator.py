@@ -1,5 +1,5 @@
 from tests.base import TestCase, main
-from ocrd_validators.json_validator import JsonValidator, DefaultValidatingDraft6Validator
+from ocrd_validators.json_validator import JsonValidator, DefaultValidatingDraft20199Validator
 
 class TestParameterValidator(TestCase):
 
@@ -15,7 +15,7 @@ class TestParameterValidator(TestCase):
                 }
             }
         }
-        self.defaults_validator = JsonValidator(self.schema, DefaultValidatingDraft6Validator)
+        self.defaults_validator = JsonValidator(self.schema, DefaultValidatingDraft20199Validator)
         super().setUp()
 
     def test_validate_string(self):
