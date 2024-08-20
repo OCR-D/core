@@ -3,7 +3,7 @@ Validating JSON-Schema
 """
 import json
 
-from jsonschema import Draft6Validator, validators # pylint: disable=import-error
+from jsonschema import Draft201909Validator, validators # pylint: disable=import-error
 
 from ocrd_models import ValidationReport
 
@@ -28,7 +28,7 @@ def extend_with_default(validator_class):
     return validators.extend(validator_class, {"properties": set_defaults})
 
 
-DefaultValidatingDraft6Validator = extend_with_default(Draft6Validator)
+DefaultValidatingDraft20199Validator = extend_with_default(Draft201909Validator)
 
 #
 # -------------------------------------------------
@@ -52,13 +52,13 @@ class JsonValidator():
             obj = json.loads(obj)
         return JsonValidator(schema)._validate(obj) # pylint: disable=protected-access
 
-    def __init__(self, schema, validator_class=Draft6Validator):
+    def __init__(self, schema, validator_class=Draft201909Validator):
         """
         Construct a JsonValidator.
 
         Args:
             schema (dict):
-            validator_class (Draft6Validator|DefaultValidatingDraft6Validator):
+            validator_class (Draft20199Validator|DefaultValidatingDraft20199Validator):
         """
         self.validator = validator_class(schema)
 
