@@ -21,6 +21,7 @@ import inspect
 import tarfile
 import io
 from deprecated import deprecated
+from requests import HTTPError
 
 from ocrd.workspace import Workspace
 from ocrd_models.ocrd_file import ClientSideOcrdFile, OcrdFile
@@ -317,16 +318,11 @@ class Processor():
             try:
                 # FIXME: add page parallelization by running multiprocessing.Pool (#322)
                 for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
-                    # FIXME: add error handling by catching exceptions in various ways (#579)
-                    # for example:
-                    # - ResourceNotFoundError → use ResourceManager to download (once), then retry
-                    # - transient (I/O or OOM) error → maybe sleep, retry
-                    # - persistent (data) error → skip / dummy / raise
                     input_files : List[Optional[Union[OcrdFile, ClientSideOcrdFile]]] = [None] * len(input_file_tuple)
-                    log.info("processing page %s",
-                             next(input_file.pageId
-                                  for input_file in input_file_tuple
-                                  if input_file))
+                    page_id = next(input_file.pageId
+                                   for input_file in input_file_tuple
+                                   if input_file)
+                    log.info(f"processing page {page_id}")
                     for i, input_file in enumerate(input_file_tuple):
                         if input_file is None:
                             # file/page not found in this file grp
@@ -336,13 +332,70 @@ class Processor():
                             continue
                         try:
                             input_files[i] = self.workspace.download_file(input_file)
-                        except ValueError as e:
+                        except (ValueError, FileNotFoundError, HTTPError) as e:
                             log.error(repr(e))
-                            log.warning(f"failed downloading file {input_file} for page {input_file.pageId}")
-                    self.process_page_file(*input_files)
+                            log.warning(f"failed downloading file {input_file} for page {page_id}")
+                    # FIXME: differentiate error cases in various ways:
+                    # - ResourceNotFoundError → use ResourceManager to download (once), then retry
+                    # - transient (I/O or OOM) error → maybe sleep, retry
+                    # - persistent (data) error → skip / dummy / raise
+                    try:
+                        self.process_page_file(*input_files)
+                    except Exception as err:
+                        # we have to be broad here, but want to exclude NotImplementedError
+                        if isinstance(err, NotImplementedError):
+                            raise err
+                        if isinstance(err, FileExistsError):
+                            if config.OCRD_EXISTING_OUTPUT == 'ABORT':
+                                raise err
+                            if config.OCRD_EXISTING_OUTPUT == 'SKIP':
+                                continue
+                            if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
+                                # too late here, must not happen
+                                raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
+                        # FIXME: re-usable/actionable logging
+                        log.exception(f"Failure on page {page_id}: {err}")
+                        if config.OCRD_MISSING_OUTPUT == 'ABORT':
+                            raise err
+                        if config.OCRD_MISSING_OUTPUT == 'SKIP':
+                            continue
+                        if config.OCRD_MISSING_OUTPUT == 'COPY':
+                            self._copy_page_file(input_files[0])
+                        else:
+                            desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
+                            raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
             except NotImplementedError:
                 # fall back to deprecated method
                 self.process()
+
+    def _copy_page_file(self, input_file : Union[OcrdFile, ClientSideOcrdFile]) -> None:
+        """
+        Copy the given ``input_file`` of the :py:attr:`workspace`,
+        representing one physical page (passed as one opened
+        :py:class:`~ocrd_models.OcrdFile` per input fileGrp)
+        and add it as if it was a processing result.
+        """
+        log = getLogger('ocrd.processor.base')
+        input_pcgts : OcrdPage
+        assert isinstance(input_file, (OcrdFile, ClientSideOcrdFile))
+        log.debug(f"parsing file {input_file.ID} for page {input_file.pageId}")
+        try:
+            input_pcgts = page_from_file(input_file)
+        except ValueError as err:
+            # not PAGE and not an image to generate PAGE for
+            log.error(f"non-PAGE input for page {input_file.pageId}: {err}")
+            return
+        output_file_id = make_file_id(input_file, self.output_file_grp)
+        input_pcgts.set_pcGtsId(output_file_id)
+        self.add_metadata(input_pcgts)
+        self.workspace.add_file(file_id=output_file_id,
+                                file_grp=self.output_file_grp,
+                                page_id=input_file.pageId,
+                                local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
+                                mimetype=MIMETYPE_PAGE,
+                                content=to_xml(input_pcgts),
+                                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+        )
 
     def process_page_file(self, *input_files : Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
         """
@@ -366,9 +419,9 @@ class Processor():
                 page_ = page_from_file(input_file)
                 assert isinstance(page_, OcrdPage)
                 input_pcgts[i] = page_
-            except ValueError as e:
+            except ValueError as err:
                 # not PAGE and not an image to generate PAGE for
-                log.info("non-PAGE input for page %s: %s", page_id, e)
+                log.error("non-PAGE input for page %s: %s", page_id, err)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
         result = self.process_page_pcgts(*input_pcgts, page_id=page_id)
         for image_result in result.images:
@@ -380,7 +433,9 @@ class Processor():
                 image_file_id,
                 self.output_file_grp,
                 page_id=page_id,
-                file_path=image_file_path)
+                file_path=image_file_path,
+                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+            )
         result.pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(result.pcgts)
         self.workspace.add_file(file_id=output_file_id,
@@ -388,7 +443,9 @@ class Processor():
                                 page_id=page_id,
                                 local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
                                 mimetype=MIMETYPE_PAGE,
-                                content=to_xml(result.pcgts))
+                                content=to_xml(result.pcgts),
+                                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+        )
 
     def process_page_pcgts(self, *input_pcgts : Optional[OcrdPage], page_id : Optional[str] = None) -> OcrdPageResult:
         """

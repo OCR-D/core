@@ -98,7 +98,7 @@ class TestBashlibCli(TestCase):
     def test_input_files(self):
         with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as wsdir:
             with pushd_popd(wsdir):
-                _, out, err = self.invoke_cli(bashlib_cli, ['input-files', '-I', 'OCR-D-IMG'])
+                _, out, err = self.invoke_cli(bashlib_cli, ['input-files', '-I', 'OCR-D-IMG', '-O', 'OUTPUT'])
                 assert ("[url]='' [local_filename]='OCR-D-IMG/INPUT_0017.tif' [ID]='INPUT_0017' [mimetype]='image/tiff' "
                         "[pageId]='PHYS_0017' [outputFileId]='OUTPUT_PHYS_0017'") in out
 

@@ -5,7 +5,13 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 from os import environ
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
+from tests.data import (
+    DummyProcessor,
+    DummyProcessorWithRequiredParameters,
+    DummyProcessorWithOutput,
+    DummyProcessorWithOutputFailures,
+    IncompleteProcessor
+)
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
@@ -145,20 +151,43 @@ class TestProcessor(TestCase):
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
 
+    def test_run_output_missing(self):
+        ws = self.workspace
+        from ocrd_utils import config
+        config.OCRD_MISSING_OUTPUT = 'SKIP'
+        run_processor(DummyProcessorWithOutputFailures, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT")
+        # only half succeed
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG")) // 2
+        config.OCRD_MISSING_OUTPUT = 'ABORT'
+        with pytest.raises(Exception) as exc:
+            run_processor(DummyProcessorWithOutputFailures, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT")
+            assert "intermittent" in str(exc.value)
+        config.OCRD_MISSING_OUTPUT = 'COPY'
+        config.OCRD_EXISTING_OUTPUT = 'SKIP'
+        run_processor(DummyProcessorWithOutputFailures, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT")
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
-            ws.overwrite_mode = True
+            from ocrd_utils import config
+            config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, file_id='OCR-D-OUT_phys_0001', page_id='phys_0001')
-            ws.overwrite_mode = False
+            config.OCRD_EXISTING_OUTPUT = 'ABORT'
             with pytest.raises(Exception) as exc:
                 run_processor(DummyProcessorWithOutput, workspace=ws,
                               input_file_grp="GRP1",
                               output_file_grp="OCR-D-OUT")
                 assert str(exc.value) == "File with ID='OCR-D-OUT_phys_0001' already exists"
-            ws.overwrite_mode = True
+            config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")

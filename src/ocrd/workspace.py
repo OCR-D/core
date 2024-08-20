@@ -42,7 +42,8 @@ from ocrd_utils import (
     MIME_TO_EXT,
     MIME_TO_PIL,
     MIMETYPE_PAGE,
-    REGEX_PREFIX
+    REGEX_PREFIX,
+    config
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -75,7 +76,6 @@ class Workspace():
             `OcrdMets` of this workspace. If `None`, then the METS will be read from and written to
             the filesystem directly.
         baseurl (string, None) : Base URL to prefix to relative URL.
-        overwrite_mode (boolean, False) : Whether to force add operations on this workspace globally
     """
 
     def __init__(
@@ -91,7 +91,6 @@ class Workspace():
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
-        self.overwrite_mode = False
         self.is_remote = bool(mets_server_url)
         if mets is None:
             if self.is_remote:
@@ -243,8 +242,6 @@ class Workspace():
         """
         log = getLogger('ocrd.workspace.remove_file')
         log.debug('Deleting mets:file %s', file_id)
-        if self.overwrite_mode:
-            force = True
         if isinstance(file_id, OcrdFile):
             file_id = file_id.ID
         try:
@@ -296,9 +293,6 @@ class Workspace():
             page_same_group (boolean): Remove only images in the same file group as the PAGE-XML.
                 Has no effect unless ``page_recursive`` is `True`.
         """
-        if not force and self.overwrite_mode:
-            force = True
-
         if (not USE.startswith(REGEX_PREFIX)) and (USE not in self.mets.file_groups) and (not force):
             raise Exception("No such fileGrp: %s" % USE)
 
@@ -419,8 +413,6 @@ class Workspace():
             raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
         if content is not None and not kwargs.get('local_filename'):
             raise Exception("'content' was set but no 'local_filename'")
-        if self.overwrite_mode:
-            kwargs['force'] = True
 
         with pushd_popd(self.directory):
             if kwargs.get('local_filename'):
@@ -1101,8 +1093,6 @@ class Workspace():
             The (absolute) path of the created file.
         """
         log = getLogger('ocrd.workspace.save_image_file')
-        if self.overwrite_mode:
-            force = True
         saveargs = dict()
         if 'dpi' in image.info:
             saveargs['dpi'] = image.info['dpi']

@@ -33,6 +33,7 @@ def ocrd_cli_options(f):
         option('-O', '--output-file-grp', default=None),
         option('-g', '--page-id'),
         option('--overwrite', is_flag=True, default=False),
+        option('--debug', is_flag=True, default=False),
         option('--profile', is_flag=True, default=False),
         option('--profile-file', type=Path(dir_okay=False, writable=True)),
         parameter_option,

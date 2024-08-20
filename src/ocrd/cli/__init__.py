@@ -33,6 +33,10 @@ Variables:
 \b
 {config.describe('OCRD_MISSING_INPUT')}
 \b
+{config.describe('OCRD_MISSING_OUTPUT')}
+\b
+{config.describe('OCRD_EXISTING_OUTPUT')}
+\b
 {config.describe('OCRD_METS_CACHING')}
 \b
 {config.describe('OCRD_MAX_PROCESSOR_CACHE')}
