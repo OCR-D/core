@@ -5,7 +5,6 @@ __all__ = [
     'abspath',
     'directory_size',
     'is_file_in_directory',
-    'get_ocrd_tool_json',
     'get_moduledir',
     'get_processor_resource_types',
     'guess_media_type',
@@ -74,25 +73,6 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     z = ZipFile(path_to_zip, 'r')
     z.extractall(output_directory)
     z.close()
-
-@lru_cache()
-def get_ocrd_tool_json(executable):
-    """
-    Get the ``ocrd-tool`` description of ``executable``.
-    """
-    ocrd_tool = {}
-    executable_name = Path(executable).name
-    try:
-        ocrd_all_tool = loads(resource_string('ocrd', 'ocrd-all-tool.json'))
-        ocrd_tool = ocrd_all_tool[executable]
-    except (JSONDecodeError, OSError, KeyError):
-        try:
-            ocrd_tool = loads(run([executable, '--dump-json'], stdout=PIPE).stdout)
-        except (JSONDecodeError, OSError) as e:
-            getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
-    if 'resource_locations' not in ocrd_tool:
-        ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
-    return ocrd_tool
 
 @lru_cache()
 def get_moduledir(executable):
