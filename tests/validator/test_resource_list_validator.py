@@ -22,8 +22,7 @@ def reslist():
 
 def test_resource_list_validator(reslist):
     report = OcrdResourceListValidator.validate(reslist)
-    print(report.errors)
-    assert report.is_valid == True
+    assert report.is_valid, str(report.to_xml())
 
 if __name__ == '__main__':
     main(__file__)

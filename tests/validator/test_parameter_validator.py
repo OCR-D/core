@@ -42,7 +42,7 @@ class TestParameterValidator(TestCase):
         })
         obj = {'baz': '23'}
         report = validator.validate(obj)
-        self.assertTrue(report.is_valid)
+        self.assertTrue(report.is_valid, str(report.to_xml()))
         self.assertEqual(obj, {'baz': '23', "num-param": 1})
 
 def test_min_max():
