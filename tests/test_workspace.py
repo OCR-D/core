@@ -270,9 +270,9 @@ def test_remove_file_force(sbb_data_workspace):
 
     # TODO check semantics - can a non-existent thing be removed?
     assert not sbb_data_workspace.remove_file('non-existing-id', force=True)
-    # should also succeed
-    sbb_data_workspace.overwrite_mode = True
-    assert not sbb_data_workspace.remove_file('non-existing-id', force=False)
+    with pytest.raises(FileNotFoundError) as not_found_exc:
+        sbb_data_workspace.remove_file('non-existing-id', force=False)
+    assert "not found in METS" in str(not_found_exc.value)
 
 
 def test_remove_file_remote_not_available_raises_exception(plain_workspace):
@@ -292,9 +292,9 @@ def test_remove_file_remote(plain_workspace):
     assert plain_workspace.remove_file('page1_img', force=True)
 
     # TODO check returned value
-    # should also "succeed", because overwrite_mode is set which also sets 'force' to 'True'
-    plain_workspace.overwrite_mode = True
-    assert not plain_workspace.remove_file('page1_img')
+    with pytest.raises(FileNotFoundError) as not_found_exc:
+        plain_workspace.remove_file('page1_img')
+    assert "not found in METS" in str(not_found_exc.value)
 
 
 def test_rename_file_group(tmp_path):
@@ -341,9 +341,6 @@ def test_remove_file_group_force(sbb_data_workspace):
     # check function and tests semantics
     # should succeed
     assert not sbb_data_workspace.remove_file_group('I DO NOT EXIST', force=True)
-    # should also succeed
-    sbb_data_workspace.overwrite_mode = True
-    assert not sbb_data_workspace.remove_file_group('I DO NOT EXIST', force=False)
 
 
 def test_remove_file_group_rmdir(sbb_data_tmp, sbb_data_workspace):
@@ -432,9 +429,11 @@ def test_save_image_file(plain_workspace):
     assert exists(join(plain_workspace.directory, 'IMG', 'page1_img.jpg'))
     # should succeed
     assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg', force=True)
-    # should also succeed
-    plain_workspace.overwrite_mode = True
-    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg')
+    # should fail
+    with pytest.raises(FileExistsError) as exists_exc:
+        plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg')
+    assert "neither force nor ignore are set" in str(exists_exc.value)
+
     # check file_path kwarg
     assert plain_workspace.save_image_file(img, 'page1_img2', 'IMG', page_id='page1', file_path='IMG/page1_img2.png')
     assert exists(join(plain_workspace.directory, 'IMG', 'page1_img2.png'))

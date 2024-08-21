@@ -21,6 +21,7 @@ import inspect
 import tarfile
 import io
 from deprecated import deprecated
+from requests import HTTPError
 
 from ocrd.workspace import Workspace
 from ocrd_models.ocrd_file import ClientSideOcrdFile, OcrdFile
@@ -29,6 +30,7 @@ from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
     MIME_TO_EXT,
+    config,
     getLogger,
     initLogging,
     list_resource_candidates,
@@ -55,9 +57,36 @@ class ResourceNotFoundError(FileNotFoundError):
     def __init__(self, name, executable):
         self.name = name
         self.executable = executable
-        self.message = "Could not find resource '%s' for executable '%s'. " \
-                       "Try 'ocrd resmgr download %s %s' to download this resource." \
-                       % (name, executable, executable, name)
+        self.message = (f"Could not find resource '{name}' for executable '{executable}'. "
+                        f"Try 'ocrd resmgr download {executable} {name}' to download this resource.")
+        super().__init__(self.message)
+
+class NonUniqueInputFile(ValueError):
+    """
+    An exception signifying the specified fileGrp / pageId / mimetype
+    selector yields multiple PAGE files, or no PAGE files but multiple images,
+    or multiple files of that mimetype.
+    """
+    def __init__(self, fileGrp, pageId, mimetype):
+        self.fileGrp = fileGrp
+        self.pageId = pageId
+        self.mimetype = mimetype
+        self.message = (f"Could not determine unique input file for fileGrp {fileGrp} "
+                        f"and pageId {pageId} under mimetype {mimetype or 'PAGE+image(s)'}")
+        super().__init__(self.message)
+
+class MissingInputFile(ValueError):
+    """
+    An exception signifying the specified fileGrp / pageId / mimetype
+    selector yields no PAGE files, or no PAGE and no image files,
+    or no files of that mimetype.
+    """
+    def __init__(self, fileGrp, pageId, mimetype):
+        self.fileGrp = fileGrp
+        self.pageId = pageId
+        self.mimetype = mimetype
+        self.message = (f"Could not find input file for fileGrp {fileGrp} "
+                        f"and pageId {pageId} under mimetype {mimetype or 'PAGE+image(s)'}")
         super().__init__(self.message)
 
 class Processor():
@@ -111,33 +140,33 @@ class Processor():
             input_file_grp=None,
             output_file_grp=None,
             page_id=None,
-            download_files=True,
+            download_files=config.OCRD_DOWNLOAD_INPUT,
             version=None
     ):
         """
-        Instantiate, but do not process. Unless ``list_resources`` or
-        ``show_resource`` or ``show_help`` or ``show_version`` or
-        ``dump_json`` or ``dump_module_dir`` is true, setup for processing
-        (parsing and validating parameters, entering the workspace directory).
+        Instantiate, but do not setup (neither for processing nor other usage).
+        If given, do parse and validate :py:data:`.parameter`.
 
         Args:
              workspace (:py:class:`~ocrd.Workspace`): The workspace to process. \
+                 If not ``None``, then `chdir` to that directory.
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
         Keyword Args:
              parameter (string): JSON of the runtime choices for ocrd-tool ``parameters``. \
                  Can be ``None`` even for processing, but then needs to be set before running.
-             input_file_grp (string): comma-separated list of METS ``fileGrp``s used for input. \
+             input_file_grp (string): comma-separated list of METS ``fileGrp`` used for input. \
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
-             output_file_grp (string): comma-separated list of METS ``fileGrp``s used for output. \
+             output_file_grp (string): comma-separated list of METS ``fileGrp`` used for output. \
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
              page_id (string): comma-separated list of METS physical ``page`` IDs to process \
                  (or empty for all pages). \
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
-             download_files (boolean): Whether input files will be downloaded prior to processing.
+             download_files (boolean): Whether input files will be downloaded prior to processing, \
+                 defaults to :py:attr:`ocrd_utils.config.OCRD_DOWNLOAD_INPUT` which is ``True`` by default
         """
         if ocrd_tool is not None:
             deprecation_warning("Passing 'ocrd_tool' as keyword argument to Processor is deprecated - "
@@ -257,29 +286,32 @@ class Processor():
         """
         pass
 
-    @deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')
+    @deprecated(version='3.0', reason='process() should be replaced with process_page_pcgts() or process_page_file() or process_workspace()')
     def process(self) -> None:
         """
-        Process all files of the :py:attr:`workspace`
-        from the given :py:attr:`input_file_grp`
-        to the given :py:attr:`output_file_grp`
-        for the given :py:attr:`page_id` (or all pages)
-        under the given :py:attr:`parameter`.
+        Process all files of the :py:data:`workspace`
+        from the given :py:data:`input_file_grp`
+        to the given :py:data:`output_file_grp`
+        for the given :py:data:`page_id` (or all pages)
+        under the given :py:data:`parameter`.
 
-        (This contains the main functionality and needs to be overridden by subclasses.)
+        (This contains the main functionality and needs to be
+        overridden by subclasses.)
         """
         raise NotImplementedError()
 
     def process_workspace(self, workspace: Workspace) -> None:
         """
         Process all files of the given ``workspace``,
-        from the given :py:attr:`input_file_grp`
-        to the given :py:attr:`output_file_grp`
-        for the given :py:attr:`page_id` (or all pages)
-        under the given :py:attr:`parameter`.
+        from the given :py:data:`input_file_grp`
+        to the given :py:data:`output_file_grp`
+        for the given :py:data:`page_id` (or all pages)
+        under the given :py:data:`parameter`.
 
         (This will iterate over pages and files, calling
-        :py:meth:`process_page`, handling exceptions.)
+        :py:meth:`.process_page_file` and handling exceptions.
+        It should be overridden by subclasses to handle cases
+        like post-processing or computation across pages.)
         """
         log = getLogger('ocrd.processor.base')
         with pushd_popd(workspace.directory):
@@ -287,17 +319,14 @@ class Processor():
             self.verify()
             try:
                 # FIXME: add page parallelization by running multiprocessing.Pool (#322)
-                for input_file_tuple in self.zip_input_files(on_error='abort'):
-                    # FIXME: add error handling by catching exceptions in various ways (#579)
-                    # for example:
-                    # - ResourceNotFoundError → use ResourceManager to download (once), then retry
-                    # - transient (I/O or OOM) error → maybe sleep, retry
-                    # - persistent (data) error → skip / dummy / raise
+                for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
                     input_files : List[Optional[Union[OcrdFile, ClientSideOcrdFile]]] = [None] * len(input_file_tuple)
+                    page_id = next(input_file.pageId
+                                   for input_file in input_file_tuple
+                                   if input_file)
+                    log.info(f"processing page {page_id}")
                     for i, input_file in enumerate(input_file_tuple):
-                        if i == 0:
-                            log.info("processing page %s", input_file.pageId)
-                        elif input_file is None:
+                        if input_file is None:
                             # file/page not found in this file grp
                             continue
                         input_files[i] = input_file
@@ -305,24 +334,81 @@ class Processor():
                             continue
                         try:
                             input_files[i] = self.workspace.download_file(input_file)
-                        except ValueError as e:
+                        except (ValueError, FileNotFoundError, HTTPError) as e:
                             log.error(repr(e))
-                            log.warning("skipping file %s for page %s", input_file, input_file.pageId)
-                    self.process_page_file(*input_files)
+                            log.warning(f"failed downloading file {input_file} for page {page_id}")
+                    # FIXME: differentiate error cases in various ways:
+                    # - ResourceNotFoundError → use ResourceManager to download (once), then retry
+                    # - transient (I/O or OOM) error → maybe sleep, retry
+                    # - persistent (data) error → skip / dummy / raise
+                    try:
+                        self.process_page_file(*input_files)
+                    except Exception as err:
+                        # we have to be broad here, but want to exclude NotImplementedError
+                        if isinstance(err, NotImplementedError):
+                            raise err
+                        if isinstance(err, FileExistsError):
+                            if config.OCRD_EXISTING_OUTPUT == 'ABORT':
+                                raise err
+                            if config.OCRD_EXISTING_OUTPUT == 'SKIP':
+                                continue
+                            if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
+                                # too late here, must not happen
+                                raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
+                        # FIXME: re-usable/actionable logging
+                        log.exception(f"Failure on page {page_id}: {err}")
+                        if config.OCRD_MISSING_OUTPUT == 'ABORT':
+                            raise err
+                        if config.OCRD_MISSING_OUTPUT == 'SKIP':
+                            continue
+                        if config.OCRD_MISSING_OUTPUT == 'COPY':
+                            self._copy_page_file(input_files[0])
+                        else:
+                            desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
+                            raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
             except NotImplementedError:
                 # fall back to deprecated method
                 self.process()
 
-    def process_page_file(self, *input_files : Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
+    def _copy_page_file(self, input_file : Union[OcrdFile, ClientSideOcrdFile]) -> None:
         """
-        Process the given ``input_files`` of the :py:attr:`workspace`,
+        Copy the given ``input_file`` of the :py:data:`workspace`,
         representing one physical page (passed as one opened
         :py:class:`~ocrd_models.OcrdFile` per input fileGrp)
-        under the given :py:attr:`parameter`, and make sure the
+        and add it as if it was a processing result.
+        """
+        log = getLogger('ocrd.processor.base')
+        input_pcgts : OcrdPage
+        assert isinstance(input_file, (OcrdFile, ClientSideOcrdFile))
+        log.debug(f"parsing file {input_file.ID} for page {input_file.pageId}")
+        try:
+            input_pcgts = page_from_file(input_file)
+        except ValueError as err:
+            # not PAGE and not an image to generate PAGE for
+            log.error(f"non-PAGE input for page {input_file.pageId}: {err}")
+            return
+        output_file_id = make_file_id(input_file, self.output_file_grp)
+        input_pcgts.set_pcGtsId(output_file_id)
+        self.add_metadata(input_pcgts)
+        self.workspace.add_file(file_id=output_file_id,
+                                file_grp=self.output_file_grp,
+                                page_id=input_file.pageId,
+                                local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
+                                mimetype=MIMETYPE_PAGE,
+                                content=to_xml(input_pcgts),
+                                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+        )
+
+    def process_page_file(self, *input_files : Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
+        """
+        Process the given ``input_files`` of the :py:data:`workspace`,
+        representing one physical page (passed as one opened
+        :py:class:`.OcrdFile` per input fileGrp)
+        under the given :py:data:`.parameter`, and make sure the
         results get added accordingly.
 
-        (This uses process_page_pcgts, but can be overridden by subclasses
-        to handle cases like multiple fileGrps, non-PAGE input etc.)
+        (This uses :py:meth:`.process_page_pcgts`, but should be overridden by subclasses
+        to handle cases like multiple output fileGrps, non-PAGE input etc.)
         """
         log = getLogger('ocrd.processor.base')
         input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
@@ -335,9 +421,9 @@ class Processor():
                 page_ = page_from_file(input_file)
                 assert isinstance(page_, OcrdPage)
                 input_pcgts[i] = page_
-            except ValueError as e:
+            except ValueError as err:
                 # not PAGE and not an image to generate PAGE for
-                log.info("non-PAGE input for page %s: %s", page_id, e)
+                log.error("non-PAGE input for page %s: %s", page_id, err)
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
         result = self.process_page_pcgts(*input_pcgts, page_id=page_id)
         for image_result in result.images:
@@ -349,41 +435,44 @@ class Processor():
                 image_file_id,
                 self.output_file_grp,
                 page_id=page_id,
-                file_path=image_file_path)
+                file_path=image_file_path,
+                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+            )
         result.pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(result.pcgts)
-        # FIXME: what about non-PAGE output like JSON ???
         self.workspace.add_file(file_id=output_file_id,
                                 file_grp=self.output_file_grp,
                                 page_id=page_id,
                                 local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
                                 mimetype=MIMETYPE_PAGE,
-                                content=to_xml(result.pcgts))
+                                content=to_xml(result.pcgts),
+                                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+        )
 
     def process_page_pcgts(self, *input_pcgts : Optional[OcrdPage], page_id : Optional[str] = None) -> OcrdPageResult:
         """
-        Process the given ``input_pcgts`` of the :py:attr:`workspace`,
+        Process the given ``input_pcgts`` of the :py:data:`.workspace`,
         representing one physical page (passed as one parsed
-        :py:class:`~ocrd_models.OcrdPage` per input fileGrp)
-        under the given :py:attr:`parameter`, and return the
-        resulting :py:class:`~ocrd.processor.OcrdPageResult`.
+        :py:class:`.OcrdPage` per input fileGrp)
+        under the given :py:data:`.parameter`, and return the
+        resulting :py:class:`.OcrdPageResult`.
 
         Optionally, add to the ``images`` attribute of the resulting
-        :py:class:`~ocrd.processor.OcrdPageResult` instances
-        of :py:class:`~ocrd.processor.OcrdPageResultImage`,
+        :py:class:`.OcrdPageResult` instances of :py:class:`.OcrdPageResultImage`,
         which have required fields for ``pil`` (:py:class:`PIL.Image` image data),
         ``file_id_suffix`` (used for generating IDs of the saved image) and
         ``alternative_image`` (reference of the :py:class:`ocrd_models.ocrd_page.AlternativeImageType`
         for setting the filename of the saved image).
 
-        (This contains the main functionality and must be overridden by subclasses.)
+        (This contains the main functionality and must be overridden by subclasses,
+        unless it does not get called by some overriden :py:meth:`.process_page_file`.)
         """
         raise NotImplementedError()
 
     def add_metadata(self, pcgts: OcrdPage) -> None:
         """
         Add PAGE-XML :py:class:`~ocrd_models.ocrd_page.MetadataItemType` ``MetadataItem`` describing
-        the processing step and runtime parameters to :py:class:`~ocrd_models.OcrdPage` ``pcgts``.
+        the processing step and runtime parameters to :py:class:`.OcrdPage` ``pcgts``.
         """
         metadata_obj = pcgts.get_Metadata()
         assert metadata_obj is not None
@@ -409,7 +498,7 @@ class Processor():
     def resolve_resource(self, val):
         """
         Resolve a resource name to an absolute file path with the algorithm in
-        https://ocr-d.de/en/spec/ocrd_tool#file-parameters
+        `spec <https://ocr-d.de/en/spec/ocrd_tool#file-parameters>`_
 
         Args:
             val (string): resource value to resolve
@@ -435,7 +524,7 @@ class Processor():
     def show_resource(self, val):
         """
         Resolve a resource name to a file path with the algorithm in
-        https://ocr-d.de/en/spec/ocrd_tool#file-parameters,
+        `spec <https://ocr-d.de/en/spec/ocrd_tool#file-parameters>`_,
         then print its contents to stdout.
 
         Args:
@@ -506,7 +595,8 @@ class Processor():
           files for that page)
         - Otherwise raise an error (complaining that only PAGE-XML warrants
           having multiple images for a single page)
-        Algorithm <https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593>_
+
+        See `algorithm <https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593>`_
 
         Returns:
             A list of :py:class:`ocrd_models.ocrd_file.OcrdFile` objects.
@@ -548,11 +638,13 @@ class Processor():
         - if ``last``, then the last matching file for the page will be
           silently selected (as if the last was the only match)
         - if ``abort``, then an exception will be raised.
+
         Multiple matches for PAGE-XML will always raise an exception.
 
         Keyword Args:
              require_first (boolean): If true, then skip a page entirely
                  whenever it is not available in the first input `fileGrp`.
+             on_error (string): How to handle multiple file matches per page.
              mimetype (string): If not `None`, filter by the specified MIME
                  type (literal or regex prefixed by `//`). Otherwise prefer
                  PAGE or image.
@@ -575,23 +667,18 @@ class Processor():
                     pageId=self.page_id, fileGrp=ifg, mimetype=mimetype),
                                 # sort by MIME type so PAGE comes before images
                                 key=lambda file_: file_.mimetype)
-            # Warn if no files found but pageId was specified because that
-            # might be because of invalid page_id (range)
-            if self.page_id and not files_:
-                msg = (f"Could not find any files for --page-id {self.page_id} - "
-                       f"compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
-                if on_error == 'abort':
-                    raise ValueError(msg)
-                LOG.warning(msg)
             for file_ in files_:
                 if not file_.pageId:
+                    # ignore document-global files
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
                 if ift[i]:
-                    LOG.debug("another file %s for page %s in input file group %s", file_.ID, file_.pageId, ifg)
+                    LOG.debug(f"another file {file_.ID} for page {file_.pageId} in input file group {ifg}")
                     # fileGrp has multiple files for this page ID
                     if mimetype:
                         # filter was active, this must not happen
+                        LOG.warning(f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
+                                    f"conflicts with file {ift[i].ID} of same MIME type {mimetype} - on_error={on_error}")
                         if on_error == 'skip':
                             ift[i] = None
                         elif on_error == 'first':
@@ -599,9 +686,7 @@ class Processor():
                         elif on_error == 'last':
                             ift[i] = file_
                         elif on_error == 'abort':
-                            raise ValueError(
-                                "Multiple '%s' matches for page '%s' in fileGrp '%s'." % (
-                                    mimetype, file_.pageId, ifg))
+                            raise NonUniqueInputFile(ifg, file_.pageId, mimetype)
                         else:
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                     elif (ift[i].mimetype == MIMETYPE_PAGE and
@@ -609,11 +694,11 @@ class Processor():
                         pass # keep PAGE match
                     elif (ift[i].mimetype == MIMETYPE_PAGE and
                           file_.mimetype == MIMETYPE_PAGE):
-                        raise ValueError(
-                            "Multiple PAGE-XML matches for page '%s' in fileGrp '%s'." % (
-                                file_.pageId, ifg))
+                        raise NonUniqueInputFile(ifg, file_.pageId, None)
                     else:
                         # filter was inactive but no PAGE is in control, this must not happen
+                        LOG.warning(f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
+                                    f"conflicts with file {ift[i].ID} but no PAGE available - on_error={on_error}")
                         if on_error == 'skip':
                             ift[i] = None
                         elif on_error == 'first':
@@ -621,21 +706,27 @@ class Processor():
                         elif on_error == 'last':
                             ift[i] = file_
                         elif on_error == 'abort':
-                            raise ValueError(
-                                "No PAGE-XML for page '%s' in fileGrp '%s' but multiple matches." % (
-                                    file_.pageId, ifg))
+                            raise NonUniqueInputFile(ifg, file_.pageId, None)
                         else:
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                 else:
-                    LOG.debug("adding file %s for page %s to input file group %s", file_.ID, file_.pageId, ifg)
+                    LOG.debug(f"adding file {file_.ID} for page {file_.pageId} to input file group {ifg}")
                     ift[i] = file_
+        # Warn if no files found but pageId was specified, because that might be due to invalid page_id (range)
+        if self.page_id and not any(pages):
+            LOG.critical(f"Could not find any files for selected pageId {self.page_id}.\ncompare '{self.page_id}' with the output of 'orcd workspace list-page'.")
         ifts = list()
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:
-                    # other fallback options?
-                    LOG.error('found no page %s in file group %s',
-                              page, ifg)
+                    # could be from non-unique with on_error=skip or from true gap
+                    LOG.error(f'Found no file for page {page} in file group {ifg}')
+                    if config.OCRD_MISSING_INPUT == 'abort':
+                        raise MissingInputFile(ifg, page, mimetype)
+            if not any(ifiles):
+                # must be from non-unique with on_error=skip
+                LOG.warning(f'Found no files for {page} - skipping')
+                continue
             if ifiles[0] or not require_first:
                 ifts.append(tuple(ifiles))
         return ifts

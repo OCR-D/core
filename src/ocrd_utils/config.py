@@ -12,6 +12,8 @@ from pathlib import Path
 from tempfile import gettempdir
 from textwrap import fill, indent
 
+_validator_boolean = lambda val: isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1')
+_parser_boolean = lambda val: bool(val) if isinstance(val, (int, bool)) else str.lower(val) in ('true', '1')
 
 class OcrdEnvVariable():
 
@@ -60,7 +62,11 @@ class OcrdEnvConfig():
         self._variables = {}
 
     def add(self, name, *args, **kwargs):
-        self._variables[name] = OcrdEnvVariable(name, *args, **kwargs)
+        var = OcrdEnvVariable(name, *args, **kwargs)
+        # make visible in ocrd_utils.config docstring (apidoc)
+        txt = var.describe(wrap_text=False, indent_text=True)
+        globals()['__doc__'] += "\n\n - " + txt + "\n\n"
+        self._variables[name] = var
         return self._variables[name]
 
     def has_default(self, name):
@@ -102,8 +108,8 @@ config = OcrdEnvConfig()
 
 config.add('OCRD_METS_CACHING',
     description='If set to `true`, access to the METS file is cached, speeding in-memory search and modification.',
-    validator=lambda val: val in ('true', 'false', '0', '1'),
-    parser=lambda val: val in ('true', '1'))
+    validator=_validator_boolean,
+    parser=_parser_boolean)
 
 config.add('OCRD_MAX_PROCESSOR_CACHE',
     description="Maximum number of processor instances (for each set of parameters) to be kept in memory (including loaded models) for processing workers or processor servers.",
@@ -114,9 +120,11 @@ config.add("OCRD_PROFILE",
     description="""\
 Whether to enable gathering runtime statistics
 on the `ocrd.profile` logger (comma-separated):
+
 - `CPU`: yields CPU and wall-time,
 - `RSS`: also yields peak memory (resident set size)
 - `PSS`: also yields peak memory (proportional set size)
+
 """,
   validator=lambda val : all(t in ('', 'CPU', 'RSS', 'PSS') for t in val.split(',')),
   default=(True, ''))
@@ -125,7 +133,7 @@ config.add("OCRD_PROFILE_FILE",
     description="If set, then the CPU profile is written to this file for later peruse with a analysis tools like snakeviz")
 
 config.add("OCRD_DOWNLOAD_RETRIES",
-    description="Number of times to retry failed attempts for downloads of resource or workspace files.",
+    description="Number of times to retry failed attempts for downloads of resources or workspace files.",
     validator=int,
     parser=int)
 
@@ -140,6 +148,50 @@ def _ocrd_download_timeout_parser(val):
 config.add("OCRD_DOWNLOAD_TIMEOUT",
     description="Timeout in seconds for connecting or reading (comma-separated) when downloading.",
     parser=_ocrd_download_timeout_parser)
+
+config.add("OCRD_DOWNLOAD_INPUT",
+    description="Whether to download files not present locally during processing",
+    default=(True, True),
+    validator=_validator_boolean,
+    parser=_parser_boolean)
+
+config.add("OCRD_MISSING_INPUT",
+    description="""\
+How to deal with missing input files (for some fileGrp/pageId) during processing:
+
+ - `SKIP`: ignore and proceed with next page's input
+ - `ABORT`: throw :py:class:`.MissingInputFile`
+
+""",
+    default=(True, 'SKIP'),
+    validator=lambda val: val in ['SKIP', 'ABORT'],
+    parser=str)
+
+config.add("OCRD_MISSING_OUTPUT",
+    description="""\
+How to deal with missing output files (for some fileGrp/pageId) during processing:
+
+ - `SKIP`: ignore and proceed processing next page
+ - `COPY`: fall back to copying input PAGE to output fileGrp for page
+ - `ABORT`: re-throw whatever caused processing to fail
+
+""",
+    default=(True, 'SKIP'),
+    validator=lambda val: val in ['SKIP', 'COPY', 'ABORT'],
+    parser=str)
+
+config.add("OCRD_EXISTING_OUTPUT",
+    description="""\
+How to deal with already existing output files (for some fileGrp/pageId) during processing:
+
+ - `SKIP`: ignore and proceed processing next page
+ - `OVERWRITE`: force writing result to output fileGrp for page
+ - `ABORT`: re-throw :py:class:`FileExistsError`
+
+""",
+    default=(True, 'SKIP'),
+    validator=lambda val: val in ['SKIP', 'OVERWRITE', 'ABORT'],
+    parser=str)
 
 config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
         description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
@@ -190,5 +242,5 @@ config.add("XDG_CONFIG_HOME",
 config.add("OCRD_LOGGING_DEBUG",
     description="Print information about the logging setup to STDERR",
     default=(True, False),
-    validator=lambda val: isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1'),
-    parser=lambda val:  val if isinstance(val, (int, bool)) else str.lower(val) in ('true', '1'))
+    validator=_validator_boolean,
+    parser=_parser_boolean)

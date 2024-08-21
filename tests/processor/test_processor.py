@@ -5,11 +5,17 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 from os import environ
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
-from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
+from tests.data import (
+    DummyProcessor,
+    DummyProcessorWithRequiredParameters,
+    DummyProcessorWithOutput,
+    DummyProcessorWithOutputFailures,
+    IncompleteProcessor
+)
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
-from ocrd.processor.base import Processor, run_processor, run_cli
+from ocrd.processor import Processor, run_processor, run_cli, NonUniqueInputFile
 
 from unittest import mock
 import pytest
@@ -145,20 +151,43 @@ class TestProcessor(TestCase):
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
 
+    def test_run_output_missing(self):
+        ws = self.workspace
+        from ocrd_utils import config
+        config.OCRD_MISSING_OUTPUT = 'SKIP'
+        run_processor(DummyProcessorWithOutputFailures, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT")
+        # only half succeed
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG")) // 2
+        config.OCRD_MISSING_OUTPUT = 'ABORT'
+        with pytest.raises(Exception) as exc:
+            run_processor(DummyProcessorWithOutputFailures, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT")
+            assert "intermittent" in str(exc.value)
+        config.OCRD_MISSING_OUTPUT = 'COPY'
+        config.OCRD_EXISTING_OUTPUT = 'SKIP'
+        run_processor(DummyProcessorWithOutputFailures, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT")
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
-            ws.overwrite_mode = True
+            from ocrd_utils import config
+            config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, file_id='OCR-D-OUT_phys_0001', page_id='phys_0001')
-            ws.overwrite_mode = False
+            config.OCRD_EXISTING_OUTPUT = 'ABORT'
             with pytest.raises(Exception) as exc:
                 run_processor(DummyProcessorWithOutput, workspace=ws,
                               input_file_grp="GRP1",
                               output_file_grp="OCR-D-OUT")
                 assert str(exc.value) == "File with ID='OCR-D-OUT_phys_0001' already exists"
-            ws.overwrite_mode = True
+            config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
@@ -251,7 +280,7 @@ class TestProcessor(TestCase):
                     assert ('foobar3', 'foobar4') in tuples
                     tuples = [(one.ID, two) for one, two in proc.zip_input_files(on_error='skip')]
                     assert ('foobar3', None) in tuples
-                    with self.assertRaisesRegex(Exception, "No PAGE-XML for page .* in fileGrp .* but multiple matches."):
+                    with self.assertRaisesRegex(NonUniqueInputFile, "Could not determine unique input file"):
                         tuples = proc.zip_input_files(on_error='abort')
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2dup', page_id='phys_0001')
             for page_id in [None, 'phys_0001,phys_0002']:
@@ -260,7 +289,7 @@ class TestProcessor(TestCase):
                     proc.workspace = ws
                     proc.input_file_grp = 'GRP1,GRP2'
                     proc.page_id = page_id
-                    with self.assertRaisesRegex(Exception, "Multiple PAGE-XML matches for page"):
+                    with self.assertRaisesRegex(NonUniqueInputFile, "Could not determine unique input file"):
                         tuples = proc.zip_input_files()
 
     def test_zip_input_files_require_first(self):
@@ -281,7 +310,7 @@ class TestProcessor(TestCase):
                     proc.page_id = page_id
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
         r = self.capture_out_err()
-        assert 'ERROR ocrd.processor.base - found no page phys_0001 in file group GRP1' in r.err
+        assert 'ERROR ocrd.processor.base - Found no file for page phys_0001 in file group GRP1' in r.err
 
 if __name__ == "__main__":
     main(__file__)
