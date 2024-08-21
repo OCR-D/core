@@ -25,7 +25,7 @@ def extend_with_default(validator_class):
         for prop, subschema in properties.items():
             if "default" in subschema:
                 instance.setdefault(prop, subschema["default"])
-            if subschema.get('deprecated', False):
+            if subschema.get('deprecated', False) and instance.get(prop):
                 yield JsonSchemaDeprecationWarning(f"Property {prop} has been deprecated, ocrd-tool.json should be updated.")
 
         for error in validate_properties(validator, properties, instance, schema):
