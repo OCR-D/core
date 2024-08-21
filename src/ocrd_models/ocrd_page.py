@@ -2,6 +2,7 @@
 API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
+from typing import Dict
 from inspect import getmembers
 from lxml import etree as ET
 
@@ -187,8 +188,8 @@ class OcrdPage():
         self,
         pcgts : PcGtsType,
         etree : ET._Element,
-        mapping : dict[str, ET._Element],
-        revmap : dict[ET._Element, str],
+        mapping : Dict[str, ET._Element],
+        revmap : Dict[ET._Element, str],
     ):
         self._pcgts = pcgts
         self.etree = etree
