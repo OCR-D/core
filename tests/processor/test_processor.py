@@ -280,7 +280,7 @@ class TestProcessor(TestCase):
                     assert ('foobar3', 'foobar4') in tuples
                     tuples = [(one.ID, two) for one, two in proc.zip_input_files(on_error='skip')]
                     assert ('foobar3', None) in tuples
-                    with self.assertRaisesRegex(Exception, "Could not determine unique input file"):
+                    with self.assertRaisesRegex(NonUniqueInputFile, "Could not determine unique input file"):
                         tuples = proc.zip_input_files(on_error='abort')
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2dup', page_id='phys_0001')
             for page_id in [None, 'phys_0001,phys_0002']:
@@ -289,7 +289,7 @@ class TestProcessor(TestCase):
                     proc.workspace = ws
                     proc.input_file_grp = 'GRP1,GRP2'
                     proc.page_id = page_id
-                    with self.assertRaisesRegex(Exception, "Could not determine unique input file"):
+                    with self.assertRaisesRegex(NonUniqueInputFile, "Could not determine unique input file"):
                         tuples = proc.zip_input_files()
 
     def test_zip_input_files_require_first(self):
