@@ -714,7 +714,7 @@ class Processor():
                     ift[i] = file_
         # Warn if no files found but pageId was specified, because that might be due to invalid page_id (range)
         if self.page_id and not any(pages):
-            LOG.critical(f"Could not find any files for selected pageId {self.page_id}")
+            LOG.critical(f"Could not find any files for selected pageId {self.page_id}.\ncompare '{self.page_id}' with the output of 'orcd workspace list-page'.")
         ifts = list()
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
