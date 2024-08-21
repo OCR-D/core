@@ -3,6 +3,28 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+Changed:
+ - :fire: `OcrdPage` as proxy of `PcGtsType` instead of alias; also contains `etree` and `mapping` now
+ - :fire: `Processor.zip_input_files` now can throw `ocrd.NonUniqueInputFile` and `ocrd.MissingInputFile`
+   (the latter only if `OCRD_MISSING_INPUT=ABORT`)
+ - :fire: `Processor.zip_input_files` does not by default use `require_first` anymore
+   (so the first file in any input file tuple per page can be `None` as well)
+ - :fire: no more `Workspace.overwrite_mode`, merely delegate to `OCRD_EXISTING_OUTPUT=OVERWRITE`
+ - :art: improve on docs result for `ocrd_utils.config`
+
+Added:
+  - :point_right: `OCRD_DOWNLOAD_INPUT` for whether input files should be downloaded before processing
+  - :point_right: `OCRD_MISSING_INPUT` for how to handle missing input files (**`SKIP`** or `ABORT`)
+  - :point_right: `OCRD_MISSING_OUTPUT` for how to handle processing failures (**`SKIP`** or `ABORT` or `COPY`)
+     the latter behaves like ocrd-dummy for the failed page(s)
+  - :point_right: `OCRD_EXISTING_OUTPUT` for how to handle existing output files (**`SKIP`** or `ABORT` or `OVERWRITE`)
+  - new CLI option `--debug` as short-hand for `ABORT` choices above
+  - `Processor.logger` set up by constructor already (for re-use by processor implementors)
+  - `default`-expand and validate `ocrd_tool.json` in `Processor` constructor, log invalidities
+  - handle JSON `deprecation` in `ocrd_tool.json` by reporting warnings
+
 ## [3.0.0a1] - 2024-08-15
 
 Changed:
