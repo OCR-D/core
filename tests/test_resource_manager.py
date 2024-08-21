@@ -8,7 +8,7 @@ from shutil import rmtree
 #from ocrd.resource_manager import OcrdResourceManager
 #from ocrd_utils import config
 
-from ocrd_utils.os import get_ocrd_tool_json
+from ocrd_validators import get_ocrd_tool_json
 
 from pytest import raises, fixture
 from tests.base import main

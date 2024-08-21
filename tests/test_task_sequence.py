@@ -10,7 +10,8 @@ from tests.data.wf_testcase import (
     PARAM_JSON,
 )
 
-from ocrd_utils import pushd_popd, MIMETYPE_PAGE, get_ocrd_tool_json
+from ocrd_utils import pushd_popd, MIMETYPE_PAGE
+from ocrd_validators import get_ocrd_tool_json
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import run_tasks, validate_tasks, ProcessorTask
 

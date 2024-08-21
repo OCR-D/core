@@ -50,6 +50,14 @@ class TestOcrdToolValidator(TestCase):
         report = OcrdToolValidator.validate(ocrd_tool)
         self.assertTrue(report.is_valid, str(report.errors))
 
+    def test_resource_location_default(self):
+        ocrd_tool = json.loads(skeleton)
+        assert 'resource_location' not in ocrd_tool['tools']['ocrd-xyz']
+        report = OcrdToolValidator.validate(ocrd_tool)
+        print(report.to_xml())
+        # assert report.is_valid
+        assert 'resource_location' in ocrd_tool['tools']['ocrd-xyz']
+
     # Not restricted anymore since spec 3.3.0
     #  def test_file_param_bad_content_types(self):
     #      bad_and_why = [
