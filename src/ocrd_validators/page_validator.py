@@ -6,7 +6,7 @@ from shapely.geometry import Polygon, LineString
 from shapely.validation import explain_validity
 
 from ocrd_utils import getLogger, polygon_from_points, deprecated_alias
-from ocrd_models.ocrd_page import parse
+from ocrd_models.ocrd_page import OcrdPage, parse
 from ocrd_modelfactory import page_from_file
 
 from ocrd_models.ocrd_page import (
@@ -236,7 +236,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
     and whether the coordinates of an element are fully within its parent element coordinates.
     """
     log = getLogger('ocrd.page_validator.validate_consistency')
-    if isinstance(node, PcGtsType):
+    if isinstance(node, (PcGtsType, OcrdPage)):
         # top-level (start recursion)
         node_id = node.get_pcGtsId()
         node = node.get_Page() # has no .id
