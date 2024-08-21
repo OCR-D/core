@@ -21,6 +21,7 @@ class OcrdExif():
             * ``RGB`` for 24-bit truecolor,
             * ``I`` for 32-bit signed integer grayscale,
             * ``F`` for floating-point grayscale
+
           (see PIL concept **mode**)
         resolution (int): pixel density
         xResolution (int): pixel density

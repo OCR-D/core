@@ -194,7 +194,7 @@ class OcrdMets(OcrdXmlDocument):
     @property
     def agents(self) -> List[OcrdAgent]:
         """
-        List all :py:class:`ocrd_models.ocrd_agent.OcrdAgent`s
+        List all :py:class:`ocrd_models.ocrd_agent.OcrdAgent` entries.
         """
         return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('mets:metsHdr/mets:agent', NS)]
 
@@ -218,7 +218,7 @@ class OcrdMets(OcrdXmlDocument):
     @property
     def file_groups(self) -> List[str]:
         """
-        List the `@USE` of all `mets:fileGrp` entries.
+        List the ``@USE`` of all ``mets:fileGrp`` entries.
         """
 
         # WARNING: Actually we cannot return strings in place of elements!
@@ -894,7 +894,7 @@ class OcrdMets(OcrdXmlDocument):
         Add all files from other_mets.
         Accepts the same kwargs as :py:func:`find_files`
         Keyword Args:
-            force (boolean): Whether to :py:meth:`add_file`s with force (overwriting existing ``mets:file``s)
+            force (boolean): Whether to do :py:meth:`add_file` with ``force`` (overwriting existing ``mets:file`` entries)
             fileGrp_mapping (dict): Map :py:attr:`other_mets` fileGrp to fileGrp in this METS
             fileId_mapping (dict): Map :py:attr:`other_mets` file ID to file ID in this METS
             pageId_mapping (dict): Map :py:attr:`other_mets` page ID to page ID in this METS

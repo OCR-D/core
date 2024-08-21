@@ -1,6 +1,8 @@
 from .base import (
     Processor,
-    ResourceNotFoundError
+    ResourceNotFoundError,
+    NonUniqueInputFile,
+    MissingInputFile,
 )
 from .ocrd_page_result import (
     OcrdPageResult,

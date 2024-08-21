@@ -15,7 +15,8 @@ from ocrd_utils import (
     MIME_TO_EXT,
     MIMETYPE_PAGE,
     parse_json_string_with_comments,
-    resource_string
+    resource_string,
+    config
 )
 from ocrd_modelfactory import page_from_file
 
@@ -42,14 +43,15 @@ class DummyProcessor(Processor):
             local_filename = join(self.output_file_grp, file_id + ext)
             LOG.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
             with open(input_file.local_filename, 'rb') as f:
-                content = f.read()
                 output_file = self.workspace.add_file(
                     file_id=file_id,
                     file_grp=self.output_file_grp,
                     page_id=input_file.pageId,
                     mimetype=input_file.mimetype,
                     local_filename=local_filename,
-                    content=content)
+                    content=f.read(),
+                    force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+                )
             file_id = file_id + '_PAGE'
             pcgts = page_from_file(output_file)
             assert isinstance(pcgts, OcrdPage)
@@ -62,8 +64,9 @@ class DummyProcessor(Processor):
                                     page_id=input_file.pageId,
                                     local_filename=join(self.output_file_grp, file_id + '.xml'),
                                     mimetype=MIMETYPE_PAGE,
-                                    content=to_xml(pcgts))
-
+                                    content=to_xml(pcgts),
+                                    force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+            )
         else:
             if self.parameter['copy_files']:
                 LOG.info("Not copying %s because it is a PAGE-XML file, which gets identity-transformed", input_file.local_filename)

@@ -20,13 +20,16 @@ import ocrd_validators.constants
 from ocrd.decorators import (
     parameter_option,
     parameter_override_option,
-    ocrd_loglevel
+    ocrd_loglevel,
+    ocrd_cli_wrap_processor
 )
 from ocrd_utils import (
     is_local_filename,
     get_local_filename,
     initLogging,
-    make_file_id
+    getLogger,
+    make_file_id,
+    config
 )
 from ocrd.resolver import Resolver
 from ocrd.processor import Processor
@@ -81,11 +84,15 @@ def bashlib_constants(name):
 @bashlib_cli.command('input-files')
 @click.option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME)
 @click.option('-w', '--working-dir', help="Working Directory")
-@click.option('-I', '--input-file-grp', help='File group(s) used as input.', default='INPUT')
-@click.option('-O', '--output-file-grp', help='File group(s) used as output.', default='OUTPUT')
+@click.option('-I', '--input-file-grp', help='File group(s) used as input.', default=None)
+@click.option('-O', '--output-file-grp', help='File group(s) used as output.', default=None)
 # repeat some other processor options for convenience (will be ignored here)
 @click.option('-g', '--page-id', help="ID(s) of the pages to process")
-@click.option('--overwrite', is_flag=True, default=False, help="Remove output pages/images if they already exist")
+@click.option('--overwrite', is_flag=True, default=False, help="Remove output pages/images if they already exist\n"
+              "(with '--page-id', remove only those).\n"
+              "Short-hand for OCRD_EXISTING_OUTPUT=OVERWRITE")
+@click.option('--debug', is_flag=True, default=False, help="Abort on any errors with full stack trace.\n"
+              "Short-hand for OCRD_MISSING_OUTPUT=ABORT")
 @parameter_option
 @parameter_override_option
 @ocrd_loglevel
@@ -100,37 +107,26 @@ def bashlib_input_files(**kwargs):
 
     (The printing format is one associative array initializer per line.)
     """
-    initLogging()
-    mets = kwargs.pop('mets')
-    working_dir = kwargs.pop('working_dir')
-    if is_local_filename(mets) and not isfile(get_local_filename(mets)):
-        msg = "File does not exist: %s" % mets
-        raise FileNotFoundError(msg)
-    resolver = Resolver()
-    workspace = resolver.workspace_from_url(mets, working_dir)
     class BashlibProcessor(Processor):
         @property
         def ocrd_tool(self):
-            return {}
+            return {'executable': '', 'steps': ['']}
         @property
-        def executable(self):
-            return ''
-    processor = BashlibProcessor(None)
-    # go half way of the normal run_processor / process_workspace call tree
-    processor.workspace = workspace
-    processor.page_id = kwargs['page_id']
-    processor.input_file_grp = kwargs['input_file_grp']
-    processor.output_file_grp = kwargs['output_file_grp']
-    for input_files in processor.zip_input_files(mimetype=None, on_error='abort'):
-        # ensure all input files exist locally (without persisting them in the METS)
-        # - this mimics the default behaviour of all Pythonic processors
-        input_files = [workspace.download_file(input_file) if input_file else None
-                       for input_file in input_files]
-        for field in ['url', 'local_filename', 'ID', 'mimetype', 'pageId']:
-            # make this bash-friendly (show initialization for associative array)
-            if len(input_files) > 1:
-                # single quotes allow us to preserve the list value inside the alist
-                print("[%s]='%s'" % (field, ' '.join(str(getattr(res, field)) for res in input_files)), end=' ')
-            else:
-                print("[%s]='%s'" % (field, str(getattr(input_files[0], field))), end=' ')
-        print("[outputFileId]='%s'" % make_file_id(input_files[0], kwargs['output_file_grp']))
+        def version(self):
+            return '1.0'
+        # go half way of the normal run_processor / process_workspace call tree
+        # by just delegating to process_workspace, overriding process_page_file
+        # to ensure all input files exist locally (without persisting them in the METS)
+        # and print what needs to be acted on in bash-friendly way
+        def process_page_file(self, *input_files):
+            for field in ['url', 'local_filename', 'ID', 'mimetype', 'pageId']:
+                # make this bash-friendly (show initialization for associative array)
+                if len(input_files) > 1:
+                    # single quotes allow us to preserve the list value inside the alist
+                    value = ' '.join(str(getattr(res, field)) for res in input_files)
+                else:
+                    value = str(getattr(input_files[0], field))
+                print(f"[{field}]='{value}'", end=' ')
+            output_file_id = make_file_id(input_files[0], kwargs['output_file_grp'])
+            print(f"[outputFileId]='{output_file_id}'")
+    ocrd_cli_wrap_processor(BashlibProcessor, **kwargs)

@@ -160,6 +160,7 @@ def run_cli(
         workspace=None,
         page_id=None,
         overwrite=None,
+        debug=None,
         log_level=None,
         log_filename=None,
         input_file_grp=None,
@@ -202,6 +203,8 @@ def run_cli(
         args += ['--parameter', parameter]
     if overwrite:
         args += ['--overwrite']
+    if debug:
+        args += ['--debug']
     if mets_server_url:
         args += ['--mets-server-url', mets_server_url]
     log = getLogger('ocrd.processor.helpers.run_cli')
@@ -270,7 +273,10 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
   -O, --output-file-grp USE       File group(s) used as output
   -g, --page-id ID                Physical page ID(s) to process instead of full document []
   --overwrite                     Remove existing output pages/images
-                                  (with "--page-id", remove only those)
+                                  (with "--page-id", remove only those).
+                                  Short-hand for OCRD_EXISTING_OUTPUT=OVERWRITE
+  --debug                         Abort on any errors with full stack trace.
+                                  Short-hand for OCRD_MISSING_OUTPUT=ABORT
   --profile                       Enable profiling
   --profile-file PROF-PATH        Write cProfile stats to PROF-PATH. Implies "--profile"
   -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
