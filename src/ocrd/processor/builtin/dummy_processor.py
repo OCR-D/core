@@ -7,7 +7,7 @@ import click
 from ocrd import Processor
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
 from ocrd.processor.ocrd_page_result import OcrdPageResult
-from ocrd_models.ocrd_file import ClientSideOcrdFile, OcrdFile
+from ocrd_models.ocrd_file import OcrdFileType
 from ocrd_models.ocrd_page import OcrdPage, to_xml
 from ocrd_utils import (
     getLogger,
@@ -32,7 +32,7 @@ class DummyProcessor(Processor):
         # nothing to do here
         return OcrdPageResult(input_pcgts[0])
 
-    def process_page_file(self, *input_files: Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
+    def process_page_file(self, *input_files: Optional[OcrdFileType]) -> None:
         input_file = input_files[0]
         assert input_file
         assert input_file.local_filename

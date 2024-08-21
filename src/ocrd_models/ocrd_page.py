@@ -2,7 +2,7 @@
 API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
-from typing import Dict
+from typing import Dict, Union
 from inspect import getmembers
 from lxml import etree as ET
 
@@ -11,6 +11,7 @@ __all__ = [
     'parseEtree',
     'parseString',
     'OcrdPage',
+    'OcrdPageType',
 
     "AdvertRegionType",
     "AlternativeImageType",
@@ -198,6 +199,8 @@ class OcrdPage():
 
     def __getattr__(self, name):
         return getattr(self._pcgts, name)
+
+OcrdPageType = Union[OcrdPage, PcGtsType]
 
 def to_xml(el, skip_declaration=False) -> str:
     """

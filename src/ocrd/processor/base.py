@@ -15,7 +15,7 @@ import json
 import os
 from os import getcwd
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Union, get_args
 import sys
 import inspect
 import tarfile
@@ -25,7 +25,7 @@ from deprecated import deprecated
 from requests import HTTPError
 
 from ocrd.workspace import Workspace
-from ocrd_models.ocrd_file import ClientSideOcrdFile, OcrdFile
+from ocrd_models.ocrd_file import OcrdFileType
 from ocrd.processor.ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
@@ -332,7 +332,7 @@ class Processor():
             try:
                 # FIXME: add page parallelization by running multiprocessing.Pool (#322)
                 for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
-                    input_files : List[Optional[Union[OcrdFile, ClientSideOcrdFile]]] = [None] * len(input_file_tuple)
+                    input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
                     page_id = next(input_file.pageId
                                    for input_file in input_file_tuple
                                    if input_file)
@@ -382,7 +382,7 @@ class Processor():
                 # fall back to deprecated method
                 self.process()
 
-    def _copy_page_file(self, input_file : Union[OcrdFile, ClientSideOcrdFile]) -> None:
+    def _copy_page_file(self, input_file : OcrdFileType) -> None:
         """
         Copy the given ``input_file`` of the :py:data:`workspace`,
         representing one physical page (passed as one opened
@@ -390,7 +390,7 @@ class Processor():
         and add it as if it was a processing result.
         """
         input_pcgts : OcrdPage
-        assert isinstance(input_file, (OcrdFile, ClientSideOcrdFile))
+        assert isinstance(input_file, get_args(OcrdFileType))
         self._base_logger.debug(f"parsing file {input_file.ID} for page {input_file.pageId}")
         try:
             input_pcgts = page_from_file(input_file)
@@ -410,7 +410,7 @@ class Processor():
                                 force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
         )
 
-    def process_page_file(self, *input_files : Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
+    def process_page_file(self, *input_files : Optional[OcrdFileType]) -> None:
         """
         Process the given ``input_files`` of the :py:data:`workspace`,
         representing one physical page (passed as one opened
@@ -422,10 +422,10 @@ class Processor():
         to handle cases like multiple output fileGrps, non-PAGE input etc.)
         """
         input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
-        assert isinstance(input_files[0], (OcrdFile, ClientSideOcrdFile))
+        assert isinstance(input_files[0], get_args(OcrdFileType))
         page_id = input_files[0].pageId
         for i, input_file in enumerate(input_files):
-            assert isinstance(input_file, (OcrdFile, ClientSideOcrdFile))
+            assert isinstance(input_file, get_args(OcrdFileType))
             self._base_logger.debug(f"parsing file {input_file.ID} for page {page_id}")
             try:
                 page_ = page_from_file(input_file)

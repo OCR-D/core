@@ -266,3 +266,5 @@ class ClientSideOcrdFile:
             for k in ['fileGrp', 'ID', 'mimetype', 'url', 'local_filename']
         ])
         return '<ClientSideOcrdFile %s]/>' % (props)
+
+OcrdFileType = Union[OcrdFile, ClientSideOcrdFile]
