@@ -20,6 +20,7 @@ import sys
 import inspect
 import tarfile
 import io
+from warnings import warn
 from deprecated import deprecated
 from requests import HTTPError
 
@@ -45,6 +46,7 @@ from ocrd_utils import (
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType, OcrdPage, to_xml
 from ocrd_modelfactory import page_from_file
+from ocrd_validators.ocrd_tool_validator import OcrdToolValidator
 
 # XXX imports must remain for backwards-compatibility
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
@@ -101,15 +103,20 @@ class Processor():
     """
 
     @property
-    def metadata(self):
+    def metadata(self) -> dict:
         """the ocrd-tool.json dict of the package"""
         if hasattr(self, '_metadata'):
             return self._metadata
         self._metadata = json.loads(resource_string(self.__module__.split('.')[0], 'ocrd-tool.json'))
+        report = OcrdToolValidator.validate(self._metadata)
+        if not report.is_valid:
+            # FIXME: remove when bertsky/core#10 is merged
+            self.logger = getLogger(f'ocrd.processor.{self.__class__.__name__}')
+            self.logger.error(f"The ocrd-tool.json of this processor is {'problematic' if not report.errors else 'invalid'}:\n{report.to_xml()}.\nPlease open an issue at {self._metadata['git_url']}.")
         return self._metadata
 
     @property
-    def version(self):
+    def version(self) -> str:
         """the version of the package"""
         if hasattr(self, '_version'):
             return self._version
@@ -117,7 +124,7 @@ class Processor():
         return self._version
 
     @property
-    def executable(self):
+    def executable(self) -> str:
         """the executable name of this processor tool"""
         if hasattr(self, '_executable'):
             return self._executable
@@ -125,7 +132,7 @@ class Processor():
         return self._executable
 
     @property
-    def ocrd_tool(self):
+    def ocrd_tool(self) -> dict:
         """the ocrd-tool.json dict of this processor tool"""
         if hasattr(self, '_ocrd_tool'):
             return self._ocrd_tool

@@ -108,6 +108,12 @@ properties:
                   maximum:
                     type: number
                     description: Maximum value for number parameters, including the maximum
+                  minProperties:
+                    type: number
+                    description: Minimum number of properties of an object
+                  maxProperties:
+                    type: number
+                    description: Maximum number of properties of an object
                   exclusiveMinimum:
                     type: number
                     description: Minimum value for number parameters, excluding the minimum
@@ -121,8 +127,11 @@ properties:
                     type: object
                     description: Describe the properties of an object value
                   additionalProperties:
-                    type: boolean
-                    description: Whether an object value may contain properties not explicitly defined
+                    oneOf:
+                    - type: boolean
+                      description: Whether an object value may contain properties not explicitly defined
+                    - type: object
+                      description: Schema any additional properties need to adhere to
                   required:
                     type: boolean
                     description: Whether this parameter is required
