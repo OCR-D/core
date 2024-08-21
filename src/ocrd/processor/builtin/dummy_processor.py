@@ -41,7 +41,7 @@ class DummyProcessor(Processor):
             file_id = make_file_id(input_file, self.output_file_grp)
             ext = MIME_TO_EXT.get(input_file.mimetype, '')
             local_filename = join(self.output_file_grp, file_id + ext)
-            LOG.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
+            self.logger.info("cp %s %s # %s -> %s", input_file.url, local_filename, input_file.ID, file_id)
             with open(input_file.local_filename, 'rb') as f:
                 output_file = self.workspace.add_file(
                     file_id=file_id,
@@ -69,9 +69,9 @@ class DummyProcessor(Processor):
             )
         else:
             if self.parameter['copy_files']:
-                LOG.info("Not copying %s because it is a PAGE-XML file, which gets identity-transformed", input_file.local_filename)
+                self.logger.info("Not copying %s because it is a PAGE-XML file, which gets identity-transformed", input_file.local_filename)
             else:
-                LOG.info("Not copying %s because it is not a PAGE-XML file and copy_files was false", input_file.local_filename)
+                self.logger.info("Not copying %s because it is not a PAGE-XML file and copy_files was false", input_file.local_filename)
             # we can rely on base implementation verbatim
             super().process_page_file(input_file)
 
