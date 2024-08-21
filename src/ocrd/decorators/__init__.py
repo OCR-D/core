@@ -118,10 +118,12 @@ def ocrd_cli_wrap_processor(
             resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_url)
     workspace = resolver.workspace_from_url(mets, working_dir, mets_server_url=mets_server_url)
     page_id = kwargs.get('page_id')
+    if debug:
+        config.OCRD_MISSING_INPUT = 'ABORT'
+        config.OCRD_MISSING_OUTPUT = 'ABORT'
+        config.OCRD_EXISTING_OUTPUT = 'ABORT'
     if overwrite:
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
-    if debug:
-        config.OCRD_MISSING_OUTPUT = 'ABORT'
     report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
     if not report.is_valid:
         raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
