@@ -144,22 +144,21 @@ class Processor():
             version=None
     ):
         """
-        Instantiate, but do not process. Unless ``list_resources`` or
-        ``show_resource`` or ``show_help`` or ``show_version`` or
-        ``dump_json`` or ``dump_module_dir`` is true, setup for processing
-        (parsing and validating parameters, entering the workspace directory).
+        Instantiate, but do not setup (neither for processing nor other usage).
+        If given, do parse and validate :py:data:`.parameter`.
 
         Args:
              workspace (:py:class:`~ocrd.Workspace`): The workspace to process. \
+                 If not ``None``, then `chdir` to that directory.
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
         Keyword Args:
              parameter (string): JSON of the runtime choices for ocrd-tool ``parameters``. \
                  Can be ``None`` even for processing, but then needs to be set before running.
-             input_file_grp (string): comma-separated list of METS ``fileGrp``s used for input. \
+             input_file_grp (string): comma-separated list of METS ``fileGrp`` used for input. \
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
-             output_file_grp (string): comma-separated list of METS ``fileGrp``s used for output. \
+             output_file_grp (string): comma-separated list of METS ``fileGrp`` used for output. \
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
              page_id (string): comma-separated list of METS physical ``page`` IDs to process \
@@ -287,29 +286,32 @@ class Processor():
         """
         pass
 
-    @deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')
+    @deprecated(version='3.0', reason='process() should be replaced with process_page_pcgts() or process_page_file() or process_workspace()')
     def process(self) -> None:
         """
-        Process all files of the :py:attr:`workspace`
-        from the given :py:attr:`input_file_grp`
-        to the given :py:attr:`output_file_grp`
-        for the given :py:attr:`page_id` (or all pages)
-        under the given :py:attr:`parameter`.
+        Process all files of the :py:data:`workspace`
+        from the given :py:data:`input_file_grp`
+        to the given :py:data:`output_file_grp`
+        for the given :py:data:`page_id` (or all pages)
+        under the given :py:data:`parameter`.
 
-        (This contains the main functionality and needs to be overridden by subclasses.)
+        (This contains the main functionality and needs to be
+        overridden by subclasses.)
         """
         raise NotImplementedError()
 
     def process_workspace(self, workspace: Workspace) -> None:
         """
         Process all files of the given ``workspace``,
-        from the given :py:attr:`input_file_grp`
-        to the given :py:attr:`output_file_grp`
-        for the given :py:attr:`page_id` (or all pages)
-        under the given :py:attr:`parameter`.
+        from the given :py:data:`input_file_grp`
+        to the given :py:data:`output_file_grp`
+        for the given :py:data:`page_id` (or all pages)
+        under the given :py:data:`parameter`.
 
         (This will iterate over pages and files, calling
-        :py:meth:`process_page`, handling exceptions.)
+        :py:meth:`.process_page_file` and handling exceptions.
+        It should be overridden by subclasses to handle cases
+        like post-processing or computation across pages.)
         """
         log = getLogger('ocrd.processor.base')
         with pushd_popd(workspace.directory):
@@ -370,7 +372,7 @@ class Processor():
 
     def _copy_page_file(self, input_file : Union[OcrdFile, ClientSideOcrdFile]) -> None:
         """
-        Copy the given ``input_file`` of the :py:attr:`workspace`,
+        Copy the given ``input_file`` of the :py:data:`workspace`,
         representing one physical page (passed as one opened
         :py:class:`~ocrd_models.OcrdFile` per input fileGrp)
         and add it as if it was a processing result.
@@ -399,14 +401,14 @@ class Processor():
 
     def process_page_file(self, *input_files : Optional[Union[OcrdFile, ClientSideOcrdFile]]) -> None:
         """
-        Process the given ``input_files`` of the :py:attr:`workspace`,
+        Process the given ``input_files`` of the :py:data:`workspace`,
         representing one physical page (passed as one opened
-        :py:class:`~ocrd_models.OcrdFile` per input fileGrp)
-        under the given :py:attr:`parameter`, and make sure the
+        :py:class:`.OcrdFile` per input fileGrp)
+        under the given :py:data:`.parameter`, and make sure the
         results get added accordingly.
 
-        (This uses process_page_pcgts, but can be overridden by subclasses
-        to handle cases like multiple fileGrps, non-PAGE input etc.)
+        (This uses :py:meth:`.process_page_pcgts`, but should be overridden by subclasses
+        to handle cases like multiple output fileGrps, non-PAGE input etc.)
         """
         log = getLogger('ocrd.processor.base')
         input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
@@ -449,28 +451,28 @@ class Processor():
 
     def process_page_pcgts(self, *input_pcgts : Optional[OcrdPage], page_id : Optional[str] = None) -> OcrdPageResult:
         """
-        Process the given ``input_pcgts`` of the :py:attr:`workspace`,
+        Process the given ``input_pcgts`` of the :py:data:`.workspace`,
         representing one physical page (passed as one parsed
-        :py:class:`~ocrd_models.OcrdPage` per input fileGrp)
-        under the given :py:attr:`parameter`, and return the
-        resulting :py:class:`~ocrd.processor.OcrdPageResult`.
+        :py:class:`.OcrdPage` per input fileGrp)
+        under the given :py:data:`.parameter`, and return the
+        resulting :py:class:`.OcrdPageResult`.
 
         Optionally, add to the ``images`` attribute of the resulting
-        :py:class:`~ocrd.processor.OcrdPageResult` instances
-        of :py:class:`~ocrd.processor.OcrdPageResultImage`,
+        :py:class:`.OcrdPageResult` instances of :py:class:`.OcrdPageResultImage`,
         which have required fields for ``pil`` (:py:class:`PIL.Image` image data),
         ``file_id_suffix`` (used for generating IDs of the saved image) and
         ``alternative_image`` (reference of the :py:class:`ocrd_models.ocrd_page.AlternativeImageType`
         for setting the filename of the saved image).
 
-        (This contains the main functionality and must be overridden by subclasses.)
+        (This contains the main functionality and must be overridden by subclasses,
+        unless it does not get called by some overriden :py:meth:`.process_page_file`.)
         """
         raise NotImplementedError()
 
     def add_metadata(self, pcgts: OcrdPage) -> None:
         """
         Add PAGE-XML :py:class:`~ocrd_models.ocrd_page.MetadataItemType` ``MetadataItem`` describing
-        the processing step and runtime parameters to :py:class:`~ocrd_models.OcrdPage` ``pcgts``.
+        the processing step and runtime parameters to :py:class:`.OcrdPage` ``pcgts``.
         """
         metadata_obj = pcgts.get_Metadata()
         assert metadata_obj is not None
@@ -496,7 +498,7 @@ class Processor():
     def resolve_resource(self, val):
         """
         Resolve a resource name to an absolute file path with the algorithm in
-        https://ocr-d.de/en/spec/ocrd_tool#file-parameters
+        `spec <https://ocr-d.de/en/spec/ocrd_tool#file-parameters>`_
 
         Args:
             val (string): resource value to resolve
@@ -522,7 +524,7 @@ class Processor():
     def show_resource(self, val):
         """
         Resolve a resource name to a file path with the algorithm in
-        https://ocr-d.de/en/spec/ocrd_tool#file-parameters,
+        `spec <https://ocr-d.de/en/spec/ocrd_tool#file-parameters>`_,
         then print its contents to stdout.
 
         Args:
@@ -593,7 +595,8 @@ class Processor():
           files for that page)
         - Otherwise raise an error (complaining that only PAGE-XML warrants
           having multiple images for a single page)
-        Algorithm <https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593>_
+
+        See `algorithm <https://github.com/cisocrgroup/ocrd_cis/pull/57#issuecomment-656336593>`_
 
         Returns:
             A list of :py:class:`ocrd_models.ocrd_file.OcrdFile` objects.
@@ -635,11 +638,13 @@ class Processor():
         - if ``last``, then the last matching file for the page will be
           silently selected (as if the last was the only match)
         - if ``abort``, then an exception will be raised.
+
         Multiple matches for PAGE-XML will always raise an exception.
 
         Keyword Args:
              require_first (boolean): If true, then skip a page entirely
                  whenever it is not available in the first input `fileGrp`.
+             on_error (string): How to handle multiple file matches per page.
              mimetype (string): If not `None`, filter by the specified MIME
                  type (literal or regex prefixed by `//`). Otherwise prefer
                  PAGE or image.

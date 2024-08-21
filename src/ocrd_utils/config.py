@@ -120,9 +120,11 @@ config.add("OCRD_PROFILE",
     description="""\
 Whether to enable gathering runtime statistics
 on the `ocrd.profile` logger (comma-separated):
+
 - `CPU`: yields CPU and wall-time,
 - `RSS`: also yields peak memory (resident set size)
 - `PSS`: also yields peak memory (proportional set size)
+
 """,
   validator=lambda val : all(t in ('', 'CPU', 'RSS', 'PSS') for t in val.split(',')),
   default=(True, ''))
@@ -154,19 +156,39 @@ config.add("OCRD_DOWNLOAD_INPUT",
     parser=_parser_boolean)
 
 config.add("OCRD_MISSING_INPUT",
-    description="How to deal with missing input files (for some fileGrp/pageId) during processing [SKIP|ABORT]",
+    description="""\
+How to deal with missing input files (for some fileGrp/pageId) during processing:
+
+ - `SKIP`: ignore and proceed with next page's input
+ - `ABORT`: throw :py:class:`.MissingInputFile`
+
+""",
     default=(True, 'SKIP'),
     validator=lambda val: val in ['SKIP', 'ABORT'],
     parser=str)
 
 config.add("OCRD_MISSING_OUTPUT",
-    description="How to deal with missing output files (for some fileGrp/pageId) during processing [SKIP|COPY|ABORT]",
+    description="""\
+How to deal with missing output files (for some fileGrp/pageId) during processing:
+
+ - `SKIP`: ignore and proceed processing next page
+ - `COPY`: fall back to copying input PAGE to output fileGrp for page
+ - `ABORT`: re-throw whatever caused processing to fail
+
+""",
     default=(True, 'SKIP'),
     validator=lambda val: val in ['SKIP', 'COPY', 'ABORT'],
     parser=str)
 
 config.add("OCRD_EXISTING_OUTPUT",
-    description="How to deal with already existing output files (for some fileGrp/pageId) during processing [SKIP|OVERWRITE|ABORT]",
+    description="""\
+How to deal with already existing output files (for some fileGrp/pageId) during processing:
+
+ - `SKIP`: ignore and proceed processing next page
+ - `OVERWRITE`: force writing result to output fileGrp for page
+ - `ABORT`: re-throw :py:class:`FileExistsError`
+
+""",
     default=(True, 'SKIP'),
     validator=lambda val: val in ['SKIP', 'OVERWRITE', 'ABORT'],
     parser=str)

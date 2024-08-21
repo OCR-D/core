@@ -308,6 +308,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
           echo PHYS_0002 BIN FILE_0002_BIN BIN/FILE_0002_BIN.xml; \\
         } | ocrd workspace bulk-add -r '(?P<pageid>.*) (?P<filegrp>.*) (?P<fileid>.*) (?P<local_filename>.*)' \\
           -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ local_filename }}' -
+
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
     workspace = Workspace(

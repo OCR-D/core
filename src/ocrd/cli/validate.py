@@ -40,7 +40,7 @@ def validate_cli():
 @click.argument('ocrd_tool', required=False, nargs=1)
 def validate_ocrd_tool(ocrd_tool):
     '''
-    Validate OCRD_TOOL as an ocrd-tool.json file.
+    Validate OCRD_TOOL as an `ocrd-tool.json` file.
     '''
     if not ocrd_tool:
         ocrd_tool = 'ocrd-tool.json'
@@ -107,7 +107,7 @@ def validate_page(page, **kwargs):
 @click.argument('tasks', nargs=-1, required=True)
 def validate_process(tasks, workspace, mets_basename, overwrite, page_id):
     '''
-    Validate a sequence of tasks passable to 'ocrd process'
+    Validate a sequence of tasks passable to `ocrd process`
     '''
     if workspace:
         _inform_of_result(validate_tasks([ProcessorTask.parse(t) for t in tasks],
