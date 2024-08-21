@@ -62,7 +62,11 @@ class OcrdEnvConfig():
         self._variables = {}
 
     def add(self, name, *args, **kwargs):
-        self._variables[name] = OcrdEnvVariable(name, *args, **kwargs)
+        var = OcrdEnvVariable(name, *args, **kwargs)
+        # make visible in ocrd_utils.config docstring (apidoc)
+        txt = var.describe(wrap_text=False, indent_text=True)
+        globals()['__doc__'] += "\n\n - " + txt + "\n\n"
+        self._variables[name] = var
         return self._variables[name]
 
     def has_default(self, name):
