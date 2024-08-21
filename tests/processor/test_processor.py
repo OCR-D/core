@@ -15,7 +15,7 @@ from tests.data import (
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
-from ocrd.processor.base import Processor, run_processor, run_cli
+from ocrd.processor import Processor, run_processor, run_cli, NonUniqueInputFile
 
 from unittest import mock
 import pytest
