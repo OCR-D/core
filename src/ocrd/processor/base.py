@@ -16,12 +16,12 @@ import os
 from os import getcwd
 from pathlib import Path
 from typing import List, Optional, Union, get_args
-from types import MappingProxyType
 import sys
 import inspect
 import tarfile
 import io
 from warnings import warn
+from frozendict import frozendict
 from deprecated import deprecated
 from requests import HTTPError
 
@@ -144,7 +144,7 @@ class Processor():
     def parameter(self) -> Optional[dict]:
         """the runtime parameter dict to be used by this processor"""
         if hasattr(self, '_parameter'):
-            return dict(self._parameter)
+            return self._parameter
         return None
 
     @parameter.setter
@@ -154,7 +154,7 @@ class Processor():
         if not report.is_valid:
             raise ValueError(f'Invalid parameters:\n{report.to_xml()}')
         # make parameter dict read-only
-        self._parameter = MappingProxyType(parameter)
+        self._parameter = frozendict(parameter)
         # (re-)run setup to load models etc
         self.setup()
 

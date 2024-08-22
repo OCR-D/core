@@ -74,14 +74,22 @@ class TestProcessor(TestCase):
             with open(jsonpath, 'w') as f:
                 f.write('{"baz": "quux"}')
             with open(jsonpath, 'r') as f:
+                parameter = json.load(f)
                 processor = run_processor(
                     DummyProcessor,
-                    parameter=json.load(f),
+                    parameter=parameter,
                     input_file_grp="OCR-D-IMG",
                     resolver=self.resolver,
                     workspace=self.workspace
                 )
                 self.assertEqual(processor.parameter['baz'], 'quux')
+                processor = get_processor(
+                    DummyProcessor,
+                    parameter=parameter)
+                with self.assertRaises(TypeError):
+                    processor.parameter['baz'] = 'xuuq'
+                processor.parameter = { **parameter, 'baz': 'xuuq' }
+                self.assertEqual(processor.parameter['baz'], 'xuuq')
 
     def test_verify(self):
         proc = DummyProcessor(None)
