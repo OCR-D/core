@@ -16,6 +16,7 @@ import os
 from os import getcwd
 from pathlib import Path
 from typing import List, Optional, Union, get_args
+from types import MappingProxyType
 import sys
 import inspect
 import tarfile
@@ -143,15 +144,19 @@ class Processor():
     def parameter(self) -> Optional[dict]:
         """the runtime parameter dict to be used by this processor"""
         if hasattr(self, '_parameter'):
-            return self._parameter
+            return dict(self._parameter)
         return None
 
     @parameter.setter
     def parameter(self, parameter : dict) -> None:
-        from types import MappingProxyType
+        parameterValidator = ParameterValidator(self.ocrd_tool)
+        report = parameterValidator.validate(parameter)
+        if not report.is_valid:
+            raise ValueError(f'Invalid parameters:\n{report.to_xml()}')
+        # make parameter dict read-only
         self._parameter = MappingProxyType(parameter)
-        # re-run setup to validate parameters and load models etc
-        self._setup()
+        # (re-)run setup to load models etc
+        self.setup()
 
     def __init__(
             self,
@@ -295,17 +300,6 @@ class Processor():
         for res in self.list_all_resources():
             print(res)
         return
-
-    def _setup(self) -> None:
-        """
-        Validate parameters, then run :py:meth:`setup`. Called whenever
-        :py:data:`parameter` is re-assigned.
-        """
-        parameterValidator = ParameterValidator(self.ocrd_tool)
-        report = parameterValidator.validate(self.parameter)
-        if not report.is_valid:
-            raise ValueError(f'Invalid parameters:\n{report.to_xml()}')
-        self.setup()
 
     def setup(self) -> None:
         """
