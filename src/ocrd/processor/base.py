@@ -20,6 +20,7 @@ import sys
 import inspect
 import tarfile
 import io
+import weakref
 from warnings import warn
 from frozendict import frozendict
 from deprecated import deprecated
@@ -149,6 +150,8 @@ class Processor():
 
     @parameter.setter
     def parameter(self, parameter : dict) -> None:
+        if self.parameter is not None:
+            self.shutdown()
         parameterValidator = ParameterValidator(self.ocrd_tool)
         report = parameterValidator.validate(parameter)
         if not report.is_valid:
@@ -229,6 +232,8 @@ class Processor():
         self._base_logger = getLogger('ocrd.processor.base')
         if parameter is not None:
             self.parameter = parameter
+        # ensure that shutdown gets called at destruction
+        self._finalizer = weakref.finalize(self, self.shutdown)
         # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
         setattr(self, 'process',
                 deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')(getattr(self, 'process')))
@@ -308,6 +313,16 @@ class Processor():
         after parsing parameters.
 
         (Override this to load models into memory etc.)
+        """
+        pass
+
+    def shutdown(self) -> None:
+        """
+        Bring down the processor after data processing,
+        after to changing back from the workspace directory but
+        before exiting (or setting up with different parameters).
+
+        (Override this to unload models from memory etc.)
         """
         pass
 

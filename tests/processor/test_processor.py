@@ -91,6 +91,37 @@ class TestProcessor(TestCase):
                 processor.parameter = { **parameter, 'baz': 'xuuq' }
                 self.assertEqual(processor.parameter['baz'], 'xuuq')
 
+    def test_instance_caching(self):
+        class DyingDummyProcessor(DummyProcessor):
+            def shutdown(self):
+                print(self.parameter['baz'])
+        self.capture_out_err()
+        # well above OCRD_MAX_PROCESSOR_CACHE=128
+        firstp = None
+        for i in range(200):
+            p = get_processor(
+                DyingDummyProcessor,
+                parameter={'baz': str(i)},
+                instance_caching=True
+            )
+            if i == 0:
+                firstp = p
+        lastp = p
+        p = get_processor(DyingDummyProcessor,
+                parameter={'baz': '0'},
+                instance_caching=True
+            )
+        # should not be cached anymore
+        self.assertNotEqual(firstp, p)
+        p = get_processor(DyingDummyProcessor,
+                parameter={'baz': '199'},
+                instance_caching=True
+            )
+        # should still be cached
+        self.assertEqual(lastp, p)
+        out, err = self.capture_out_err()
+        #assert '0' in out.split('\n')
+
     def test_verify(self):
         proc = DummyProcessor(None)
         with self.assertRaises(AttributeError):
