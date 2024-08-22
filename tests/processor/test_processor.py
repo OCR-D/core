@@ -16,6 +16,7 @@ from tests.data import (
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
 from ocrd.processor import Processor, run_processor, run_cli, NonUniqueInputFile
+from ocrd.processor.helpers import get_processor
 
 from unittest import mock
 import pytest
@@ -95,8 +96,18 @@ class TestProcessor(TestCase):
         DummyProcessor(None).dump_json()
 
     def test_params_missing_required(self):
-        with self.assertRaisesRegex(Exception, 'is a required property'):
-            DummyProcessorWithRequiredParameters(None)
+        proc = DummyProcessorWithRequiredParameters(None)
+        assert proc.parameter is None
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            proc.parameter = {}
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            get_processor(DummyProcessorWithRequiredParameters, None)
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            get_processor(DummyProcessorWithRequiredParameters, {})
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            run_processor(DummyProcessorWithRequiredParameters,
+                          workspace=self.workspace, input_file_grp="OCR-D-IMG")
+        proc.parameter = {'i-am-required': 'foo'}
 
     def test_params_preset_resolve(self):
         with pushd_popd(tempdir=True) as tempdir:
@@ -127,6 +138,9 @@ class TestProcessor(TestCase):
             def ocrd_tool(self):
                 return {}
         proc = ParamTestProcessor(None)
+        self.assertEqual(proc.parameter, None)
+        # get_processor will set to non-none and validate
+        proc = get_processor(ParamTestProcessor, None)
         self.assertEqual(proc.parameter, {})
 
     def test_run_agent(self):
