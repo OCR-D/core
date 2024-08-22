@@ -103,7 +103,7 @@ class TestProcessor(TestCase):
         with self.assertRaisesRegex(ValueError, 'is a required property'):
             get_processor(DummyProcessorWithRequiredParameters)
         with self.assertRaisesRegex(ValueError, 'is a required property'):
-            get_processor(DummyProcessorWithRequiredParameters, {})
+            get_processor(DummyProcessorWithRequiredParameters, parameter={})
         with self.assertRaisesRegex(ValueError, 'is a required property'):
             run_processor(DummyProcessorWithRequiredParameters,
                           workspace=self.workspace, input_file_grp="OCR-D-IMG")
@@ -140,7 +140,7 @@ class TestProcessor(TestCase):
         proc = ParamTestProcessor(None)
         self.assertEqual(proc.parameter, None)
         # get_processor will set to non-none and validate
-        proc = get_processor(ParamTestProcessor, None)
+        proc = get_processor(ParamTestProcessor)
         self.assertEqual(proc.parameter, {})
 
     def test_run_agent(self):

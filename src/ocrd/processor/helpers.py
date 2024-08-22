@@ -84,7 +84,7 @@ def run_processor(
     log.debug("Running processor %s", processorClass)
 
     processor = get_processor(
-        processor_class=processorClass,
+        processorClass,
         parameter=parameter,
         workspace=None,
         page_id=page_id,
