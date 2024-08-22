@@ -5,6 +5,9 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+  - :fire: `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are not published as separate packages anymore, everything is contained in `ocrd` and you should adapt your `requirements.txt` accordingly.
+
 ## [3.0.0a2] - 2024-08-22
 
 Changed:
