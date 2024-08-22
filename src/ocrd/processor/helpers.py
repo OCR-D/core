@@ -7,7 +7,7 @@ from functools import lru_cache
 import json
 import inspect
 from subprocess import run
-from typing import List
+from typing import List, Optional
 
 from click import wrap_text
 from ocrd.workspace import Workspace
@@ -374,16 +374,14 @@ def get_cached_processor(parameter: dict, processor_class):
         Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
     """
     if processor_class:
-        dict_params = dict(parameter) if parameter else None
-        processor = processor_class(None, parameter=dict_params)
-        processor.setup()
+        processor = processor_class(None, parameter=dict(parameter))
         return processor
     return None
 
 
 def get_processor(
         processor_class,
-        parameter: dict,
+        parameter: Optional[dict],
         workspace: Workspace = None,
         page_id: str = None,
         input_file_grp: List[str] = None,
@@ -391,11 +389,14 @@ def get_processor(
         instance_caching: bool = False,
 ):
     if processor_class:
+        if parameter is None:
+            parameter = {}
         if instance_caching:
             processor = get_cached_processor(parameter, processor_class)
         else:
+            # avoid passing workspace already (deprecated chdir behaviour)
             processor = processor_class(None, parameter=parameter)
-            processor.setup()
+        # set current processing parameters
         processor.workspace = workspace
         processor.page_id = page_id
         processor.input_file_grp = input_file_grp
