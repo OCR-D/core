@@ -303,7 +303,7 @@ class Processor():
         parameterValidator = ParameterValidator(self.ocrd_tool)
         report = parameterValidator.validate(self.parameter)
         if not report.is_valid:
-            raise ValueError("Invalid parameters %s" % report.errors)
+            raise ValueError(f'Invalid parameters:\n{report.to_xml()}')
         self.setup()
 
     def setup(self) -> None:
