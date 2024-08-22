@@ -139,6 +139,19 @@ class Processor():
         self._ocrd_tool = self.metadata['tools'][self.executable]
         return self._ocrd_tool
 
+    @property
+    def parameter(self) -> Optional[dict]:
+        """the runtime parameter dict to be used by this processor"""
+        if hasattr(self, '_parameter'):
+            return self._parameter
+        return None
+
+    @parameter.setter
+    def parameter(self, parameter : dict) -> None:
+        self._parameter = parameter
+        # re-run setup to validate parameters and load models etc
+        self._setup()
+
     def __init__(
             self,
             # FIXME: deprecate in favor of process_workspace(workspace)
@@ -204,19 +217,12 @@ class Processor():
                                 "is deprecated - pass as argument to process_workspace instead")
             self.page_id = page_id or None
         self.download = download_files
-        if parameter is None:
-            parameter = {}
-        parameterValidator = ParameterValidator(self.ocrd_tool)
-
-        report = parameterValidator.validate(parameter)
-        if not report.is_valid:
-            raise ValueError("Invalid parameters %s" % report.errors)
-        self.parameter = parameter
-        # NOTE: this is the logger to be used by processor implementations,
-        # `processor.base` default implementations should use
-        # :py:attr:`self._base_logger`
+        #: The logger to be used by processor implementations.
+        # `ocrd.processor.base` internals should use :py:attr:`self._base_logger`
         self.logger = getLogger(f'ocrd.processor.{self.__class__.__name__}')
         self._base_logger = getLogger('ocrd.processor.base')
+        if parameter is not None:
+            self.parameter = parameter
         # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
         setattr(self, 'process',
                 deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')(getattr(self, 'process')))
@@ -288,6 +294,17 @@ class Processor():
         for res in self.list_all_resources():
             print(res)
         return
+
+    def _setup(self) -> None:
+        """
+        Validate parameters, then run :py:meth:`setup`. Called whenever
+        :py:data:`parameter` changes.
+        """
+        parameterValidator = ParameterValidator(self.ocrd_tool)
+        report = parameterValidator.validate(self.parameter)
+        if not report.is_valid:
+            raise ValueError("Invalid parameters %s" % report.errors)
+        self.setup()
 
     def setup(self) -> None:
         """
