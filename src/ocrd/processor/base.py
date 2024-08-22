@@ -148,7 +148,8 @@ class Processor():
 
     @parameter.setter
     def parameter(self, parameter : dict) -> None:
-        self._parameter = parameter
+        from types import MappingProxyType
+        self._parameter = MappingProxyType(parameter)
         # re-run setup to validate parameters and load models etc
         self._setup()
 
