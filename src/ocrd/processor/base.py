@@ -298,7 +298,7 @@ class Processor():
     def _setup(self) -> None:
         """
         Validate parameters, then run :py:meth:`setup`. Called whenever
-        :py:data:`parameter` changes.
+        :py:data:`parameter` is re-assigned.
         """
         parameterValidator = ParameterValidator(self.ocrd_tool)
         report = parameterValidator.validate(self.parameter)
