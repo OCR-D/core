@@ -381,7 +381,7 @@ def get_cached_processor(parameter: dict, processor_class):
 
 def get_processor(
         processor_class,
-        parameter: Optional[dict],
+        parameter: Optional[dict] = None,
         workspace: Workspace = None,
         page_id: str = None,
         input_file_grp: List[str] = None,

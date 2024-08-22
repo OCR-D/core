@@ -101,7 +101,7 @@ class TestProcessor(TestCase):
         with self.assertRaisesRegex(ValueError, 'is a required property'):
             proc.parameter = {}
         with self.assertRaisesRegex(ValueError, 'is a required property'):
-            get_processor(DummyProcessorWithRequiredParameters, None)
+            get_processor(DummyProcessorWithRequiredParameters)
         with self.assertRaisesRegex(ValueError, 'is a required property'):
             get_processor(DummyProcessorWithRequiredParameters, {})
         with self.assertRaisesRegex(ValueError, 'is a required property'):
