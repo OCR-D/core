@@ -95,7 +95,9 @@ class TestProcessor(TestCase):
         class DyingDummyProcessor(DummyProcessor):
             max_instances = 10
             def shutdown(self):
-                print(self.parameter['baz'])
+                # fixme: will only print _after_ pytest exits, so too late for assertions
+                #print(self.parameter['baz'])
+                pass
         self.capture_out_err()
         # customize (as processor implementors would)
         firstp = None
@@ -120,7 +122,16 @@ class TestProcessor(TestCase):
             )
         # should still be cached
         self.assertEqual(lastp, p)
-        out, err = self.capture_out_err()
+        from ocrd.processor.helpers import get_cached_processor
+        get_cached_processor.__wrapped__.cache_clear()
+        p = get_processor(DyingDummyProcessor,
+                parameter={'baz': str(i)},
+                instance_caching=True
+            )
+        # should not be cached anymore
+        self.assertNotEqual(lastp, p)
+        # fixme: will only print _after_ pytest exits, so too late for assertions
+        #out, err = self.capture_out_err()
         #assert '0' in out.split('\n')
 
     def test_verify(self):
