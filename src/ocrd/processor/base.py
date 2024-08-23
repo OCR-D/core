@@ -113,11 +113,18 @@ class Processor():
     """
 
     @property
+    def metadata_location(self) -> str:
+        """
+        Location of `ocrd-tool.json` inside the package. By default we expect it in the root of the module
+        """
+        return 'ocrd-tool.json'
+
+    @property
     def metadata(self) -> dict:
         """the ocrd-tool.json dict of the package"""
         if hasattr(self, '_metadata'):
             return self._metadata
-        self._metadata = json.loads(resource_string(self.__module__.split('.')[0], 'ocrd-tool.json'))
+        self._metadata = json.loads(resource_string(self.__module__.split('.')[0], self.metadata_location))
         report = OcrdToolValidator.validate(self._metadata)
         if not report.is_valid:
             # FIXME: remove when bertsky/core#10 is merged
