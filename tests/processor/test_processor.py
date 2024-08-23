@@ -93,12 +93,13 @@ class TestProcessor(TestCase):
 
     def test_instance_caching(self):
         class DyingDummyProcessor(DummyProcessor):
+            max_instances = 10
             def shutdown(self):
                 print(self.parameter['baz'])
         self.capture_out_err()
-        # well above OCRD_MAX_PROCESSOR_CACHE=128
+        # customize (as processor implementors would)
         firstp = None
-        for i in range(200):
+        for i in range(DyingDummyProcessor.max_instances + 2):
             p = get_processor(
                 DyingDummyProcessor,
                 parameter={'baz': str(i)},
@@ -114,7 +115,7 @@ class TestProcessor(TestCase):
         # should not be cached anymore
         self.assertNotEqual(firstp, p)
         p = get_processor(DyingDummyProcessor,
-                parameter={'baz': '199'},
+                parameter={'baz': str(i)},
                 instance_caching=True
             )
         # should still be cached
