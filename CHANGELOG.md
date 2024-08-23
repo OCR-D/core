@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.68.0] - 2024-08-23
+
 Changed:
 
   * ocrd_network: Use `ocrd-all-tool.json` bundled by core instead of download from website, #1257, #1260
@@ -2162,6 +2164,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.68.0]: ../../compare/v2.68.0..v2.67.2
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0
 [2.67.0]: ../../compare/v2.67.0..v2.66.1
