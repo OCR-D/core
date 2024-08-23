@@ -104,6 +104,14 @@ class Processor():
     a number of optional or mandatory parameters.
     """
 
+    max_instances : int = -1
+    """
+    maximum number of cached instances (ignored if negative), to be applied on top of
+    :py:data:`~ocrd_utils.config.OCRD_MAX_PROCESSOR_CACHE` (i.e. whatever is smaller).
+
+    (Override this if you know how many instances fit into memory at once.)
+    """
+
     @property
     def metadata(self) -> dict:
         """the ocrd-tool.json dict of the package"""
