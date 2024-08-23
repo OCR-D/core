@@ -127,9 +127,8 @@ class Processor():
         self._metadata = json.loads(resource_string(self.__module__.split('.')[0], self.metadata_location))
         report = OcrdToolValidator.validate(self._metadata)
         if not report.is_valid:
-            # FIXME: remove when bertsky/core#10 is merged
-            self.logger = getLogger(f'ocrd.processor.{self.__class__.__name__}')
-            self.logger.error(f"The ocrd-tool.json of this processor is {'problematic' if not report.errors else 'invalid'}:\n{report.to_xml()}.\nPlease open an issue at {self._metadata['git_url']}.")
+            self.logger.error(f"The ocrd-tool.json of this processor is {'problematic' if not report.errors else 'invalid'}:\n"
+                              f"{report.to_xml()}.\nPlease open an issue at {self._metadata['git_url']}.")
         return self._metadata
 
     @property
@@ -178,7 +177,7 @@ class Processor():
 
     def __init__(
             self,
-            # FIXME: deprecate in favor of process_workspace(workspace)
+            # FIXME: remove in favor of process_workspace(workspace)
             workspace : Optional[Workspace],
             ocrd_tool=None,
             parameter=None,
@@ -286,14 +285,10 @@ class Processor():
                     assert len(grps) >= minimum, msg % (len(grps), str(spec))
                 if maximum > 0:
                     assert len(grps) <= maximum, msg % (len(grps), str(spec))
-        # FIXME: maybe we should enforce the cardinality properties to be specified or apply default=1 here
-        # (but we already have ocrd-tool validation, and these first need to be adopted by implementors)
-        if 'input_file_grp_cardinality' in self.ocrd_tool:
-            assert_file_grp_cardinality(input_file_grps, self.ocrd_tool['input_file_grp_cardinality'],
-                                        "Unexpected number of input file groups %d vs %s")
-        if 'output_file_grp_cardinality' in self.ocrd_tool:
-            assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
-                                        "Unexpected number of output file groups %d vs %s")
+        assert_file_grp_cardinality(input_file_grps, self.ocrd_tool['input_file_grp_cardinality'],
+                                    "Unexpected number of input file groups %d vs %s")
+        assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
+                                    "Unexpected number of output file groups %d vs %s")
         for input_file_grp in input_file_grps:
             assert input_file_grp in self.workspace.mets.file_groups
         # keep this for backwards compatibility:
