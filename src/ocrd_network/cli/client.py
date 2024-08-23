@@ -90,7 +90,7 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
     print(f"Processing job status: {job_status}")
 
 
-@processing_cli.command('processor')
+@processing_cli.command('run')
 @click.argument('processor_name', required=True, type=click.STRING)
 @click.option('--address',
               help='The address of the Processing Server. If not provided, '

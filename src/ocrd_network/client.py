@@ -28,7 +28,7 @@ class Client:
         verify_server_protocol(self.server_addr_processing)
         self.polling_timeout = timeout
         self.polling_wait = wait
-        self.polling_tries = int(timeout/wait)
+        self.polling_tries = int(timeout / wait)
 
     def check_deployed_processors(self):
         return get_ps_deployed_processors(ps_server_host=self.server_addr_processing)
