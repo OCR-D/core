@@ -359,9 +359,9 @@ Options:
         pass
 
 
-# Taken from https://github.com/OCR-D/core/pull/884
-@freeze_args
-@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
+# not decorated here but at runtime (on first use)
+#@freeze_args
+#@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
 def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.
@@ -378,7 +378,6 @@ def get_cached_processor(parameter: dict, processor_class):
         return processor
     return None
 
-
 def get_processor(
         processor_class,
         parameter: Optional[dict] = None,
@@ -392,6 +391,16 @@ def get_processor(
         if parameter is None:
             parameter = {}
         if instance_caching:
+            global get_cached_processor
+            if not hasattr(get_cached_processor, '__wrapped__'):
+                # first call: wrap
+                if processor_class.max_instances < 0:
+                    maxsize = config.OCRD_MAX_PROCESSOR_CACHE
+                else:
+                    maxsize = min(config.OCRD_MAX_PROCESSOR_CACHE, processor_class.max_instances)
+                # wrapping in call cache
+                # wrapping dict into frozendict (from https://github.com/OCR-D/core/pull/884)
+                get_cached_processor = freeze_args(lru_cache(maxsize=maxsize)(get_cached_processor))
             processor = get_cached_processor(parameter, processor_class)
         else:
             # avoid passing workspace already (deprecated chdir behaviour)
