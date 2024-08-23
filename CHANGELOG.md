@@ -8,17 +8,18 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   * ocrd_network: Use `ocrd-all-tool.json` bundled by core instead of download from website, #1257, #1260
-  * `ocrd network client processing processor` supports blocking behavior with `--block` by polling job status, #1265, #1269
+  * :fire: `ocrd network client processing processor` renamed `ocrd network client processing run`, #1269
+  * `ocrd network client processing run` supports blocking behavior with `--block` by polling job status, #1265, #1269
 
 Added:
 
+  * `ocrd network client workflow run` Run, optionally blocking, a workflow on the processing server, #1265, #1269
   * `ocrd network client workflow check-status` to get the status of a workflow job, #1269
   * `ocrd network client processing check-status` to get the status of a processing (processor) job, #1269
-  * `ocrd network client workflow run` Run, optionally blocking, a workflow on the processing server, #1265, #1269
-  * Environment variables `OCRD_NETWORK_CLIENT_POLLING_SLEEP` and `OCRD_NETWORK_CLIENT_POLLING_TIMEOUT` to control polling interval and timeout for `ocrd network client {processing processor,workflow run`, #1269
   * `ocrd network client discovery processors` to list the processors deployed in the processing server, #1269
   * `ocrd network client discovery processor` to get the `ocrd-tool.json` of a deployed processor, #1269
   * `ocrd network client processing check-log` to retrieve the log data for a processing job, #1269
+  * Environment variables `OCRD_NETWORK_CLIENT_POLLING_SLEEP` and `OCRD_NETWORK_CLIENT_POLLING_TIMEOUT` to control polling interval and timeout for `ocrd network client {processing processor,workflow run`, #1269
   * `ocrd workspace clone`/`Resolver.workspace_from_url`: with `clobber_mets=False`, raise a FileExistsError for existing mets.xml on disk, #563, #1268
   * `ocrd workspace find --download`: print the the correct, up-to-date field, not `None`, #1202, #1266
 
