@@ -248,7 +248,7 @@ def test_file_pageid(sbb_sample_01):
 
 def test_agent(sbb_sample_01):
     beforelen = len(sbb_sample_01.agents)
-    sbb_sample_01.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'YETOTHERSTILL')
+    sbb_sample_01.add_agent(name='foo bar v0.0.1', _type='OTHER', othertype='OTHER', role='YETOTHERSTILL')
     assert len(sbb_sample_01.agents) == beforelen + 1
 
 def test_metshdr():
