@@ -299,6 +299,8 @@ ocrd__wrap () {
         eval "ocrd__files[$i]=ocrd__file$i"
         let ++i
     done < <(ocrd bashlib input-files \
+                  --ocrd-tool $OCRD_TOOL_JSON \
+                  --executable $OCRD_TOOL_NAME \
                   -m "${ocrd__argv[mets_file]}" \
                   -I "${ocrd__argv[input_file_grp]}" \
                   -O "${ocrd__argv[output_file_grp]}" \
