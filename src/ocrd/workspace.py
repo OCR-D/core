@@ -1168,9 +1168,9 @@ def _reflect(log, name, orientation, segment_image, segment_coords, segment_xywh
     # Transpose in affine coordinate transform:
     # (consistent with image transposition or AlternativeImage below)
     transposition = {
-        90: Image.ROTATE_90,
-        180: Image.ROTATE_180,
-        270: Image.ROTATE_270
+        90: Image.Transpose.ROTATE_90,
+        180: Image.Transpose.ROTATE_180,
+        270: Image.Transpose.ROTATE_270
     }.get(orientation) # no default
     segment_coords['transform'] = transpose_coordinates(
         segment_coords['transform'], transposition,
@@ -1238,5 +1238,5 @@ def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwa
         segment_image = segment_image.resize((int(segment_image.width * factor),
                                               int(segment_image.height * factor)),
                                              # slowest, but highest quality:
-                                             Image.BICUBIC)
+                                             Image.Resampling.BICUBIC)
     return segment_image, segment_coords, segment_xywh

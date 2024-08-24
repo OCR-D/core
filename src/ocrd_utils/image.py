@@ -65,10 +65,10 @@ def adjust_canvas_to_transposition(size, method):
     
     Return a numpy array of the enlarged width and height.
     """
-    if method in [Image.ROTATE_90,
-                  Image.ROTATE_270,
-                  Image.TRANSPOSE,
-                  Image.TRANSVERSE]:
+    if method in [Image.Transpose.ROTATE_90,
+                  Image.Transpose.ROTATE_270,
+                  Image.Transpose.TRANSPOSE,
+                  Image.Transpose.TRANSVERSE]:
         size = size[::-1]
     return size
 
@@ -348,26 +348,26 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
     calculate the affine coordinate transform corresponding to the composition
     of both transformations, which is respectively:
 
-    - ``PIL.Image.FLIP_LEFT_RIGHT``:
+    - ``PIL.Image.Transpose.FLIP_LEFT_RIGHT``:
       entails translation to the center, followed by pure reflection
       about the y-axis, and subsequent translation back
-    - ``PIL.Image.FLIP_TOP_BOTTOM``:
+    - ``PIL.Image.Transpose.FLIP_TOP_BOTTOM``:
       entails translation to the center, followed by pure reflection
       about the x-axis, and subsequent translation back
-    - ``PIL.Image.ROTATE_180``:
+    - ``PIL.Image.Transpose.ROTATE_180``:
       entails translation to the center, followed by pure reflection
       about the origin, and subsequent translation back
-    - ``PIL.Image.ROTATE_90``:
+    - ``PIL.Image.Transpose.ROTATE_90``:
       entails translation to the center, followed by pure rotation
       by 90° counter-clockwise, and subsequent translation back
-    - ``PIL.Image.ROTATE_270``:
+    - ``PIL.Image.Transpose.ROTATE_270``:
       entails translation to the center, followed by pure rotation
       by 270° counter-clockwise, and subsequent translation back
-    - ``PIL.Image.TRANSPOSE``:
+    - ``PIL.Image.Transpose.TRANSPOSE``:
       entails translation to the center, followed by pure rotation
       by 90° counter-clockwise and pure reflection about the x-axis,
       and subsequent translation back
-    - ``PIL.Image.TRANSVERSE``:
+    - ``PIL.Image.Transpose.TRANSVERSE``:
       entails translation to the center, followed by pure rotation
       by 90° counter-clockwise and pure reflection about the y-axis,
       and subsequent translation back
@@ -388,13 +388,13 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
                       [0, 0, 1]])
     transform = shift_coordinates(transform, -orig)
     operations = {
-        Image.FLIP_LEFT_RIGHT: [refly],
-        Image.FLIP_TOP_BOTTOM: [reflx],
-        Image.ROTATE_180: [reflx, refly],
-        Image.ROTATE_90: [rot90],
-        Image.ROTATE_270: [rot90, reflx, refly],
-        Image.TRANSPOSE: [rot90, reflx],
-        Image.TRANSVERSE: [rot90, refly]
+        Image.Transpose.FLIP_LEFT_RIGHT: [refly],
+        Image.Transpose.FLIP_TOP_BOTTOM: [reflx],
+        Image.Transpose.ROTATE_180: [reflx, refly],
+        Image.Transpose.ROTATE_90: [rot90],
+        Image.Transpose.ROTATE_270: [rot90, reflx, refly],
+        Image.Transpose.TRANSPOSE: [rot90, reflx],
+        Image.Transpose.TRANSVERSE: [rot90, refly]
     }.get(method) # no default
     for operation in operations:
         transform = np.dot(operation, transform)
@@ -411,29 +411,29 @@ def transpose_image(image, method):
     Given a PIL.Image ``image`` and a transposition mode ``method``,
     apply the respective operation:
 
-    - ``PIL.Image.FLIP_LEFT_RIGHT``:
+    - ``PIL.Image.Transpose.FLIP_LEFT_RIGHT``:
       all pixels get mirrored at half the width of the image
-    - ``PIL.Image.FLIP_TOP_BOTTOM``:
+    - ``PIL.Image.Transpose.FLIP_TOP_BOTTOM``:
       all pixels get mirrored at half the height of the image
-    - ``PIL.Image.ROTATE_180``:
+    - ``PIL.Image.Transpose.ROTATE_180``:
       all pixels get mirrored at both, the width and half the height
       of the image,
       i.e. the image gets rotated by 180° counter-clockwise
-    - ``PIL.Image.ROTATE_90``:
+    - ``PIL.Image.Transpose.ROTATE_90``:
       rows become columns (but counted from the right) and
       columns become rows,
       i.e. the image gets rotated by 90° counter-clockwise;
       width becomes height and vice versa
-    - ``PIL.Image.ROTATE_270``:
+    - ``PIL.Image.Transpose.ROTATE_270``:
       rows become columns and
       columns become rows (but counted from the bottom),
       i.e. the image gets rotated by 270° counter-clockwise;
       width becomes height and vice versa
-    - ``PIL.Image.TRANSPOSE``:
+    - ``PIL.Image.Transpose.TRANSPOSE``:
       rows become columns and vice versa,
       i.e. all pixels get mirrored at the main diagonal;
       width becomes height and vice versa
-    - ``PIL.Image.TRANSVERSE``:
+    - ``PIL.Image.Transpose.TRANSVERSE``:
       rows become columns (but counted from the right) and
       columns become rows (but counted from the bottom),
       i.e. all pixels get mirrored at the opposite diagonal;
