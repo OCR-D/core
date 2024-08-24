@@ -118,7 +118,7 @@ def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency
 @workspace_cli.command('clone', cls=command_with_replaced_help(
     (r' \[WORKSPACE_DIR\]', ''))) # XXX deprecated argument
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
-@click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
+@click.option('-a', '--download', is_flag=True, help="Download all selected files and add local path references in METS file afterwards")
 @click.argument('mets_url')
 @mets_find_options
 # XXX deprecated
@@ -129,8 +129,10 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
     Create a workspace from METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
-    If METS_URL is not provided, use --mets accordingly.
     METS_URL can also be an OAI-PMH GetRecord URL wrapping a METS file.
+
+    Additional options pertain to the selection of files / fileGrps / pages
+    to be downloaded, if --download is used.
     """
     LOG = getLogger('ocrd.cli.workspace.clone')
     if workspace_dir:
@@ -143,6 +145,7 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
+        fileGrp=file_grp,
         ID=file_id,
         pageId=page_id,
         mimetype=mimetype,
@@ -407,7 +410,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
         if dry_run:
             log.info('workspace.add_file(%s)' % file_dict)
         else:
-            workspace.add_file(fileGrp, ignore=ignore, force=force, **file_dict)
+            workspace.add_file(fileGrp, ignore=ignore, force=force, **file_dict) # pylint: disable=redundant-keyword-arg
 
     # save changes to disk
     workspace.save_mets()
