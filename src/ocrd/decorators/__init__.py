@@ -109,7 +109,7 @@ def ocrd_cli_wrap_processor(
         kwargs['parameter'] = dict()
     # Merge parameter overrides and parameters
     if 'parameter_override' in kwargs:
-        set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
+        set_json_key_value_overrides(kwargs['parameter'], *kwargs.pop('parameter_override'))
     # Assert -I / -O
     if not kwargs['input_file_grp']:
         raise ValueError('-I/--input-file-grp is required')

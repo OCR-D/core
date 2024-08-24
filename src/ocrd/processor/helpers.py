@@ -39,10 +39,7 @@ def run_processor(
         log_level=None,
         input_file_grp=None,
         output_file_grp=None,
-        show_resource=None,
-        list_resources=False,
         parameter=None,
-        parameter_override=None,
         working_dir=None,
         mets_server_url=None,
         instance_caching=False
