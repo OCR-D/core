@@ -126,7 +126,7 @@ class Processor():
         return 'ocrd-tool.json'
 
     @cached_property
-    def metadata_location(self) -> str:
+    def metadata_location(self) -> Path:
         """
         Absolute path of the ``ocrd-tool.json`` file as distributed with the package.
 
@@ -134,7 +134,7 @@ class Processor():
 
         (Override if ``ocrd-tool.json`` is not distributed with the Python package.)
         """
-        return resource_filename(__package__.split('.')[0], self.metadata_filename)
+        return resource_filename(self.__module__.split('.')[0], self.metadata_filename)
 
     @cached_property
     def metadata_rawdict(self) -> dict:
