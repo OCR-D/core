@@ -20,8 +20,6 @@ from ocrd_utils import (
 )
 from ocrd_modelfactory import page_from_file
 
-OCRD_TOOL = parse_json_string_with_comments(resource_string(__package__ + '.dummy', 'ocrd-tool.json'))
-
 class DummyProcessor(Processor):
     """
     Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
@@ -76,16 +74,12 @@ class DummyProcessor(Processor):
             super().process_page_file(input_file)
 
     @property
-    def metadata(self):
-        return OCRD_TOOL
+    def metadata_filename(self):
+        return 'processor/builtin/dummy/ocrd-tool.json'
 
     @property
     def executable(self):
         return 'ocrd-dummy'
-
-    @property
-    def version(self):
-        return '0.0.3'
 
 @click.command()
 @ocrd_cli_options

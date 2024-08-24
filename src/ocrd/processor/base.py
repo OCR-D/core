@@ -9,6 +9,7 @@ __all__ = [
     'run_processor'
 ]
 
+from functools import cached_property
 from os.path import exists, join
 from shutil import copyfileobj
 import json
@@ -35,13 +36,12 @@ from ocrd_utils import (
     MIME_TO_EXT,
     config,
     getLogger,
-    initLogging,
     list_resource_candidates,
     pushd_popd,
     list_all_resources,
     get_processor_resource_types,
     resource_filename,
-    resource_string,
+    parse_json_file_with_comments,
     make_file_id,
     deprecation_warning
 )
@@ -96,12 +96,14 @@ class MissingInputFile(ValueError):
 
 class Processor():
     """
-    A processor is a tool that implements the uniform OCR-D command-line interface
-    for run-time data processing. That is, it executes a single workflow step,
-    or a combination of workflow steps, on the workspace (represented by local METS).
-    It reads input files for all or requested physical pages of the input fileGrp(s),
-    and writes output files for them into the output fileGrp(s). It may take 
-    a number of optional or mandatory parameters.
+    A processor is a tool that implements the uniform OCR-D
+    `command-line interface for run-time data processing <https://ocr-d.de/en/spec/cli>`_.
+
+    That is, it executes a single workflow step, or a combination of workflow steps,
+    on the workspace (represented by local METS). It reads input files for all or selected
+    physical pages of the input fileGrp(s), computes additional annotation, and writes output
+    files for them into the output fileGrp(s). It may take a number of optional or mandatory
+    parameters.
     """
 
     max_instances : int = -1
@@ -113,47 +115,96 @@ class Processor():
     """
 
     @property
-    def metadata_location(self) -> str:
+    def metadata_filename(self) -> str:
         """
-        Location of `ocrd-tool.json` inside the package. By default we expect it in the root of the module
+        Relative location of the ``ocrd-tool.json`` file inside the package.
+
+        Used by :py:data:`metadata_location`.
+
+        (Override if ``ocrd-tool.json`` is not in the root of the module,
+        e.g. ``namespace/ocrd-tool.json`` or ``data/ocrd-tool.json``).
         """
         return 'ocrd-tool.json'
 
-    @property
+    @cached_property
+    def metadata_location(self) -> str:
+        """
+        Absolute path of the ``ocrd-tool.json`` file as distributed with the package.
+
+        Used by :py:data:`metadata_rawdict`.
+
+        (Override if ``ocrd-tool.json`` is not distributed with the Python package.)
+        """
+        return resource_filename(__package__.split('.')[0], self.metadata_filename)
+
+    @cached_property
+    def metadata_rawdict(self) -> dict:
+        """
+        Raw (unvalidated, unexpanded) ``ocrd-tool.json`` dict contents of the package.
+
+        Used by :py:data:`metadata`.
+
+        (Override if ``ocrd-tool.json`` is not in a file.)
+        """
+        return parse_json_file_with_comments(self.metadata_location)
+
+    @cached_property
     def metadata(self) -> dict:
-        """the ocrd-tool.json dict of the package"""
-        if hasattr(self, '_metadata'):
-            return self._metadata
-        self._metadata = json.loads(resource_string(self.__module__.split('.')[0], self.metadata_location))
-        report = OcrdToolValidator.validate(self._metadata)
+        """
+        The ``ocrd-tool.json`` dict contents of the package, according to the OCR-D
+        `spec <https://ocr-d.de/en/spec/ocrd_tool>`_ for processor tools.
+
+        After deserialisation, it also gets validated against the
+        `schema <https://ocr-d.de/en/spec/ocrd_tool#definition>`_ with all defaults
+        expanded.
+
+        Used by :py:data:`ocrd_tool` and :py:data:`version`.
+
+        (Override if you want to provide metadata programmatically instead of a
+        JSON file.)
+        """
+        metadata = self.metadata_rawdict
+        report = OcrdToolValidator.validate(metadata)
         if not report.is_valid:
             self.logger.error(f"The ocrd-tool.json of this processor is {'problematic' if not report.errors else 'invalid'}:\n"
-                              f"{report.to_xml()}.\nPlease open an issue at {self._metadata['git_url']}.")
-        return self._metadata
+                              f"{report.to_xml()}.\nPlease open an issue at {metadata.get('git_url', 'the website')}.")
+        return metadata
 
-    @property
+    @cached_property
     def version(self) -> str:
-        """the version of the package"""
-        if hasattr(self, '_version'):
-            return self._version
-        self._version = self.metadata['version']
-        return self._version
+        """
+        The program version of the package.
+        Usually the ``version`` part of :py:data:`metadata`.
 
-    @property
+        (Override if you do not want to use :py:data:`metadata` lookup
+        mechanism.)
+        """
+        return self.metadata['version']
+
+    @cached_property
     def executable(self) -> str:
-        """the executable name of this processor tool"""
-        if hasattr(self, '_executable'):
-            return self._executable
-        self._executable = os.path.basename(inspect.stack()[-1].filename)
-        return self._executable
+        """
+        The executable name of this processor tool. Taken from the runtime
+        filename.
 
-    @property
+        Used by :py:data:`ocrd_tool` for lookup in :py:data:`metadata`.
+
+        (Override if your entry-point name deviates from the ``executable``
+        name, or the processor gets instantiated from another runtime.)
+        """
+        return os.path.basename(inspect.stack()[-1].filename)
+
+    @cached_property
     def ocrd_tool(self) -> dict:
-        """the ocrd-tool.json dict of this processor tool"""
-        if hasattr(self, '_ocrd_tool'):
-            return self._ocrd_tool
-        self._ocrd_tool = self.metadata['tools'][self.executable]
-        return self._ocrd_tool
+        """
+        The ``ocrd-tool.json`` dict contents of this processor tool.
+        Usually the :py:data:`executable` key of the ``tools`` part
+        of :py:data:`metadata`.
+
+        (Override if you do not want to use :py:data:`metadata` lookup
+        mechanism.)
+        """
+        return self.metadata['tools'][self.executable]
 
     @property
     def parameter(self) -> Optional[dict]:
