@@ -21,6 +21,7 @@ __all__ = [
     'make_file_id',
     'make_xml_id',
     'nth_url_segment',
+    'parse_json_file_with_comments',
     'parse_json_string_or_file',
     'parse_json_string_with_comments',
     'remove_non_path_from_url',
@@ -161,6 +162,13 @@ def is_string(val):
     """
     return isinstance(val, str)
 
+
+def parse_json_file_with_comments(val):
+    """
+    Parse a file of JSON interspersed with #-prefixed full-line comments
+    """
+    with open(val, 'r', encoding='utf-8') as inputf:
+        return parse_json_string_with_comments(inputf.read())
 
 def parse_json_string_with_comments(val):
     """
