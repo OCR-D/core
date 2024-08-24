@@ -248,7 +248,7 @@ class OcrdResourceManager:
                         if "Content-Disposition" not in r.headers:
                             url = get_url_from_gdrive_confirmation(r.text)
                 except RuntimeError as e:
-                    log.warning("Cannot unwrap Google Drive URL: ", e)
+                    log.warning("Cannot unwrap Google Drive URL: %s", e)
             with open(filename, 'wb') as f:
                 with requests.get(url, stream=True) as r:
                     r.raise_for_status()
