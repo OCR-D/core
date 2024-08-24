@@ -198,7 +198,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         return [OcrdAgent(el_agent) for el_agent in self._tree.getroot().findall('mets:metsHdr/mets:agent', NS)]
 
-    def add_agent(self, *args, **kwargs) -> OcrdAgent:
+    def add_agent(self, **kwargs) -> OcrdAgent:
         """
         Add an :py:class:`ocrd_models.ocrd_agent.OcrdAgent` to the list of agents in the ``metsHdr``.
         """
@@ -213,7 +213,7 @@ class OcrdMets(OcrdXmlDocument):
             el_agent_last.addnext(el_agent)
         except StopIteration:
             el_metsHdr.insert(0, el_agent)
-        return OcrdAgent(el_agent, *args, **kwargs)
+        return OcrdAgent(el_agent, **kwargs)
 
     @property
     def file_groups(self) -> List[str]:

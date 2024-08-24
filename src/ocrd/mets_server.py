@@ -236,7 +236,7 @@ class ClientSideOcrdMets:
             agent_dict["_type"] = agent_dict.pop("type")
         return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in agent_dicts]
 
-    def add_agent(self, *args, **kwargs):
+    def add_agent(self, **kwargs):
         if not self.multiplexing_mode:
             return self.session.request("POST", f"{self.url}/agent", json=OcrdAgentModel.create(**kwargs).dict())
         else:
