@@ -22,7 +22,6 @@ import inspect
 import tarfile
 import io
 import weakref
-from warnings import warn
 from frozendict import frozendict
 from deprecated import deprecated
 from requests import HTTPError
@@ -350,14 +349,12 @@ class Processor():
         Print :py:attr:`ocrd_tool` on stdout.
         """
         print(json.dumps(self.ocrd_tool, indent=True))
-        return
 
     def dump_module_dir(self):
         """
         Print :py:attr:`moduledir` on stdout.
         """
         print(self.moduledir)
-        return
 
     def list_resources(self):
         """
@@ -365,7 +362,6 @@ class Processor():
         """
         for res in self.list_all_resources():
             print(res)
-        return
 
     def setup(self) -> None:
         """
@@ -756,7 +752,7 @@ class Processor():
         # can actually be much more costly than traversing the ltree.
         # This might depend on the number of pages vs number of fileGrps.
 
-        pages = dict()
+        pages = {}
         for i, ifg in enumerate(ifgs):
             files_ = sorted(self.workspace.mets.find_all_files(
                     pageId=self.page_id, fileGrp=ifg, mimetype=mimetype),
@@ -811,7 +807,7 @@ class Processor():
         if self.page_id and not any(pages):
             self._base_logger.critical(f"Could not find any files for selected pageId {self.page_id}.\n"
                                        f"compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
-        ifts = list()
+        ifts = []
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:

@@ -17,7 +17,6 @@ from ocrd.decorators import parameter_option, parameter_override_option
 from ocrd.processor import Processor
 from ocrd_utils import (
     set_json_key_value_overrides,
-    VERSION as OCRD_VERSION,
     parse_json_string_or_file,
     parse_json_string_with_comments as loads
 )
@@ -30,22 +29,23 @@ class OcrdToolCtx():
         with codecs.open(filename, encoding='utf-8') as f:
             self.content = f.read()
             self.json = loads(self.content)
+        self.tool_name = ''
 
         class BashProcessor(Processor):
             @property
-            def metadata(inner_self):
+            def metadata(inner_self): # pylint: disable=no-self-argument,arguments-renamed
                 return self.json
             @property
-            def executable(inner_self):
+            def executable(inner_self): # pylint: disable=no-self-argument,arguments-renamed
                 return self.tool_name
             @property
-            def moduledir(inner_self):
+            def moduledir(inner_self): # pylint: disable=no-self-argument,arguments-renamed
                 return os.path.dirname(self.filename)
             # set docstrings to empty
             __doc__ = None
             # HACK: override the module-level docstring, too
             getmodule(OcrdToolCtx).__doc__ = None
-            def process(inner_self):
+            def process(inner_self): # pylint: disable=no-self-argument,arguments-renamed
                 return super()
 
         self.processor = BashProcessor

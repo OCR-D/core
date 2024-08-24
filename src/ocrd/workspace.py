@@ -1,7 +1,7 @@
 import io
 from os import makedirs, unlink, listdir, path
 from pathlib import Path
-from shutil import move, copyfileobj
+from shutil import copyfileobj
 from re import sub
 from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
@@ -43,7 +43,6 @@ from ocrd_utils import (
     MIME_TO_PIL,
     MIMETYPE_PAGE,
     REGEX_PREFIX,
-    config
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -111,7 +110,7 @@ class Workspace():
 
     def __repr__(self):
         return 'Workspace[remote=%s, directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
-            not not self.is_remote,
+            self.is_remote,
             self.directory,
             self.baseurl,
             self.mets.file_groups,
@@ -648,7 +647,7 @@ class Workspace():
         log = getLogger('ocrd.workspace.image_from_page')
         page_image_info = self.resolve_image_exif(page.imageFilename)
         page_image = self._resolve_image_as_pil(page.imageFilename)
-        page_coords = dict()
+        page_coords = {}
         # use identity as initial affine coordinate transform:
         page_coords['transform'] = np.eye(3)
         # interim bbox (updated with each change to the transform):
@@ -1091,7 +1090,7 @@ class Workspace():
             The (absolute) path of the created file.
         """
         log = getLogger('ocrd.workspace.save_image_file')
-        saveargs = dict()
+        saveargs = {}
         if 'dpi' in image.info:
             saveargs['dpi'] = image.info['dpi']
         image_bytes = io.BytesIO()

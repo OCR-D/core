@@ -75,7 +75,7 @@ class OcrdMets(OcrdXmlDocument):
     def __init__(self, **kwargs) -> None:
         """
         """
-        super(OcrdMets, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         # XXX If the environment variable OCRD_METS_CACHING is set to "true",
         # then enable caching, if "false", disable caching, overriding the
@@ -488,11 +488,12 @@ class OcrdMets(OcrdXmlDocument):
                         f"A file with ID=={ID} already exists {mets_file} but unrelated - cannot mitigate")
 
         # To get rid of Python's FutureWarning - checking if v is not None
-        kwargs = {k: v for k, v in locals().items() if
-                  k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v is not None}
+        kwargs = {k: v for k, v in locals().items()
+                  if k in ['url', 'ID', 'mimetype', 'pageId', 'local_filename'] and v is not None}
         # This separation is needed to reuse the same el_mets_file element in the caching if block
         el_mets_file = ET.SubElement(el_fileGrp, TAG_METS_FILE)
         # The caching of the physical page is done in the OcrdFile constructor
+        # (which calls us back with set_physical_page_for_file)
         mets_file = OcrdFile(el_mets_file, mets=self, **kwargs)
 
         if self._cache_flag:
@@ -542,9 +543,9 @@ class OcrdMets(OcrdXmlDocument):
         # Delete the physical page ref
         fptrs = []
         if self._cache_flag:
-            for page in self._fptr_cache.keys():
-                if ID in self._fptr_cache[page]:
-                    fptrs.append(self._fptr_cache[page][ID])
+            for pageId, fptrdict in self._fptr_cache.items():
+                if ID in fptrdict:
+                    fptrs.append(fptrdict[ID])
         else:
             fptrs = self._tree.getroot().findall('.//mets:fptr[@FILEID="%s"]' % ID, namespaces=NS)
 
@@ -700,8 +701,8 @@ class OcrdMets(OcrdXmlDocument):
         assert for_fileIds # at this point we know for_fileIds is set, assert to convince pyright
         ret = [None] * len(for_fileIds)
         if self._cache_flag:
-            for pageId in self._fptr_cache.keys():
-                for fptr in self._fptr_cache[pageId].keys():
+            for pageId, fptrdict in self._fptr_cache.items():
+                for fptr in fptrdict:
                     if fptr in for_fileIds:
                         index = for_fileIds.index(fptr)
                         if return_divs:
@@ -737,10 +738,10 @@ class OcrdMets(OcrdXmlDocument):
         # delete any existing page mapping for this file.ID
         fptrs = []
         if self._cache_flag:
-            for page_id in self._fptr_cache.keys():
-                if ocrd_file.ID in self._fptr_cache[page_id].keys():
-                    if self._fptr_cache[page_id][ocrd_file.ID] is not None:
-                        fptrs.append(self._fptr_cache[page_id][ocrd_file.ID])
+            for page, fptrdict in self._fptr_cache.items():
+                if ocrd_file.ID in fptrdict:
+                    if fptrdict[ocrd_file.ID] is not None:
+                        fptrs.append(fptrdict[ocrd_file.ID])
         else:
             fptrs = self._tree.getroot().findall(
                 'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' %
@@ -791,7 +792,7 @@ class OcrdMets(OcrdXmlDocument):
             self._fptr_cache[pageId].update({ocrd_file.ID: el_fptr})
 
     def update_physical_page_attributes(self, page_id : str, **kwargs) -> None:
-        invalid_keys = list(k for k in kwargs.keys() if k not in METS_PAGE_DIV_ATTRIBUTE.names())
+        invalid_keys = list(k for k in kwargs if k not in METS_PAGE_DIV_ATTRIBUTE.names())
         if invalid_keys:
             raise ValueError(f"Invalid attribute {invalid_keys}. Allowed values: {METS_PAGE_DIV_ATTRIBUTE.names()}")
 
@@ -812,8 +813,8 @@ class OcrdMets(OcrdXmlDocument):
         corresponding to the ``mets:file`` :py:attr:`ocrd_file`.
         """
         if self._cache_flag:
-            for pageId in self._fptr_cache.keys():
-                if ocrd_file.ID in self._fptr_cache[pageId].keys():
+            for pageId, fptrdict in self._fptr_cache.items():
+                if ocrd_file.ID in fptrdict:
                     return pageId
         else:
             ret = self._tree.getroot().find(
@@ -828,7 +829,7 @@ class OcrdMets(OcrdXmlDocument):
         """
         mets_div = None
         if self._cache_flag:
-            if ID in self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID].keys():
+            if ID in self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID]:
                 mets_div = [self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID][ID]]
         else:
             mets_div = self._tree.getroot().xpath(
@@ -857,9 +858,9 @@ class OcrdMets(OcrdXmlDocument):
         # If that's the case then we do not need to iterate 2 loops, just one.
         mets_fptrs = []
         if self._cache_flag:
-            for page_id in self._fptr_cache.keys():
-                if fileId in self._fptr_cache[page_id].keys():
-                    mets_fptrs.append(self._fptr_cache[page_id][fileId])
+            for pageId, fptrdict in self._fptr_cache.items():
+                if fileId in fptrdict:
+                    mets_fptrs.append(fptrdict[fileId])
         else:
             mets_fptrs = self._tree.getroot().xpath(
                 'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]/mets:fptr[@FILEID="%s"]' % fileId,
@@ -919,4 +920,3 @@ class OcrdMets(OcrdXmlDocument):
             # FIXME: merge structMap logical and structLink as well
             if after_add_cb:
                 after_add_cb(f_dest)
-

@@ -5,9 +5,9 @@ By default: Log with lastResort logger, usually STDERR.
 
 Logging can be overridden either programmatically in code using the library or by creating one or more of
 
-- /etc/ocrd_logging.py
-- $HOME/ocrd_logging.py
-- $PWD/ocrd_logging.py
+- ``/etc/ocrd_logging.py``
+- ``$HOME/ocrd_logging.py``
+- ``$PWD/ocrd_logging.py``
 
 These files will be executed in the context of ocrd/ocrd_logging.py, with `logging` global set.
 
@@ -16,19 +16,17 @@ Changes as of 2023-08-20:
     - Try to be less intrusive with OCR-D specific logging conventions to
       make it easier and less surprising to define logging behavior when
       using OCR-D/core as a library
-    - Change setOverrideLogLevel to only override the log level of the ``ocrd``
+    - Change :py:meth:`setOverrideLogLevel` to only override the log level of the ``ocrd``
       logger and its descendants
-    - initLogging will set exactly one handler, for the root logger or for the
+    - :py:meth:`initLogging` will set exactly one handler, for the root logger or for the
       ``ocrd`` logger.
     - Child loggers should propagate to the ancestor logging (default
-      behavior of the logging library - no more PropagationShyLogger)
-    - disableLogging only removes any handlers from the ``ocrd`` logger
+      behavior of the logging library - no more ``PropagationShyLogger``)
+    - :py:meth:`disableLogging` only removes any handlers from the ``ocrd`` logger
 """
 # pylint: disable=no-member
 
 from __future__ import absolute_import
-
-from traceback import format_stack
 
 import logging
 import logging.config
@@ -81,10 +79,10 @@ _ocrdLevel2pythonLevel = {
 
 def tf_disable_interactive_logs():
     try:
-        from os import environ
+        from os import environ # pylint: disable=import-outside-toplevel
         # This env variable must be set before importing from Keras
         environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from tensorflow.keras.utils import disable_interactive_logging
+        from tensorflow.keras.utils import disable_interactive_logging # pylint: disable=import-outside-toplevel
         # Enabled interactive logging throws an exception
         # due to a call of sys.stdout.flush()
         disable_interactive_logging()
@@ -143,21 +141,21 @@ def get_logging_config_files():
 
 def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_LOGGING_DEBUG):
     """
-    Reset ``ocrd`` logger, read logging configuration if exists, otherwise use basicConfig
+    Reset ``ocrd`` logger, read logging configuration if exists, otherwise use :py:meth:`logging.basicConfig`
 
-    initLogging is to be called by OCR-D/core once, i.e.
+    This is to be called by OCR-D/core only once, i.e.
         -  for the ``ocrd`` CLI
         -  for the processor wrapper methods
 
     Other processes that use OCR-D/core as a library can, but do not have to, use this functionality.
 
     Keyword Args:
-        - builtin_only (bool, False): Whether to search for logging configuration
-                                      on-disk (``False``) or only use the
-                                      hard-coded config (``True``). For testing
-        - force_reinit (bool, False): Whether to ignore the module-level
-                                      ``_initialized_flag``. For testing only.
-        - silent (bool, True): Whether to log logging behavior by printing to stderr
+        - builtin_only (bool): Whether to search for logging configuration
+              on-disk (``False``) or only use the hard-coded config (``True``).
+              For testing
+        - force_reinit (bool): Whether to ignore the module-level ``_initialized_flag``.
+              For testing only
+        - silent (bool): Whether to log logging behavior by printing to stderr
     """
     global _initialized_flag
     if _initialized_flag and not force_reinit:

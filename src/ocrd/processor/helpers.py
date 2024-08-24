@@ -1,7 +1,6 @@
 """
 Helper methods for running and documenting processors
 """
-from os import chdir, getcwd
 from time import perf_counter, process_time
 from functools import lru_cache
 import json
@@ -99,7 +98,7 @@ def run_processor(
     t0_cpu = process_time()
     if any(x in config.OCRD_PROFILE for x in ['RSS', 'PSS']):
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
-        from memory_profiler import memory_usage
+        from memory_profiler import memory_usage # pylint: disable=import-outside-toplevel
         try:
             mem_usage = memory_usage(proc=(processor.process_workspace, [workspace], {}),
                                      # only run process once
@@ -209,7 +208,7 @@ def run_cli(
     if not log_filename:
         result = run(args, check=False)
     else:
-        with open(log_filename, 'a') as file_desc:
+        with open(log_filename, 'a', encoding='utf-8') as file_desc:
             result = run(args, check=False, stdout=file_desc, stderr=file_desc)
     return result.returncode
 

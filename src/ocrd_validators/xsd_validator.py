@@ -45,7 +45,7 @@ class XsdValidator():
             schema_url (str): URI of XML schema to validate against.
         """
         if schema_url not in XSD_PATHS:
-            raise Exception('XML schema not bundled with OCR-D: %s' % schema_url)
+            raise ValueError('XML schema not bundled with OCR-D: %s' % schema_url)
         with open(XSD_PATHS[schema_url], 'r') as f:
             xmlschema_doc = ET.parse(f)
             self._xmlschema = ET.XMLSchema(xmlschema_doc)

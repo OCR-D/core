@@ -20,7 +20,7 @@ class ParameterValidator(JsonValidator):
             obj (dict):
             schema (dict):
         """
-        return super(ParameterValidator, self)._validate(*args, **kwargs)
+        return super()._validate(*args, **kwargs)
 
     def __init__(self, ocrd_tool):
         """
@@ -40,7 +40,7 @@ class ParameterValidator(JsonValidator):
                 if p[n]['required']:
                     required.append(n)
                 del(p[n]['required'])
-        super(ParameterValidator, self).__init__({
+        super().__init__({
             "type": "object",
             "required": required,
             "additionalProperties": False,

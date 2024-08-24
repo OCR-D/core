@@ -6,7 +6,7 @@ OCR-D CLI: workspace management
     :nested: full
 """
 import os
-from os import getcwd, rmdir, unlink
+from os import rmdir, unlink
 from os.path import dirname, relpath, normpath, exists, join, isabs, isdir
 from pathlib import Path
 from json import loads, dumps
@@ -14,7 +14,6 @@ import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
 import time
-import numpy as np
 
 import click
 
@@ -455,7 +454,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
     snake_to_camel = {"file_id": "ID", "page_id": "pageId", "file_grp": "fileGrp"}
     output_field = [snake_to_camel.get(x, x) for x in output_field]
     modified_mets = False
-    ret = list()
+    ret = []
     workspace = Workspace(
         ctx.resolver,
         directory=ctx.directory,
@@ -751,7 +750,7 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 
 @workspace_cli.command('update-page')
 @click.option('--set', 'attr_value_pairs', help=f"set mets:div ATTR to VALUE. possible keys: {METS_PAGE_DIV_ATTRIBUTE.names()}", metavar="ATTR VALUE", nargs=2, multiple=True)
-@click.option('--order', help="[DEPRECATED - use --set ATTR VALUE", metavar='ORDER')               
+@click.option('--order', help="[DEPRECATED - use --set ATTR VALUE", metavar='ORDER')
 @click.option('--orderlabel', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
 @click.option('--contentids', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
 @click.argument('PAGE_ID')
@@ -760,7 +759,7 @@ def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     """
     Update the @ID, @ORDER, @ORDERLABEL, @LABEL or @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
     """
-    update_kwargs = {k: v for k, v in attr_value_pairs}
+    update_kwargs = dict(attr_value_pairs)
     if order:
         update_kwargs['ORDER'] = order
     if orderlabel:

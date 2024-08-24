@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field, ValidationError
 import uvicorn
 
 from ocrd_models import OcrdFile, ClientSideOcrdFile, OcrdAgent, ClientSideOcrdAgent
-from ocrd_utils import getLogger, deprecated_alias
+from ocrd_utils import getLogger
 
 
 #
@@ -403,7 +403,6 @@ class OcrdMetsServer:
     @staticmethod
     def kill_process(mets_server_pid: int):
         subprocess_run(args=["kill", "-s", "SIGINT", f"{mets_server_pid}"], shell=False, universal_newlines=True)
-        return
 
     def shutdown(self):
         if self.is_uds:

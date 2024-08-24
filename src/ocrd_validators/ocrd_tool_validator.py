@@ -22,5 +22,5 @@ class OcrdToolValidator(JsonValidator):
         """
         return OcrdToolValidator(schema)._validate(obj) # pylint: disable=protected-access
 
-    def __init__(self, schema, validator_class=...):
-        super().__init__(schema, DefaultValidatingDraft20199Validator)
+    def __init__(self, schema):
+        super().__init__(schema, validator_class=DefaultValidatingDraft20199Validator)

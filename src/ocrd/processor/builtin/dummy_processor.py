@@ -1,6 +1,6 @@
 # pylint: disable=missing-module-docstring,invalid-name
-from os.path import join, basename
-from typing import Optional, Union
+from os.path import join
+from typing import Optional
 
 import click
 
@@ -10,7 +10,6 @@ from ocrd.processor.ocrd_page_result import OcrdPageResult
 from ocrd_models.ocrd_file import OcrdFileType
 from ocrd_models.ocrd_page import OcrdPage, to_xml
 from ocrd_utils import (
-    getLogger,
     make_file_id,
     MIME_TO_EXT,
     MIMETYPE_PAGE,

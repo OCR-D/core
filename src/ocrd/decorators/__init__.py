@@ -106,7 +106,7 @@ def ocrd_cli_wrap_processor(
         kwargs['parameter'] = parse_json_string_or_file(*kwargs['parameter'],
                                                         resolve_preset_file=resolve)
     else:
-        kwargs['parameter'] = dict()
+        kwargs['parameter'] = {}
     # Merge parameter overrides and parameters
     if 'parameter_override' in kwargs:
         set_json_key_value_overrides(kwargs['parameter'], *kwargs.pop('parameter_override'))
@@ -146,8 +146,7 @@ def ocrd_cli_wrap_processor(
             pr.disable()
             print("Profiling completed")
             if profile_file:
-                with open(profile_file, 'wb') as f:
-                    pr.dump_stats(profile_file)
+                pr.dump_stats(profile_file)
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
             print(s.getvalue())

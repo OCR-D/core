@@ -4,9 +4,9 @@ Utility functions for strings, paths and URL.
 
 import re
 import json
-from typing import List, Union
+from typing import List
 from .constants import REGEX_FILE_ID, SPARKLINE_CHARS
-from .deprecate import deprecation_warning
+#from .deprecate import deprecation_warning
 from deprecated import deprecated
 from warnings import warn
 from numpy import array_split
@@ -273,4 +273,3 @@ def sparkline(values : List[int]) -> str:
     # normalize to 0..1 and convert to index in SPARKLINE_CHARS
     mapped = [int(x / max_value * max_mapping) for x in values]
     return ''.join(SPARKLINE_CHARS[x] for x in mapped)
-

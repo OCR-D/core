@@ -72,7 +72,7 @@ def page_from_image(input_file : Union[OcrdFile, ClientSideOcrdFile], **kwargs) 
         ),
         pcGtsId=input_file.ID
     )
-    mapping = dict()
+    mapping = {}
     etree : ET._Element = pcgts.to_etree(mapping_=mapping)
     revmap = dict(((node, element) for element, node in mapping.items()))
     return OcrdPage(pcgts, etree, mapping, revmap)

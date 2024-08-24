@@ -8,7 +8,6 @@ OCR-D CLI: bash library
 """
 from __future__ import print_function
 import sys
-from os.path import isfile
 import click
 
 from ocrd.constants import BASHLIB_FILENAME
@@ -23,15 +22,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor
 )
-from ocrd_utils import (
-    is_local_filename,
-    get_local_filename,
-    initLogging,
-    getLogger,
-    make_file_id,
-    config
-)
-from ocrd.resolver import Resolver
+from ocrd_utils import make_file_id
 from ocrd.processor import Processor
 
 # ----------------------------------------------------------------------

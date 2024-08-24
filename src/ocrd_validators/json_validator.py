@@ -2,7 +2,6 @@
 Validating JSON-Schema
 """
 import json
-from warnings import warn
 
 from jsonschema import Draft201909Validator, ValidationError, validators # pylint: disable=import-error
 
@@ -28,8 +27,7 @@ def extend_with_default(validator_class):
             if subschema.get('deprecated', False) and instance.get(prop):
                 yield JsonSchemaDeprecationWarning(f"Property {prop} has been deprecated, ocrd-tool.json should be updated.")
 
-        for error in validate_properties(validator, properties, instance, schema):
-            yield error
+        yield from validate_properties(validator, properties, instance, schema)
 
     return validators.extend(validator_class, {"properties": set_defaults_and_handle_deprecate})
 
