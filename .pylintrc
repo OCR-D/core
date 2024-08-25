@@ -1,6 +1,7 @@
 [MASTER]
 extension-pkg-whitelist=lxml,pydantic
 ignored-modules=cv2,tesserocr,ocrd_models.ocrd_page_generateds
+ignore-paths=ocrd_page_generateds.py
 ignore-patterns=.*generateds.*
 
 [MESSAGES CONTROL]
