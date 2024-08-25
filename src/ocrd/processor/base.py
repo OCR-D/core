@@ -45,7 +45,15 @@ from ocrd_utils import (
     deprecation_warning
 )
 from ocrd_validators import ParameterValidator
-from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType, OcrdPage, to_xml
+from ocrd_models.ocrd_page import (
+    PageType,
+    AlternativeImageType,
+    MetadataItemType,
+    LabelType,
+    LabelsType,
+    OcrdPage,
+    to_xml,
+)
 from ocrd_modelfactory import page_from_file
 from ocrd_validators.ocrd_tool_validator import OcrdToolValidator
 
@@ -523,7 +531,15 @@ class Processor():
         for image_result in result.images:
             image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
             image_file_path = join(self.output_file_grp, f'{image_file_id}.png')
-            image_result.alternative_image.set_filename(image_file_path)
+            if isinstance(image_result.alternative_image, PageType):
+                image_result.alternative_image.set_imageFilename(image_file_path)
+                image_result.alternative_image.set_imageWidth(image_result.pil.width)
+                image_result.alternative_image.set_imageHeight(image_result.pil.height)
+            elif isinstance(image_result.alternative_image, AlternativeImageType):
+                image_result.alternative_image.set_filename(image_file_path)
+            else:
+                raise ValueError(f"process_page_pcgts returned an OcrdPageResultImage of unknown type "
+                                 f"{type(image_result.alternative_image)}")
             self.workspace.save_image_file(
                 image_result.pil,
                 image_file_id,
