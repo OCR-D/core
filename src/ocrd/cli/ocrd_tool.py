@@ -28,6 +28,8 @@ class OcrdToolCtx():
         self.filename = filename
         with codecs.open(filename, encoding='utf-8') as f:
             self.content = f.read()
+            # perhaps the validator should _always_ run (for default expansion)
+            # so validate command only for the report?
             self.json = loads(self.content)
         self.tool_name = ''
 
