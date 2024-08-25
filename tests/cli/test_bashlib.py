@@ -121,7 +121,7 @@ class TestBashlibCli(TestCase):
         assert f"ERROR: ocrd/core is too old ({VERSION} < {version})" in err
 
         # test non-matching prerelease (the 99th alpha pre-release here)
-        version = "%d.%d.%da99" % (major, minor, patch)
+        version = "%d.%d.%dz99" % (major, minor, patch)
         assert VERSION != version # assuming we will never have 99 alpha prereleases ^^
         exit_code, out, err = self.invoke_bash("source $(ocrd bashlib filename) && ocrd__minversion " + version)
         assert exit_code > 0
