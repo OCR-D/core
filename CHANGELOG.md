@@ -5,13 +5,37 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+  - actuall apply CLI `--log-filename`
+  - adapt to Pillow changes
+  - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
+
 Changed:
-  - :fire: `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are not published as separate packages anymore, everything is contained in `ocrd` and you should adapt your `requirements.txt` accordingly.
+  - :fire: `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are not published
+    as separate packages anymore, everything is contained in `ocrd` - you should adapt your `requirements.txt` accordingly
+  - :fire: `Processor.parameter` now a property (attribute always exists, but `None` for non-processing contexts)
+  - :fire: `Processor.parameter` is now a `frozendict` (contents immutable)
+  - :fire: `Processor.parameter` validate when(ever) set instead of (just) the constructor
+  - setting `Processor.parameter` will also trigger (`Processor.shutdown() and) `Processor.setup()`
+  - `get_processor(... instance_caching=True)`: use `min(max_instances, OCRD_MAX_PROCESSOR_CACHE)`
+  - :fire: `Processor.verify` always validates fileGrp cardinalities (because we have `ocrd-tool.json` defaults now)
+  - :fire: `OcrdMets.add_agent` without positional arguments
+  - `ocrd bashlib input-files` now uses normal Processor decorator, and gets passed actual `ocrd-tool.json` and tool name
+    from bashlib's `ocrd__wrap`
+
+Added:
+  - `Processor.metadata_filename`: expose to make local path of `ocrd-tool.json` in Python distribution reusable+overridable
+  - `Processor.metadata_location`: expose to make absolute path of `ocrd-tool.json` reusable+overridable
+  - `Processor.metadata_rawdict`: expose to make in-memory contents of `ocrd-tool.json` reusable+overridable
+  - `Processor.metadata`: expose to make validated and default-expanded contents of `ocrd-tool.json` reusable+overridable
+  - `Processor.shutdown`: to shut down processor after processing, optional
+  - `Processor.max_instances`: class attribute to control instance caching of this implementation
 
 ## [3.0.0a2] - 2024-08-22
 
 Changed:
  - :fire: `OcrdPage` as proxy of `PcGtsType` instead of alias; also contains `etree` and `mapping` now
+ - :fire: `page_from_file`: removed kwarg `with_tree` - use `OcrdPage.etree` and `OcrdPage.mapping` instead
  - :fire: `Processor.zip_input_files` now can throw `ocrd.NonUniqueInputFile` and `ocrd.MissingInputFile`
    (the latter only if `OCRD_MISSING_INPUT=ABORT`)
  - :fire: `Processor.zip_input_files` does not by default use `require_first` anymore
