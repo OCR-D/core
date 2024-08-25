@@ -1,4 +1,5 @@
 import sys
+from contextlib import nullcontext
 
 from ocrd_utils import (
     config,
@@ -9,6 +10,7 @@ from ocrd_utils import (
     parse_json_string_with_comments,
     set_json_key_value_overrides,
     parse_json_string_or_file,
+    redirect_stderr_and_stdout_to_file,
 )
 from ocrd_validators import WorkspaceValidator
 from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
@@ -104,10 +106,10 @@ def ocrd_cli_wrap_processor(
         kwargs['parameter'] = parse_json_string_or_file(*kwargs['parameter'],
                                                         resolve_preset_file=resolve)
     else:
-        kwargs['parameter'] = dict()
+        kwargs['parameter'] = {}
     # Merge parameter overrides and parameters
     if 'parameter_override' in kwargs:
-        set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
+        set_json_key_value_overrides(kwargs['parameter'], *kwargs.pop('parameter_override'))
     # Assert -I / -O
     if not kwargs['input_file_grp']:
         raise ValueError('-I/--input-file-grp is required')
@@ -140,17 +142,21 @@ def ocrd_cli_wrap_processor(
         print("Profiling...")
         pr = cProfile.Profile()
         pr.enable()
-        def exit():
+        def goexit():
             pr.disable()
             print("Profiling completed")
             if profile_file:
-                with open(profile_file, 'wb') as f:
-                    pr.dump_stats(profile_file)
+                pr.dump_stats(profile_file)
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
             print(s.getvalue())
-        atexit.register(exit)
-    run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
+        atexit.register(goexit)
+    if log_filename:
+        log_ctx = redirect_stderr_and_stdout_to_file(log_filename)
+    else:
+        log_ctx = nullcontext()
+    with log_ctx:
+        run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
 
 
 def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, database: str, queue: str):

@@ -3,7 +3,6 @@ API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
 from typing import Dict, Union
-from inspect import getmembers
 from lxml import etree as ET
 
 __all__ = [

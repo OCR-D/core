@@ -44,7 +44,6 @@ NAMESPACES = {
     'ocrd': 'https://ocr-d.de',
 }
 
-# pylint: disable=bad-whitespace
 TAG_METS_AGENT            = '{%s}agent' % NAMESPACES['mets']
 TAG_METS_DIV              = '{%s}div' % NAMESPACES['mets']
 TAG_METS_FILE             = '{%s}file' % NAMESPACES['mets']

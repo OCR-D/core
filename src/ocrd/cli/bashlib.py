@@ -8,7 +8,6 @@ OCR-D CLI: bash library
 """
 from __future__ import print_function
 import sys
-from os.path import isfile
 import click
 
 from ocrd.constants import BASHLIB_FILENAME
@@ -23,15 +22,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor
 )
-from ocrd_utils import (
-    is_local_filename,
-    get_local_filename,
-    initLogging,
-    getLogger,
-    make_file_id,
-    config
-)
-from ocrd.resolver import Resolver
+from ocrd_utils import make_file_id
 from ocrd.processor import Processor
 
 # ----------------------------------------------------------------------
@@ -82,6 +73,8 @@ def bashlib_constants(name):
         print(val)
 
 @bashlib_cli.command('input-files')
+@click.option('--ocrd-tool', help="path to ocrd-tool.json of processor to feed", default=None)
+@click.option('--executable', help="name of processor executable in ocrd-tool.json", default=None)
 @click.option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME)
 @click.option('-w', '--working-dir', help="Working Directory")
 @click.option('-I', '--input-file-grp', help='File group(s) used as input.', default=None)
@@ -96,7 +89,7 @@ def bashlib_constants(name):
 @parameter_option
 @parameter_override_option
 @ocrd_loglevel
-def bashlib_input_files(**kwargs):
+def bashlib_input_files(ocrd_tool, executable, **kwargs):
     """
     List input files for processing
 
@@ -108,12 +101,6 @@ def bashlib_input_files(**kwargs):
     (The printing format is one associative array initializer per line.)
     """
     class BashlibProcessor(Processor):
-        @property
-        def ocrd_tool(self):
-            return {'executable': '', 'steps': ['']}
-        @property
-        def version(self):
-            return '1.0'
         # go half way of the normal run_processor / process_workspace call tree
         # by just delegating to process_workspace, overriding process_page_file
         # to ensure all input files exist locally (without persisting them in the METS)
@@ -129,4 +116,31 @@ def bashlib_input_files(**kwargs):
                 print(f"[{field}]='{value}'", end=' ')
             output_file_id = make_file_id(input_files[0], kwargs['output_file_grp'])
             print(f"[outputFileId]='{output_file_id}'")
-    ocrd_cli_wrap_processor(BashlibProcessor, **kwargs)
+    if ocrd_tool and executable:
+        class FullBashlibProcessor(BashlibProcessor):
+            @property
+            def metadata_location(self):
+                # needed for metadata loading and validation mechanism
+                return ocrd_tool
+            @property
+            def executable(self):
+                # needed for ocrd_tool lookup
+                return executable
+    else:
+        # we have no true metadata file, so fill in just to make it work
+        class FullBashlibProcessor(BashlibProcessor):
+            @property
+            def ocrd_tool(self):
+                # needed to satisfy the validator
+                return {'executable': '',
+                        # required now
+                        'input_file_grp_cardinality': 1,
+                        'output_file_grp_cardinality': 1,
+                        'steps': ['']
+                }
+            @property
+            def version(self):
+                # needed to satisfy the validator and wrapper
+                return '1.0'
+
+    ocrd_cli_wrap_processor(FullBashlibProcessor, **kwargs)

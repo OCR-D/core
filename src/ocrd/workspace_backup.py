@@ -1,6 +1,6 @@
 from datetime import datetime
 from os import makedirs
-from os.path import join, basename, getsize, abspath
+from os.path import join, basename, getsize
 from glob import glob
 from shutil import copy
 import hashlib

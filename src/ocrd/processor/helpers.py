@@ -1,13 +1,12 @@
 """
 Helper methods for running and documenting processors
 """
-from os import chdir, getcwd
 from time import perf_counter, process_time
 from functools import lru_cache
 import json
 import inspect
 from subprocess import run
-from typing import List
+from typing import List, Optional
 
 from click import wrap_text
 from ocrd.workspace import Workspace
@@ -39,10 +38,7 @@ def run_processor(
         log_level=None,
         input_file_grp=None,
         output_file_grp=None,
-        show_resource=None,
-        list_resources=False,
         parameter=None,
-        parameter_override=None,
         working_dir=None,
         mets_server_url=None,
         instance_caching=False
@@ -84,7 +80,7 @@ def run_processor(
     log.debug("Running processor %s", processorClass)
 
     processor = get_processor(
-        processor_class=processorClass,
+        processorClass,
         parameter=parameter,
         workspace=None,
         page_id=page_id,
@@ -102,7 +98,7 @@ def run_processor(
     t0_cpu = process_time()
     if any(x in config.OCRD_PROFILE for x in ['RSS', 'PSS']):
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
-        from memory_profiler import memory_usage
+        from memory_profiler import memory_usage # pylint: disable=import-outside-toplevel
         try:
             mem_usage = memory_usage(proc=(processor.process_workspace, [workspace], {}),
                                      # only run process once
@@ -212,7 +208,7 @@ def run_cli(
     if not log_filename:
         result = run(args, check=False)
     else:
-        with open(log_filename, 'a') as file_desc:
+        with open(log_filename, 'a', encoding='utf-8') as file_desc:
             result = run(args, check=False, stdout=file_desc, stderr=file_desc)
     return result.returncode
 
@@ -359,9 +355,9 @@ Options:
         pass
 
 
-# Taken from https://github.com/OCR-D/core/pull/884
-@freeze_args
-@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
+# not decorated here but at runtime (on first use)
+#@freeze_args
+#@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
 def get_cached_processor(parameter: dict, processor_class):
     """
     Call this function to get back an instance of a processor.
@@ -374,16 +370,13 @@ def get_cached_processor(parameter: dict, processor_class):
         Otherwise, an instance of the `:py:class:~ocrd.Processor` is returned.
     """
     if processor_class:
-        dict_params = dict(parameter) if parameter else None
-        processor = processor_class(None, parameter=dict_params)
-        processor.setup()
+        processor = processor_class(None, parameter=dict(parameter))
         return processor
     return None
 
-
 def get_processor(
         processor_class,
-        parameter: dict,
+        parameter: Optional[dict] = None,
         workspace: Workspace = None,
         page_id: str = None,
         input_file_grp: List[str] = None,
@@ -391,11 +384,24 @@ def get_processor(
         instance_caching: bool = False,
 ):
     if processor_class:
+        if parameter is None:
+            parameter = {}
         if instance_caching:
+            global get_cached_processor
+            if not hasattr(get_cached_processor, '__wrapped__'):
+                # first call: wrap
+                if processor_class.max_instances < 0:
+                    maxsize = config.OCRD_MAX_PROCESSOR_CACHE
+                else:
+                    maxsize = min(config.OCRD_MAX_PROCESSOR_CACHE, processor_class.max_instances)
+                # wrapping in call cache
+                # wrapping dict into frozendict (from https://github.com/OCR-D/core/pull/884)
+                get_cached_processor = freeze_args(lru_cache(maxsize=maxsize)(get_cached_processor))
             processor = get_cached_processor(parameter, processor_class)
         else:
+            # avoid passing workspace already (deprecated chdir behaviour)
             processor = processor_class(None, parameter=parameter)
-            processor.setup()
+        # set current processing parameters
         processor.workspace = workspace
         processor.page_id = page_id
         processor.input_file_grp = input_file_grp

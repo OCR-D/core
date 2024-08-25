@@ -1,6 +1,6 @@
 from pathlib import Path
 from pika import BasicProperties
-from src.ocrd.processor.builtin.dummy_processor import DummyProcessor, OCRD_TOOL
+from src.ocrd.processor.builtin.dummy_processor import DummyProcessor
 from src.ocrd_network.constants import JobState
 from src.ocrd_network.database import sync_db_create_workspace, sync_db_create_processing_job
 from src.ocrd_network.logging_utils import get_processing_job_logging_file_path
@@ -25,12 +25,13 @@ def test_processing_worker_process_message():
     # wrong reads from the deployed dummy worker (part of the processing server integration test)
     processor_name = "ocrd-dummy-test"
     result_queue_name = f"{processor_name}-result"
+    ocrd_tool = DummyProcessor(None).metadata
 
     processing_worker = ProcessingWorker(
         rabbitmq_addr=test_config.RABBITMQ_URL,
         mongodb_addr=test_config.DB_URL,
         processor_name=processor_name,
-        ocrd_tool=OCRD_TOOL,
+        ocrd_tool=ocrd_tool,
         processor_class=DummyProcessor
     )
     processing_worker.connect_publisher(enable_acks=True)

@@ -6,7 +6,7 @@ OCR-D CLI: workspace management
     :nested: full
 """
 import os
-from os import getcwd, rmdir, unlink
+from os import rmdir, unlink
 from os.path import dirname, relpath, normpath, exists, join, isabs, isdir
 from pathlib import Path
 from json import loads, dumps
@@ -14,7 +14,6 @@ import sys
 from glob import glob   # XXX pathlib.Path.glob does not support absolute globs
 import re
 import time
-import numpy as np
 
 import click
 
@@ -118,7 +117,7 @@ def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency
 @workspace_cli.command('clone', cls=command_with_replaced_help(
     (r' \[WORKSPACE_DIR\]', ''))) # XXX deprecated argument
 @click.option('-f', '--clobber-mets', help="Overwrite existing METS file", default=False, is_flag=True)
-@click.option('-a', '--download', is_flag=True, help="Download all files and change location in METS file after cloning")
+@click.option('-a', '--download', is_flag=True, help="Download all selected files and add local path references in METS file afterwards")
 @click.argument('mets_url')
 @mets_find_options
 # XXX deprecated
@@ -129,8 +128,10 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
     Create a workspace from METS_URL and return the directory
 
     METS_URL can be a URL, an absolute path or a path relative to $PWD.
-    If METS_URL is not provided, use --mets accordingly.
     METS_URL can also be an OAI-PMH GetRecord URL wrapping a METS file.
+
+    Additional options pertain to the selection of files / fileGrps / pages
+    to be downloaded, if --download is used.
     """
     LOG = getLogger('ocrd.cli.workspace.clone')
     if workspace_dir:
@@ -143,6 +144,7 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
         mets_basename=ctx.mets_basename,
         clobber_mets=clobber_mets,
         download=download,
+        fileGrp=file_grp,
         ID=file_id,
         pageId=page_id,
         mimetype=mimetype,
@@ -408,7 +410,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
         if dry_run:
             log.info('workspace.add_file(%s)' % file_dict)
         else:
-            workspace.add_file(fileGrp, ignore=ignore, force=force, **file_dict)
+            workspace.add_file(fileGrp, ignore=ignore, force=force, **file_dict) # pylint: disable=redundant-keyword-arg
 
     # save changes to disk
     workspace.save_mets()
@@ -452,7 +454,7 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
     snake_to_camel = {"file_id": "ID", "page_id": "pageId", "file_grp": "fileGrp"}
     output_field = [snake_to_camel.get(x, x) for x in output_field]
     modified_mets = False
-    ret = list()
+    ret = []
     workspace = Workspace(
         ctx.resolver,
         directory=ctx.directory,
@@ -748,7 +750,7 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 
 @workspace_cli.command('update-page')
 @click.option('--set', 'attr_value_pairs', help=f"set mets:div ATTR to VALUE. possible keys: {METS_PAGE_DIV_ATTRIBUTE.names()}", metavar="ATTR VALUE", nargs=2, multiple=True)
-@click.option('--order', help="[DEPRECATED - use --set ATTR VALUE", metavar='ORDER')               
+@click.option('--order', help="[DEPRECATED - use --set ATTR VALUE", metavar='ORDER')
 @click.option('--orderlabel', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
 @click.option('--contentids', help="DEPRECATED - use --set ATTR VALUE", metavar='ORDERLABEL')
 @click.argument('PAGE_ID')
@@ -757,7 +759,7 @@ def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     """
     Update the @ID, @ORDER, @ORDERLABEL, @LABEL or @CONTENTIDS attributes of the mets:div with @ID=PAGE_ID
     """
-    update_kwargs = {k: v for k, v in attr_value_pairs}
+    update_kwargs = dict(attr_value_pairs)
     if order:
         update_kwargs['ORDER'] = order
     if orderlabel:

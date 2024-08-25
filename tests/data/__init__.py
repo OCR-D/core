@@ -9,6 +9,10 @@ DUMMY_TOOL = {
     'executable': 'ocrd-test',
     'description': 'dolor sit',
     'steps': ['recognition/post-correction'],
+    # as we bypass Processor.metadata with OcrdToolValidator
+    # we get no default expansion, so add default cardinalities here
+    'input_file_grp_cardinality': 1,
+    'output_file_grp_cardinality': 1,
     'parameters': {
         'baz': {
             'type': 'string',
@@ -133,7 +137,11 @@ class DummyProcessorWithOutputFailures(Processor):
 
 class IncompleteProcessor(Processor):
     @property
-    def ocrd_tool(self):
-        return {}
+    def executable(self):
+        return 'ocrd-foo'
+
+    @property
+    def metadata_rawdict(self):
+        return {'tools': {self.executable: {}}}
 
 

@@ -102,7 +102,7 @@ class OcrdExif():
         Serialize all properties as XML string.
         """
         ret = '<exif>'
-        for k in self.__dict__:
-            ret += '<%s>%s</%s>' % (k, self.__dict__[k], k)
+        for k, v in self.__dict__.items():
+            ret += f'<{k}>{v}</{k}>'
         ret += '</exif>'
         return ret

@@ -4,9 +4,9 @@ Utility functions for strings, paths and URL.
 
 import re
 import json
-from typing import List, Union
+from typing import List
 from .constants import REGEX_FILE_ID, SPARKLINE_CHARS
-from .deprecate import deprecation_warning
+#from .deprecate import deprecation_warning
 from deprecated import deprecated
 from warnings import warn
 from numpy import array_split
@@ -21,6 +21,7 @@ __all__ = [
     'make_file_id',
     'make_xml_id',
     'nth_url_segment',
+    'parse_json_file_with_comments',
     'parse_json_string_or_file',
     'parse_json_string_with_comments',
     'remove_non_path_from_url',
@@ -162,6 +163,13 @@ def is_string(val):
     return isinstance(val, str)
 
 
+def parse_json_file_with_comments(val):
+    """
+    Parse a file of JSON interspersed with #-prefixed full-line comments
+    """
+    with open(val, 'r', encoding='utf-8') as inputf:
+        return parse_json_string_with_comments(inputf.read())
+
 def parse_json_string_with_comments(val):
     """
     Parse a string of JSON interspersed with #-prefixed full-line comments
@@ -265,4 +273,3 @@ def sparkline(values : List[int]) -> str:
     # normalize to 0..1 and convert to index in SPARKLINE_CHARS
     mapped = [int(x / max_value * max_mapping) for x in values]
     return ''.join(SPARKLINE_CHARS[x] for x in mapped)
-

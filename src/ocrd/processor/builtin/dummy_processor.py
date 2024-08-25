@@ -1,6 +1,6 @@
 # pylint: disable=missing-module-docstring,invalid-name
-from os.path import join, basename
-from typing import Optional, Union
+from os.path import join
+from typing import Optional
 
 import click
 
@@ -10,7 +10,6 @@ from ocrd.processor.ocrd_page_result import OcrdPageResult
 from ocrd_models.ocrd_file import OcrdFileType
 from ocrd_models.ocrd_page import OcrdPage, to_xml
 from ocrd_utils import (
-    getLogger,
     make_file_id,
     MIME_TO_EXT,
     MIMETYPE_PAGE,
@@ -19,8 +18,6 @@ from ocrd_utils import (
     config
 )
 from ocrd_modelfactory import page_from_file
-
-OCRD_TOOL = parse_json_string_with_comments(resource_string(__package__ + '.dummy', 'ocrd-tool.json'))
 
 class DummyProcessor(Processor):
     """
@@ -76,16 +73,12 @@ class DummyProcessor(Processor):
             super().process_page_file(input_file)
 
     @property
-    def metadata(self):
-        return OCRD_TOOL
+    def metadata_filename(self):
+        return 'processor/builtin/dummy/ocrd-tool.json'
 
     @property
     def executable(self):
         return 'ocrd-dummy'
-
-    @property
-    def version(self):
-        return '0.0.3'
 
 @click.command()
 @ocrd_cli_options

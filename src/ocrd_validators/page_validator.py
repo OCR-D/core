@@ -34,50 +34,50 @@ from ocrd_models import ValidationReport
 
 _HIERARCHY = [
     # page can contain different types of regions
-    (PageType,       'get_AdvertRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_ChartRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_ChemRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_CustomRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_GraphicRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_ImageRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_LineDrawingRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_MapRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_MathsRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_MusicRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_NoiseRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_SeparatorRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_TableRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_TextRegion', None), # pylint: disable=bad-whitespace
-    (PageType,       'get_UnknownRegion', None), # pylint: disable=bad-whitespace
+    (PageType,       'get_AdvertRegion', None),
+    (PageType,       'get_ChartRegion', None),
+    (PageType,       'get_ChemRegion', None),
+    (PageType,       'get_CustomRegion', None),
+    (PageType,       'get_GraphicRegion', None),
+    (PageType,       'get_ImageRegion', None),
+    (PageType,       'get_LineDrawingRegion', None),
+    (PageType,       'get_MapRegion', None),
+    (PageType,       'get_MathsRegion', None),
+    (PageType,       'get_MusicRegion', None),
+    (PageType,       'get_NoiseRegion', None),
+    (PageType,       'get_SeparatorRegion', None),
+    (PageType,       'get_TableRegion', None),
+    (PageType,       'get_TextRegion', None),
+    (PageType,       'get_UnknownRegion', None),
     # all regions can be recursive
-    (RegionType,     'get_AdvertRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_ChartRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_ChemRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_CustomRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_GraphicRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_ImageRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_LineDrawingRegion', None), # pylint: disable=bad-whitespace
-    #(RegionType,     'get_MapRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_MathsRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_MusicRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_NoiseRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_SeparatorRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_TableRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_TextRegion', None), # pylint: disable=bad-whitespace
-    (RegionType,     'get_UnknownRegion', None), # pylint: disable=bad-whitespace
+    (RegionType,     'get_AdvertRegion', None),
+    (RegionType,     'get_ChartRegion', None),
+    (RegionType,     'get_ChemRegion', None),
+    (RegionType,     'get_CustomRegion', None),
+    (RegionType,     'get_GraphicRegion', None),
+    (RegionType,     'get_ImageRegion', None),
+    (RegionType,     'get_LineDrawingRegion', None),
+    #(RegionType,     'get_MapRegion', None),
+    (RegionType,     'get_MathsRegion', None),
+    (RegionType,     'get_MusicRegion', None),
+    (RegionType,     'get_NoiseRegion', None),
+    (RegionType,     'get_SeparatorRegion', None),
+    (RegionType,     'get_TableRegion', None),
+    (RegionType,     'get_TextRegion', None),
+    (RegionType,     'get_UnknownRegion', None),
     # only TextRegion can contain TextLine
-    (TextRegionType, 'get_TextLine',   '\n'), # pylint: disable=bad-whitespace
-    (TextLineType,   'get_Word',       ' '),  # pylint: disable=bad-whitespace
-    (WordType,       'get_Glyph',      ''),   # pylint: disable=bad-whitespace
-    (GlyphType,      None,             None), # pylint: disable=bad-whitespace
+    (TextRegionType, 'get_TextLine',   '\n'),
+    (TextLineType,   'get_Word',       ' '),
+    (WordType,       'get_Glyph',      ''),
+    (GlyphType,      None,             None),
 ]
 
 _ORDER = [
     (None, TextLineOrderSimpleType.BOTTOMTOTOP, ReadingDirectionSimpleType.RIGHTTOLEFT),
-    (PageType,       'get_textLineOrder', 'get_readingDirection'), # pylint: disable=bad-whitespace
-    (TextRegionType, 'get_textLineOrder', 'get_readingDirection'), # pylint: disable=bad-whitespace
-    (TextLineType,   None,                'get_readingDirection'), # pylint: disable=bad-whitespace
-    (WordType,       None,                'get_readingDirection'), # pylint: disable=bad-whitespace
+    (PageType,       'get_textLineOrder', 'get_readingDirection'),
+    (TextRegionType, 'get_textLineOrder', 'get_readingDirection'),
+    (TextLineType,   None,                'get_readingDirection'),
+    (WordType,       None,                'get_readingDirection'),
 ]
 
 # The following parameters control how tolerant we are with respect to
@@ -115,9 +115,9 @@ class ConsistencyError(Exception):
         self.file_id = file_id
         self.actual = actual
         self.expected = expected
-        super(ConsistencyError, self).__init__(
-            "INCONSISTENCY in %s ID '%s' of file '%s': text results '%s' != concatenated '%s'" % (
-                tag, ID, file_id, actual, expected))
+        super().__init__(
+            f"INCONSISTENCY in {tag} ID '{ID}' of file '{file_id}': "
+            f"text results '{actual}' != concatenated '{expected}'")
 
 class CoordinateConsistencyError(Exception):
     """
@@ -141,9 +141,9 @@ class CoordinateConsistencyError(Exception):
         self.file_id = file_id
         self.outer = outer
         self.inner = inner
-        super(CoordinateConsistencyError, self).__init__(
-            "INCONSISTENCY in %s ID '%s' of '%s': coords '%s' not within parent coords '%s'" % (
-                tag, ID, file_id, inner, outer))
+        super().__init__(
+            f"INCONSISTENCY in {tag} ID '{ID}' of '{file_id}': "
+            f"coords '{inner}' not within parent coords '{outer}'")
 
 class CoordinateValidityError(Exception):
     """
@@ -166,9 +166,8 @@ class CoordinateValidityError(Exception):
         self.ID = ID
         self.file_id = file_id
         self.points = points
-        super(CoordinateValidityError, self).__init__(
-            "INVALIDITY in %s ID '%s' of '%s': coords '%s' - %s" % (
-                tag, ID, file_id, points, reason))
+        super().__init__(
+            f"INVALIDITY in {tag} ID '{ID}' of '{file_id}': coords '{points}' - {reason}")
 
 def compare_without_whitespace(a, b):
     """
@@ -177,13 +176,14 @@ def compare_without_whitespace(a, b):
     return re.sub('\\s+', '', a) == re.sub('\\s+', '', b)
 
 def page_get_reading_order(ro, rogroup):
-    """Add all elements from the given reading order group to the given dictionary.
-    
+    """
+    Add all elements from the given reading order group to the given dictionary.
+
     Given a dict ``ro`` from layout element IDs to ReadingOrder element objects,
     and an object ``rogroup`` with additional ReadingOrder element objects,
     add all references to the dict, traversing the group recursively.
     """
-    regionrefs = list()
+    regionrefs = []
     if isinstance(rogroup, (OrderedGroupType, OrderedGroupIndexedType)):
         regionrefs = (rogroup.get_RegionRefIndexed() +
                       rogroup.get_OrderedGroupIndexed() +
@@ -241,12 +241,12 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
         node_id = node.get_pcGtsId()
         node = node.get_Page() # has no .id
         if not readingOrder:
-            readingOrder = dict()
+            readingOrder = {}
         ro = node.get_ReadingOrder()
         if ro:
             page_get_reading_order(readingOrder, ro.get_OrderedGroup() or ro.get_UnorderedGroup())
         if not joinRelations:
-            joinRelations = list()
+            joinRelations = []
         relations = node.get_Relations() # get RelationsType
         if relations:
             relations = relations.get_Relation() # get list of RelationType
@@ -358,7 +358,7 @@ def concatenate(nodes, concatenate_with, page_textequiv_strategy, joins=None):
     if not nodes:
         return ''
     if not joins:
-        joins = list()
+        joins = []
     result = get_text(nodes[0], page_textequiv_strategy)
     for node, next_node in zip(nodes, nodes[1:]):
         if (node.id, next_node.id) not in joins:
@@ -470,11 +470,11 @@ class PageValidator():
             page = parse(filename, silence=True)
             file_id = filename
         else:
-            raise Exception("At least one of ocrd_page, ocrd_file or filename must be set")
+            raise ValueError("At least one of ocrd_page, ocrd_file or filename must be set")
         if page_textequiv_strategy not in ('first'):
-            raise Exception("page_textequiv_strategy %s not implemented" % page_textequiv_strategy)
+            raise ValueError("page_textequiv_strategy %s not implemented" % page_textequiv_strategy)
         if page_textequiv_consistency not in ('strict', 'lax', 'fix', 'off'):
-            raise Exception("page_textequiv_consistency level %s not implemented" % page_textequiv_consistency)
+            raise ValueError("page_textequiv_consistency level %s not implemented" % page_textequiv_consistency)
         report = ValidationReport()
         log.info("Validating input file '%s'", file_id)
         validate_consistency(page, page_textequiv_consistency, page_textequiv_strategy, check_baseline, check_coords, report, file_id)

@@ -16,6 +16,7 @@ from tests.data import (
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
 from ocrd.processor import Processor, run_processor, run_cli, NonUniqueInputFile
+from ocrd.processor.helpers import get_processor
 
 from unittest import mock
 import pytest
@@ -73,14 +74,65 @@ class TestProcessor(TestCase):
             with open(jsonpath, 'w') as f:
                 f.write('{"baz": "quux"}')
             with open(jsonpath, 'r') as f:
+                parameter = json.load(f)
                 processor = run_processor(
                     DummyProcessor,
-                    parameter=json.load(f),
+                    parameter=parameter,
                     input_file_grp="OCR-D-IMG",
                     resolver=self.resolver,
                     workspace=self.workspace
                 )
                 self.assertEqual(processor.parameter['baz'], 'quux')
+                processor = get_processor(
+                    DummyProcessor,
+                    parameter=parameter)
+                with self.assertRaises(TypeError):
+                    processor.parameter['baz'] = 'xuuq'
+                processor.parameter = { **parameter, 'baz': 'xuuq' }
+                self.assertEqual(processor.parameter['baz'], 'xuuq')
+
+    def test_instance_caching(self):
+        class DyingDummyProcessor(DummyProcessor):
+            max_instances = 10
+            def shutdown(self):
+                # fixme: will only print _after_ pytest exits, so too late for assertions
+                #print(self.parameter['baz'])
+                pass
+        self.capture_out_err()
+        # customize (as processor implementors would)
+        firstp = None
+        for i in range(DyingDummyProcessor.max_instances + 2):
+            p = get_processor(
+                DyingDummyProcessor,
+                parameter={'baz': str(i)},
+                instance_caching=True
+            )
+            if i == 0:
+                firstp = p
+        lastp = p
+        p = get_processor(DyingDummyProcessor,
+                parameter={'baz': '0'},
+                instance_caching=True
+            )
+        # should not be cached anymore
+        self.assertNotEqual(firstp, p)
+        p = get_processor(DyingDummyProcessor,
+                parameter={'baz': str(i)},
+                instance_caching=True
+            )
+        # should still be cached
+        self.assertEqual(lastp, p)
+        from ocrd.processor.helpers import get_cached_processor
+        get_cached_processor.__wrapped__.cache_clear()
+        p = get_processor(DyingDummyProcessor,
+                parameter={'baz': str(i)},
+                instance_caching=True
+            )
+        # should not be cached anymore
+        self.assertNotEqual(lastp, p)
+        # fixme: will only print _after_ pytest exits, so too late for assertions
+        #out, err = self.capture_out_err()
+        #assert '0' in out.split('\n')
 
     def test_verify(self):
         proc = DummyProcessor(None)
@@ -95,8 +147,18 @@ class TestProcessor(TestCase):
         DummyProcessor(None).dump_json()
 
     def test_params_missing_required(self):
-        with self.assertRaisesRegex(Exception, 'is a required property'):
-            DummyProcessorWithRequiredParameters(None)
+        proc = DummyProcessorWithRequiredParameters(None)
+        assert proc.parameter is None
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            proc.parameter = {}
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            get_processor(DummyProcessorWithRequiredParameters)
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            get_processor(DummyProcessorWithRequiredParameters, parameter={})
+        with self.assertRaisesRegex(ValueError, 'is a required property'):
+            run_processor(DummyProcessorWithRequiredParameters,
+                          workspace=self.workspace, input_file_grp="OCR-D-IMG")
+        proc.parameter = {'i-am-required': 'foo'}
 
     def test_params_preset_resolve(self):
         with pushd_popd(tempdir=True) as tempdir:
@@ -127,6 +189,9 @@ class TestProcessor(TestCase):
             def ocrd_tool(self):
                 return {}
         proc = ParamTestProcessor(None)
+        self.assertEqual(proc.parameter, None)
+        # get_processor will set to non-none and validate
+        proc = get_processor(ParamTestProcessor)
         self.assertEqual(proc.parameter, {})
 
     def test_run_agent(self):

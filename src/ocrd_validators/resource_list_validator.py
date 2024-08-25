@@ -16,9 +16,10 @@ class OcrdResourceListValidator(JsonValidator):
     """
 
     @staticmethod
-    def validate(obj, schema=RESOURCE_LIST_SCHEMA):
+    def validate(obj, schema=None):
         """
         Validate against ``resource_list.schema.yml`` schema.
         """
-        return JsonValidator(schema, validator_class=DefaultValidatingDraft20199Validator)._validate(obj)
-
+        if schema is None:
+            schema = RESOURCE_LIST_SCHEMA
+        return JsonValidator(schema, validator_class=DefaultValidatingDraft20199Validator)._validate(obj) # pylint: disable=protected-access

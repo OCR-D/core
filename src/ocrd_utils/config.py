@@ -12,8 +12,12 @@ from pathlib import Path
 from tempfile import gettempdir
 from textwrap import fill, indent
 
-_validator_boolean = lambda val: isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1')
-_parser_boolean = lambda val: bool(val) if isinstance(val, (int, bool)) else str.lower(val) in ('true', '1')
+
+def _validator_boolean(val):
+    return isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1')
+
+def _parser_boolean(val):
+    return bool(val) if isinstance(val, (int, bool)) else str.lower(val) in ('true', '1')
 
 class OcrdEnvVariable():
 

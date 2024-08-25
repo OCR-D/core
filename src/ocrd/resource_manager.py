@@ -1,6 +1,6 @@
 from pathlib import Path
 from os.path import join
-from os import environ, listdir, makedirs, getcwd, path, unlink
+from os import environ, listdir, getcwd, unlink
 from shutil import copytree, rmtree, copy
 from fnmatch import filter as apply_glob
 from datetime import datetime
@@ -13,14 +13,18 @@ from gdown.parse_url import parse_url as gparse_url
 from gdown.download import get_url_from_gdrive_confirmation
 from yaml import safe_load, safe_dump
 
+# pylint: disable=wrong-import-position
+
 # https://github.com/OCR-D/core/issues/867
 # https://stackoverflow.com/questions/50900727/skip-converting-entities-while-loading-a-yaml-string-using-pyyaml
 import yaml.constructor
-yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp'] = \
-    yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
+yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:timestamp'] = \
+    yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:str']
+
+# pylint: enable=wrong-import-position
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment, guess_media_type, config
+from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -248,7 +252,7 @@ class OcrdResourceManager:
                         if "Content-Disposition" not in r.headers:
                             url = get_url_from_gdrive_confirmation(r.text)
                 except RuntimeError as e:
-                    log.warning("Cannot unwrap Google Drive URL: ", e)
+                    log.warning("Cannot unwrap Google Drive URL: %s", e)
             with open(filename, 'wb') as f:
                 with requests.get(url, stream=True) as r:
                     r.raise_for_status()

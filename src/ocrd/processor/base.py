@@ -9,6 +9,7 @@ __all__ = [
     'run_processor'
 ]
 
+from functools import cached_property
 from os.path import exists, join
 from shutil import copyfileobj
 import json
@@ -20,7 +21,8 @@ import sys
 import inspect
 import tarfile
 import io
-from warnings import warn
+import weakref
+from frozendict import frozendict
 from deprecated import deprecated
 from requests import HTTPError
 
@@ -33,13 +35,12 @@ from ocrd_utils import (
     MIME_TO_EXT,
     config,
     getLogger,
-    initLogging,
     list_resource_candidates,
     pushd_popd,
     list_all_resources,
     get_processor_resource_types,
     resource_filename,
-    resource_string,
+    parse_json_file_with_comments,
     make_file_id,
     deprecation_warning
 )
@@ -94,54 +95,139 @@ class MissingInputFile(ValueError):
 
 class Processor():
     """
-    A processor is a tool that implements the uniform OCR-D command-line interface
-    for run-time data processing. That is, it executes a single workflow step,
-    or a combination of workflow steps, on the workspace (represented by local METS).
-    It reads input files for all or requested physical pages of the input fileGrp(s),
-    and writes output files for them into the output fileGrp(s). It may take 
-    a number of optional or mandatory parameters.
+    A processor is a tool that implements the uniform OCR-D
+    `command-line interface for run-time data processing <https://ocr-d.de/en/spec/cli>`_.
+
+    That is, it executes a single workflow step, or a combination of workflow steps,
+    on the workspace (represented by local METS). It reads input files for all or selected
+    physical pages of the input fileGrp(s), computes additional annotation, and writes output
+    files for them into the output fileGrp(s). It may take a number of optional or mandatory
+    parameters.
+    """
+
+    max_instances : int = -1
+    """
+    maximum number of cached instances (ignored if negative), to be applied on top of
+    :py:data:`~ocrd_utils.config.OCRD_MAX_PROCESSOR_CACHE` (i.e. whatever is smaller).
+
+    (Override this if you know how many instances fit into memory at once.)
     """
 
     @property
+    def metadata_filename(self) -> str:
+        """
+        Relative location of the ``ocrd-tool.json`` file inside the package.
+
+        Used by :py:data:`metadata_location`.
+
+        (Override if ``ocrd-tool.json`` is not in the root of the module,
+        e.g. ``namespace/ocrd-tool.json`` or ``data/ocrd-tool.json``).
+        """
+        return 'ocrd-tool.json'
+
+    @cached_property
+    def metadata_location(self) -> Path:
+        """
+        Absolute path of the ``ocrd-tool.json`` file as distributed with the package.
+
+        Used by :py:data:`metadata_rawdict`.
+
+        (Override if ``ocrd-tool.json`` is not distributed with the Python package.)
+        """
+        return resource_filename(self.__module__.split('.')[0], self.metadata_filename)
+
+    @cached_property
+    def metadata_rawdict(self) -> dict:
+        """
+        Raw (unvalidated, unexpanded) ``ocrd-tool.json`` dict contents of the package.
+
+        Used by :py:data:`metadata`.
+
+        (Override if ``ocrd-tool.json`` is not in a file.)
+        """
+        return parse_json_file_with_comments(self.metadata_location)
+
+    @cached_property
     def metadata(self) -> dict:
-        """the ocrd-tool.json dict of the package"""
-        if hasattr(self, '_metadata'):
-            return self._metadata
-        self._metadata = json.loads(resource_string(self.__module__.split('.')[0], 'ocrd-tool.json'))
-        report = OcrdToolValidator.validate(self._metadata)
+        """
+        The ``ocrd-tool.json`` dict contents of the package, according to the OCR-D
+        `spec <https://ocr-d.de/en/spec/ocrd_tool>`_ for processor tools.
+
+        After deserialisation, it also gets validated against the
+        `schema <https://ocr-d.de/en/spec/ocrd_tool#definition>`_ with all defaults
+        expanded.
+
+        Used by :py:data:`ocrd_tool` and :py:data:`version`.
+
+        (Override if you want to provide metadata programmatically instead of a
+        JSON file.)
+        """
+        metadata = self.metadata_rawdict
+        report = OcrdToolValidator.validate(metadata)
         if not report.is_valid:
-            # FIXME: remove when bertsky/core#10 is merged
-            self.logger = getLogger(f'ocrd.processor.{self.__class__.__name__}')
-            self.logger.error(f"The ocrd-tool.json of this processor is {'problematic' if not report.errors else 'invalid'}:\n{report.to_xml()}.\nPlease open an issue at {self._metadata['git_url']}.")
-        return self._metadata
+            self.logger.error(f"The ocrd-tool.json of this processor is {'problematic' if not report.errors else 'invalid'}:\n"
+                              f"{report.to_xml()}.\nPlease open an issue at {metadata.get('git_url', 'the website')}.")
+        return metadata
 
-    @property
+    @cached_property
     def version(self) -> str:
-        """the version of the package"""
-        if hasattr(self, '_version'):
-            return self._version
-        self._version = self.metadata['version']
-        return self._version
+        """
+        The program version of the package.
+        Usually the ``version`` part of :py:data:`metadata`.
 
-    @property
+        (Override if you do not want to use :py:data:`metadata` lookup
+        mechanism.)
+        """
+        return self.metadata['version']
+
+    @cached_property
     def executable(self) -> str:
-        """the executable name of this processor tool"""
-        if hasattr(self, '_executable'):
-            return self._executable
-        self._executable = os.path.basename(inspect.stack()[-1].filename)
-        return self._executable
+        """
+        The executable name of this processor tool. Taken from the runtime
+        filename.
+
+        Used by :py:data:`ocrd_tool` for lookup in :py:data:`metadata`.
+
+        (Override if your entry-point name deviates from the ``executable``
+        name, or the processor gets instantiated from another runtime.)
+        """
+        return os.path.basename(inspect.stack()[-1].filename)
+
+    @cached_property
+    def ocrd_tool(self) -> dict:
+        """
+        The ``ocrd-tool.json`` dict contents of this processor tool.
+        Usually the :py:data:`executable` key of the ``tools`` part
+        of :py:data:`metadata`.
+
+        (Override if you do not want to use :py:data:`metadata` lookup
+        mechanism.)
+        """
+        return self.metadata['tools'][self.executable]
 
     @property
-    def ocrd_tool(self) -> dict:
-        """the ocrd-tool.json dict of this processor tool"""
-        if hasattr(self, '_ocrd_tool'):
-            return self._ocrd_tool
-        self._ocrd_tool = self.metadata['tools'][self.executable]
-        return self._ocrd_tool
+    def parameter(self) -> Optional[dict]:
+        """the runtime parameter dict to be used by this processor"""
+        if hasattr(self, '_parameter'):
+            return self._parameter
+        return None
+
+    @parameter.setter
+    def parameter(self, parameter : dict) -> None:
+        if self.parameter is not None:
+            self.shutdown()
+        parameterValidator = ParameterValidator(self.ocrd_tool)
+        report = parameterValidator.validate(parameter)
+        if not report.is_valid:
+            raise ValueError(f'Invalid parameters:\n{report.to_xml()}')
+        # make parameter dict read-only
+        self._parameter = frozendict(parameter)
+        # (re-)run setup to load models etc
+        self.setup()
 
     def __init__(
             self,
-            # FIXME: deprecate in favor of process_workspace(workspace)
+            # FIXME: remove in favor of process_workspace(workspace)
             workspace : Optional[Workspace],
             ocrd_tool=None,
             parameter=None,
@@ -204,19 +290,14 @@ class Processor():
                                 "is deprecated - pass as argument to process_workspace instead")
             self.page_id = page_id or None
         self.download = download_files
-        if parameter is None:
-            parameter = {}
-        parameterValidator = ParameterValidator(self.ocrd_tool)
-
-        report = parameterValidator.validate(parameter)
-        if not report.is_valid:
-            raise ValueError("Invalid parameters %s" % report.errors)
-        self.parameter = parameter
-        # NOTE: this is the logger to be used by processor implementations,
-        # `processor.base` default implementations should use
-        # :py:attr:`self._base_logger`
+        #: The logger to be used by processor implementations.
+        # `ocrd.processor.base` internals should use :py:attr:`self._base_logger`
         self.logger = getLogger(f'ocrd.processor.{self.__class__.__name__}')
         self._base_logger = getLogger('ocrd.processor.base')
+        if parameter is not None:
+            self.parameter = parameter
+        # ensure that shutdown gets called at destruction
+        self._finalizer = weakref.finalize(self, self.shutdown)
         # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
         setattr(self, 'process',
                 deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')(getattr(self, 'process')))
@@ -254,14 +335,10 @@ class Processor():
                     assert len(grps) >= minimum, msg % (len(grps), str(spec))
                 if maximum > 0:
                     assert len(grps) <= maximum, msg % (len(grps), str(spec))
-        # FIXME: maybe we should enforce the cardinality properties to be specified or apply default=1 here
-        # (but we already have ocrd-tool validation, and these first need to be adopted by implementors)
-        if 'input_file_grp_cardinality' in self.ocrd_tool:
-            assert_file_grp_cardinality(input_file_grps, self.ocrd_tool['input_file_grp_cardinality'],
-                                        "Unexpected number of input file groups %d vs %s")
-        if 'output_file_grp_cardinality' in self.ocrd_tool:
-            assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
-                                        "Unexpected number of output file groups %d vs %s")
+        assert_file_grp_cardinality(input_file_grps, self.ocrd_tool['input_file_grp_cardinality'],
+                                    "Unexpected number of input file groups %d vs %s")
+        assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
+                                    "Unexpected number of output file groups %d vs %s")
         for input_file_grp in input_file_grps:
             assert input_file_grp in self.workspace.mets.file_groups
         # keep this for backwards compatibility:
@@ -272,14 +349,12 @@ class Processor():
         Print :py:attr:`ocrd_tool` on stdout.
         """
         print(json.dumps(self.ocrd_tool, indent=True))
-        return
 
     def dump_module_dir(self):
         """
         Print :py:attr:`moduledir` on stdout.
         """
         print(self.moduledir)
-        return
 
     def list_resources(self):
         """
@@ -287,7 +362,6 @@ class Processor():
         """
         for res in self.list_all_resources():
             print(res)
-        return
 
     def setup(self) -> None:
         """
@@ -296,6 +370,16 @@ class Processor():
         after parsing parameters.
 
         (Override this to load models into memory etc.)
+        """
+        pass
+
+    def shutdown(self) -> None:
+        """
+        Bring down the processor after data processing,
+        after to changing back from the workspace directory but
+        before exiting (or setting up with different parameters).
+
+        (Override this to unload models from memory etc.)
         """
         pass
 
@@ -668,7 +752,7 @@ class Processor():
         # can actually be much more costly than traversing the ltree.
         # This might depend on the number of pages vs number of fileGrps.
 
-        pages = dict()
+        pages = {}
         for i, ifg in enumerate(ifgs):
             files_ = sorted(self.workspace.mets.find_all_files(
                     pageId=self.page_id, fileGrp=ifg, mimetype=mimetype),
@@ -723,7 +807,7 @@ class Processor():
         if self.page_id and not any(pages):
             self._base_logger.critical(f"Could not find any files for selected pageId {self.page_id}.\n"
                                        f"compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
-        ifts = list()
+        ifts = []
         for page, ifiles in pages.items():
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:

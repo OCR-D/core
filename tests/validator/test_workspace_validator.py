@@ -90,7 +90,7 @@ class TestWorkspaceValidator(TestCase):
             self.assertEqual(len(report.errors), 1)
             self.assertIn('No files', report.errors[0])
             self.assertEqual(len(report.notices), 1)
-            self.assertIn("USE does not begin with 'OCR-D-'", report.notices[0])
+            self.assertIn("fileGrp USE 'FOO' does not begin with 'OCR-D-'", report.notices[0])
 
     def test_validate_file_groups_unspecified(self):
         with TemporaryDirectory() as tempdir:
