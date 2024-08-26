@@ -16,7 +16,7 @@ import json
 import os
 from os import getcwd
 from pathlib import Path
-from typing import List, Optional, Union, get_args
+from typing import Any, List, Optional, Union, get_args
 import sys
 import inspect
 import tarfile
@@ -339,7 +339,7 @@ class Processor():
         self._finalizer = weakref.finalize(self, self.shutdown)
         # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
         setattr(self, 'process',
-                deprecated(version='3.0', reason='process() should be replaced with process_page() and process_workspace()')(getattr(self, 'process')))
+                deprecated(version='3.0', reason='process() should be replaced with process_page_pcgts() or process_page_file() or process_workspace()')(getattr(self, 'process')))
 
     def show_help(self, subcommand=None):
         """

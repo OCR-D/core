@@ -234,10 +234,10 @@ def get_cached_processor(parameter: dict, processor_class):
 def get_processor(
         processor_class,
         parameter: Optional[dict] = None,
-        workspace: Workspace = None,
-        page_id: str = None,
-        input_file_grp: List[str] = None,
-        output_file_grp: List[str] = None,
+        workspace: Optional[Workspace] = None,
+        page_id: Optional[str] = None,
+        input_file_grp: Optional[List[str]] = None,
+        output_file_grp: Optional[List[str]] = None,
         instance_caching: bool = False,
 ):
     if processor_class:
@@ -258,6 +258,7 @@ def get_processor(
         else:
             # avoid passing workspace already (deprecated chdir behaviour)
             processor = processor_class(None, parameter=parameter)
+        assert processor
         # set current processing parameters
         processor.workspace = workspace
         processor.page_id = page_id

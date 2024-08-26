@@ -1,3 +1,4 @@
+from functools import cached_property
 import json
 import os
 from time import sleep
@@ -72,15 +73,15 @@ class DummyProcessorWithRequiredParameters(Processor):
     def process(self): pass
 
 class DummyProcessorWithOutput(Processor):
-    @property
+    @cached_property
     def ocrd_tool(self):
         return DUMMY_TOOL
 
-    @property
+    @cached_property
     def version(self):
         return '0.0.1'
 
-    @property
+    @cached_property
     def executable(self):
         return 'ocrd-test'
 
@@ -128,15 +129,15 @@ class DummyProcessorWithOutputSleep(Processor):
         return OcrdPageResult(pcgts)
 
 class DummyProcessorWithOutputFailures(Processor):
-    @property
+    @cached_property
     def ocrd_tool(self):
         return DUMMY_TOOL
 
-    @property
+    @cached_property
     def version(self):
         return '0.0.1'
 
-    @property
+    @cached_property
     def executable(self):
         return 'ocrd-test'
 
