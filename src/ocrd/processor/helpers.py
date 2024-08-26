@@ -358,7 +358,7 @@ Options:
 # not decorated here but at runtime (on first use)
 #@freeze_args
 #@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
-def get_cached_processor(parameter: dict, processor_class):
+def get_cached_processor(parameter: dict, processor_class) -> Optional['Processor']:
     """
     Call this function to get back an instance of a processor.
     The results are cached based on the parameters.
@@ -382,7 +382,7 @@ def get_processor(
         input_file_grp: Optional[List[str]] = None,
         output_file_grp: Optional[List[str]] = None,
         instance_caching: bool = False,
-):
+) -> 'Processor':
     if processor_class:
         if parameter is None:
             parameter = {}

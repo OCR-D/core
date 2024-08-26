@@ -206,22 +206,23 @@ class Processor():
         return self.metadata['tools'][self.executable]
 
     @property
-    def parameter(self) -> Optional[dict]:
+    def parameter(self) -> frozendict[str, Any]:
         """the runtime parameter dict to be used by this processor"""
         if hasattr(self, '_parameter'):
             return self._parameter
-        return None
+        return frozendict({})
 
     @parameter.setter
     def parameter(self, parameter : dict) -> None:
-        if self.parameter is not None:
+        if hasattr(self, '_parameter'):
             self.shutdown()
+            delattr(self, '_parameter')
         parameterValidator = ParameterValidator(self.ocrd_tool)
         report = parameterValidator.validate(parameter)
         if not report.is_valid:
             raise ValueError(f'Invalid parameters:\n{report.to_xml()}')
         # make parameter dict read-only
-        self._parameter = frozendict(parameter)
+        self._parameter : frozendict[str, Any] = frozendict(parameter)
         # (re-)run setup to load models etc
         self.setup()
 
