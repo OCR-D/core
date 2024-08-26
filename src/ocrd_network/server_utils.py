@@ -125,14 +125,13 @@ def request_processor_server_tool_json(logger: Logger, processor_server_base_url
             urljoin(base=processor_server_base_url, url="info"),
             headers={"Content-Type": "application/json"}
         )
-        if response.status_code != 200:
-            message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
-            raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
-        return response.json()
     except Exception as error:
         message = f"Failed to retrieve ocrd tool json from: {processor_server_base_url}"
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message, error)
-
+    if response.status_code != 200:
+        message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
+        raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
+    return response.json()
 
 async def forward_job_to_processor_server(
     logger: Logger, job_input: PYJobInput, processor_server_base_url: str
@@ -193,11 +192,14 @@ def parse_workflow_tasks(logger: Logger, workflow_content: str) -> List[Processo
 
 
 def raise_http_exception(logger: Logger, status_code: int, message: str, error: Exception = None) -> None:
-    logger.exception(f"{message} {error}")
+    if error:
+        message = f"{message} {error}"
+    logger.exception(f"{message}")
     raise HTTPException(status_code=status_code, detail=message)
 
 
 def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
+    # logger.warning(f"Job input: {job_input}")
     if bool(job_input.path_to_mets) == bool(job_input.workspace_id):
         message = (
             "Wrong processing job input format. "
@@ -210,12 +212,12 @@ def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
     try:
         report = ParameterValidator(ocrd_tool).validate(dict(job_input.parameters))
-        if not report.is_valid:
-            message = f"Failed to validate processing job input against the tool json of processor: {processor_name}\n"
-            raise_http_exception(logger, status.HTTP_404_BAD_REQUEST, message + report.errors)
     except Exception as error:
         message = f"Failed to validate processing job input against the ocrd tool json of processor: {processor_name}"
-        raise_http_exception(logger, status.HTTP_404_BAD_REQUEST, message, error)
+        raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, message, error)
+    if report and not report.is_valid:
+        message = f"Failed to validate processing job input against the tool json of processor: {processor_name}\n"
+        raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, f"{message}{report.errors}")
 
 
 def validate_workflow(logger: Logger, workflow: str) -> None:

@@ -286,7 +286,7 @@ network-module-test: assets
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 network-integration-test:
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="$(TESTDIR)/network/*ocrd_all*.py"
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py"
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
 network-integration-test-cicd:

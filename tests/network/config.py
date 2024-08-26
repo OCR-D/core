@@ -56,6 +56,20 @@ test_config.add(
 )
 
 test_config.add(
+    "OCRD_NETWORK_CLIENT_POLLING_SLEEP",
+    description="How many seconds to sleep before trying again.",
+    parser=int,
+    default=(True, 30)
+)
+
+test_config.add(
+    "OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
+    description="Timeout for a blocking ocrd network client (in seconds).",
+    parser=int,
+    default=(True, 3600)
+)
+
+test_config.add(
     name="OCRD_NETWORK_SERVER_ADDR_PROCESSING",
     description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
     default=(True, '')

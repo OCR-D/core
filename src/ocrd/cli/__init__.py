@@ -71,6 +71,10 @@ Variables:
 \b
 {config.describe('OCRD_MAX_PROCESSOR_CACHE')}
 \b
+{config.describe('OCRD_NETWORK_CLIENT_POLLING_SLEEP')}
+\b
+{config.describe('OCRD_NETWORK_CLIENT_POLLING_TIMEOUT')}
+\b
 {config.describe('OCRD_NETWORK_SERVER_ADDR_PROCESSING')}
 \b
 {config.describe('OCRD_NETWORK_SERVER_ADDR_WORKFLOW')}
