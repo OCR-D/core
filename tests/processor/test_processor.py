@@ -1,3 +1,4 @@
+from functools import cached_property
 import json
 from contextlib import ExitStack
 
@@ -185,7 +186,7 @@ class TestProcessor(TestCase):
 
     def test_params(self):
         class ParamTestProcessor(Processor):
-            @property
+            @cached_property
             def ocrd_tool(self):
                 return {}
         proc = ParamTestProcessor(None)
