@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0b1] - 2024-08-26
+
 Fixed:
   - actuall apply CLI `--log-filename`
   - adapt to Pillow changes
