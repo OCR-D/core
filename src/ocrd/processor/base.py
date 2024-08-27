@@ -424,6 +424,9 @@ class Processor():
             self.workspace = workspace
             self.verify()
             try:
+                nr_succeeded = 0
+                nr_skipped = 0
+                nr_copied = 0
                 # FIXME: add page parallelization by running multiprocessing.Pool (#322)
                 for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
                     input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
@@ -449,29 +452,38 @@ class Processor():
                     # - persistent (data) error → skip / dummy / raise
                     try:
                         self.process_page_file(*input_files)
-                    except Exception as err:
-                        # we have to be broad here, but want to exclude NotImplementedError
-                        if isinstance(err, NotImplementedError):
+                        nr_succeeded += 1
+                    # exclude NotImplementedError, so we can try process() below
+                    except NotImplementedError:
+                        raise
+                    # handle input failures separately
+                    except FileExistsError as err:
+                        if config.OCRD_EXISTING_OUTPUT == 'ABORT':
                             raise err
-                        if isinstance(err, FileExistsError):
-                            if config.OCRD_EXISTING_OUTPUT == 'ABORT':
-                                raise err
-                            if config.OCRD_EXISTING_OUTPUT == 'SKIP':
-                                continue
-                            if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
-                                # too late here, must not happen
-                                raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
-                        # FIXME: re-usable/actionable logging
+                        if config.OCRD_EXISTING_OUTPUT == 'SKIP':
+                            continue
+                        if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
+                            # too late here, must not happen
+                            raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
+                    # broad coverage of output failures
+                    except Exception as err:
+                        # FIXME: add re-usable/actionable logging
                         self._base_logger.exception(f"Failure on page {page_id}: {err}")
                         if config.OCRD_MISSING_OUTPUT == 'ABORT':
                             raise err
                         if config.OCRD_MISSING_OUTPUT == 'SKIP':
+                            nr_skipped += 1
                             continue
                         if config.OCRD_MISSING_OUTPUT == 'COPY':
                             self._copy_page_file(input_files[0])
+                            nr_copied += 1
                         else:
                             desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
                             raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
+                if nr_skipped > 0 and nr_succeeded / nr_skipped < config.OCRD_MAX_MISSING_OUTPUTS:
+                    raise Exception(f"too many failures with skipped output ({nr_skipped})")
+                if nr_copied > 0 and nr_succeeded / nr_copied < config.OCRD_MAX_MISSING_OUTPUTS:
+                    raise Exception(f"too many failures with fallback output ({nr_skipped})")
             except NotImplementedError:
                 # fall back to deprecated method
                 self.process()
@@ -534,6 +546,9 @@ class Processor():
             image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
             image_file_path = join(self.output_file_grp, f'{image_file_id}.png')
             if isinstance(image_result.alternative_image, PageType):
+                # special case: not an alternative image, but replacing the original image
+                # (this is needed by certain processors when the original's coordinate system
+                #  cannot or must not be kept)
                 image_result.alternative_image.set_imageFilename(image_file_path)
                 image_result.alternative_image.set_imageWidth(image_result.pil.width)
                 image_result.alternative_image.set_imageHeight(image_result.pil.height)

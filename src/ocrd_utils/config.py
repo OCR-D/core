@@ -184,6 +184,11 @@ How to deal with missing output files (for some fileGrp/pageId) during processin
     validator=lambda val: val in ['SKIP', 'COPY', 'ABORT'],
     parser=str)
 
+config.add("OCRD_MAX_MISSING_OUTPUTS",
+    description="Maximal rate of skipped/fallback pages among all processed pages before aborting.",
+    default=(True, 0.1),
+    parser=float)
+
 config.add("OCRD_EXISTING_OUTPUT",
     description="""\
 How to deal with already existing output files (for some fileGrp/pageId) during processing:
