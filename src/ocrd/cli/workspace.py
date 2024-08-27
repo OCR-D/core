@@ -6,8 +6,8 @@ OCR-D CLI: workspace management
     :nested: full
 """
 import os
-from os import getcwd
-from os.path import relpath, exists, join, isabs
+from os import getcwd, rmdir, unlink
+from os.path import dirname, relpath, normpath, exists, join, isabs, isdir
 from pathlib import Path
 from json import loads, dumps
 import sys
@@ -48,7 +48,7 @@ pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 @click.option('-d', '--directory', envvar='WORKSPACE_DIR', type=click.Path(file_okay=False), metavar='WORKSPACE_DIR', help='Changes the workspace folder location [default: METS_URL directory or .]"')
 @click.option('-M', '--mets-basename', default=None, help='METS file basename. Deprecated, use --mets/--directory')
 @click.option('-m', '--mets', default=None, help='The path/URL of the METS file [default: WORKSPACE_DIR/mets.xml]', metavar="METS_URL")
-@click.option('-U', '--mets-server-url', 'mets_server_url', help="TCP host of METS server")
+@click.option('-U', '--mets-server-url', 'mets_server_url', help="TCP host URI or UDS path of METS server")
 @click.option('--backup', default=False, help="Backup mets.xml whenever it is saved.", is_flag=True)
 @click.pass_context
 def workspace_cli(ctx, directory, mets, mets_basename, mets_server_url, backup):
@@ -164,7 +164,7 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
 @pass_workspace
 def workspace_init(ctx, clobber_mets, directory):
     """
-    Create a workspace with an empty METS file in --directory.
+    Create a workspace with an empty METS file in DIRECTORY or CWD.
 
     """
     LOG = getLogger('ocrd.cli.workspace.init')
@@ -436,11 +436,12 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
                   'basename_without_extension',
                   'local_filename',
               ]))
-@click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file ")
-@click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS")
+@click.option('--download', is_flag=True, help="Download found files to workspace and change location in METS file")
+@click.option('--undo-download', is_flag=True, help="Remove all downloaded files from the METS and workspace")
+@click.option('--keep-files', is_flag=True, help="Do not remove downloaded files from the workspace with --undo-download")
 @click.option('--wait', type=int, default=0, help="Wait this many seconds between download requests")
 @pass_workspace
-def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, include_fileGrp, exclude_fileGrp, download, undo_download, wait):
+def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, include_fileGrp, exclude_fileGrp, download, undo_download, keep_files, wait):
     """
     Find files.
 
@@ -457,25 +458,28 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
         mets_basename=ctx.mets_basename,
         mets_server_url=ctx.mets_server_url,
     )
-    for f in workspace.find_files(
-            file_id=file_id,
-            file_grp=file_grp,
-            mimetype=mimetype,
-            page_id=page_id,
-            include_fileGrp=include_fileGrp,
-            exclude_fileGrp=exclude_fileGrp,
-        ):
-        ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
-        if download and not f.local_filename:
-            workspace.download_file(f)
-            modified_mets = True
-            if wait:
-                time.sleep(wait)
-        if undo_download and f.local_filename:
-            ret_entry = [f'Removed local_filename {f.local_filename}']
-            f.local_filename = None
-            modified_mets = True
-        ret.append(ret_entry)
+    with pushd_popd(workspace.directory):
+        for f in workspace.find_files(
+                file_id=file_id,
+                file_grp=file_grp,
+                mimetype=mimetype,
+                page_id=page_id,
+                include_fileGrp=include_fileGrp,
+                exclude_fileGrp=exclude_fileGrp,
+            ):
+            if download and not f.local_filename:
+                workspace.download_file(f)
+                modified_mets = True
+                if wait:
+                    time.sleep(wait)
+            if undo_download and f.url and f.local_filename:
+                f.local_filename = None
+                modified_mets = True
+                if not keep_files:
+                    ctx.log.debug("rm %s [cwd=%s]", f.local_filename, workspace.directory)
+                    unlink(f.local_filename)
+            ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
+            ret.append(ret_entry)
     if modified_mets:
         workspace.save_mets()
     if 'pageId' in output_field:
@@ -579,6 +583,60 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
                 ctx.log.exception("Error removing %f: %s", f, e)
                 raise(e)
         workspace.save_mets()
+
+# ----------------------------------------------------------------------
+# ocrd workspace clean
+# ----------------------------------------------------------------------
+
+@workspace_cli.command('clean')
+@click.option('-n', '--dry-run', help="Don't actually do anything to the filesystem, just preview", default=False, is_flag=True)
+@click.option('-d', '--directories', help="Remove untracked directories in addition to untracked files", default=False, is_flag=True)
+@click.argument('path_glob', nargs=-1, required=False)
+@pass_workspace
+def clean(ctx, dry_run, directories, path_glob):
+    """
+    Removes files and directories from the workspace that are not
+    referenced by any mets:files.
+
+    PATH_GLOB can be a shell glob expression to match file names,
+    directory names (recursively), or plain paths. All paths are
+    resolved w.r.t. the workspace.
+
+    If no PATH_GLOB are specified, then all files and directories
+    may match.
+    """
+    log = getLogger('ocrd.cli.workspace.clean')
+    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    allowed_files = [normpath(f.local_filename) for f in workspace.find_files(local_only=True)]
+    allowed_files.append(relpath(workspace.mets_target, start=workspace.directory))
+    allowed_dirs = set(dirname(path) for path in allowed_files)
+    with pushd_popd(workspace.directory):
+        if len(path_glob):
+            paths = []
+            for expression in path_glob:
+                if isabs(expression):
+                    expression = relpath(expression)
+                paths += glob(expression, recursive=True) or [expression]
+        else:
+            paths = glob('**', recursive=True)
+        file_paths = [path for path in paths if not isdir(path)]
+        for path in file_paths:
+            if normpath(path) in allowed_files:
+                continue
+            if dry_run:
+                log.info('unlink(%s)' % path)
+            else:
+                unlink(path)
+        if not directories:
+            return
+        dir_paths = [path for path in paths if isdir(path)]
+        for path in sorted(dir_paths, key=lambda p: p.count('/'), reverse=True):
+            if normpath(path) in allowed_dirs:
+                continue
+            if dry_run:
+                log.info('rmdir(%s)' % path)
+            else:
+                rmdir(path)
 
 # ----------------------------------------------------------------------
 # ocrd workspace list-group

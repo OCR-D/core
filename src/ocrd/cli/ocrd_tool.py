@@ -18,6 +18,7 @@ from ocrd.processor import Processor
 from ocrd_utils import (
     set_json_key_value_overrides,
     VERSION as OCRD_VERSION,
+    parse_json_string_or_file,
     parse_json_string_with_comments as loads
 )
 from ocrd_validators import ParameterValidator, OcrdToolValidator
@@ -104,6 +105,17 @@ def ocrd_tool_tool_list_resources(ctx):
     BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
                   list_resources=True)
 
+@ocrd_tool_tool.command('resolve-resource', help="Get a tool's file resource full path name")
+@click.argument('res_name')
+@pass_ocrd_tool
+def ocrd_tool_tool_resolve_resource(ctx, res_name):
+    class BashProcessor(Processor):
+        @property
+        def moduledir(self):
+            return os.path.dirname(ctx.filename)
+    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
+                  resolve_resource=res_name)
+
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
 @pass_ocrd_tool
@@ -169,7 +181,7 @@ def ocrd_tool_tool_parse_params(ctx, parameter, parameter_override, json):
     """
     Parse parameters with fallback to defaults and output as shell-eval'able assignments to params var.
     """
-    set_json_key_value_overrides(parameter, *parameter_override)
+    parameter = set_json_key_value_overrides(parse_json_string_or_file(*parameter), *parameter_override)
     parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
     report = parameterValidator.validate(parameter)
     if not report.is_valid:

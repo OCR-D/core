@@ -4,7 +4,7 @@ from ocrd.cli import command_with_replaced_help
 
 from tests.base import CapturingTestCase as TestCase, main
 
-class TestDeprectateUtils(TestCase):
+class TestDeprecateUtils(TestCase):
 
     def test_help_replace(self):
         @click.command('foo', help='foo foo foo', cls=command_with_replaced_help(('foo', 'bar')))

@@ -9,7 +9,7 @@ ENV LANG=C.UTF-8
 ENV PIP=pip
 ENV PIP_INDEX_URL="https://artefakt.dev.sbb.berlin/repository/pypi-central/simple"
 
-WORKDIR /build-ocrd
+WORKDIR /build/core
 
 COPY src ./src
 COPY pyproject.toml .
@@ -38,17 +38,21 @@ RUN apt-get update && apt-get -y install software-properties-common \
 RUN python3 --version
 RUN python3 -m venv /usr/local \
     && hash -r \
-    && make install \
+    && make install-dev \
     && eval $FIXUP
+# Smoke Test
+RUN ocrd --version
 
 WORKDIR /data
 
 CMD ["/usr/local/bin/ocrd", "--help"]
 
 FROM ocrd_core_base as ocrd_core_test
-WORKDIR /build-ocrd
+# Optionally skip make assets with this arg
+ARG SKIP_ASSETS
+WORKDIR /build/core
 COPY Makefile .
-RUN make assets
+RUN if test -z "$SKIP_ASSETS" || test $SKIP_ASSETS -eq 0 ; then make assets ; fi
 COPY tests ./tests
 COPY .gitmodules .
 COPY requirements_test.txt .

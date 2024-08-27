@@ -64,13 +64,17 @@ class Workspace():
     :py:class:`ocrd.resolver.Resolver`.
 
     Args:
-
-        directory (string) : Filesystem folder to work in
+        resolver (:py:class:`ocrd.Resolver`) : `Resolver` instance
+        directory (string) : Filesystem path to work in
         mets (:py:class:`ocrd_models.ocrd_mets.OcrdMets`) : `OcrdMets` representing this workspace.
-            Loaded from `'mets.xml'` if `None`.
-        mets_basename (string) : Basename of the METS XML file. Default: Last URL segment of the mets_url.
-        overwrite_mode (boolean) : Whether to force add operations on this workspace globally
-        baseurl (string) : Base URL to prefix to relative URL.
+            If `None`, then loaded from ``directory``/``mets_basename``
+            or delegated to ``mets_server_url``.
+        mets_basename (string, mets.xml) : Basename of the METS XML file in the workspace directory.
+        mets_server_url (string, None) : URI of TCP or local path of UDS for METS server handling the
+            `OcrdMets` of this workspace. If `None`, then the METS will be read from and written to
+            the filesystem directly.
+        baseurl (string, None) : Base URL to prefix to relative URL.
+        overwrite_mode (boolean, False) : Whether to force add operations on this workspace globally
     """
 
     def __init__(
@@ -90,7 +94,7 @@ class Workspace():
         self.is_remote = bool(mets_server_url)
         if mets is None:
             if self.is_remote:
-                mets = ClientSideOcrdMets(mets_server_url)
+                mets = ClientSideOcrdMets(mets_server_url, self.directory)
                 if mets.workspace_path != self.directory:
                     raise ValueError(f"METS server {mets_server_url} workspace directory {mets.workspace_path} differs "
                             f"from local workspace directory {self.directory}. These are not the same workspaces.")
@@ -105,7 +109,7 @@ class Workspace():
         self.baseurl = baseurl
         #  print(mets.to_xml(xmllint=True).decode('utf-8'))
 
-    def __str__(self):
+    def __repr__(self):
         return 'Workspace[remote=%s, directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
             not not self.is_remote,
             self.directory,
@@ -202,21 +206,24 @@ class Workspace():
                     return f
                 if f.url:
                     log.debug("OcrdFile has 'local_filename' but it doesn't resolve - trying to download from 'url' %s", f.url)
+                    url = f.url
                 elif self.baseurl:
                     log.debug("OcrdFile has 'local_filename' but it doesn't resolve, and no 'url' - trying 'baseurl' %s with 'local_filename' %s",
                               self.baseurl, f.local_filename)
-                    f.url = '%s/%s' % (self.baseurl, f.local_filename)
+                    url = '%s/%s' % (self.baseurl, f.local_filename)
                 else:
-                    raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file,"
+                    raise FileNotFoundError(f"'local_filename' {f.local_filename} points to non-existing file, "
                                             "and no 'url' to download and no 'baseurl' set on workspace - nothing we can do.")
+                file_path = Path(f.local_filename)
+                self.resolver.download_to_directory(self.directory, url, subdir=file_path.parent, basename=file_path.name)
+                return f
             if f.url:
                 # If f.url is set, download the file to the workspace
                 basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
                 f.local_filename = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
-            else:
-                # If neither f.local_filename nor f.url is set, fail
-                raise ValueError("OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
-            return f
+                return f
+            # If neither f.local_filename nor f.url is set, fail
+            raise ValueError(f"OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
 
     def remove_file(self, file_id, force=False, keep_file=False, page_recursive=False, page_same_group=False):
         """
@@ -419,7 +426,7 @@ class Workspace():
                 # If the local filename has folder components, create those folders
                 local_filename_dir = str(kwargs['local_filename']).rsplit('/', 1)[0]
                 if local_filename_dir != str(kwargs['local_filename']) and not Path(local_filename_dir).is_dir():
-                    makedirs(local_filename_dir)
+                    makedirs(local_filename_dir, exist_ok=True)
 
             #  print(kwargs)
             kwargs["pageId"] = kwargs.pop("page_id")

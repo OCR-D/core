@@ -1,5 +1,6 @@
 from .base import (
     Processor,
+    ResourceNotFoundError
 )
 from .helpers import (
     run_cli,

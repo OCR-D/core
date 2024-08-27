@@ -20,7 +20,7 @@ class OcrdEnvVariable():
         An environment variable for use in OCR-D.
 
         Args:
-            name (str): Name of the environment vairable
+            name (str): Name of the environment variable
             description (str): Description of what the variable is used for.
 
         Keyword Args:
@@ -28,7 +28,7 @@ class OcrdEnvVariable():
             validator (callable): Function to validate that the raw (string) value is parseable.
             default (tuple(bool, any)): 2-tuple, first element is a bool whether there is a default
                 value defined and second element contains that default value, which can be a callable
-                for defered evaluation
+                for deferred evaluation
         """
         self.name = name
         self.description = description
@@ -145,6 +145,16 @@ config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
         description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
         default=(True, ''))
 
+config.add("OCRD_NETWORK_CLIENT_POLLING_SLEEP",
+           description="How many seconds to sleep before trying again.",
+           parser=int,
+           default=(True, 30))
+
+config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
+           description="Timeout for a blocking ocrd network client (in seconds).",
+           parser=int,
+           default=(True, 3600))
+
 config.add("OCRD_NETWORK_SERVER_ADDR_WORKFLOW",
         description="Default address of Workflow Server to connect to (for `ocrd network client workflow`).",
         default=(True, ''))
@@ -153,8 +163,8 @@ config.add("OCRD_NETWORK_SERVER_ADDR_WORKSPACE",
         description="Default address of Workspace Server to connect to (for `ocrd network client workspace`).",
         default=(True, ''))
 
-config.add("OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS",
-    description="Number of attempts for a worker to create its queue. Helpfull if the rabbitmq-server needs time to be fully started",
+config.add("OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
+    description="Number of attempts for a RabbitMQ client to connect before failing.",
     parser=int,
     default=(True, 3))
 
@@ -178,17 +188,17 @@ config.add("HOME",
     default=(True, lambda: Path.home()))
 
 config.add("XDG_DATA_HOME",
-    description="Directory to look for `./ocrd/resources.yml` (i.e. `ocrd resmgr` user database)",
+    description="Directory to look for `./ocrd-resources/*` (i.e. `ocrd resmgr` data location)",
     parser=lambda val: Path(val),
     default=(True, lambda: Path(config.HOME, '.local/share')))
 
 config.add("XDG_CONFIG_HOME",
-    description="Directory to look for `./ocrd-resources/*` (i.e. `ocrd resmgr` data location)",
+    description="Directory to look for `./ocrd/resources.yml` (i.e. `ocrd resmgr` user database)",
     parser=lambda val: Path(val),
     default=(True, lambda: Path(config.HOME, '.config')))
 
 config.add("OCRD_LOGGING_DEBUG",
     description="Print information about the logging setup to STDERR",
     default=(True, False),
-    validator=lambda val: isinstance(val, bool) or val in ('true', 'false', '0', '1'),
-    parser=lambda val:  val in ('true', '1'))
+    validator=lambda val: isinstance(val, bool) or str.lower(val) in ('true', 'false', '0', '1'),
+    parser=lambda val:  val if isinstance(val, (int, bool)) else str.lower(val) in ('true', '1'))

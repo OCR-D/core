@@ -1,26 +1,36 @@
 import json
+from contextlib import ExitStack
 
 from tempfile import TemporaryDirectory
-from os.path import join
-from tests.base import CapturingTestCase as TestCase, assets, main # pylint: disable=import-error, no-name-in-module
+from pathlib import Path
+from os import environ
+from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
 
+from unittest import mock
 import pytest
 
 class TestProcessor(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.resolver = Resolver()
-        self.workspace = self.resolver.workspace_from_url(assets.url_of('SBB0000F29300010000/data/mets.xml'))
+        # make sure we get an isolated temporary copy of the testdata each time
+        # as long as we are not using pytest but unittest, we need to manage contexts
+        # (enterContext is only supported starting with py311)
+        with ExitStack() as stack:
+            self.resolver = Resolver()
+            self.workdir = stack.enter_context(copy_of_directory(assets.path_to('SBB0000F29300010000/data')))
+            stack.enter_context(pushd_popd(self.workdir))
+            self.workspace = self.resolver.workspace_from_url('mets.xml')
+            self.addCleanup(stack.pop_all().close)
 
     def test_incomplete_processor(self):
         proc = IncompleteProcessor(None)
-        with self.assertRaisesRegex(Exception, 'Must be implemented'):
+        with self.assertRaises(NotImplementedError):
             proc.process()
 
     def test_no_resolver(self):
@@ -48,8 +58,8 @@ class TestProcessor(TestCase):
         assert [f.mimetype for f in processor.input_files] == [MIMETYPE_PAGE, MIMETYPE_PAGE]
 
     def test_parameter(self):
-        with TemporaryDirectory() as tempdir:
-            jsonpath = join(tempdir, 'params.json')
+        with TemporaryDirectory():
+            jsonpath = Path('params.json').name
             with open(jsonpath, 'w') as f:
                 f.write('{"baz": "quux"}')
             with open(jsonpath, 'r') as f:
@@ -72,6 +82,29 @@ class TestProcessor(TestCase):
     def test_params_missing_required(self):
         with self.assertRaisesRegex(Exception, 'is a required property'):
             DummyProcessorWithRequiredParameters(workspace=self.workspace)
+
+    def test_params_preset_resolve(self):
+        with pushd_popd(tempdir=True) as tempdir:
+            with mock.patch.dict(environ, {'XDG_DATA_HOME': str(tempdir)}):
+                path = Path(tempdir) / 'ocrd-resources' / 'ocrd-dummy'
+                path.mkdir(parents=True)
+                path = str(path / 'preset.json')
+                with open(path, 'w') as out:
+                    # it would be nicer to test some existing processor which does take params
+                    out.write('{}')
+                assert 0 == run_cli("ocrd-dummy",
+                                    resolver=Resolver(),
+                                    mets_url=self.workspace.mets_target,
+                                    input_file_grp="OCR-D-IMG",
+                                    output_file_grp="DUMMY",
+                                    parameter=path)
+                assert 0 == run_cli("ocrd-dummy",
+                                    resolver=Resolver(),
+                                    mets_url=self.workspace.mets_target,
+                                    input_file_grp="OCR-D-IMG",
+                                    output_file_grp="DUMMY",
+                                    parameter='preset.json',
+                                    overwrite=True)
 
     def test_params(self):
         proc = Processor(workspace=self.workspace)

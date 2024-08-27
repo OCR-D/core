@@ -1,7 +1,7 @@
 import click
 from click import option, Path, group, command, argument
 from ocrd_utils import DEFAULT_METS_BASENAME
-from ocrd_network import NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
+from ocrd_network import AgentType
 from .parameter_option import parameter_option, parameter_override_option
 from .loglevel_option import loglevel_option
 from ocrd_network import (
@@ -29,11 +29,8 @@ def ocrd_cli_options(f):
         option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME),
         option('-w', '--working-dir', help="Working Directory"),
         option('-U', '--mets-server-url', help="METS server URL. Starts with http:// then TCP, otherwise unix socket path"),
-        # TODO OCR-D/core#274
-        # option('-I', '--input-file-grp', required=True),
-        # option('-O', '--output-file-grp', required=True),
-        option('-I', '--input-file-grp', default='INPUT'),
-        option('-O', '--output-file-grp', default='OUTPUT'),
+        option('-I', '--input-file-grp', default=None),
+        option('-O', '--output-file-grp', default=None),
         option('-g', '--page-id'),
         option('--overwrite', is_flag=True, default=False),
         option('--profile', is_flag=True, default=False),
@@ -57,7 +54,7 @@ def ocrd_cli_options(f):
         # subcommands. So we have to work around that by creating a
         # pseudo-subcommand handled in ocrd_cli_wrap_processor
         argument('subcommand', nargs=1, required=False,
-                 type=click.Choice([NETWORK_AGENT_WORKER, NETWORK_AGENT_SERVER])),
+                 type=click.Choice([AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER])),
     ]
     for param in params:
         param(f)

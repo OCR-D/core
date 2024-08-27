@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import gettempdir
-from src.ocrd_utils.config import OcrdEnvConfig
-from src.ocrd_utils.config import _ocrd_download_timeout_parser
+from ocrd_utils.config import OcrdEnvConfig
+from ocrd_utils.config import _ocrd_download_timeout_parser
 
 test_config = OcrdEnvConfig()
 
@@ -56,6 +56,20 @@ test_config.add(
 )
 
 test_config.add(
+    "OCRD_NETWORK_CLIENT_POLLING_SLEEP",
+    description="How many seconds to sleep before trying again.",
+    parser=int,
+    default=(True, 30)
+)
+
+test_config.add(
+    "OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
+    description="Timeout for a blocking ocrd network client (in seconds).",
+    parser=int,
+    default=(True, 3600)
+)
+
+test_config.add(
     name="OCRD_NETWORK_SERVER_ADDR_PROCESSING",
     description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
     default=(True, '')
@@ -74,12 +88,12 @@ test_config.add(
 )
 
 test_config.add(
-    name="OCRD_NETWORK_WORKER_QUEUE_CONNECT_ATTEMPTS",
+    name="OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
     description="""
-    Number of attempts for a worker to create its queue. Helpful if the rabbitmq-server needs time to be fully started
+    Number of attempts for a RabbitMQ client to connect before failing
     """,
     parser=int,
-    default=(True, 1)
+    default=(True, 3)
 )
 
 test_config.add(

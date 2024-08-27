@@ -1,39 +1,64 @@
+from asyncio import iscoroutine, get_event_loop
 from datetime import datetime
+from fastapi import UploadFile
 from functools import wraps
-from pika import URLParameters
-from pymongo import uri_parser as mongo_uri_parser
-from re import match as re_match
-from requests import get, Session as Session_TCP
+from hashlib import md5
+from json import loads
+from pathlib import Path
+from re import compile as re_compile, split as re_split
+from requests import get as requests_get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
-from typing import Dict, List
+from time import sleep
+from typing import List
 from uuid import uuid4
-from yaml import safe_load
 
-from ocrd import Resolver, Workspace
-from ocrd_validators import ProcessingServerConfigValidator
+from ocrd.resolver import Resolver
+from ocrd.workspace import Workspace
+from ocrd.mets_server import MpxReq
+from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger, resource_string
+from .constants import OCRD_ALL_TOOL_JSON
 from .rabbitmq_utils import OcrdResultMessage
-from ocrd.task_sequence import ProcessorTask
 
 
-# Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
 def call_sync(func):
-    import asyncio
-
+    # Based on: https://gist.github.com/phizaz/20c36c6734878c6ec053245a477572ec
     @wraps(func)
     def func_wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
-            return asyncio.get_event_loop().run_until_complete(result)
+        if iscoroutine(result):
+            return get_event_loop().run_until_complete(result)
         return result
     return func_wrapper
 
 
 def calculate_execution_time(start: datetime, end: datetime) -> int:
     """
-    Calculates the difference between `start` and `end` datetime.
+    Calculates the difference between 'start' and 'end' datetime.
     Returns the result in milliseconds
     """
     return int((end - start).total_seconds() * 1000)
+
+
+def calculate_processing_request_timeout(amount_pages: int, timeout_per_page: float = 20.0) -> float:
+    return amount_pages * timeout_per_page
+
+
+def convert_url_to_uds_format(url: str) -> str:
+    return f"http+unix://{url.replace('/', '%2F')}"
+
+
+def expand_page_ids(page_id: str) -> List:
+    page_ids = []
+    if not page_id:
+        return page_ids
+    for page_id_token in re_split(pattern=r',', string=page_id):
+        if page_id_token.startswith(REGEX_PREFIX):
+            page_ids.append(re_compile(pattern=page_id_token[len(REGEX_PREFIX):]))
+        elif '..' in page_id_token:
+            page_ids += generate_range(*page_id_token.split(sep='..', maxsplit=1))
+        else:
+            page_ids += [page_id_token]
+    return page_ids
 
 
 def generate_created_time() -> int:
@@ -49,67 +74,32 @@ def generate_id() -> str:
     return str(uuid4())
 
 
-def is_url_responsive(url: str, retries: int = 0) -> bool:
-    while True:
+async def generate_workflow_content(workflow: UploadFile, encoding: str = "utf-8"):
+    return (await workflow.read()).decode(encoding)
+
+
+def generate_workflow_content_hash(workflow_content: str, encoding: str = "utf-8"):
+    return md5(workflow_content.encode(encoding)).hexdigest()
+
+
+def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3) -> bool:
+    while tries > 0:
         try:
-            response = get(url)
-            if response.status_code == 200:
+            if requests_get(url).status_code == 200:
                 return True
         except Exception:
-            if retries <= 0:
-                return False
-            retries -= 1
+            continue
+        sleep(wait_time)
+        tries -= 1
+    return False
 
 
-def validate_and_load_config(config_path: str) -> Dict:
-    # Load and validate the config
-    with open(config_path) as fin:
-        config = safe_load(fin)
-    report = ProcessingServerConfigValidator.validate(config)
-    if not report.is_valid:
-        raise Exception(f'Processing-Server configuration file is invalid:\n{report.errors}')
-    return config
-
-
-def verify_database_uri(mongodb_address: str) -> str:
+def load_ocrd_all_tool_json():
     try:
-        # perform validation check
-        mongo_uri_parser.parse_uri(uri=mongodb_address, validate=True)
+        ocrd_all_tool_json = loads(resource_string('ocrd', OCRD_ALL_TOOL_JSON))
     except Exception as error:
-        raise ValueError(f"The MongoDB address '{mongodb_address}' is in wrong format, {error}")
-    return mongodb_address
-
-
-def verify_and_parse_mq_uri(rabbitmq_address: str):
-    """
-    Check the full list of available parameters in the docs here:
-    https://pika.readthedocs.io/en/stable/_modules/pika/connection.html#URLParameters
-    """
-
-    uri_pattern = r"^(?:([^:\/?#\s]+):\/{2})?(?:([^@\/?#\s]+)@)?([^\/?#\s]+)?(?:\/([^?#\s]*))?(?:[?]([^#\s]+))?\S*$"
-    match = re_match(pattern=uri_pattern, string=rabbitmq_address)
-    if not match:
-        raise ValueError(f"The message queue server address is in wrong format: '{rabbitmq_address}'")
-    url_params = URLParameters(rabbitmq_address)
-
-    parsed_data = {
-        'username': url_params.credentials.username,
-        'password': url_params.credentials.password,
-        'host': url_params.host,
-        'port': url_params.port,
-        'vhost': url_params.virtual_host
-    }
-    return parsed_data
-
-
-def download_ocrd_all_tool_json(ocrd_all_url: str):
-    if not ocrd_all_url:
-        raise ValueError(f'The URL of ocrd all tool json is empty')
-    headers = {'Accept': 'application/json'}
-    response = Session_TCP().get(ocrd_all_url, headers=headers)
-    if not response.status_code == 200:
-        raise ValueError(f"Failed to download ocrd all tool json from: '{ocrd_all_url}'")
-    return response.json()
+        raise ValueError(f"Failed to load ocrd all tool json from: '{OCRD_ALL_TOOL_JSON}', {error}")
+    return ocrd_all_tool_json
 
 
 def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMessage):
@@ -127,7 +117,7 @@ def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMe
 
 def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> Workspace:
     if mets_server_url:
-        if not is_mets_server_running(mets_server_url=mets_server_url):
+        if not is_mets_server_running(mets_server_url=mets_server_url, ws_dir_path=str(Path(mets_path).parent)):
             raise RuntimeError(f'The mets server is not running: {mets_server_url}')
     return Resolver().workspace_from_url(mets_url=mets_path, mets_server_url=mets_server_url)
 
@@ -136,44 +126,47 @@ def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = Non
     return get_ocrd_workspace_instance(mets_path=mets_path, mets_server_url=mets_server_url).mets.physical_pages
 
 
-def is_mets_server_running(mets_server_url: str) -> bool:
-    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
-    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
-    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
+def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> bool:
+    protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
+    session = Session_TCP() if protocol == "tcp" else Session_UDS()
+    if protocol == "uds":
+        mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
-        response = session.get(url=f'{mets_server_url}/workspace_path')
+        if 'tcp_mets' in mets_server_url:
+            if not ws_dir_path:
+                return False
+            path = session.post(
+                url=f"{mets_server_url}",
+                json=MpxReq.workspace_path(ws_dir_path)
+            ).json()["text"]
+            return bool(path)
+        else:
+            try:
+                response = session.get(url=f"{mets_server_url}/workspace_path")
+                return response.status_code == 200
+            except OSError:
+                return False
+    except Exception:
+        getLogger("ocrd_network.utils").exception("Unexpected exception in is_mets_server_running: ")
+        return False
+
+
+def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
+    protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
+    session = Session_TCP() if protocol == "tcp" else Session_UDS()
+    if protocol == "uds":
+        mets_server_url = convert_url_to_uds_format(mets_server_url)
+    try:
+        if 'tcp_mets' in mets_server_url:
+            if not ws_dir_path:
+                return False
+            response = session.post(url=f"{mets_server_url}", json=MpxReq.stop(ws_dir_path))
+        else:
+            response = session.delete(url=f"{mets_server_url}/")
     except Exception:
         return False
-    if response.status_code == 200:
-        return True
-    return False
+    return response.status_code == 200
 
 
-def stop_mets_server(mets_server_url: str) -> bool:
-    protocol = 'tcp' if (mets_server_url.startswith('http://') or mets_server_url.startswith('https://')) else 'uds'
-    session = Session_TCP() if protocol == 'tcp' else Session_UDS()
-    mets_server_url = mets_server_url if protocol == 'tcp' else f'http+unix://{mets_server_url.replace("/", "%2F")}'
-    try:
-        response = session.delete(url=f'{mets_server_url}/')
-    except Exception:
-        return False
-    if response.status_code == 200:
-        return True
-    return False
-
-
-def validate_workflow(workflow: str, logger=None) -> bool:
-    """ Check that workflow is not empty and parseable to a lists of ProcessorTask
-    """
-    if not workflow.strip():
-        if logger:
-            logger.info("Workflow is invalid (empty string)")
-        return False
-    try:
-        tasks_list = workflow.splitlines()
-        [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
-    except ValueError as e:
-        if logger:
-            logger.info(f"Workflow is invalid, parsing to ProcessorTasks failed: {e}")
-        return False
-    return True
+def get_uds_path(ws_dir_path: str) -> Path:
+    return Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(ws_dir_path)}.sock")

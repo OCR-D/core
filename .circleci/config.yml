@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 orbs:
     python: circleci/python@2.0.3
@@ -20,19 +20,6 @@ jobs:
       - run: $PIP_INSTALL -U pip setuptools
       - run: make install
       - run: export PATH="/Users/distiller/Library/Python/3.9/bin:$PATH"; make deps-test test benchmark
-
-  test-python37:
-    docker:
-      - image: cimg/python:3.7
-    working_directory: ~/ocrd-core
-    steps:
-      - checkout
-      - run: sudo apt-get -y update
-      - run: sudo make deps-ubuntu 
-      - run: make install deps-test
-      - run: make test benchmark
-      # smoke test to ensure that --editable install works
-      - run: make install-dev; ocrd --version
 
   test-python38:
     docker:
@@ -89,27 +76,29 @@ jobs:
   deploy:
     docker:
       - image: circleci/buildpack-deps:stretch
+    parameters:
+      docker-variant:
+        type: string
     steps:
       - checkout
       - setup_remote_docker: # https://circleci.com/docs/2.0/building-docker-images/
           docker_layer_caching: true
-      - run: make docker
-      - run: make docker-cuda
+      - run: make docker<< parameters.docker-variant >>
       - run:
           name: Login to Docker Hub
           command: echo "$DOCKERHUB_PASS" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
-      - run: docker push ocrd/core:latest
-      - run: docker push ocrd/core-cuda:latest
-      - run: docker tag ocrd/core ocrd/core:$(git describe --tags --abbrev=0)
-      - run: docker tag ocrd/core-cuda ocrd/core-cuda:$(git describe --tags --abbrev=0)
-      - run: docker push ocrd/core:$(git describe --tags --abbrev=0)
-      - run: docker push ocrd/core-cuda:$(git describe --tags --abbrev=0)
+      - run: docker push ocrd/core<< parameters.docker-variant >>:latest
+      - run: docker tag ocrd/core<< parameters.docker-variant >> ocrd/core<< parameters.docker-variant >>:$(git describe --tags --abbrev=0)
+      - run: docker push ocrd/core<< parameters.docker-variant >>:$(git describe --tags --abbrev=0)
 
 workflows:
   version: 2
   build-master:
     jobs:
       - deploy:
+          matrix:
+            parameters:
+              docker-variant: ['', '-cuda', '-cuda-tf1', '-cuda-tf2', '-cuda-torch']
           filters:
             branches:
               only: master
@@ -117,7 +106,6 @@ workflows:
               only: /^v\d\.\d\d\.\d$/
   test-pull-request:
     jobs:
-      - test-python37
       - test-python38
       - test-python39
       - test-python310

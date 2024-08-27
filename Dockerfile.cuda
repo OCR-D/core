@@ -8,15 +8,13 @@ ENV CONDA_EXE=$MAMBA_EXE
 ENV CONDA_PREFIX=$MAMBA_ROOT_PREFIX
 ENV CONDA_SHLVL='1'
 
-WORKDIR /build
+WORKDIR /build/core
 
 COPY Makefile .
 
 RUN make deps-cuda
 
 WORKDIR /data
-
-RUN rm -fr /build
 
 CMD ["/usr/local/bin/ocrd", "--help"]
 

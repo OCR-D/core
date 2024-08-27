@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from datetime import datetime
 
 from os.path import join
@@ -62,10 +61,11 @@ def test_unique_identifier_from_nothing():
 
 
 def test_str():
-    mets = OcrdMets(content='<mets/>', cache_flag=False)
-    assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
-    mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
-    assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
+    with temp_env_var('OCRD_METS_CACHING', None):
+        mets = OcrdMets(content='<mets/>', cache_flag=False)
+        assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
+        mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
+        assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
 
 
 def test_file_groups(sbb_sample_01):
@@ -133,7 +133,7 @@ def test_physical_pages_for_fileids(sbb_directory_ocrd_mets):
     assert sbb_directory_ocrd_mets.get_physical_pages(
         for_fileIds=['FILE_0002_IMAGE']) == ['PHYS_0002']
 
-def test_physical_pages_for_emtpy_fileids(sbb_directory_ocrd_mets):
+def test_physical_pages_for_empty_fileids(sbb_directory_ocrd_mets):
     assert sbb_directory_ocrd_mets.get_physical_pages(
         for_fileIds=[]) == []
 
@@ -384,16 +384,20 @@ def test_invalid_filegrp():
 @contextmanager
 def temp_env_var(k, v):
     v_before = environ.get(k, None)
-    environ[k] = v
+    if v == None:
+        environ.pop(k, None)
+    else:
+        environ[k] = v
     yield
     if v_before is not None:
         environ[k] = v_before
     else:
-        del environ[k]
+        environ.pop(k, None)
 
 def test_envvar():
-    assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
-    assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
+    with temp_env_var('OCRD_METS_CACHING', None):
+        assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+        assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
     with temp_env_var('OCRD_METS_CACHING', 'true'):
         assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
         assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag

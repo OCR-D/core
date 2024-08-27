@@ -35,8 +35,21 @@ from ocrd_utils import (
 from ocrd_validators import ParameterValidator
 from ocrd_models.ocrd_page import MetadataItemType, LabelType, LabelsType
 
-# XXX imports must remain for backwards-compatibilty
+# XXX imports must remain for backwards-compatibility
 from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
+
+class ResourceNotFoundError(FileNotFoundError):
+    """
+    An exception signifying the requested processor resource
+    cannot be resolved.
+    """
+    def __init__(self, name, executable):
+        self.name = name
+        self.executable = executable
+        self.message = "Could not find resource '%s' for executable '%s'. " \
+                       "Try 'ocrd resmgr download %s %s' to download this resource." \
+                       % (name, executable, executable, name)
+        super().__init__(self.message)
 
 class Processor():
     """
@@ -53,12 +66,10 @@ class Processor():
             workspace : Workspace,
             ocrd_tool=None,
             parameter=None,
-            # TODO OCR-D/core#274
-            # input_file_grp=None,
-            # output_file_grp=None,
-            input_file_grp="INPUT",
-            output_file_grp="OUTPUT",
+            input_file_grp=None,
+            output_file_grp=None,
             page_id=None,
+            resolve_resource=None,
             show_resource=None,
             list_resources=False,
             show_help=False,
@@ -87,6 +98,8 @@ class Processor():
              output_file_grp (string): comma-separated list of METS ``fileGrp``s used for output.
              page_id (string): comma-separated list of METS physical ``page`` IDs to process \
                  (or empty for all pages).
+             resolve_resource (string): If not ``None``, then instead of processing, resolve \
+                 given resource by name and print its full path to stdout.
              show_resource (string): If not ``None``, then instead of processing, resolve \
                  given resource by name and print its contents to stdout.
              list_resources (boolean): If true, then instead of processing, find all installed \
@@ -103,8 +116,6 @@ class Processor():
                  on stdout.
         """
         self.ocrd_tool = ocrd_tool
-        if parameter is None:
-            parameter = {}
         if dump_json:
             print(json.dumps(ocrd_tool, indent=True))
             return
@@ -115,19 +126,22 @@ class Processor():
             for res in self.list_all_resources():
                 print(res)
             return
+        if resolve_resource:
+            try:
+                res = self.resolve_resource(resolve_resource)
+                print(res)
+            except ResourceNotFoundError as e:
+                log = getLogger('ocrd.processor.base')
+                log.critical(e.message)
+                sys.exit(1)
+            return
         if show_resource:
-            initLogging()
-            res_fname = self.resolve_resource(show_resource)
-            fpath = Path(res_fname)
-            if fpath.is_dir():
-                with pushd_popd(fpath):
-                    fileobj = io.BytesIO()
-                    with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
-                        tarball.add('.')
-                    fileobj.seek(0)
-                    copyfileobj(fileobj, sys.stdout.buffer)
-            else:
-                sys.stdout.buffer.write(fpath.read_bytes())
+            try:
+                self.show_resource(show_resource)
+            except ResourceNotFoundError as e:
+                log = getLogger('ocrd.processor.base')
+                log.critical(e.message)
+                sys.exit(1)
             return
         if show_help:
             self.show_help(subcommand=subcommand)
@@ -146,6 +160,8 @@ class Processor():
         self.input_file_grp = input_file_grp
         self.output_file_grp = output_file_grp
         self.page_id = None if page_id == [] or page_id is None else page_id
+        if parameter is None:
+            parameter = {}
         parameterValidator = ParameterValidator(ocrd_tool)
         report = parameterValidator.validate(parameter)
         if not report.is_valid:
@@ -174,7 +190,7 @@ class Processor():
         
         (This contains the main functionality and needs to be overridden by subclasses.)
         """
-        raise Exception("Must be implemented")
+        raise NotImplementedError()
 
 
     def add_metadata(self, pcgts):
@@ -209,8 +225,9 @@ class Processor():
         Args:
             val (string): resource value to resolve
         """
+        initLogging()
         executable = self.ocrd_tool['executable']
-        log = getLogger('ocrd.%s.resolve_resource' % executable)
+        log = getLogger('ocrd.processor.base')
         if exists(val):
             log.debug("Resolved to absolute path %s" % val)
             return val
@@ -224,10 +241,20 @@ class Processor():
         if ret:
             log.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
-        log.error("Could not find resource '%s' for executable '%s'. "
-                  "Try 'ocrd resmgr download %s %s' to download this resource.",
-                  val, executable, executable, val)
-        sys.exit(1)
+        raise ResourceNotFoundError(val, executable)
+
+    def show_resource(self, val):
+        res_fname = self.resolve_resource(val)
+        fpath = Path(res_fname)
+        if fpath.is_dir():
+            with pushd_popd(fpath):
+                fileobj = io.BytesIO()
+                with tarfile.open(fileobj=fileobj, mode='w:gz') as tarball:
+                    tarball.add('.')
+                fileobj.seek(0)
+                copyfileobj(fileobj, sys.stdout.buffer)
+        else:
+            sys.stdout.buffer.write(fpath.read_bytes())
 
     def list_all_resources(self):
         """

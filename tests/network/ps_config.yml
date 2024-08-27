@@ -1,5 +1,6 @@
 # the content of this config file is based on the .env
 internal_callback_url: http://ps-docker-host.ocrd_network_test:8000
+use_tcp_mets: true
 process_queue:
   address: rabbitmq-docker-host.ocrd_network_test
   port: 5672

@@ -52,6 +52,12 @@ properties:
   parameters:
     description: Parameters for the used model
     type: object
+  agent_type:
+    description: The network agent type - worker or server
+    type: string
+    enum:
+      - worker
+      - server
   result_queue_name:
     description: Name of the queue to which result is published
     type: string

@@ -8,19 +8,20 @@ from ocrd_utils import (
     getLogger,
     parse_json_string_with_comments,
     set_json_key_value_overrides,
+    parse_json_string_or_file,
 )
 from ocrd_validators import WorkspaceValidator
-from ocrd_network import ProcessingWorker, ProcessorServer, NETWORK_AGENT_SERVER, NETWORK_AGENT_WORKER
+from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
 
 from ..resolver import Resolver
-from ..processor.base import run_processor
+from ..processor.base import ResourceNotFoundError, run_processor
 
 from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
 
-SUBCOMMANDS = [NETWORK_AGENT_WORKER, NETWORK_AGENT_SERVER]
+SUBCOMMANDS = [AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER]
 
 
 def ocrd_cli_wrap_processor(
@@ -47,11 +48,11 @@ def ocrd_cli_wrap_processor(
     **kwargs
 ):
     if not sys.argv[1:]:
-        processorClass(workspace=None, show_help=True)
+        processorClass(None, show_help=True)
         sys.exit(1)
     if dump_json or dump_module_dir or help or version or show_resource or list_resources:
         processorClass(
-            workspace=None,
+            None,
             dump_json=dump_json,
             dump_module_dir=dump_module_dir,
             show_help=help,
@@ -70,7 +71,25 @@ def ocrd_cli_wrap_processor(
     initLogging()
 
     LOG = getLogger('ocrd.cli_wrap_processor')
+    assert kwargs['input_file_grp'] is not None
+    assert kwargs['output_file_grp'] is not None
     # LOG.info('kwargs=%s' % kwargs)
+    if 'parameter' in kwargs:
+        # Disambiguate parameter file/literal, and resolve file
+        # (but avoid entering processing context of constructor)
+        class DisposableSubclass(processorClass):
+            def show_version(self):
+                pass
+        disposable = DisposableSubclass(None, show_version=True)
+        def resolve(name):
+            try:
+                return disposable.resolve_resource(name)
+            except ResourceNotFoundError:
+                return None
+        kwargs['parameter'] = parse_json_string_or_file(*kwargs['parameter'],
+                                                        resolve_preset_file=resolve)
+    else:
+        kwargs['parameter'] = dict()
     # Merge parameter overrides and parameters
     if 'parameter_override' in kwargs:
         set_json_key_value_overrides(kwargs['parameter'], *kwargs['parameter_override'])
@@ -142,19 +161,19 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
     if not database:
         raise ValueError(f"Option '--database' is invalid for subcommand {subcommand}")
 
-    if subcommand == NETWORK_AGENT_SERVER:
+    if subcommand == AgentType.PROCESSOR_SERVER:
         if not address:
             raise ValueError(f"Option '--address' required for subcommand {subcommand}")
         if queue:
             raise ValueError(f"Option '--queue' invalid for subcommand {subcommand}")
-    if subcommand == NETWORK_AGENT_WORKER:
+    if subcommand == AgentType.PROCESSING_WORKER:
         if address:
             raise ValueError(f"Option '--address' invalid for subcommand {subcommand}")
         if not queue:
             raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
 
     processor = ProcessorClass(workspace=None)
-    if subcommand == NETWORK_AGENT_WORKER:
+    if subcommand == AgentType.PROCESSING_WORKER:
         processing_worker = ProcessingWorker(
             rabbitmq_addr=queue,
             mongodb_addr=database,
@@ -166,7 +185,7 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
         processing_worker.connect_consumer()
         # Start consuming from the queue with name `processor_name`
         processing_worker.start_consuming()
-    elif subcommand == NETWORK_AGENT_SERVER:
+    elif subcommand == AgentType.PROCESSOR_SERVER:
         # TODO: Better validate that inside the ProcessorServer itself
         host, port = address.split(':')
         processor_server = ProcessorServer(
@@ -175,4 +194,6 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
             processor_class=ProcessorClass,
         )
         processor_server.run_server(host=host, port=int(port))
+    else:
+        raise ValueError(f"Unknown network agent type, must be one of: {SUBCOMMANDS}")
     sys.exit(0)

@@ -5,6 +5,132 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.68.0] - 2024-08-23
+
+Changed:
+
+  * ocrd_network: Use `ocrd-all-tool.json` bundled by core instead of download from website, #1257, #1260
+  * :fire: `ocrd network client processing processor` renamed `ocrd network client processing run`, #1269
+  * `ocrd network client processing run` supports blocking behavior with `--block` by polling job status, #1265, #1269
+
+Added:
+
+  * `ocrd network client workflow run` Run, optionally blocking, a workflow on the processing server, #1265, #1269
+  * `ocrd network client workflow check-status` to get the status of a workflow job, #1269
+  * `ocrd network client processing check-status` to get the status of a processing (processor) job, #1269
+  * `ocrd network client discovery processors` to list the processors deployed in the processing server, #1269
+  * `ocrd network client discovery processor` to get the `ocrd-tool.json` of a deployed processor, #1269
+  * `ocrd network client processing check-log` to retrieve the log data for a processing job, #1269
+  * Environment variables `OCRD_NETWORK_CLIENT_POLLING_SLEEP` and `OCRD_NETWORK_CLIENT_POLLING_TIMEOUT` to control polling interval and timeout for `ocrd network client {processing processor,workflow run`, #1269
+  * `ocrd workspace clone`/`Resolver.workspace_from_url`: with `clobber_mets=False`, raise a FileExistsError for existing mets.xml on disk, #563, #1268
+  * `ocrd workspace find --download`: print the the correct, up-to-date field, not `None`, #1202, #1266
+
+Fixed:
+
+  * Sanitize `self.imageFilename` for the `pcGtsId` to ensure it is a valid `xml:id`, #1271
+
+## [2.67.2] - 2024-07-19
+
+Fixed:
+
+  * Run `multiprocessing.set_start_method('fork')` only for OSX, #1261
+  * Broken PyPI release, #1262
+
+## [2.67.1] - 2024-07-17
+
+Fixed:
+
+  - Build and tests fixed, no functional changes from #1258
+
+## [2.67.0] - 2024-07-16
+
+Changed:
+
+  - Additional docker base images with preinstalled tensorflow 1 (`core-cuda-tf1`), tensorflow 2 (`core-cuda-tf2`) and torch (`core-cuda-torch`), #1239
+  - Resource Manager: Skip instead of raise an exception download if target file already exists (unless `--overwrite`), #1246
+  - Resource Manager: Try to use bundled `ocrd-all-tool.json` if available, #1250, OCR-D/all#444
+
+Added:
+
+  - `ocrd process` does support `-U/--mets-server`, #1243
+
+Fixed:
+
+  - `ocrd process`-derived tasks are not run in a temporary directory when not called from within workspace, #1243
+  - regression from #1238 where processors failed that had required parameters, #1255, #1256
+  - METS Server: Unlink UDS sockert file if it exists before startup, #1244
+  - Resource Manager: Do not create zero-size files for failing downloads, #1201, #1246
+  - Workspace.add_file: Allow multiple processors to create file group folders simultaneously, #1203, #1253
+  - Resource Manager: Do not try to run `--dump-json` for known non-processors `ocrd-{cis-data,import,make}`, #1218, #1249
+  - Resource Manager: Properly handle copying of directories, #1237, #1248
+  - bashlib: regression in parsing JSON from introducing parameter preset files, #1258
+
+Removed:
+
+  - Defaults for `-I/--input-file-grp`/`-O/--output-file-grp`, #1256, #274
+
+## [2.66.1] - 2024-06-26
+
+Fixed:
+
+  * GHA Docker: build docker.io first, then tag ghcr.io
+
+## [2.66.0] - 2024-06-07
+
+Fixed:
+
+  * `OcrdFile.url` can now be removed properly, #1226, #1227
+  * `ocrd workspace find --undo-download`: Only remove file refs if it's an actual download, #1150, #1235
+  * `ocrd workspace find --undo-download`: When `--keep-files` is not set, remove file from disk, #1150, #1235
+  * `OCRD_LOGGING_DEBUG`: Normalize/lowercase boolean values, #1230, #1231
+  * `Workspace.download_file`: Use `Ocrd.local_filename` if set but not already present in the FS, #1149, #1228
+
+Changed:
+
+  * Install ocrd with `pip --editable` inside Docker, #1225, OCR-D/ocrd_all#416
+  * Reduce log spam in ocrd_network, #1222
+  * CI: Stop testing for 3.7, #1207, #1221
+
+Added:
+
+  * Separate docker versions for tensorflow v1, tensorflow v2 and torch, #1186
+  * Processing server can serve as a proxy for METS Server TCP requests, forwarding to UDS, #1220
+  * `ocrd workspace clean` to remove "untracked", i.e. not METS-referenced, files, #1150, #1236
+  * `-p` now supports parameter preset resources in addition to raw JSON and absolute/relative paths to JSON files, #930, #969, #1238
+
+## [2.65.0] - 2024-05-03
+
+Fixed:
+
+  - bashlib processors will download on-demand, like pythonic processors do, #1216, #1217
+
+Changed:
+
+  - Replace `distutils` which equivalents from `shutil` for compatibility with python 3.12+, #1219
+  - CI: Updated GitHub actions, #1206
+  - CI: Fixed scrutinizer, #1217
+
+Added:
+
+  - Integration tests for `ocrd_network`, #1184
+
+## [2.64.1] - 2024-04-22
+
+Fixed:
+
+  * Broken PyPI release
+
+## [2.64.0] - 2024-04-22
+
+Removed:
+
+  * Support for Python `<=` 3.7, #1207
+
+Fixed:
+
+  * remove duplicate description of `OCRD_DOWNLOAD_TIMEOUT` in `--help`, #1204
+  * Use `importlib_metadata` shim for 3.9+, #1210, OCR-D/ocrd_froc#10
+
 ## [2.63.3] - 2024-03-07
 
 Added:
@@ -96,7 +222,7 @@ Fixed:
 
 Fixed:
 
-  * Log level downgraded from DEBUG to INFO in loggin.conf, #1161
+  * Log level downgraded from DEBUG to INFO in logging.conf, #1161
   * log OAI check as `DEBUG` not `INFO`, #1160
 
 ## [2.60.1] - 2023-12-15
@@ -121,7 +247,7 @@ Changed:
 Fixed:
 
   * Chunking algorithm for `ocrd workspace list-page` now handles edge cases properly, #1145
-  * Avoid deadlocks in `ocrd_network` if procesing workers not deployed, #1125, #1142
+  * Avoid deadlocks in `ocrd_network` if processing workers not deployed, #1125, #1142
 
 ## [2.59.0] - 2023-11-27
 
@@ -262,7 +388,7 @@ Changed:
 
 Added
 
-  * Environement variables to control optional retries and timeouts for downloading files:
+  * Environment variables to control optional retries and timeouts for downloading files:
     * `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of workspace files. #1073
     * `OCRD_DOWNLOAD_TIMEOUT`: Timeout in seconds for connecting or reading (comma-separated) when downloading. #1073
   * Environment variables used throughout core are now documented in README and `ocrd --help`,  #1073
@@ -548,7 +674,7 @@ Fixed:
 
 Changed:
 
-  * Consistenly use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
+  * Consistently use snake_case but continue to support CamelCase for kwargs and CLI options, #874, #862
   * Update to spec to 3.19.0, introducing greater flexibility in describing parameters, #872, #848, OCR-D/spec#206
   * `ocrd workspace merge`: support mapping `file_id` and `page_id` in addition to `file_grp`, #886, #888
   * `ocrd workspace merge`: rebase `OcrdFile.url` to target workspace, #887, #888
@@ -958,7 +1084,7 @@ Changed:
 
 Added:
 
-  * processors can `self.add_metada(pcgts)` to add a self-describing `pg:MetadataItem`, #574
+  * processors can `self.add_metadata(pcgts)` to add a self-describing `pg:MetadataItem`, #574
 
 
 ## [2.13.2] - 2020-08-13
@@ -1005,7 +1131,7 @@ Fixed:
 
 Fixed:
 
-  * logging no longer intereferes with `--dump-json`/`--help`/`--version`, #540, #546
+  * logging no longer interferes with `--dump-json`/`--help`/`--version`, #540, #546
 
 ## [2.12.3] - 2020-07-23
 
@@ -1122,7 +1248,7 @@ Changed:
 Added:
 
   * Workspace: Optional `overwrite_mode` that sets `force` for all operations
-  * `OcrdPage`: `get_AllAlternaiveImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
+  * `OcrdPage`: `get_AllAlternativeImagePaths` to list all `pc:AlternativeImage/@filename` referenced in a PcGts, #434, #471
   * `ocrd workspace bulk-add` to add many files at once to a workspace, #428
   * `OcrdMets.add_file`: `ignore` parameter to optionally disable looking for existing files, #428
 
@@ -1832,7 +1958,7 @@ Changed:
       a temporary directory but reuse the existing directory
     * When not providing `mets_basename`, assume the last URL path segment to be
       the METS basename instead of the fixed string `mets.xml`
-  * incoroporate changes to ocrd_tool schema from spec/v2.2.1
+  * incorporate changes to ocrd_tool schema from spec/v2.2.1
 
 ## [0.6.0] - 2018-07-23
 
@@ -2038,6 +2164,15 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.68.0]: ../../compare/v2.68.0..v2.67.2
+[2.67.2]: ../../compare/v2.67.2..v2.67.1
+[2.67.1]: ../../compare/v2.67.1..v2.67.0
+[2.67.0]: ../../compare/v2.67.0..v2.66.1
+[2.66.1]: ../../compare/v2.66.1..v2.66.0
+[2.66.0]: ../../compare/v2.66.0..v2.65.0
+[2.65.0]: ../../compare/v2.65.0..v2.64.1
+[2.64.1]: ../../compare/v2.64.1..v2.64.0
+[2.64.0]: ../../compare/v2.63.0..v2.63.3
 [2.63.3]: ../../compare/v2.63.3..v2.63.1
 [2.63.2]: ../../compare/v2.63.2..v2.63.1
 [2.63.1]: ../../compare/v2.63.1..v2.63.0

@@ -18,6 +18,7 @@ __all__ = [
     'partition_list',
     'is_string',
     'make_file_id',
+    'make_xml_id',
     'nth_url_segment',
     'parse_json_string_or_file',
     'parse_json_string_with_comments',
@@ -95,12 +96,19 @@ def make_file_id(ocrd_file, output_file_grp):
             ret = output_file_grp + '_' + ocrd_file.pageId
         else:
             ret = output_file_grp + '_' + ocrd_file.ID
+    return make_xml_id(ret)
+
+def make_xml_id(idstr: str) -> str:
+    """
+    Turn ``idstr`` into a valid ``xml:id`` literal by replacing ``:`` with ``_``, removing everything non-alphanumeric, ``.`` and ``-`` and prepending `id_` if ``idstr`` starts with a number.
+    """
+    ret = idstr
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
         ret = re.sub(r'[^\w.-]', r'', ret)
     return ret
-
+    
 def nth_url_segment(url, n=-1):
     """
     Return the last /-delimited segment of a URL-like string
@@ -159,7 +167,7 @@ def parse_json_string_with_comments(val):
     jsonstr = re.sub(r'^\s*#.*$', '', val, flags=re.MULTILINE)
     return json.loads(jsonstr)
 
-def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
+def parse_json_string_or_file(*values, resolve_preset_file=None):    # pylint: disable=unused-argument
     """
     Parse a string as either the path to a JSON object or a literal JSON object.
 
@@ -173,7 +181,10 @@ def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
             continue
         try:
             try:
-                with open(value, 'r') as f:
+                path = value
+                if callable(resolve_preset_file):
+                    path = resolve_preset_file(value) or value
+                with open(path, 'r') as f:
                     value_parsed = parse_json_string_with_comments(f.read())
             except (FileNotFoundError, OSError):
                 value_parsed = parse_json_string_with_comments(value.strip())
