@@ -144,7 +144,11 @@ class Processor():
 
         (Override if ``ocrd-tool.json`` is not distributed with the Python package.)
         """
-        return resource_filename(self.__module__.split('.')[0], self.metadata_filename)
+        # XXX HACK
+        module_tokens = self.__module__.split('.')
+        if module_tokens[0] == 'src':
+            module_tokens.pop(0)
+        return resource_filename(module_tokens[0], self.metadata_filename)
 
     @cached_property
     def metadata_rawdict(self) -> dict:
