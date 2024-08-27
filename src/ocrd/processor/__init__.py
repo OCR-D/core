@@ -3,6 +3,7 @@ from .base import (
     ResourceNotFoundError,
     NonUniqueInputFile,
     MissingInputFile,
+    generate_processor_help,
 )
 from .ocrd_page_result import (
     OcrdPageResult,
@@ -11,5 +12,4 @@ from .ocrd_page_result import (
 from .helpers import (
     run_cli,
     run_processor,
-    generate_processor_help
 )

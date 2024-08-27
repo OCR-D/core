@@ -8,7 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 ## [3.0.0b1] - 2024-08-26
 
 Fixed:
-  - actuall apply CLI `--log-filename`
+  - actually apply CLI `--log-filename`
   - adapt to Pillow changes
   - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
 

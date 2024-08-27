@@ -23,6 +23,8 @@ import tarfile
 import io
 import weakref
 from frozendict import frozendict
+
+from click import wrap_text
 from deprecated import deprecated
 from requests import HTTPError
 
@@ -58,7 +60,7 @@ from ocrd_modelfactory import page_from_file
 from ocrd_validators.ocrd_tool_validator import OcrdToolValidator
 
 # XXX imports must remain for backwards-compatibility
-from .helpers import run_cli, run_processor, generate_processor_help # pylint: disable=unused-import
+from .helpers import run_cli, run_processor # pylint: disable=unused-import
 
 
 class ResourceNotFoundError(FileNotFoundError):
@@ -838,3 +840,150 @@ class Processor():
             if ifiles[0] or not require_first:
                 ifts.append(tuple(ifiles))
         return ifts
+
+def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
+    """Generate a string describing the full CLI of this processor including params.
+
+    Args:
+         ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
+         processor_instance (object, optional): the processor implementation
+             (for adding any module/class/function docstrings)
+        subcommand (string): 'worker' or 'server'
+    """
+    doc_help = ''
+    if processor_instance:
+        module = inspect.getmodule(processor_instance)
+        if module and module.__doc__:
+            doc_help += '\n' + inspect.cleandoc(module.__doc__) + '\n'
+        if processor_instance.__doc__:
+            doc_help += '\n' + inspect.cleandoc(processor_instance.__doc__) + '\n'
+        # Try to find the most concrete docstring among the various methods that an implementation
+        # could overload, first serving.
+        # In doing so, compare with Processor to avoid a glitch in the way py>=3.5 inherits docstrings.
+        # (They are supposed to only repeat information inspect.getdoc, rather than inherit __doc__ itself.)
+        for method in ['process_page_pcgts', 'process_page_file', 'process_workspace', 'process']:
+            instance_method = getattr(processor_instance, method)
+            superclass_method = getattr(Processor, method)
+            if instance_method.__doc__ and instance_method.__doc__ != superclass_method.__doc__:
+                doc_help += '\n' + inspect.cleandoc(instance_method.__doc__) + '\n'
+                break
+        if doc_help:
+            doc_help = '\n\n' + wrap_text(doc_help, width=72,
+                                          initial_indent='  > ',
+                                          subsequent_indent='  > ',
+                                          preserve_paragraphs=True)
+    subcommands = '''\
+    worker      Start a processing worker rather than do local processing
+    server      Start a processor server rather than do local processing
+'''
+
+    processing_worker_options = '''\
+  --queue                         The RabbitMQ server address in format
+                                  "amqp://{user}:{pass}@{host}:{port}/{vhost}"
+                                  [amqp://admin:admin@localhost:5672]
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+  --log-filename                  Filename to redirect STDOUT/STDERR to,
+                                  if specified.
+'''
+
+    processing_server_options = '''\
+  --address                       The Processor server address in format
+                                  "{host}:{port}"
+  --database                      The MongoDB server address in format
+                                  "mongodb://{host}:{port}"
+                                  [mongodb://localhost:27018]
+'''
+
+    processing_options = '''\
+  -m, --mets URL-PATH             URL or file path of METS to process [./mets.xml]
+  -w, --working-dir PATH          Working directory of local workspace [dirname(URL-PATH)]
+  -I, --input-file-grp USE        File group(s) used as input
+  -O, --output-file-grp USE       File group(s) used as output
+  -g, --page-id ID                Physical page ID(s) to process instead of full document []
+  --overwrite                     Remove existing output pages/images
+                                  (with "--page-id", remove only those).
+                                  Short-hand for OCRD_EXISTING_OUTPUT=OVERWRITE
+  --debug                         Abort on any errors with full stack trace.
+                                  Short-hand for OCRD_MISSING_OUTPUT=ABORT
+  --profile                       Enable profiling
+  --profile-file PROF-PATH        Write cProfile stats to PROF-PATH. Implies "--profile"
+  -p, --parameter JSON-PATH       Parameters, either verbatim JSON string
+                                  or JSON file path
+  -P, --param-override KEY VAL    Override a single JSON object key-value pair,
+                                  taking precedence over --parameter
+  -U, --mets-server-url URL       URL of a METS Server for parallel incremental access to METS
+                                  If URL starts with http:// start an HTTP server there,
+                                  otherwise URL is a path to an on-demand-created unix socket
+  -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
+                                  Override log level globally [INFO]
+'''
+
+    information_options = '''\
+  -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
+  -L, --list-resources            List names of processor resources
+  -J, --dump-json                 Dump tool description as JSON
+  -D, --dump-module-dir           Show the 'module' resource location path for this processor
+  -h, --help                      Show this message
+  -V, --version                   Show version
+'''
+
+    parameter_help = ''
+    if 'parameters' not in ocrd_tool or not ocrd_tool['parameters']:
+        parameter_help = '  NONE\n'
+    else:
+        def wrap(s):
+            return wrap_text(s, initial_indent=' '*3,
+                             subsequent_indent=' '*4,
+                             width=72, preserve_paragraphs=True)
+        for param_name, param in ocrd_tool['parameters'].items():
+            parameter_help += wrap('"%s" [%s%s]' % (
+                param_name,
+                param['type'],
+                ' - REQUIRED' if 'required' in param and param['required'] else
+                ' - %s' % json.dumps(param['default']) if 'default' in param else ''))
+            parameter_help += '\n ' + wrap(param['description'])
+            if 'enum' in param:
+                parameter_help += '\n ' + wrap('Possible values: %s' % json.dumps(param['enum']))
+            parameter_help += "\n"
+
+    if not subcommand:
+        return f'''\
+Usage: {ocrd_tool['executable']} [worker|server] [OPTIONS]
+
+  {ocrd_tool['description']}{doc_help}
+
+Subcommands:
+{subcommands}
+Options for processing:
+{processing_options}
+Options for information:
+{information_options}
+Parameters:
+{parameter_help}
+'''
+    elif subcommand == 'worker':
+        return f'''\
+Usage: {ocrd_tool['executable']} worker [OPTIONS]
+
+  Run {ocrd_tool['executable']} as a processing worker.
+
+  {ocrd_tool['description']}{doc_help}
+
+Options:
+{processing_worker_options}
+'''
+    elif subcommand == 'server':
+        return f'''\
+Usage: {ocrd_tool['executable']} server [OPTIONS]
+
+  Run {ocrd_tool['executable']} as a processor sever.
+
+  {ocrd_tool['description']}{doc_help}
+
+Options:
+{processing_server_options}
+'''
+    else:
+        pass
