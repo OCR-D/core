@@ -185,7 +185,7 @@ How to deal with missing output files (for some fileGrp/pageId) during processin
     parser=str)
 
 config.add("OCRD_MAX_MISSING_OUTPUTS",
-    description="Maximal rate of skipped/fallback pages among all processed pages before aborting.",
+    description="Maximal rate of skipped/fallback pages among all processed pages before aborting (decimal fraction, ignored if negative).",
     default=(True, 0.1),
     parser=float)
 

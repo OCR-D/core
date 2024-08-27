@@ -219,6 +219,8 @@ class TestProcessor(TestCase):
     def test_run_output_missing(self):
         ws = self.workspace
         from ocrd_utils import config
+        # do not raise for number of failures:
+        config.OCRD_MAX_MISSING_OUTPUTS = -1
         config.OCRD_MISSING_OUTPUT = 'SKIP'
         run_processor(DummyProcessorWithOutputFailures, workspace=ws,
                       input_file_grp="OCR-D-IMG",
@@ -237,6 +239,14 @@ class TestProcessor(TestCase):
                       input_file_grp="OCR-D-IMG",
                       output_file_grp="OCR-D-OUT")
         assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+        # do raise for number of failures:
+        config.OCRD_MAX_MISSING_OUTPUTS = 0.4
+        config.OCRD_MISSING_OUTPUT = 'SKIP'
+        with pytest.raises(Exception) as exc:
+            run_processor(DummyProcessorWithOutputFailures, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT")
+            assert "too many failures" in str(exc.value)
 
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
