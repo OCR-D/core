@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+ - `Processor.max_workers`: class attribute to control per-page parallelism of this implementation
+ - `Processor.max_page_seconds`: class attribute to control per-page timeout of this implementation
+ - `OCRD_MAX_PARALLEL_PAGES` for whether and how many workers should process pages in parallel
+ - `OCRD_PROCESSING_PAGE_TIMEOUT` for whether and how long processors should wait for single pages
+ - `OCRD_MAX_MISSING_OUTPUTS` for maximum rate (fraction) of pages before making `OCRD_MISSING_OUTPUT=abort`
+
 ## [3.0.0b1] - 2024-08-26
 
 Fixed:
