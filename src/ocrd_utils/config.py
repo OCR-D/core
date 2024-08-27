@@ -120,6 +120,16 @@ config.add('OCRD_MAX_PROCESSOR_CACHE',
     parser=int,
     default=(True, 128))
 
+config.add('OCRD_MAX_PARALLEL_PAGES',
+    description="Maximum number of processor threads for page-parallel processing (within each Processor's selected page range, independent of the number of Processing Workers or Processor Servers). If set >1, then a METS Server must be used for METS synchronisation.",
+    parser=int,
+    default=(True, 1))
+
+config.add('OCRD_PROCESSING_PAGE_TIMEOUT',
+    description="Timeout in seconds for processing a single page. If set >0, when exceeded, the same as OCRD_MISSING_OUTPUT applies.",
+    parser=int,
+    default=(True, 0))
+
 config.add("OCRD_PROFILE",
     description="""\
 Whether to enable gathering runtime statistics

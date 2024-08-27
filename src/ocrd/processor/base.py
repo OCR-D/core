@@ -23,14 +23,16 @@ import tarfile
 import io
 import weakref
 from frozendict import frozendict
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from click import wrap_text
 from deprecated import deprecated
 from requests import HTTPError
 
-from ocrd.workspace import Workspace
+from ..workspace import Workspace
+from ..mets_server import ClientSideOcrdMets
 from ocrd_models.ocrd_file import OcrdFileType
-from ocrd.processor.ocrd_page_result import OcrdPageResult
+from .ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
@@ -120,7 +122,27 @@ class Processor():
     maximum number of cached instances (ignored if negative), to be applied on top of
     :py:data:`~ocrd_utils.config.OCRD_MAX_PROCESSOR_CACHE` (i.e. whatever is smaller).
 
-    (Override this if you know how many instances fit into memory at once.)
+    (Override this if you know how many instances fit into memory - GPU / CPU RAM - at once.)
+    """
+
+    max_workers : int = -1
+    """
+    maximum number of processor threads for page-parallel processing (ignored if negative),
+    to be applied on top of :py:data:`~ocrd_utils.config.OCRD_MAX_PARALLEL_PAGES` (i.e.
+    whatever is smaller).
+
+    (Override this if you know how many pages fit into processing units - GPU shaders / CPU cores
+    - at once, or if your class is not thread-safe.)
+    """
+
+    max_page_seconds : int = -1
+    """
+    maximum number of seconds may be spent processing a single page (ignored if negative),
+    to be applied on top of :py:data:`~ocrd_utils.config.OCRD_PROCESSING_PAGE_TIMEOUT`
+    (i.e. whatever is smaller).
+
+    (Override this if you know how costly this processor may be, irrespective of image size
+    or complexity of the page.)
     """
 
     @property
@@ -431,7 +453,26 @@ class Processor():
                 nr_succeeded = 0
                 nr_skipped = 0
                 nr_copied = 0
-                # FIXME: add page parallelization by running multiprocessing.Pool (#322)
+
+                # set up multithreading
+                if self.max_workers < 0:
+                    max_workers = config.OCRD_MAX_PARALLEL_PAGES
+                else:
+                    max_workers = min(config.OCRD_MAX_PARALLEL_PAGES, self.max_workers)
+                if max_workers > 1:
+                    assert isinstance(workspace.mets, ClientSideOcrdMets), \
+                        "OCRD_MAX_PARALLEL_PAGES>1 requires also using --mets-server-url"
+                if self.max_page_seconds < 0:
+                    max_seconds = config.OCRD_PROCESSING_PAGE_TIMEOUT
+                else:
+                    max_seconds = min(config.OCRD_PROCESSING_PAGE_TIMEOUT, self.max_page_seconds)
+                executor = ThreadPoolExecutor(
+                    max_workers=max_workers,
+                    thread_name_prefix=f"pagetask.{workspace.mets.unique_identifier}"
+                )
+                self._base_logger.debug("started executor %s", str(executor))
+                tasks = {}
+
                 for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
                     input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
                     page_id = next(input_file.pageId
@@ -450,12 +491,20 @@ class Processor():
                         except (ValueError, FileNotFoundError, HTTPError) as e:
                             self._base_logger.error(repr(e))
                             self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
+                    # process page
+                    tasks[executor.submit(self.process_page_file, *input_files)] = (page_id, input_files)
+                self._base_logger.debug("submitted %d processing tasks", len(tasks))
+
+                for task in tasks:
+                    # wait for results, handle errors
+                    page_id, input_files = tasks[task]
                     # FIXME: differentiate error cases in various ways:
                     # - ResourceNotFoundError → use ResourceManager to download (once), then retry
                     # - transient (I/O or OOM) error → maybe sleep, retry
                     # - persistent (data) error → skip / dummy / raise
                     try:
-                        self.process_page_file(*input_files)
+                        self._base_logger.debug("waiting for output of task %s (page %s) max_seconds=%d", task, page_id, max_seconds)
+                        task.result(timeout=max_seconds)
                         nr_succeeded += 1
                     # exclude NotImplementedError, so we can try process() below
                     except NotImplementedError:
@@ -469,10 +518,10 @@ class Processor():
                         if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
                             # too late here, must not happen
                             raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
-                    # broad coverage of output failures
-                    except Exception as err:
+                    # broad coverage of output failures (including TimeoutError)
+                    except (Exception, TimeoutError) as err:
                         # FIXME: add re-usable/actionable logging
-                        self._base_logger.exception(f"Failure on page {page_id}: {err}")
+                        self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
                         if config.OCRD_MISSING_OUTPUT == 'ABORT':
                             raise err
                         if config.OCRD_MISSING_OUTPUT == 'SKIP':
@@ -484,10 +533,13 @@ class Processor():
                         else:
                             desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
                             raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
+
                 if nr_skipped > 0 and nr_succeeded / nr_skipped < config.OCRD_MAX_MISSING_OUTPUTS:
                     raise Exception(f"too many failures with skipped output ({nr_skipped})")
                 if nr_copied > 0 and nr_succeeded / nr_copied < config.OCRD_MAX_MISSING_OUTPUTS:
                     raise Exception(f"too many failures with fallback output ({nr_skipped})")
+                executor.shutdown()
+
             except NotImplementedError:
                 # fall back to deprecated method
                 self.process()
@@ -511,13 +563,14 @@ class Processor():
         output_file_id = make_file_id(input_file, self.output_file_grp)
         input_pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(input_pcgts)
-        self.workspace.add_file(file_id=output_file_id,
-                                file_grp=self.output_file_grp,
-                                page_id=input_file.pageId,
-                                local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
-                                mimetype=MIMETYPE_PAGE,
-                                content=to_xml(input_pcgts),
-                                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+        self.workspace.add_file(
+            file_id=output_file_id,
+            file_grp=self.output_file_grp,
+            page_id=input_file.pageId,
+            local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
+            mimetype=MIMETYPE_PAGE,
+            content=to_xml(input_pcgts),
+            force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
         )
 
     def process_page_file(self, *input_files : Optional[OcrdFileType]) -> None:
@@ -571,13 +624,14 @@ class Processor():
             )
         result.pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(result.pcgts)
-        self.workspace.add_file(file_id=output_file_id,
-                                file_grp=self.output_file_grp,
-                                page_id=page_id,
-                                local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
-                                mimetype=MIMETYPE_PAGE,
-                                content=to_xml(result.pcgts),
-                                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+        self.workspace.add_file(
+            file_id=output_file_id,
+            file_grp=self.output_file_grp,
+            page_id=page_id,
+            local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
+            mimetype=MIMETYPE_PAGE,
+            content=to_xml(result.pcgts),
+            force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
         )
 
     def process_page_pcgts(self, *input_pcgts : Optional[OcrdPage], page_id : Optional[str] = None) -> OcrdPageResult:
