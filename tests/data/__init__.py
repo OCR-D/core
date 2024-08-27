@@ -1,8 +1,9 @@
 import json
 import os
 import re
+from time import sleep
 from pytest import warns
-from ocrd import Processor
+from ocrd import Processor, OcrdPageResult
 from ocrd_utils import make_file_id, config
 
 DUMMY_TOOL = {
@@ -102,6 +103,29 @@ class DummyProcessorWithOutput(Processor):
                 content='CONTENT',
                 force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
             )
+
+class DummyProcessorWithOutputPagewise(Processor):
+    @property
+    def ocrd_tool(self):
+        dummy_tool = dict(DUMMY_TOOL)
+        dummy_tool['parameters']['sleep'] = {'type': 'number'}
+        return dummy_tool
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
+
+    def __init__(self, *args, **kwargs):
+        kwargs['download_files'] = False
+        super().__init__(*args, **kwargs)
+
+    def process_page_pcgts(self, pcgts, page_id=None):
+        sleep(self.parameter['sleep'])
+        return OcrdPageResult(pcgts)
 
 class DummyProcessorWithOutputFailures(Processor):
     @property

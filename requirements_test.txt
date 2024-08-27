@@ -3,6 +3,7 @@ cryptography < 43.0.0
 pytest >= 4.0.0
 generateDS == 2.35.20
 pytest-benchmark >= 3.2.3
+pytest-timeout
 coverage >= 4.5.2
 sphinx
 sphinx_click

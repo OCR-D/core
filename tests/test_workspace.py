@@ -87,10 +87,10 @@ def test_workspace_add_file_overwrite(plain_workspace):
     plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id='phys1', local_filename=fpath)
     with pytest.raises(FileExistsError) as fn_exc:
         plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id=None, local_filename=fpath)
-        assert str(fn_exc.value) == "File with file_id='ID1' already exists"
+    assert str(fn_exc.value) == "File with file_id='ID1' already exists"
     with pytest.raises(FileExistsError) as fn_exc:
         plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id='phys2', local_filename=fpath, force=True)
-        assert 'cannot mitigate' in str(fn_exc.value)
+    assert 'cannot mitigate' in str(fn_exc.value)
     plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT2', page_id='phys1', local_filename=fpath, force=True)
 
     f = plain_workspace.mets.find_all_files()[0]
@@ -684,7 +684,7 @@ def test_merge_overwrite(tmp_path):
         ws1.add_file('X', page_id='X', mimetype='X', file_id='id123', local_filename='X/X', content='ws1')
         ws2.add_file('X', page_id='X', mimetype='X', file_id='id456', local_filename='X/X', content='ws2')
         ws1.merge(ws2)
-        assert "would overwrite" == str(exc.value)
+    assert "would overwrite" == str(exc.value)
 
 def test_merge_with_filter(plain_workspace, tmp_path):
     # arrange

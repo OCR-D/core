@@ -9,9 +9,11 @@ from tests.data import (
     DummyProcessor,
     DummyProcessorWithRequiredParameters,
     DummyProcessorWithOutput,
+    DummyProcessorWithOutputPagewise,
     DummyProcessorWithOutputFailures,
     IncompleteProcessor
 )
+from tests.test_mets_server import fixture_start_mets_server
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
 from ocrd.resolver import Resolver
@@ -232,7 +234,7 @@ class TestProcessor(TestCase):
             run_processor(DummyProcessorWithOutputFailures, workspace=ws,
                           input_file_grp="OCR-D-IMG",
                           output_file_grp="OCR-D-OUT")
-            assert "intermittent" in str(exc.value)
+        assert "intermittent" in str(exc.value)
         config.OCRD_MISSING_OUTPUT = 'COPY'
         config.OCRD_EXISTING_OUTPUT = 'SKIP'
         run_processor(DummyProcessorWithOutputFailures, workspace=ws,
@@ -246,7 +248,28 @@ class TestProcessor(TestCase):
             run_processor(DummyProcessorWithOutputFailures, workspace=ws,
                           input_file_grp="OCR-D-IMG",
                           output_file_grp="OCR-D-OUT")
-            assert "too many failures" in str(exc.value)
+        assert "too many failures" in str(exc.value)
+
+    def test_run_output_timeout(self):
+        ws = self.workspace
+        from ocrd_utils import config
+        # do not raise for number of failures:
+        config.OCRD_MAX_MISSING_OUTPUTS = -1
+        config.OCRD_MISSING_OUTPUT = 'ABORT'
+        config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
+        run_processor(DummyProcessorWithOutputPagewise, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={"sleep": 1})
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+        config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+        config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
+        from concurrent.futures import TimeoutError
+        with pytest.raises(TimeoutError) as exc:
+            run_processor(DummyProcessorWithOutputPagewise, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT",
+                          parameter={"sleep": 3})
 
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
@@ -261,7 +284,7 @@ class TestProcessor(TestCase):
                 run_processor(DummyProcessorWithOutput, workspace=ws,
                               input_file_grp="GRP1",
                               output_file_grp="OCR-D-OUT")
-                assert str(exc.value) == "File with ID='OCR-D-OUT_phys_0001' already exists"
+            assert str(exc.value) == "File with ID='OCR-D-OUT_phys_0001' already exists"
             config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
@@ -386,6 +409,23 @@ class TestProcessor(TestCase):
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
         r = self.capture_out_err()
         assert 'ERROR ocrd.processor.base - Found no file for page phys_0001 in file group GRP1' in r.err
+
+# 2s (+ 2s tolerance) instead of 3*3s (+ 2s tolerance)
+@pytest.mark.timeout(4)
+def test_run_output_parallel(start_mets_server):
+    mets_server_url, ws = start_mets_server
+    from ocrd_utils import config
+    # do not raise for single-page timeout
+    config.OCRD_PROCESSING_PAGE_TIMEOUT = -1
+    # do not raise for number of failures:
+    config.OCRD_MAX_MISSING_OUTPUTS = -1
+    config.OCRD_MAX_PARALLEL_PAGES = 3
+    run_processor(DummyProcessorWithOutputPagewise, workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  parameter={"sleep": 2},
+                  mets_server_url=mets_server_url)
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
 
 if __name__ == "__main__":
     main(__file__)
