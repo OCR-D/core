@@ -28,8 +28,8 @@ pipeline {
     stage('Set up variables') {
       steps {
         script {
-          echo 'Use snapshot nexus for now'
-            env.DOCKER_REPO_ID = "artefakt.dev.sbb.berlin:5003"
+          echo 'Use release nexus'
+            env.DOCKER_REPO_ID = "artefakt.dev.sbb.berlin:5005"
             echo 'Determine OCR-D version'
             env.OCRD_VERSION = readFile 'VERSION'
             echo 'Set Docker tag'
