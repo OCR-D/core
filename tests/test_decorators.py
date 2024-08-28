@@ -64,6 +64,7 @@ class TestDecorators(TestCase):
             pytest.skip(f"ocrd_logging.conf found at {get_logging_config_files()}, skipping logging test")
         import logging
         disableLogging()
+        assert logging.getLogger('').getEffectiveLevel() == logging.WARNING
         assert logging.getLogger('ocrd').getEffectiveLevel() == logging.WARNING
         initLogging()
         assert logging.getLogger('ocrd').getEffectiveLevel() == logging.INFO
