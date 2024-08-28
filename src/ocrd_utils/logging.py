@@ -210,11 +210,13 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     # logging.basicConfig(level=logging.CRITICAL)
     # logging.disable(logging.ERROR)
     # remove all handlers for the ocrd logger
-    for logger_name in ROOT_OCRD_LOGGERS:
+    for logger_name in ROOT_OCRD_LOGGERS + ['']:
         for handler in logging.getLogger(logger_name).handlers[:]:
             logging.getLogger(logger_name).removeHandler(handler)
     for logger_name in LOGGING_DEFAULTS:
         logging.getLogger(logger_name).setLevel(logging.NOTSET)
+    # Python default log level is WARNING
+    logging.root.setLevel(logging.WARNING)
 
 # Initializing stream handlers at module level
 # would cause message output in all runtime contexts,
