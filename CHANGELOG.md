@@ -12,10 +12,13 @@ Added:
  - `OCRD_PROCESSING_PAGE_TIMEOUT` for whether and how long processors should wait for single pages
  - `OCRD_MAX_MISSING_OUTPUTS` for maximum rate (fraction) of pages before making `OCRD_MISSING_OUTPUT=abort`
 
+Fixed:
+  - `disableLogging`: also re-instate root logger to Python defaults
+
 ## [3.0.0b1] - 2024-08-26
 
 Fixed:
-  - actually apply CLI `--log-filename`
+  - actually apply CLI `--log-filename`, and show in `--help`
   - adapt to Pillow changes
   - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
 
