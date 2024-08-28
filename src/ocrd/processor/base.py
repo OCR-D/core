@@ -991,6 +991,7 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
                                   otherwise URL is a path to an on-demand-created unix socket
   -l, --log-level [OFF|ERROR|WARN|INFO|DEBUG|TRACE]
                                   Override log level globally [INFO]
+  --log-filename LOG-PATH         File to redirect stderr logging to (overriding ocrd_logging.conf).
 '''
 
     information_options = '''\
