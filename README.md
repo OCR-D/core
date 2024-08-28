@@ -47,17 +47,12 @@ complete stack of OCR-D-related software.
 
 The easiest way to install is via `pip`:
 
-```sh
-pip install ocrd
+    pip install ocrd
 
-# or just the functionality you need, e.g.
-
-pip install ocrd_modelfactory
-```
 
 All Python software released by [OCR-D](https://github.com/OCR-D) requires Python 3.8 or higher.
 
-**NOTE** Some OCR-D-Tools (or even test cases) _might_ reveal an unintended behavior if you have specific environment modifications, like:
+> **NOTE** Some OCR-D tools (or even test cases) _might_ reveal an unintended behavior if you have specific environment modifications, like:
 * using a custom build of [ImageMagick](https://github.com/ImageMagick/ImageMagick), whose format delegates are different from what OCR-D supposes
 * custom Python logging configurations in your personal account
 
@@ -82,7 +77,6 @@ Almost all behaviour of the OCR-D/core software is configured via CLI options an
 
 Some parts of the software are configured via environment variables:
 
-* `OCRD_METS_CACHING`: If set to `true`, access to the METS file is cached, speeding in-memory search and modification.
 * `OCRD_PROFILE`: This variable configures the built-in CPU and memory profiling. If empty, no profiling is done. Otherwise expected to contain any of the following tokens:
   * `CPU`: Enable CPU profiling of processor runs
   * `RSS`: Enable RSS memory profiling
@@ -95,17 +89,45 @@ Some parts of the software are configured via environment variables:
 * `XDG_CONFIG_HOME`: Directory to look for `./ocrd/resources.yml` (i.e. `ocrd resmgr` user database) – defaults to `$HOME/.config`.
 * `XDG_DATA_HOME`: Directory to look for `./ocrd-resources/*` (i.e. `ocrd resmgr` data location) – defaults to `$HOME/.local/share`.
 
-* `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of workspace files.
+* `OCRD_DOWNLOAD_RETRIES`: Number of times to retry failed attempts for downloads of resources or workspace files.
 * `OCRD_DOWNLOAD_TIMEOUT`: Timeout in seconds for connecting or reading (comma-separated) when downloading.
+
+* `OCRD_MISSING_INPUT`: How to deal with missing input files (for some fileGrp/pageId) during processing:
+  * `SKIP`: ignore and proceed with next page's input
+  * `ABORT`: throw `MissingInputFile` exception
+
+* `OCRD_MISSING_OUTPUT`: How to deal with missing output files (for some fileGrp/pageId) during processing:
+  * `SKIP`: ignore and proceed processing next page
+  * `COPY`: fall back to copying input PAGE to output fileGrp for page
+  * `ABORT`: re-throw whatever caused processing to fail
+
+* `OCRD_MAX_MISSING_OUTPUTS`: Maximal rate of skipped/fallback pages among all processed pages before aborting (decimal fraction, ignored if negative).
+
+* `OCRD_EXISTING_OUTPUT`: How to deal with already existing output files (for some fileGrp/pageId) during processing:
+  * `SKIP`: ignore and proceed processing next page
+  * `OVERWRITE`: force writing result to output fileGrp for page
+  * `ABORT`: re-throw `FileExistsError` exception
+
 
 * `OCRD_METS_CACHING`: Whether to enable in-memory storage of OcrdMets data structures for speedup during processing or workspace operations.
 
 * `OCRD_MAX_PROCESSOR_CACHE`: Maximum number of processor instances (for each set of parameters) to be kept in memory (including loaded models) for processing workers or processor servers.
 
+* `OCRD_MAX_PARALLEL_PAGES`: Maximum number of processor threads for page-parallel processing (within each Processor's selected page range, independent of the number of Processing Workers or Processor Servers). If set `>1`, then a METS Server must be used for METS synchronisation.
+
+* `OCRD_PROCESSING_PAGE_TIMEOUT`: Timeout in seconds for processing a single page. If set >0, when exceeded, the same as OCRD_MISSING_OUTPUT applies.
+
 * `OCRD_NETWORK_SERVER_ADDR_PROCESSING`: Default address of Processing Server to connect to (for `ocrd network client processing`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKFLOW`: Default address of Workflow Server to connect to (for `ocrd network client workflow`).
 * `OCRD_NETWORK_SERVER_ADDR_WORKSPACE`: Default address of Workspace Server to connect to (for `ocrd network client workspace`).
 * `OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS`: Number of attempts for a worker to create its queue. Helpful if the rabbitmq-server needs time to be fully started.
+
+* `OCRD_NETWORK_CLIENT_POLLING_SLEEP`: How many seconds to sleep before trying `ocrd network client` again.
+* `OCRD_NETWORK_CLIENT_POLLING_TIMEOUT`: Timeout for a blocking `ocrd network client` (in seconds).
+
+* `OCRD_NETWORK_SOCKETS_ROOT_DIR`: The root directory where all mets server related socket files are created.
+* `OCRD_NETWORK_LOGS_ROOT_DIR`: The root directory where all ocrd_network related file logs are stored.
+
 
 
 ## Packages
