@@ -22,13 +22,16 @@ from uuid import uuid4
 from requests.exceptions import ConnectionError
 
 from ocrd import Resolver, OcrdMetsServer, Workspace
-from ocrd_utils import pushd_popd, MIMETYPE_PAGE
+from ocrd_utils import pushd_popd, MIMETYPE_PAGE, initLogging, setOverrideLogLevel
 
-WORKSPACE_DIR = '/tmp/ocrd-mets-server'
 TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://127.0.0.1:12345']
 
+initLogging()
+setOverrideLogLevel(10)
+
 @fixture(scope='function', name='start_mets_server', params=TRANSPORTS)
-def fixture_start_mets_server(request) -> Iterable[Tuple[str, Workspace]]:
+def fixture_start_mets_server(request, tmpdir) -> Iterable[Tuple[str, Workspace]]:
+    tmpdir = str(tmpdir)
     def _start_mets_server(*args, **kwargs):
         mets_server = OcrdMetsServer(*args, **kwargs)
         mets_server.startup()
@@ -39,21 +42,22 @@ def fixture_start_mets_server(request) -> Iterable[Tuple[str, Workspace]]:
         if exists(mets_server_url):
             remove(mets_server_url)
 
-    if exists(WORKSPACE_DIR):
-        rmtree(WORKSPACE_DIR, ignore_errors=True)
+    if exists(tmpdir):
+        rmtree(tmpdir, ignore_errors=True)
 
-    copytree(assets.path_to('SBB0000F29300010000/data'), WORKSPACE_DIR)
-    workspace = Workspace(Resolver(), WORKSPACE_DIR)
+    copytree(assets.path_to('SBB0000F29300010000/data'), tmpdir)
+    workspace = Workspace(Resolver(), tmpdir)
     p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': request.param})
     p.start()
     sleep(1)  # sleep to start up server
-    yield mets_server_url, Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
+    workspace_server = Workspace(Resolver(), tmpdir, mets_server_url=mets_server_url)
+    yield mets_server_url, workspace_server
     p.terminate()
-    rmtree(WORKSPACE_DIR, ignore_errors=True)
+    rmtree(tmpdir, ignore_errors=True)
 
 def add_file_server(x):
-    mets_server_url, i = x
-    workspace_server = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
+    mets_server_url, directory, i = x
+    workspace_server = Workspace(Resolver(), directory, mets_server_url=mets_server_url)
     workspace_server.add_file(
         'FOO',
         local_filename=f'local_filename{i}',
@@ -64,8 +68,8 @@ def add_file_server(x):
     )
 
 def add_agent_server(x):
-    mets_server_url, i = x
-    workspace_server = Workspace(resolver=Resolver(), directory=WORKSPACE_DIR, mets_server_url=mets_server_url)
+    mets_server_url, directory, i = x
+    workspace_server = Workspace(Resolver(), directory, mets_server_url=mets_server_url)
     workspace_server.mets.add_agent(
         name=f'proc{i}',
         _type='baz',
@@ -82,7 +86,10 @@ def test_mets_server_add_file(start_mets_server):
 
     # add NO_FILES files in parallel
     with Pool() as pool:
-        pool.map(add_file_server, zip(repeat(mets_server_url), range(NO_FILES)))
+        pool.map(add_file_server, zip(
+            repeat(mets_server_url),
+            repeat(workspace_server.directory),
+            range(NO_FILES)))
 
     assert set(workspace_server.mets.file_groups) == set( [
         'OCR-D-IMG',
@@ -107,7 +114,7 @@ def test_mets_server_add_file(start_mets_server):
     assert len(workspace_server.mets.find_all_files(fileGrp='FOO')) == NO_FILES
 
     # not yet synced
-    workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
+    workspace_file = Workspace(Resolver(), workspace_server.directory)
     assert len(workspace_file.mets.find_all_files(fileGrp='FOO')) == 0
 
     # sync
@@ -125,13 +132,16 @@ def test_mets_server_add_agents(start_mets_server):
 
     # add NO_AGENTS agents in parallel
     with Pool() as pool:
-        pool.map(add_agent_server, zip(repeat(mets_server_url), list(range(NO_AGENTS))))
+        pool.map(add_agent_server, zip(
+            repeat(mets_server_url),
+            repeat(workspace_server.directory),
+            list(range(NO_AGENTS))))
 
     assert len(workspace_server.mets.agents) == NO_AGENTS + no_agents_before
     # XXX not a tuple
     assert workspace_server.mets.agents[-1].notes[0][0] == {'{https://ocr-d.de}foo': 'bar'}
 
-    workspace_file = Workspace(Resolver(), WORKSPACE_DIR)
+    workspace_file = Workspace(Resolver(), workspace_server.directory)
     assert len(workspace_file.mets.agents) == no_agents_before
 
     # sync
@@ -142,7 +152,7 @@ def test_mets_server_add_agents(start_mets_server):
 
 def test_mets_server_str(start_mets_server):
     mets_server_url, workspace_server = start_mets_server
-    workspace_server = Workspace(Resolver(), WORKSPACE_DIR, mets_server_url=mets_server_url)
+    workspace_server = Workspace(Resolver(), workspace_server.directory, mets_server_url=mets_server_url)
     f = next(workspace_server.find_files())
     assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=FILE_0001_IMAGE, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/FILE_0001_IMAGE.tif]/>'
     a = workspace_server.mets.agents[0]
@@ -182,7 +192,7 @@ def test_mets_server_socket_stop(start_mets_server):
         assert True, 'No stop conditions to test for TCP server'
     else:
         assert Path(mets_server_url).exists()
-        assert workspace_server.mets.workspace_path == WORKSPACE_DIR
+        assert workspace_server.mets.workspace_path == workspace_server.directory
         workspace_server.mets.stop()
         with raises(ConnectionError):
             workspace_server.mets.file_groups
