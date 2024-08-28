@@ -301,12 +301,12 @@ class Processor():
         if ocrd_tool is not None:
             deprecation_warning("Passing 'ocrd_tool' as keyword argument to Processor is deprecated - "
                                 "use or override metadata/executable/ocrd-tool properties instead")
-            self._ocrd_tool = ocrd_tool
-            self._executable = ocrd_tool['executable']
+            self.ocrd_tool = ocrd_tool
+            self.executable = ocrd_tool['executable']
         if version is not None:
             deprecation_warning("Passing 'version' as keyword argument to Processor is deprecated - "
                                 "use or override metadata/version properties instead")
-            self._version = version
+            self.version = version
         if workspace is not None:
             deprecation_warning("Passing a workspace argument other than 'None' to Processor "
                                 "is deprecated - pass as argument to process_workspace instead")
