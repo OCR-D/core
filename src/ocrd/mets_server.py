@@ -120,7 +120,7 @@ class ClientSideOcrdMets:
 
     def __init__(self, url, workspace_path: Optional[str] = None):
         self.protocol = "tcp" if url.startswith("http://") else "uds"
-        self.log = getLogger(f"ocrd.mets_client[{url}]")
+        self.log = getLogger(f"ocrd.models.ocrd_mets.client.{url}")
         self.url = url if self.protocol == "tcp" else f'http+unix://{url.replace("/", "%2F")}'
         self.ws_dir_path = workspace_path if workspace_path else None
 
