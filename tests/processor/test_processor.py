@@ -9,6 +9,7 @@ from tests.data import (
     DummyProcessor,
     DummyProcessorWithRequiredParameters,
     DummyProcessorWithOutput,
+    DummyProcessorWithOutputLegacy,
     DummyProcessorWithOutputPagewise,
     DummyProcessorWithOutputFailures,
     IncompleteProcessor
@@ -217,6 +218,14 @@ class TestProcessor(TestCase):
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
+
+    def test_run_output_legacy(self):
+        ws = self.workspace
+        run_processor(DummyProcessorWithOutputLegacy,
+                      workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT")
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
 
     def test_run_output_missing(self):
         ws = self.workspace

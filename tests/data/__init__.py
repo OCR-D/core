@@ -1,6 +1,5 @@
 import json
 import os
-import re
 from time import sleep
 from pytest import warns
 from ocrd import Processor, OcrdPageResult
@@ -147,7 +146,7 @@ class DummyProcessorWithOutputFailures(Processor):
 
     # no error handling with old process(), so override new API
     def process_page_file(self, input_file):
-        n = int(re.findall(r'\d+', input_file.pageId)[-1])
+        n = self.workspace.mets.physical_pages.index(input_file.pageId) + 1
         if n % 2:
             raise Exception(f"intermittent failure on page {input_file.pageId}")
         output_file_id = make_file_id(input_file, self.output_file_grp)
@@ -159,6 +158,30 @@ class DummyProcessorWithOutputFailures(Processor):
                                 content='CONTENT',
                                 force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
         )
+
+class DummyProcessorWithOutputLegacy(Processor):
+    def __init__(self, *args, **kwargs):
+        kwargs['download_files'] = False
+        kwargs['ocrd_tool'] = DUMMY_TOOL
+        kwargs['version'] = '0.0.1'
+        super().__init__(*args, **kwargs)
+        if hasattr(self, 'output_file_grp'):
+            self.setup()
+
+    def process(self):
+        # print([str(x) for x in self.input_files]
+        for input_file in self.input_files:
+            file_id = make_file_id(input_file, self.output_file_grp)
+            # print(input_file.ID, file_id)
+            self.workspace.add_file(
+                file_id=file_id,
+                file_grp=self.output_file_grp,
+                page_id=input_file.pageId,
+                mimetype=input_file.mimetype,
+                local_filename=os.path.join(self.output_file_grp, file_id),
+                content='CONTENT',
+                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
+            )
 
 class IncompleteProcessor(Processor):
     @property
