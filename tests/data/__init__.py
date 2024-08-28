@@ -107,7 +107,8 @@ class DummyProcessorWithOutput(Processor):
 class DummyProcessorWithOutputPagewise(Processor):
     @property
     def ocrd_tool(self):
-        dummy_tool = dict(DUMMY_TOOL)
+        # make deep copy
+        dummy_tool = json.loads(json.dumps(DUMMY_TOOL))
         dummy_tool['parameters']['sleep'] = {'type': 'number'}
         return dummy_tool
 
