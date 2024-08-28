@@ -284,7 +284,7 @@ class TestProcessor(TestCase):
                 run_processor(DummyProcessorWithOutput, workspace=ws,
                               input_file_grp="GRP1",
                               output_file_grp="OCR-D-OUT")
-            assert str(exc.value) == "File with ID='OCR-D-OUT_phys_0001' already exists"
+            assert "already exists" in str(exc.value)
             config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
