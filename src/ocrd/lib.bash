@@ -156,6 +156,7 @@ ocrd__parse_argv () {
     while [[ "${1:-}" = -* ]];do
         case "$1" in
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
+            --log-filename) exec 2> "$2" ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
             -D|--dump-module-dir) echo $(dirname "$OCRD_TOOL_JSON"); exit ;;
