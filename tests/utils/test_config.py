@@ -57,3 +57,11 @@ def test_OCRD_PROFILE():
     with temp_env_var('OCRD_PROFILE', 'some other value'):
         with raises(ValueError, match="'OCRD_PROFILE' set to invalid value 'some other value'"):
             config.OCRD_PROFILE
+
+def test_defaults():
+    default = config.OCRD_MAX_PROCESSOR_CACHE
+    print(type(default))
+    config.OCRD_MAX_PROCESSOR_CACHE = 2
+    assert config.OCRD_MAX_PROCESSOR_CACHE == 2
+    config.reset_defaults()
+    assert config.OCRD_MAX_PROCESSOR_CACHE == default
