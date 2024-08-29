@@ -78,14 +78,26 @@ class OcrdEnvConfig():
             raise ValueError(f"Unregistered env variable {name}")
         return self._variables[name].has_default
 
+    def reset_defaults(self):
+        for name in self._variables:
+            try:
+                # we cannot use hasattr, because that delegates to getattr,
+                # which we override and provide defaults for (which of course
+                # cannot be removed)
+                if self.__getattribute__(name):
+                    delattr(self, name)
+            except AttributeError:
+                pass
+
     def describe(self, name, *args, **kwargs):
         if not name in self._variables:
             raise ValueError(f"Unregistered env variable {name}")
         return self._variables[name].describe(*args, **kwargs)
 
     def __getattr__(self, name):
+        # will be called if name is not accessible (has not been added directly yet)
         if not name in self._variables:
-            raise ValueError(f"Unregistered env variable {name}")
+            raise AttributeError(f"Unregistered env variable {name}")
         var_obj = self._variables[name]
         try:
             raw_value = self.raw_value(name)
