@@ -470,7 +470,7 @@ class Processor():
                     max_workers=max_workers or 1,
                     thread_name_prefix=f"pagetask.{workspace.mets.unique_identifier}"
                 )
-                self._base_logger.debug("started executor %s", str(executor))
+                self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
                 tasks = {}
 
                 for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
@@ -478,7 +478,7 @@ class Processor():
                     page_id = next(input_file.pageId
                                    for input_file in input_file_tuple
                                    if input_file)
-                    self._base_logger.info(f"processing page {page_id}")
+                    self._base_logger.info(f"preparing page {page_id}")
                     for i, input_file in enumerate(input_file_tuple):
                         if input_file is None:
                             # file/page not found in this file grp
@@ -521,9 +521,10 @@ class Processor():
                     # broad coverage of output failures (including TimeoutError)
                     except (Exception, TimeoutError) as err:
                         # FIXME: add re-usable/actionable logging
-                        self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
                         if config.OCRD_MISSING_OUTPUT == 'ABORT':
+                            self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
                             raise err
+                        self._base_logger.exception(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
                         if config.OCRD_MISSING_OUTPUT == 'SKIP':
                             nr_skipped += 1
                             continue
@@ -587,6 +588,7 @@ class Processor():
         input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
         assert isinstance(input_files[0], get_args(OcrdFileType))
         page_id = input_files[0].pageId
+        self._base_logger.info("processing page %s", page_id)
         for i, input_file in enumerate(input_files):
             assert isinstance(input_file, get_args(OcrdFileType))
             self._base_logger.debug(f"parsing file {input_file.ID} for page {page_id}")
