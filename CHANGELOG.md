@@ -3,6 +3,12 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
+## [3.0.0b3] - 2024-08-30
+
+Added:
+
+  * `OcrdConfig.reset_defaults` to reset config variables to their defaults
+
 ## [3.0.0b2] - 2024-08-30
 
 Added:
@@ -2244,6 +2250,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.0b3]: ../../compare/v3.0.0b3..v3.0.0b2
 [3.0.0b2]: ../../compare/v3.0.0b2..v3.0.0b1
 [3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
 [3.0.0a2]: ../../compare/v3.0.0a2..v3.0.0a1
