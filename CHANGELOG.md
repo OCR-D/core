@@ -3,7 +3,7 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
-## Unreleased
+## [3.0.0b2] - 2024-08-30
 
 Added:
  - `Processor.max_workers`: class attribute to control per-page parallelism of this implementation
@@ -2244,12 +2244,11 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-<<<<<<< HEAD
+[3.0.0b2]: ../../compare/v3.0.0b2..v3.0.0b1
+[3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
 [3.0.0a2]: ../../compare/v3.0.0a2..v3.0.0a1
 [3.0.0a1]: ../../compare/v3.0.0a1..v2.67.2
-=======
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
->>>>>>> @{-1}
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0
 [2.67.0]: ../../compare/v2.67.0..v2.66.1
