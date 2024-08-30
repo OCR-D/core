@@ -61,11 +61,11 @@ Variables:
 \b
 {config.describe('OCRD_DOWNLOAD_INPUT')}
 \b
-{config.describe('OCRD_MISSING_INPUT')}
+{config.describe('OCRD_MISSING_INPUT', wrap_text=False)}
 \b
-{config.describe('OCRD_MISSING_OUTPUT')}
+{config.describe('OCRD_MISSING_OUTPUT', wrap_text=False)}
 \b
-{config.describe('OCRD_EXISTING_OUTPUT')}
+{config.describe('OCRD_EXISTING_OUTPUT', wrap_text=False)}
 \b
 {config.describe('OCRD_METS_CACHING')}
 \b
