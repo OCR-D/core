@@ -166,11 +166,14 @@ class Processor():
 
         (Override if ``ocrd-tool.json`` is not distributed with the Python package.)
         """
-        # XXX HACK
-        module_tokens = self.__module__.split('.')
-        if module_tokens[0] == 'src':
-            module_tokens.pop(0)
-        return resource_filename(module_tokens[0], self.metadata_filename)
+        module = inspect.getmodule(self)
+        module_tokens = module.__package__.split('.')
+        # for namespace packages, we cannot just use the first token
+        for i in range(len(module_tokens)):
+            prefix = '.'.join(module_tokens[:i + 1])
+            if sys.modules[prefix].__spec__.has_location:
+                return resource_filename(prefix, self.metadata_filename)
+        raise Exception("cannot find top-level module prefix for %s", module.__package__)
 
     @cached_property
     def metadata_rawdict(self) -> dict:
