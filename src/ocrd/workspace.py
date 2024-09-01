@@ -121,7 +121,10 @@ class Workspace():
         """
         Reload METS from the filesystem.
         """
-        self.mets = OcrdMets(filename=self.mets_target)
+        if self.is_remote:
+            self.mets.reload()
+        else:
+            self.mets = OcrdMets(filename=self.mets_target)
 
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
