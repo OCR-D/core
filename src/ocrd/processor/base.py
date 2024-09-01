@@ -458,17 +458,17 @@ class Processor():
                 nr_copied = 0
 
                 # set up multithreading
-                if self.max_workers <= 0:
-                    max_workers = max(0, config.OCRD_MAX_PARALLEL_PAGES)
-                else:
-                    max_workers = max(0, min(config.OCRD_MAX_PARALLEL_PAGES, self.max_workers))
+                max_workers = max(0, config.OCRD_MAX_PARALLEL_PAGES)
+                if self.max_workers > 0 and self.max_workers < config.OCRD_MAX_PARALLEL_PAGES:
+                    self._base_logger.info("limiting number of threads from %d to %d", max_workers, self.max_workers)
+                    max_workers = self.max_workers
                 if max_workers > 1:
                     assert isinstance(workspace.mets, ClientSideOcrdMets), \
                         "OCRD_MAX_PARALLEL_PAGES>1 requires also using --mets-server-url"
-                if self.max_page_seconds <= 0:
-                    max_seconds = max(0, config.OCRD_PROCESSING_PAGE_TIMEOUT)
-                else:
-                    max_seconds = max(0, min(config.OCRD_PROCESSING_PAGE_TIMEOUT, self.max_page_seconds))
+                max_seconds = max(0, config.OCRD_PROCESSING_PAGE_TIMEOUT)
+                if self.max_page_seconds > 0 and self.max_page_seconds < config.OCRD_PROCESSING_PAGE_TIMEOUT:
+                    self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
+                    max_seconds = self.max_page_seconds
                 executor = ThreadPoolExecutor(
                     max_workers=max_workers or 1,
                     thread_name_prefix=f"pagetask.{workspace.mets.unique_identifier}"
