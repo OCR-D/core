@@ -284,15 +284,17 @@ class ClientSideOcrdMets:
             file_id=ID, page_id=pageId,
             mimetype=mimetype, url=url, local_filename=local_filename
         )
+        # add force+ignore
+        kwargs = {**kwargs, **data.dict()}
 
         if not self.multiplexing_mode:
-            r = self.session.request("POST", f"{self.url}/file", data=data.dict())
-            if not r:
-                raise RuntimeError("Add file failed. Please check provided parameters")
+            r = self.session.request("POST", f"{self.url}/file", data=kwargs)
+            if not r.ok:
+                raise RuntimeError(f"Failed to add file ({str(data)}): {r.json()}")
         else:
-            r = self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, data.dict()))
-            if "error" in r:
-                raise RuntimeError(f"Add file failed: Msg: {r['error']}")
+            r = self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, kwargs))
+            if not r.ok:
+                raise RuntimeError(f"Failed to add file ({str(data)}): {r.json()[errors]}")
 
         return ClientSideOcrdFile(
             None, fileGrp=file_grp,
@@ -505,7 +507,8 @@ class OcrdMetsServer:
             page_id: Optional[str] = Form(),
             mimetype: str = Form(),
             url: Optional[str] = Form(None),
-            local_filename: Optional[str] = Form(None)
+            local_filename: Optional[str] = Form(None),
+            force: bool = Form(False),
         ):
             """
             Add a file
@@ -517,7 +520,7 @@ class OcrdMetsServer:
             )
             # Add to workspace
             kwargs = file_resource.dict()
-            workspace.add_file(**kwargs)
+            workspace.add_file(**kwargs, force=force)
             return file_resource
 
         # ------------- #
