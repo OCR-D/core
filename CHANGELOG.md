@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0b4] - 2024-09-02
+
 Fixed:
 
   * `Processor.metadata_location`: `src` workaround respects namespace packages, qurator-spk/eynollah#134
