@@ -10,7 +10,7 @@ from tests.data import (
     DummyProcessorWithRequiredParameters,
     DummyProcessorWithOutput,
     DummyProcessorWithOutputLegacy,
-    DummyProcessorWithOutputPagewise,
+    DummyProcessorWithOutputSleep,
     DummyProcessorWithOutputFailures,
     IncompleteProcessor
 )
@@ -266,7 +266,7 @@ class TestProcessor(TestCase):
         config.OCRD_MAX_MISSING_OUTPUTS = -1
         config.OCRD_MISSING_OUTPUT = 'ABORT'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
-        run_processor(DummyProcessorWithOutputPagewise, workspace=ws,
+        run_processor(DummyProcessorWithOutputSleep, workspace=ws,
                       input_file_grp="OCR-D-IMG",
                       output_file_grp="OCR-D-OUT",
                       parameter={"sleep": 1})
@@ -275,7 +275,7 @@ class TestProcessor(TestCase):
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
         from concurrent.futures import TimeoutError
         with pytest.raises(TimeoutError) as exc:
-            run_processor(DummyProcessorWithOutputPagewise, workspace=ws,
+            run_processor(DummyProcessorWithOutputSleep, workspace=ws,
                           input_file_grp="OCR-D-IMG",
                           output_file_grp="OCR-D-OUT",
                           parameter={"sleep": 3})
@@ -419,6 +419,33 @@ class TestProcessor(TestCase):
         r = self.capture_out_err()
         assert 'ERROR ocrd.processor.base - Found no file for page phys_0001 in file group GRP1' in r.err
 
+def test_run_output_metsserver(start_mets_server):
+    mets_server_url, ws = start_mets_server
+    from ocrd_utils import config
+    # do not raise for number of failures:
+    config.OCRD_MAX_MISSING_OUTPUTS = -1
+    run_processor(DummyProcessorWithOutputSleep, workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  parameter={"sleep": 0},
+                  mets_server_url=mets_server_url)
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+    config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+    run_processor(DummyProcessorWithOutputSleep, workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  parameter={"sleep": 0},
+                  mets_server_url=mets_server_url)
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+    config.OCRD_EXISTING_OUTPUT = 'ABORT'
+    with pytest.raises(Exception) as exc:
+        run_processor(DummyProcessorWithOutputSleep, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={"sleep": 0},
+                      mets_server_url=mets_server_url)
+    assert "already exists" in str(exc.value)
+
 # 2s (+ 2s tolerance) instead of 3*3s (+ 2s tolerance)
 @pytest.mark.timeout(4)
 def test_run_output_parallel(start_mets_server):
@@ -429,7 +456,7 @@ def test_run_output_parallel(start_mets_server):
     # do not raise for number of failures:
     config.OCRD_MAX_MISSING_OUTPUTS = -1
     config.OCRD_MAX_PARALLEL_PAGES = 3
-    run_processor(DummyProcessorWithOutputPagewise, workspace=ws,
+    run_processor(DummyProcessorWithOutputSleep, workspace=ws,
                   input_file_grp="OCR-D-IMG",
                   output_file_grp="OCR-D-OUT",
                   parameter={"sleep": 2},

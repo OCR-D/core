@@ -103,7 +103,7 @@ class DummyProcessorWithOutput(Processor):
                 force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
             )
 
-class DummyProcessorWithOutputPagewise(Processor):
+class DummyProcessorWithOutputSleep(Processor):
     @property
     def ocrd_tool(self):
         # make deep copy
