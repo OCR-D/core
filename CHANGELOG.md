@@ -3,6 +3,13 @@ Change Log
 
 Versioned according to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+Fixed:
+
+  * `Processor.metadata_location`: `src` workaround respects namespace packages, qurator-spk/eynollah#134
+  * `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+
 ## [3.0.0b3] - 2024-08-30
 
 Added:
