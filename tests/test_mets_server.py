@@ -55,7 +55,7 @@ def fixture_start_mets_server(request, tmpdir) -> Iterable[Tuple[str, Workspace]
     p.terminate()
     rmtree(tmpdir, ignore_errors=True)
 
-def add_file_server(x):
+def add_file_server(x, force=False):
     mets_server_url, directory, i = x
     workspace_server = Workspace(Resolver(), directory, mets_server_url=mets_server_url)
     workspace_server.add_file(
@@ -65,6 +65,7 @@ def add_file_server(x):
         page_id=f'page{i}',
         file_id=f'FOO_page{i}_foo{i}',
         # url=f'url{i}'
+        force=force
     )
 
 def add_agent_server(x):
@@ -122,6 +123,19 @@ def test_mets_server_add_file(start_mets_server):
     workspace_file.reload_mets()
 
     assert len(workspace_file.mets.find_all_files(fileGrp='FOO')) == NO_FILES
+
+def test_mets_server_add_file_overwrite(start_mets_server):
+    mets_server_url, workspace_server = start_mets_server
+
+    add_file_server((mets_server_url, workspace_server.directory, 5))
+
+    assert len(workspace_server.mets.find_all_files(fileGrp='FOO')) == 1
+
+    with raises(RuntimeError, match="already exists"):
+        add_file_server((mets_server_url, workspace_server.directory, 5))
+
+    add_file_server((mets_server_url, workspace_server.directory, 5), force=True)
+    assert len(workspace_server.mets.find_all_files(fileGrp='FOO')) == 1
 
 def test_mets_server_add_agents(start_mets_server):
     NO_AGENTS = 30
