@@ -34,6 +34,9 @@ RUN apt-get update && apt-get -y install software-properties-common \
         curl \
         sudo \
         git \
+        bind9-dnsutils \
+        nmap \
+        iputils-ping \
     && make deps-ubuntu
 RUN python3 --version
 RUN python3 -m venv /usr/local \
