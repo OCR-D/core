@@ -16,6 +16,56 @@
           "description": "Whether to actually copy files (true) or just create PAGE-XML as a side effect (false)"
         }
       }
+    },
+    "ocrd-filter": {
+      "executable": "ocrd-filter",
+      "description": "Bare-bones processor can be dynamically configured to remove segments based on XPath queries",
+      "steps": ["recognition/post-correction"],
+      "categories": ["Quality assurance"],
+      "input_file_grp_cardinality": 1,
+      "output_file_grp_cardinality": 1,
+      "parameters": {
+        "type": {
+          "type": "string",
+          "default": "all",
+          "enum": [
+            "all",
+            "region",
+            "line",
+            "word",
+            "glyph",
+            "NoiseRegion",
+            "LineDrawingRegion",
+            "AdvertRegion",
+            "ImageRegion",
+            "ChartRegion",
+            "MusicRegion",
+            "GraphicRegion",
+            "UnknownRegion",
+            "CustomRegion",
+            "SeparatorRegion",
+            "MathsRegion",
+            "TextRegion",
+            "MapRegion",
+            "ChemRegion",
+            "TableRegion",
+            "TextLine",
+            "Word",
+            "Glyph"
+          ],
+          "description": "Which type of segments to remove from. Either a precise element name ('TextRegion', 'TextLine') or an alias ('all', 'region', 'line', 'word', 'glyph')."
+        },
+        "query": {
+          "type": "string",
+          "default": "",
+          "description": "Which segments to select for removal (XPath predicate). Matches unconditionally, if empty. For example, to remove elements with low text confidence, set 'TextEquiv/@conf < 0.7'. Or low layout confidence, 'Coords/@conf < 0.7'.\nSupports extra predicates 'pixelarea()' for the number of pixels of the bounding box, and 'textequiv()' for the first TextEquiv unicode string. For example, to remove high pixel-to-character rate, set 'pixelarea(.) div string-length(textequiv(.)) > 500'."
+        },
+        "plot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to extract an image for each filtered segment and write to the output fileGrp."
+        }
+      }
     }
   }
 }
