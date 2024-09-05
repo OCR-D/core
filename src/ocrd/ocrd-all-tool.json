@@ -1,4 +1,779 @@
 {
+  "ocrd-tesserocr-deskew": {
+    "executable": "ocrd-tesserocr-deskew",
+    "categories": [
+      "Image preprocessing"
+    ],
+    "description": "Detect script, orientation and skew angle for pages or regions",
+    "input_file_grp": [
+      "OCR-D-IMG",
+      "OCR-D-SEG-BLOCK"
+    ],
+    "output_file_grp": [
+      "OCR-D-DESKEW-BLOCK"
+    ],
+    "steps": [
+      "preprocessing/optimization/deskewing"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "operation_level": {
+        "type": "string",
+        "enum": [
+          "page",
+          "region",
+          "line"
+        ],
+        "default": "region",
+        "description": "PAGE XML hierarchy level to operate on"
+      },
+      "min_orientation_confidence": {
+        "type": "number",
+        "format": "float",
+        "default": 1.5,
+        "description": "Minimum confidence score to apply orientation as detected by OSD"
+      }
+    }
+  },
+  "ocrd-tesserocr-fontshape": {
+    "executable": "ocrd-tesserocr-fontshape",
+    "categories": [
+      "Text recognition and optimization"
+    ],
+    "description": "Recognize font shapes (family/monospace/bold/italic) and size in segmented words with Tesseract (using annotated derived images, or masking and cropping images from coordinate polygons), annotating TextStyle",
+    "input_file_grp": [
+      "OCR-D-SEG-WORD",
+      "OCR-D-OCR"
+    ],
+    "output_file_grp": [
+      "OCR-D-OCR-FONTSTYLE"
+    ],
+    "steps": [
+      "recognition/font-identification"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "default": 0,
+        "description": "Number of background-filled pixels to add around the word image (i.e. the annotated AlternativeImage if it exists or the higher-level image cropped to the bounding box and masked by the polygon otherwise) on each side before recognition."
+      },
+      "model": {
+        "type": "string",
+        "format": "uri",
+        "content-type": "application/octet-stream",
+        "default": "osd",
+        "description": "tessdata model to apply (an ISO 639-3 language specification or some other basename, e.g. deu-frak or osd); must be an old (pre-LSTM) model"
+      }
+    }
+  },
+  "ocrd-tesserocr-recognize": {
+    "executable": "ocrd-tesserocr-recognize",
+    "categories": [
+      "Text recognition and optimization"
+    ],
+    "description": "Segment and/or recognize text with Tesseract (using annotated derived images, or masking and cropping images from coordinate polygons) on any level of the PAGE hierarchy.",
+    "input_file_grp": [
+      "OCR-D-SEG-PAGE",
+      "OCR-D-SEG-REGION",
+      "OCR-D-SEG-TABLE",
+      "OCR-D-SEG-LINE",
+      "OCR-D-SEG-WORD"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-REGION",
+      "OCR-D-SEG-TABLE",
+      "OCR-D-SEG-LINE",
+      "OCR-D-SEG-WORD",
+      "OCR-D-SEG-GLYPH",
+      "OCR-D-OCR-TESS"
+    ],
+    "steps": [
+      "layout/segmentation/region",
+      "layout/segmentation/line",
+      "recognition/text-recognition"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "default": 0,
+        "description": "Extend detected region/cell/line/word rectangles by this many (true) pixels, or extend existing region/line/word images (i.e. the annotated AlternativeImage if it exists or the higher-level image cropped to the bounding box and masked by the polygon otherwise) by this many (background/white) pixels on each side before recognition."
+      },
+      "segmentation_level": {
+        "type": "string",
+        "enum": [
+          "region",
+          "cell",
+          "line",
+          "word",
+          "glyph",
+          "none"
+        ],
+        "default": "word",
+        "description": "Highest PAGE XML hierarchy level to remove existing annotation from and detect segments for (before iterating downwards); if ``none``, does not attempt any new segmentation; if ``cell``, starts at table regions, detecting text regions (cells). Ineffective when lower than ``textequiv_level``."
+      },
+      "textequiv_level": {
+        "type": "string",
+        "enum": [
+          "region",
+          "cell",
+          "line",
+          "word",
+          "glyph",
+          "none"
+        ],
+        "default": "word",
+        "description": "Lowest PAGE XML hierarchy level to re-use or detect segments for and add the TextEquiv results to (before projecting upwards); if ``none``, adds segmentation down to the glyph level, but does not attempt recognition at all; if ``cell``, stops short before text lines, adding text of text regions inside tables (cells) or on page level only."
+      },
+      "overwrite_segments": {
+        "type": "boolean",
+        "default": false,
+        "description": "If ``segmentation_level`` is not none, but an element already contains segments, remove them and segment again. Otherwise use the existing segments of that element."
+      },
+      "overwrite_text": {
+        "type": "boolean",
+        "default": true,
+        "description": "If ``textequiv_level`` is not none, but a segment already contains TextEquivs, remove them and replace with recognised text. Otherwise add new text as alternative. (Only the first entry is projected upwards.)"
+      },
+      "shrink_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "When detecting any segments, annotate polygon coordinates instead of bounding box rectangles by projecting the convex hull of all symbols."
+      },
+      "block_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "When detecting regions, annotate polygon coordinates instead of bounding box rectangles by querying Tesseract accordingly."
+      },
+      "find_tables": {
+        "type": "boolean",
+        "default": true,
+        "description": "When detecting regions, recognise tables as table regions (Tesseract's ``textord_tabfind_find_tables=1``)."
+      },
+      "find_staves": {
+        "type": "boolean",
+        "default": false,
+        "description": "When detecting regions, recognize music staves as non-text, suppressing it in the binary image (Tesseract's ``pageseg_apply_music_mask``). Note that this might wrongly detect tables as staves."
+      },
+      "sparse_text": {
+        "type": "boolean",
+        "default": false,
+        "description": "When detecting regions, use 'sparse text' page segmentation mode (finding as much text as possible in no particular order): only text regions, single lines without vertical or horizontal space."
+      },
+      "raw_lines": {
+        "type": "boolean",
+        "default": false,
+        "description": "When detecting lines, do not attempt additional segmentation (baseline+xheight+ascenders/descenders prediction) on line images. Can increase accuracy for certain workflows. Disable when line segments/images may contain components of more than 1 line, or larger gaps/white-spaces."
+      },
+      "char_whitelist": {
+        "type": "string",
+        "default": "",
+        "description": "When recognizing text, enumeration of character hypotheses (from the model) to allow exclusively; overruled by blacklist if set."
+      },
+      "char_blacklist": {
+        "type": "string",
+        "default": "",
+        "description": "When recognizing text, enumeration of character hypotheses (from the model) to suppress; overruled by unblacklist if set."
+      },
+      "char_unblacklist": {
+        "type": "string",
+        "default": "",
+        "description": "When recognizing text, enumeration of character hypotheses (from the model) to allow inclusively."
+      },
+      "tesseract_parameters": {
+        "type": "object",
+        "default": {},
+        "description": "Dictionary of additional Tesseract runtime variables (cf. tesseract --print-parameters), string values."
+      },
+      "xpath_parameters": {
+        "type": "object",
+        "default": {},
+        "description": "Set additional Tesseract runtime variables according to results of XPath queries into the segment. (As a convenience, `@language` and `@script` also match their upwards `@primary*` and `@secondary*` variants where applicable.) (Example: {'ancestor::TextRegion/@type=\"page-number\"': {'char_whitelist': '0123456789-'}, 'contains(@custom,\"ISBN\")': {'char_whitelist': '0123456789-'}})"
+      },
+      "xpath_model": {
+        "type": "object",
+        "default": {},
+        "description": "Prefer models mapped according to results of XPath queries into the segment. (As a convenience, `@language` and `@script` also match their upwards `@primary*` and `@secondary*` variants where applicable.) If no queries / mappings match (or under the default empty parameter), then fall back to `model`. If there are multiple matches, combine their results. (Example: {'starts-with(@script,\"Latn\")': 'Latin', 'starts-with(@script,\"Grek\")': 'Greek', '@language=\"Latin\"': 'lat', '@language=\"Greek\"': 'grc+ell', 'ancestor::TextRegion/@type=\"page-number\"': 'eng'})"
+      },
+      "auto_model": {
+        "type": "boolean",
+        "default": false,
+        "description": "Prefer models performing best (by confidence) per segment (if multiple given in `model`). Repeats the OCR of the best model once (i.e. slower). (Use as a fallback to xpath_model if you do not trust script/language detection.)"
+      },
+      "model": {
+        "type": "string",
+        "format": "uri",
+        "content-type": "application/octet-stream",
+        "description": "The tessdata text recognition model to apply (an ISO 639-3 language specification or some other basename, e.g. deu-frak or Fraktur)."
+      },
+      "oem": {
+        "type": "string",
+        "enum": [
+          "TESSERACT_ONLY",
+          "LSTM_ONLY",
+          "TESSERACT_LSTM_COMBINED",
+          "DEFAULT"
+        ],
+        "default": "DEFAULT",
+        "description": "Tesseract OCR engine mode to use:\n* Run Tesseract only - fastest,\n* Run just the LSTM line recognizer. (>=v4.00),\n*Run the LSTM recognizer, but allow fallback to Tesseract when things get difficult. (>=v4.00),\n*Run both and combine results - best accuracy."
+      }
+    },
+    "resource_locations": [
+      "module"
+    ],
+    "resources": [
+      {
+        "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/ocrd-train/data/Fraktur_5000000/tessdata_best/Fraktur_50000000.334_450937.traineddata",
+        "name": "Fraktur_GT4HistOCR.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model trained on GT4HistOCR",
+        "size": 1058487
+      },
+      {
+        "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/ocrd-train/data/ONB/tessdata_best/ONB_1.195_300718_989100.traineddata",
+        "name": "ONB.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model based on Austrian National Library newspaper data",
+        "size": 4358948
+      },
+      {
+        "url": "https://ub-backup.bib.uni-mannheim.de/~stweil/tesstrain/frak2021/tessdata_best/frak2021-0.905.traineddata",
+        "name": "frak2021.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model based on a mix of mostly German and Latin ground truth data",
+        "size": 3421140
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/equ.traineddata",
+        "name": "equ.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract legacy model for mathematical equations",
+        "size": 2251950
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/osd.traineddata",
+        "name": "osd.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract legacy model for orientation and script detection",
+        "size": 10562727
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/eng.traineddata",
+        "name": "eng.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model for contemporary (computer typesetting and offset printing) English",
+        "size": 4113088
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/deu.traineddata",
+        "name": "deu.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model for contemporary (computer typesetting and offset printing) German",
+        "size": 1525436
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/deu_latf.traineddata",
+        "name": "deu_latf.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model for historical (Fraktur typesetting and letterpress printing) German",
+        "size": 6423052
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/deu_latf.traineddata",
+        "name": "frk.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model for historical German (deprecated, replaced by deu_latf)",
+        "size": 6423052
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/script/Fraktur.traineddata",
+        "name": "Fraktur.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model for historical Latin script with Fraktur typesetting",
+        "size": 10915632
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tessdata_best/raw/main/script/Latin.traineddata",
+        "name": "Latin.traineddata",
+        "parameter_usage": "without-extension",
+        "description": "Tesseract LSTM model for contemporary and historical Latin script",
+        "size": 89384811
+      },
+      {
+        "url": "https://github.com/tesseract-ocr/tesseract/archive/main.tar.gz",
+        "name": "configs",
+        "description": "Tesseract configs (parameter sets) for use with the standalone tesseract CLI",
+        "size": 1915529,
+        "type": "archive",
+        "path_in_archive": "tesseract-main/tessdata/configs"
+      }
+    ]
+  },
+  "ocrd-tesserocr-segment": {
+    "executable": "ocrd-tesserocr-segment",
+    "categories": [
+      "Layout analysis"
+    ],
+    "description": "Segment page into regions and lines with Tesseract",
+    "input_file_grp": [
+      "OCR-D-IMG",
+      "OCR-D-SEG-PAGE",
+      "OCR-D-GT-SEG-PAGE"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-LINE"
+    ],
+    "steps": [
+      "layout/segmentation/region",
+      "layout/segmentation/line"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "description": "extend detected region rectangles by this many (true) pixels",
+        "default": 4
+      },
+      "shrink_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "annotate polygon coordinates instead of bounding box rectangles by projecting the convex hull of all symbols"
+      },
+      "block_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "annotate polygon coordinates instead of bounding box rectangles"
+      },
+      "find_tables": {
+        "type": "boolean",
+        "default": true,
+        "description": "recognise tables as table regions (textord_tabfind_find_tables)"
+      },
+      "find_staves": {
+        "type": "boolean",
+        "default": false,
+        "description": "When detecting regions, recognize music staves as non-text, suppressing it in the binary image (Tesseract's ``pageseg_apply_music_mask``). Note that this might wrongly detect tables as staves."
+      },
+      "sparse_text": {
+        "type": "boolean",
+        "default": false,
+        "description": "use 'sparse text' page segmentation mode (find as much text as possible in no particular order): only text regions, single lines without vertical or horizontal space"
+      }
+    }
+  },
+  "ocrd-tesserocr-segment-region": {
+    "executable": "ocrd-tesserocr-segment-region",
+    "categories": [
+      "Layout analysis"
+    ],
+    "description": "Segment page into regions with Tesseract",
+    "input_file_grp": [
+      "OCR-D-IMG",
+      "OCR-D-SEG-PAGE",
+      "OCR-D-GT-SEG-PAGE"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-BLOCK"
+    ],
+    "steps": [
+      "layout/segmentation/region"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "overwrite_regions": {
+        "type": "boolean",
+        "default": true,
+        "description": "Remove existing layout and text annotation below the Page level (otherwise skip page; no incremental annotation yet)."
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "description": "extend detected region rectangles by this many (true) pixels",
+        "default": 0
+      },
+      "shrink_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "annotate polygon coordinates instead of bounding box rectangles by projecting the convex hull of all symbols"
+      },
+      "crop_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "annotate polygon coordinates instead of bounding box rectangles"
+      },
+      "find_tables": {
+        "type": "boolean",
+        "default": true,
+        "description": "recognise tables as table regions (textord_tabfind_find_tables)"
+      },
+      "find_staves": {
+        "type": "boolean",
+        "default": false,
+        "description": "When detecting regions, recognize music staves as non-text, suppressing it in the binary image (Tesseract's ``pageseg_apply_music_mask``). Note that this might wrongly detect tables as staves."
+      },
+      "sparse_text": {
+        "type": "boolean",
+        "default": false,
+        "description": "use 'sparse text' page segmentation mode (find as much text as possible in no particular order): only text regions, single lines without vertical or horizontal space"
+      }
+    }
+  },
+  "ocrd-tesserocr-segment-table": {
+    "executable": "ocrd-tesserocr-segment-table",
+    "categories": [
+      "Layout analysis"
+    ],
+    "description": "Segment table regions into cell text regions with Tesseract",
+    "input_file_grp": [
+      "OCR-D-SEG-BLOCK",
+      "OCR-D-GT-SEG-BLOCK"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-BLOCK"
+    ],
+    "steps": [
+      "layout/segmentation/region"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "overwrite_cells": {
+        "type": "boolean",
+        "default": true,
+        "description": "Remove existing layout and text annotation below the TableRegion level (otherwise skip table; no incremental annotation yet)."
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "description": "extend detected cell rectangles by this many (true) pixels",
+        "default": 0
+      },
+      "shrink_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "annotate polygon coordinates instead of bounding box rectangles by projecting the convex hull of all symbols"
+      }
+    }
+  },
+  "ocrd-tesserocr-segment-line": {
+    "executable": "ocrd-tesserocr-segment-line",
+    "categories": [
+      "Layout analysis"
+    ],
+    "description": "Segment regions into lines with Tesseract",
+    "input_file_grp": [
+      "OCR-D-SEG-BLOCK",
+      "OCR-D-GT-SEG-BLOCK"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-LINE"
+    ],
+    "steps": [
+      "layout/segmentation/line"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "overwrite_lines": {
+        "type": "boolean",
+        "default": true,
+        "description": "Remove existing layout and text annotation below the TextRegion level (otherwise skip region; no incremental annotation yet)."
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "description": "extend detected line rectangles by this many (true) pixels",
+        "default": 0
+      },
+      "shrink_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "annotate polygon coordinates instead of bounding box rectangles by projecting the convex hull of all symbols"
+      }
+    }
+  },
+  "ocrd-tesserocr-segment-word": {
+    "executable": "ocrd-tesserocr-segment-word",
+    "categories": [
+      "Layout analysis"
+    ],
+    "description": "Segment lines into words with Tesseract",
+    "input_file_grp": [
+      "OCR-D-SEG-LINE",
+      "OCR-D-GT-SEG-LINE"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-WORD"
+    ],
+    "steps": [
+      "layout/segmentation/word"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "overwrite_words": {
+        "type": "boolean",
+        "default": true,
+        "description": "Remove existing layout and text annotation below the TextLine level (otherwise skip line; no incremental annotation yet)."
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "description": "extend detected cell rectangles by this many (true) pixels",
+        "default": 0
+      },
+      "shrink_polygons": {
+        "type": "boolean",
+        "default": false,
+        "description": "annotate polygon coordinates instead of bounding box rectangles by projecting the convex hull of all symbols"
+      }
+    }
+  },
+  "ocrd-tesserocr-crop": {
+    "executable": "ocrd-tesserocr-crop",
+    "categories": [
+      "Image preprocessing"
+    ],
+    "description": "Poor man's cropping via region segmentation",
+    "input_file_grp": [
+      "OCR-D-IMG"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-PAGE"
+    ],
+    "steps": [
+      "preprocessing/optimization/cropping"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "padding": {
+        "type": "number",
+        "format": "integer",
+        "description": "extend detected border by this many (true) pixels on every side",
+        "default": 4
+      }
+    }
+  },
+  "ocrd-tesserocr-binarize": {
+    "executable": "ocrd-tesserocr-binarize",
+    "categories": [
+      "Image preprocessing"
+    ],
+    "description": "Binarize regions or lines with Tesseract's global Otsu",
+    "input_file_grp": [
+      "OCR-D-IMG",
+      "OCR-D-SEG-BLOCK",
+      "OCR-D-SEG-LINE"
+    ],
+    "output_file_grp": [
+      "OCR-D-BIN-BLOCK",
+      "OCR-D-BIN-LINE"
+    ],
+    "steps": [
+      "preprocessing/optimization/binarization"
+    ],
+    "parameters": {
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images)",
+        "default": 0
+      },
+      "operation_level": {
+        "type": "string",
+        "enum": [
+          "page",
+          "region",
+          "line"
+        ],
+        "default": "page",
+        "description": "PAGE XML hierarchy level to operate on"
+      },
+      "tiseg": {
+        "type": "boolean",
+        "default": false,
+        "description": "also separate text vs image by detecting and suppressing photo+sepline mask"
+      }
+    }
+  },
+  "ocrd-fileformat-transform": {
+    "executable": "ocrd-fileformat-transform",
+    "description": "Convert between OCR file formats",
+    "categories": [
+      "Image preprocessing"
+    ],
+    "steps": [
+      "preprocessing/optimization"
+    ],
+    "input_file_grp": [
+      "OCR-D-OCR-PAGE",
+      "OCR-D-OCR-ALTO",
+      "OCR-D-OCR-HOCR"
+    ],
+    "output_file_grp": [
+      "OCR-D-OCR-PAGE",
+      "OCR-D-OCR-ALTO",
+      "OCR-D-OCR-HOCR"
+    ],
+    "parameters": {
+      "from-to": {
+        "description": "Transformation scenario, see ocr-fileformat -L",
+        "type": "string",
+        "default": "page alto",
+        "enum": [
+          "abbyy hocr",
+          "abbyy page",
+          "alto2.0 alto3.0",
+          "alto2.0 alto3.1",
+          "alto2.0 hocr",
+          "alto2.1 alto3.0",
+          "alto2.1 alto3.1",
+          "alto2.1 hocr",
+          "alto page",
+          "alto text",
+          "gcv hocr",
+          "gcv page",
+          "hocr alto2.0",
+          "hocr alto2.1",
+          "hocr page",
+          "hocr text",
+          "page alto",
+          "page alto_legacy",
+          "page hocr",
+          "page page2019",
+          "page text",
+          "tei hocr",
+          "textract page"
+        ]
+      },
+      "ext": {
+        "description": "Output extension. Set to empty string to derive extension from the media type.",
+        "type": "string",
+        "default": ""
+      },
+      "script-args": {
+        "description": "Arguments to Saxon (for XSLT transformations) or to transformation script",
+        "type": "string",
+        "default": ""
+      }
+    }
+  },
+  "ocrd-eynollah-segment": {
+    "executable": "ocrd-eynollah-segment",
+    "categories": [
+      "Layout analysis"
+    ],
+    "description": "Segment page into regions and lines and do reading order detection with eynollah",
+    "input_file_grp": [
+      "OCR-D-IMG",
+      "OCR-D-SEG-PAGE",
+      "OCR-D-GT-SEG-PAGE"
+    ],
+    "output_file_grp": [
+      "OCR-D-SEG-LINE"
+    ],
+    "steps": [
+      "layout/segmentation/region",
+      "layout/segmentation/line"
+    ],
+    "parameters": {
+      "models": {
+        "type": "string",
+        "format": "file",
+        "content-type": "text/directory",
+        "cacheable": true,
+        "description": "Path to directory containing models to be used (See https://qurator-data.de/eynollah)",
+        "required": true
+      },
+      "dpi": {
+        "type": "number",
+        "format": "float",
+        "description": "pixel density in dots per inch (overrides any meta-data in the images); ignored if <= 0 (with fall-back 230)",
+        "default": 0
+      },
+      "full_layout": {
+        "type": "boolean",
+        "default": true,
+        "description": "Try to detect all element subtypes, including drop-caps and headings"
+      },
+      "tables": {
+        "type": "boolean",
+        "default": false,
+        "description": "Try to detect table regions"
+      },
+      "curved_line": {
+        "type": "boolean",
+        "default": false,
+        "description": "try to return contour of textlines instead of just rectangle bounding box. Needs more processing time"
+      },
+      "allow_scaling": {
+        "type": "boolean",
+        "default": false,
+        "description": "check the resolution against the number of detected columns and if needed, scale the image up or down during layout detection (heuristic to improve quality and performance)"
+      },
+      "headers_off": {
+        "type": "boolean",
+        "default": false,
+        "description": "ignore the special role of headings during reading order detection"
+      }
+    },
+    "resources": [
+      {
+        "description": "models for eynollah (TensorFlow format)",
+        "url": "https://qurator-data.de/eynollah/2021-04-25/SavedModel.tar.gz",
+        "name": "default",
+        "size": 1483106598,
+        "type": "archive",
+        "path_in_archive": "default"
+      }
+    ]
+  },
   "ocrd-dummy": {
     "executable": "ocrd-dummy",
     "description": "Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group",
