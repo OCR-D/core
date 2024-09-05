@@ -619,6 +619,8 @@ class Processor():
                 image_result.alternative_image.set_imageHeight(image_result.pil.height)
             elif isinstance(image_result.alternative_image, AlternativeImageType):
                 image_result.alternative_image.set_filename(image_file_path)
+            elif image_result.alternative_image is None:
+                pass # do not reference in PAGE result
             else:
                 raise ValueError(f"process_page_pcgts returned an OcrdPageResultImage of unknown type "
                                  f"{type(image_result.alternative_image)}")
