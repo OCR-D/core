@@ -374,10 +374,13 @@ class Processor():
                     assert len(grps) >= minimum, msg % (len(grps), str(spec))
                 if maximum > 0:
                     assert len(grps) <= maximum, msg % (len(grps), str(spec))
-        assert_file_grp_cardinality(input_file_grps, self.ocrd_tool['input_file_grp_cardinality'],
-                                    "Unexpected number of input file groups %d vs %s")
-        assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
-                                    "Unexpected number of output file groups %d vs %s")
+        # FIXME: enforce unconditionally as soon as grace period for deprecation is over
+        if 'input_file_grp_cardinality' in self.ocrd_tool:
+            assert_file_grp_cardinality(input_file_grps, self.ocrd_tool['input_file_grp_cardinality'],
+                                        "Unexpected number of input file groups %d vs %s")
+        if 'output_file_grp_cardinality' in self.ocrd_tool:
+            assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
+                                        "Unexpected number of output file groups %d vs %s")
         for input_file_grp in input_file_grps:
             assert input_file_grp in self.workspace.mets.file_groups
         # keep this for backwards compatibility:
