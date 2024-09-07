@@ -116,6 +116,7 @@ METHOD_SPECS = (
     _add_method(r'^(PageType)$', 'set_Border'),
     _add_method(r'^(CoordsType)$', 'set_points'),
     _add_method(r'^(PageType)$', 'get_AllTextLines'),
+    _add_method(r'^(PageType)$', 'get_ReadingOrderGroups'),
     # for some reason, pagecontent.xsd does not declare @orientation at the abstract/base RegionType:
     _add_method(r'^(PageType|AdvertRegionType|MusicRegionType|MapRegionType|ChemRegionType|MathsRegionType|SeparatorRegionType|ChartRegionType|TableRegionType|GraphicRegionType|LineDrawingRegionType|ImageRegionType|TextRegionType)$', 'set_orientation'),
     )
