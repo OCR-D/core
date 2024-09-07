@@ -93,6 +93,7 @@ class FilterProcessor(Processor):
         if not(len(segments)):
             self.logger.info("no matches")
             return result
+        rodict = pcgts.get_Page().get_ReadingOrderGroups()
         if self.parameter['plot']:
             page_image, page_coords, _ = self.workspace.image_from_page(pcgts.get_Page(), page_id)
         for segment in segments:
@@ -116,6 +117,13 @@ class FilterProcessor(Processor):
                 else:
                     raise Exception(f"unexpected type ({partype}) of parent for matched segment ({segtype})")
                 segment.parent_object_ = None
+                if segtype.endswith('Region') and segment.id in rodict:
+                    # remove from ReadingOrder as well
+                    roelem = rodict[segment.id]
+                    rorefs = getattr(roelem.parent_object_, roelem.__class__.__name__.replace('Type', ''))
+                    rorefs.remove(roelem)
+                    roelem.parent_object_ = None
+                    del rodict[segment.id]
                 if self.parameter['plot']:
                     segment_image, _ = self.workspace.image_from_segment(segment, page_image, page_coords)
                     result.images.append(OcrdPageResultImage(segment_image, segment.id + '.IMG', None))
