@@ -34,6 +34,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         curl \
         sudo \
         git \
+        jq \
         bind9-dnsutils \
         nmap \
         iputils-ping \
