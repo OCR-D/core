@@ -58,7 +58,7 @@
         "query": {
           "type": "string",
           "default": "",
-          "description": "Which segments to select for removal (XPath predicate). Matches unconditionally, if empty. For example, to remove elements with low text confidence, set 'pc:TextEquiv/@conf < 0.7'. Or low layout confidence, 'pc:Coords/@conf < 0.7'.\nSupports extra predicates 'pixelarea()' for the number of pixels of the bounding box, and 'textequiv()' for the first TextEquiv unicode string. For example, to remove high pixel-to-character rate, set 'pixelarea(.) div string-length(textequiv(.)) > 500'."
+          "description": "Which segments to select for removal (XPath predicate). Matches unconditionally, if empty. For example, to remove elements with low text confidence, set 'pc:TextEquiv/@conf < 0.7'. Or low layout confidence, 'pc:Coords/@conf < 0.7'.\nSupports extra predicates 'pc:area()' for the number of pixels of the bounding box, and 'pc:text()' for the first TextEquiv unicode string. For example, to remove high pixel-to-character rate, set 'pc:area(.) div string-length(pc:text(.)) > 500'."
         },
         "plot": {
           "type": "boolean",
