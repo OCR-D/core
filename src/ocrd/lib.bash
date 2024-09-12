@@ -134,7 +134,7 @@ ocrd__parse_argv () {
     local __parameters=()
     local __parameter_overrides=()
 
-    if [[ $1 = '-l' || $1 == '--log-level']];then
+    if [[ ${1:-} == '-l' || ${1:-} == '--log-level' ]];then
       ocrd__argv[log_level]=$2
       shift
       shift
