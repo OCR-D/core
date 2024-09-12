@@ -3,10 +3,10 @@ from time import sleep
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
-def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int):
+def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int) -> JobState:
     if job_type not in ["workflow", "processor"]:
         raise ValueError(f"Unknown job type '{job_type}', expected 'workflow' or 'processor'")
-    job_state = JobState.unset
+    job_state = 'unset'
     while tries > 0:
         sleep(wait)
         if job_type == "processor":
@@ -47,22 +47,22 @@ def get_ps_processing_job_log(ps_server_host: str, processing_job_id: str):
     return response
 
 
-def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) -> str:
+def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) -> JobState:
     request_url = f"{ps_server_host}/processor/job/{processing_job_id}"
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
     job_state = response.json()["state"]
     assert job_state
-    return job_state
+    return getattr(JobState, job_state)
 
 
-def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> str:
+def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> JobState:
     request_url = f"{ps_server_host}/workflow/job-simple/{workflow_job_id}"
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
     job_state = response.json()["state"]
     assert job_state
-    return job_state
+    return getattr(JobState, job_state)
 
 
 def post_ps_processing_request(ps_server_host: str, processor: str, job_input: dict) -> str:

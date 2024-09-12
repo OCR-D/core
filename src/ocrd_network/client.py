@@ -1,5 +1,6 @@
 from typing import Optional
-from ocrd_utils import config, getLogger, LOG_FORMAT
+from ocrd_network.constants import JobState
+from ocrd_utils import config, getLogger
 from .client_utils import (
     get_ps_deployed_processors,
     get_ps_deployed_processor_ocrd_tool,
@@ -15,6 +16,8 @@ from .client_utils import (
 
 
 class Client:
+    server_addr_processing: str
+
     def __init__(
         self,
         server_addr_processing: Optional[str],
@@ -24,6 +27,7 @@ class Client:
         self.log = getLogger(f"ocrd_network.client")
         if not server_addr_processing:
             server_addr_processing = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING
+        assert server_addr_processing
         self.server_addr_processing = server_addr_processing
         verify_server_protocol(self.server_addr_processing)
         self.polling_timeout = timeout
@@ -40,10 +44,10 @@ class Client:
     def check_job_log(self, job_id: str):
         return get_ps_processing_job_log(self.server_addr_processing, processing_job_id=job_id)
 
-    def check_job_status(self, job_id: str):
+    def check_job_status(self, job_id: str) -> JobState:
         return get_ps_processing_job_status(self.server_addr_processing, processing_job_id=job_id)
 
-    def check_workflow_status(self, workflow_job_id: str):
+    def check_workflow_status(self, workflow_job_id: str) -> JobState:
         return get_ps_workflow_job_status(self.server_addr_processing, workflow_job_id=workflow_job_id)
 
     def poll_job_status(self, job_id: str) -> str:
