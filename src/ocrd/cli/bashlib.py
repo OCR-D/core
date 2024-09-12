@@ -76,10 +76,10 @@ def bashlib_constants(name):
 @click.option('--ocrd-tool', help="path to ocrd-tool.json of processor to feed", default=None)
 @click.option('--executable', help="name of processor executable in ocrd-tool.json", default=None)
 @click.option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME)
-@click.option('-w', '--working-dir', help="Working Directory")
+@click.option('-U', '--mets-server-url', help='TCP host URI or UDS path of METS server', default=None)
+@click.option('-d', '--working-dir', help="Working Directory")
 @click.option('-I', '--input-file-grp', help='File group(s) used as input.', default=None)
 @click.option('-O', '--output-file-grp', help='File group(s) used as output.', default=None)
-# repeat some other processor options for convenience (will be ignored here)
 @click.option('-g', '--page-id', help="ID(s) of the pages to process")
 @click.option('--overwrite', is_flag=True, default=False, help="Remove output pages/images if they already exist\n"
               "(with '--page-id', remove only those).\n"
@@ -126,9 +126,10 @@ def bashlib_input_files(ocrd_tool, executable, **kwargs):
             def executable(self):
                 # needed for ocrd_tool lookup
                 return executable
+        processor_class = FullBashlibProcessor
     else:
         # we have no true metadata file, so fill in just to make it work
-        class FullBashlibProcessor(BashlibProcessor):
+        class UnknownBashlibProcessor(BashlibProcessor):
             @property
             def ocrd_tool(self):
                 # needed to satisfy the validator
@@ -142,5 +143,6 @@ def bashlib_input_files(ocrd_tool, executable, **kwargs):
             def version(self):
                 # needed to satisfy the validator and wrapper
                 return '1.0'
+        processor_class = UnknownBashlibProcessor
 
-    ocrd_cli_wrap_processor(FullBashlibProcessor, **kwargs)
+    ocrd_cli_wrap_processor(processor_class, **kwargs)
