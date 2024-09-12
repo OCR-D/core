@@ -89,7 +89,7 @@ def run_processor(
 
     ocrd_tool = processor.ocrd_tool
     name = '%s v%s' % (ocrd_tool['executable'], processor.version)
-    otherrole = ocrd_tool['steps'][0]
+    otherrole = ocrd_tool.get('steps', [''])[0]
     logProfile = getLogger('ocrd.process.profile')
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
