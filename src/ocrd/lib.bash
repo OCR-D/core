@@ -134,6 +134,12 @@ ocrd__parse_argv () {
     local __parameters=()
     local __parameter_overrides=()
 
+    if [[ $1 = '-l' || $1 == '--log-level']];then
+      ocrd__argv[log_level]=$2
+      shift
+      shift
+    fi
+
     if [[ $1 == 'worker' || $1 == 'server' ]];then
          ocrd__subcommand="$1" ; shift ;
     fi
