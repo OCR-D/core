@@ -2,6 +2,7 @@ import click
 from json import dumps
 from typing import List, Optional, Tuple
 from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
+from ocrd_network.constants import JobState
 from ocrd_utils import DEFAULT_METS_BASENAME
 from ocrd_utils.introspect import set_json_key_value_overrides
 from ocrd_utils.str import parse_json_string_or_file
@@ -192,7 +193,10 @@ def send_workflow_job_request(
     assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
-        client.poll_workflow_status(job_id=workflow_job_id)
+        state = client.poll_workflow_status(job_id=workflow_job_id)
+        if state != JobState.success:
+            print(f"Workflow failed with {state}")
+            exit(1)
 
 
 @client_cli.group('workspace')
