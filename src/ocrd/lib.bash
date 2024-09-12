@@ -27,8 +27,8 @@ ocrd__log () {
 ## Ensure minimum version
 # ht https://stackoverflow.com/posts/4025065
 ocrd__minversion () {
-    local minversion_raw="$1"
     set -e
+    local minversion_raw="$1"
     local version_raw=$(ocrd --version|sed 's/ocrd, version //')
     local version_mmp=$(echo "$version_raw" | grep -Eo '([0-9]+\.?){3}')
     local version_prerelease_suffix="${version_raw#$version_mmp}"
@@ -123,6 +123,7 @@ ocrd__usage () {
 ## declare -A ocrd__argv=()
 ## ```
 ocrd__parse_argv () {
+    set -e
 
     # if [[ -n "$ZSH_VERSION" ]];then
     #     print -r -- ${+ocrd__argv} ${(t)ocrd__argv}
@@ -140,6 +141,7 @@ ocrd__parse_argv () {
         exit 1
     fi
 
+    ocrd__argv[debug]=false
     ocrd__argv[overwrite]=false
     ocrd__argv[profile]=false
     ocrd__argv[profile_file]=
@@ -170,6 +172,7 @@ ocrd__parse_argv () {
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
             -U|--mets-server-url) ocrd__argv[mets_server_url]="$2" ; shift ;;
+            --debug) ocrd__argv[debug]=true ;;
             --overwrite) ocrd__argv[overwrite]=true ;;
             --profile) ocrd__argv[profile]=true ;;
             --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;
@@ -265,6 +268,7 @@ $params_parsed"
 }
 
 ocrd__wrap () {
+    set -e
 
     declare -gx OCRD_TOOL_JSON="$1"
     declare -gx OCRD_TOOL_NAME="$2"
