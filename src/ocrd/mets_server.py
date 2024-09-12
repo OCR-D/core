@@ -303,7 +303,7 @@ class ClientSideOcrdMets:
 
 
 class MpxReq:
-    """This class wrapps the request bodies needed for the tcp forwarding
+    """This class wraps the request bodies needed for the tcp forwarding
 
     For every mets-server-call like find_files or workspace_path a special request_body is
     needed to call `MetsServerProxy.forward_tcp_request`. These are created by this functions.

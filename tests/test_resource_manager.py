@@ -80,7 +80,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     assert mgr.userdir == tmp_path
 
 
-def test_resources_manager_config_explicite(tmp_path):
+def test_resources_manager_config_explicit(tmp_path):
 
     # act
     from ocrd.resource_manager import OcrdResourceManager

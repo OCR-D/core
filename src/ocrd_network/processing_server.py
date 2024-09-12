@@ -320,7 +320,7 @@ class ProcessingServer(FastAPI):
         """Forward mets-server-request
 
         A processor calls a mets related method like add_file with ClientSideOcrdMets. This sends
-        a request to this endpoint. This request contains all infomation neccessary to make a call
+        a request to this endpoint. This request contains all information necessary to make a call
         to the uds-mets-server. This information is used by `MetsServerProxy` to make a the call
         to the local (local for the processing-server) reachable the uds-mets-server.
         """
