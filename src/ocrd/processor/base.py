@@ -549,7 +549,11 @@ class Processor():
 
             except NotImplementedError:
                 # fall back to deprecated method
-                self.process()
+                try:
+                    self.process()
+                except Exception as err:
+                    # suppress the NotImplementedError context
+                    raise err from None
 
     def _copy_page_file(self, input_file : OcrdFileType) -> None:
         """
