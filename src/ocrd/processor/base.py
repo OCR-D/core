@@ -358,6 +358,7 @@ class Processor():
         """
         Verify that :py:attr:`input_file_grp` and :py:attr:`output_file_grp` fulfill the processor's requirements.
         """
+        # verify input and output file groups in parameters
         assert self.input_file_grp is not None
         assert self.output_file_grp is not None
         input_file_grps = self.input_file_grp.split(',')
@@ -381,8 +382,16 @@ class Processor():
         if 'output_file_grp_cardinality' in self.ocrd_tool:
             assert_file_grp_cardinality(output_file_grps, self.ocrd_tool['output_file_grp_cardinality'],
                                         "Unexpected number of output file groups %d vs %s")
+        # verify input and output file groups in METS
         for input_file_grp in input_file_grps:
-            assert input_file_grp in self.workspace.mets.file_groups
+            assert input_file_grp in self.workspace.mets.file_groups, \
+                f"input fileGrp {input_file_grp} does not exist in workspace {self.workspace}"
+        for output_file_grp in output_file_grps:
+            assert output_file_grp not in self.workspace.mets.file_groups \
+                or config.OCRD_EXISTING_OUTPUT in ['OVERWRITE', 'SKIP'] \
+                or not any(self.workspace.mets.find_files(
+                    pageId=self.page_id, fileGrp=output_file_grp)), \
+                    f"output fileGrp {output_file_grp} already exists in workspace {self.workspace}"
         # keep this for backwards compatibility:
         return True
 
