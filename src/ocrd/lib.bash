@@ -136,6 +136,10 @@ ocrd__parse_argv () {
         ocrd__raise "Must set \$params (declare -A params)"
     fi
 
+    if ! declare -p "params_json" >/dev/null 2>/dev/null ;then
+        ocrd__raise "Must set \$params_json (declare params_json)"
+    fi
+
     if [[ $# = 0 ]];then
         ocrd__usage
         exit 1
@@ -264,6 +268,7 @@ ocrd__parse_argv () {
 $params_parsed"
     }
     eval "$params_parsed"
+    params_json="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params --json "${__parameters[@]}" "${__parameter_overrides[@]}")"
 
 }
 
@@ -276,6 +281,7 @@ ocrd__wrap () {
     shift
     declare -Agx params
     params=()
+    declare -g params_json
     declare -Agx ocrd__argv
     ocrd__argv=()
 
@@ -297,22 +303,26 @@ ocrd__wrap () {
 
     ocrd__parse_argv "$@"
 
-    i=0
-    declare -ag ocrd__files=()
-    while read line; do
-        eval declare -Ag "ocrd__file$i=( $line )"
-        eval "ocrd__files[$i]=ocrd__file$i"
-        let ++i
-    done < <(ocrd bashlib input-files \
+    declare -ag ocrd__files
+    IFS=$'\n'
+    ocrd__files=( $(ocrd bashlib input-files \
                   --ocrd-tool $OCRD_TOOL_JSON \
                   --executable $OCRD_TOOL_NAME \
+                  $(if [[ ${ocrd__argv[debug]} = true ]]; then echo --debug; fi) \
+                  $(if [[ ${ocrd__argv[overwrite]} = true ]]; then echo --overwrite; fi) \
                   -m "${ocrd__argv[mets_file]}" \
+                  -d "${ocrd__argv[working_dir]}" \
+                  ${ocrd__argv[mets_server_url]:+-U} ${ocrd__argv[mets_server_url]:-} \
+                  -p "$params_json" \
                   -I "${ocrd__argv[input_file_grp]}" \
                   -O "${ocrd__argv[output_file_grp]}" \
-                  ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-})
+                  ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-}) )
+    IFS=$' \t\n'
 }
 
 ## usage: pageId=$(ocrd__input_file 3 pageId)
 ocrd__input_file() {
-    eval echo "\${${ocrd__files[$1]}[$2]}"
+    declare -A input_file
+    eval input_file=( "${ocrd__files[$1]}" )
+    eval echo "${input_file[$2]}"
 }
