@@ -590,7 +590,6 @@ class Processor():
             local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
             mimetype=MIMETYPE_PAGE,
             content=to_xml(input_pcgts),
-            force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
         )
 
     def process_page_file(self, *input_files : Optional[OcrdFileType]) -> None:
@@ -643,7 +642,6 @@ class Processor():
                 self.output_file_grp,
                 page_id=page_id,
                 file_path=image_file_path,
-                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
             )
         result.pcgts.set_pcGtsId(output_file_id)
         self.add_metadata(result.pcgts)
@@ -654,7 +652,6 @@ class Processor():
             local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
             mimetype=MIMETYPE_PAGE,
             content=to_xml(result.pcgts),
-            force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
         )
 
     def process_page_pcgts(self, *input_pcgts : Optional[OcrdPage], page_id : Optional[str] = None) -> OcrdPageResult:

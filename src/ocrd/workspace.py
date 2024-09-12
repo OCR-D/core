@@ -19,6 +19,7 @@ from ocrd_models.ocrd_page import parse, BorderType, to_xml
 from ocrd_modelfactory import exif_from_filename, page_from_file
 from ocrd_utils import (
     atomic_write,
+    config,
     getLogger,
     image_from_polygon,
     coordinates_of_segment,
@@ -427,6 +428,8 @@ class Workspace():
             kwargs["pageId"] = kwargs.pop("page_id")
             if "file_id" in kwargs:
                 kwargs["ID"] = kwargs.pop("file_id")
+            if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
+                kwargs["force"] = True
 
             ret = self.mets.add_file(file_grp, **kwargs)
 

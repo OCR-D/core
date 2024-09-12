@@ -47,7 +47,6 @@ class DummyProcessor(Processor):
                     mimetype=input_file.mimetype,
                     local_filename=local_filename,
                     content=f.read(),
-                    force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
                 )
             file_id = file_id + '_PAGE'
             pcgts = page_from_file(output_file)
@@ -62,7 +61,6 @@ class DummyProcessor(Processor):
                                     local_filename=join(self.output_file_grp, file_id + '.xml'),
                                     mimetype=MIMETYPE_PAGE,
                                     content=to_xml(pcgts),
-                                    force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
             )
         else:
             if self.parameter['copy_files']:
