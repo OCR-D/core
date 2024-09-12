@@ -125,7 +125,7 @@ def ocrd_tool_tool_list_resources(ctx):
 @click.argument('res_name')
 @pass_ocrd_tool
 def ocrd_tool_tool_resolve_resource(ctx, res_name):
-    ctx.processor(None).resolve_resource(res_name)
+    print(ctx.processor(None).resolve_resource(res_name))
 
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
