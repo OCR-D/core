@@ -182,7 +182,7 @@ ocrd__parse_argv () {
             if ! [ -v ocrd__worker_queue ]; then
                 ocrd__raise "For the Processing Worker --queue is required"
             fi
-            ocrd network processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
+            ocrd -l DEBUG network processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
         elif [ ${ocrd__subcommand} = "server" ]; then
             if ! [ -v ocrd__worker_address ]; then
                 ocrd__raise "For the Processor Server --address is required"
