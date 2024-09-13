@@ -290,6 +290,7 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
 '''
 
     information_options = '''\
+  -R, --resolve-resource RESNAME  Show the full path of processor resource RESNAME
   -C, --show-resource RESNAME     Dump the content of processor resource RESNAME
   -L, --list-resources            List names of processor resources
   -J, --dump-json                 Dump tool description as JSON

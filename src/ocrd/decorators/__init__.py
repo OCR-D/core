@@ -36,6 +36,7 @@ def ocrd_cli_wrap_processor(
     profile_file=None,
     version=False,
     overwrite=False,
+    resolve_resource=None,
     show_resource=None,
     list_resources=False,
     # ocrd_network params start #
@@ -50,7 +51,7 @@ def ocrd_cli_wrap_processor(
     if not sys.argv[1:]:
         processorClass(None, show_help=True)
         sys.exit(1)
-    if dump_json or dump_module_dir or help or version or show_resource or list_resources:
+    if dump_json or dump_module_dir or help or version or resolve_resource or show_resource or list_resources:
         processorClass(
             None,
             dump_json=dump_json,
@@ -58,6 +59,7 @@ def ocrd_cli_wrap_processor(
             show_help=help,
             subcommand=subcommand,
             show_version=version,
+            resolve_resource=resolve_resource,
             show_resource=show_resource,
             list_resources=list_resources
         )
