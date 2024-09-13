@@ -689,6 +689,7 @@ class ProcessingServer(FastAPI):
             for file_group in task.output_file_grps:
                 temp_file_group_cache[file_group] = response.job_id
             responses.append(response)
+        self.log.debug(f"task_sequence_to_processing_jobs, ")
         return responses
 
     def validate_tasks_agents_existence(self, tasks: List[ProcessorTask], agent_type: AgentType) -> None:

@@ -55,7 +55,7 @@ ROOT_OCRD_LOGGERS = [
 ]
 
 LOGGING_DEFAULTS = {
-    'ocrd': logging.INFO,
+    'ocrd': logging.DEBUG,
     'ocrd_network': logging.INFO,
     # 'ocrd.resolver': logging.INFO,
     # 'ocrd.resolver.download_to_directory': logging.INFO,
@@ -84,10 +84,10 @@ def tf_disable_interactive_logs():
         from os import environ
         # This env variable must be set before importing from Keras
         environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from tensorflow.keras.utils import disable_interactive_logging
         # Enabled interactive logging throws an exception
         # due to a call of sys.stdout.flush()
-        disable_interactive_logging()
+        import tensorflow as tf
+        tf.keras.utils.disable_interactive_logging()
     except ImportError:
         # Nothing should be handled here if TF is not available
         pass

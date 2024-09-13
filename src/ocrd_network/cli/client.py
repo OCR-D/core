@@ -197,6 +197,9 @@ def send_workflow_job_request(
         if state != JobState.success:
             print(f"Workflow failed with {state}")
             exit(1)
+        else:
+            print(f"Workflow succeeded")
+            exit(0)
 
 
 @client_cli.group('workspace')
