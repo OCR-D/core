@@ -888,6 +888,20 @@ def workspace_serve_stop(ctx): # pylint: disable=unused-argument
     workspace = ctx.workspace()
     workspace.mets.stop()
 
+@workspace_serve_cli.command('reload')
+@pass_workspace
+def workspace_serve_reload(ctx): # pylint: disable=unused-argument
+    """Reload the METS server from disk"""
+    workspace = ctx.workspace()
+    workspace.mets.reload()
+
+@workspace_serve_cli.command('save')
+@pass_workspace
+def workspace_serve_save(ctx): # pylint: disable=unused-argument
+    """Save the METS changes to disk"""
+    workspace = ctx.workspace()
+    workspace.mets.save()
+
 @workspace_serve_cli.command('start')
 @pass_workspace
 def workspace_serve_start(ctx): # pylint: disable=unused-argument
