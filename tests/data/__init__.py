@@ -101,7 +101,6 @@ class DummyProcessorWithOutput(Processor):
                 mimetype=input_file.mimetype,
                 local_filename=os.path.join(self.output_file_grp, file_id),
                 content='CONTENT',
-                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
             )
 
 class DummyProcessorWithOutputSleep(Processor):
@@ -157,7 +156,6 @@ class DummyProcessorWithOutputFailures(Processor):
                                 local_filename=os.path.join(self.output_file_grp, output_file_id),
                                 mimetype=input_file.mimetype,
                                 content='CONTENT',
-                                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
         )
 
 class DummyProcessorWithOutputLegacy(Processor):
@@ -181,7 +179,6 @@ class DummyProcessorWithOutputLegacy(Processor):
                 mimetype=input_file.mimetype,
                 local_filename=os.path.join(self.output_file_grp, file_id),
                 content='CONTENT',
-                force=config.OCRD_EXISTING_OUTPUT == 'OVERWRITE',
             )
 
 class IncompleteProcessor(Processor):
