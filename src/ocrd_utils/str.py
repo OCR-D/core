@@ -108,10 +108,11 @@ def make_xml_id(idstr: str) -> str:
     ret = idstr
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
+        ret = ret.replace('/', '_')
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
         ret = re.sub(r'[^\w.-]', r'', ret)
     return ret
-    
+
 def nth_url_segment(url, n=-1):
     """
     Return the last /-delimited segment of a URL-like string
