@@ -37,6 +37,17 @@ class WorkspaceCtx():
                 = self.resolver.resolve_mets_arguments(directory, mets_url, mets_basename, mets_server_url)
         self.automatic_backup = automatic_backup
 
+    def workspace(self):
+        return Workspace(
+            self.resolver,
+            directory=self.directory,
+            mets_basename=self.mets_basename,
+            automatic_backup=self.automatic_backup,
+            mets_server_url=self.mets_server_url,
+        )
+    def backup_manager(self):
+        return WorkspaceBackupManager(self.workspace())
+
 
 pass_workspace = click.make_pass_decorator(WorkspaceCtx)
 
@@ -139,6 +150,7 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
         LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR clone' instead of argument 'WORKSPACE_DIR' ('%s')" % workspace_dir))
         ctx.directory = workspace_dir
 
+    assert not ctx.mets_server_url
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
         dst_dir=ctx.directory,
@@ -174,10 +186,11 @@ def workspace_init(ctx, clobber_mets, directory):
     if directory:
         LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR init' instead of argument 'DIRECTORY' ('%s')" % directory))
         ctx.directory = directory
+    assert not ctx.mets_server_url
     workspace = ctx.resolver.workspace_from_nothing(
         directory=ctx.directory,
         mets_basename=ctx.mets_basename,
-        clobber_mets=clobber_mets
+        clobber_mets=clobber_mets,
     )
     workspace.save_mets()
     print(workspace.directory)
@@ -201,13 +214,7 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     Add a file or http(s) URL FNAME to METS in a workspace.
     If FNAME is not an http(s) URL and is not a workspace-local existing file, try to copy to workspace.
     """
-    workspace = Workspace(
-        ctx.resolver,
-        directory=ctx.directory,
-        mets_basename=ctx.mets_basename,
-        automatic_backup=ctx.automatic_backup,
-        mets_server_url=ctx.mets_server_url,
-    )
+    workspace = ctx.workspace()
 
     log = getLogger('ocrd.cli.workspace.add')
     if not mimetype:
@@ -313,13 +320,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
           -G '{{ filegrp }}' -g '{{ pageid }}' -i '{{ fileid }}' -S '{{ local_filename }}' -
     """
     log = getLogger('ocrd.cli.workspace.bulk-add') # pylint: disable=redefined-outer-name
-    workspace = Workspace(
-        ctx.resolver,
-        directory=ctx.directory,
-        mets_basename=ctx.mets_basename,
-        automatic_backup=ctx.automatic_backup,
-        mets_server_url=ctx.mets_server_url,
-    )
+    workspace = ctx.workspace()
 
     try:
         pat = re.compile(regex)
@@ -454,13 +455,8 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
     snake_to_camel = {"file_id": "ID", "page_id": "pageId", "file_grp": "fileGrp"}
     output_field = [snake_to_camel.get(x, x) for x in output_field]
     modified_mets = False
-    ret = list()
-    workspace = Workspace(
-        ctx.resolver,
-        directory=ctx.directory,
-        mets_basename=ctx.mets_basename,
-        mets_server_url=ctx.mets_server_url,
-    )
+    ret = []
+    workspace = ctx.workspace()
     with pushd_popd(workspace.directory):
         for f in workspace.find_files(
                 file_id=file_id,
@@ -510,7 +506,7 @@ def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefin
     (If any ``ID`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = ctx.workspace()
     for i in id:
         workspace.remove_file(i, force=force, keep_file=keep_file)
     workspace.save_mets()
@@ -528,7 +524,7 @@ def rename_group(ctx, old, new):
     """
     Rename fileGrp (USE attribute ``NEW`` to ``OLD``).
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = ctx.workspace()
     workspace.rename_file_group(old, new)
     workspace.save_mets()
 
@@ -549,7 +545,7 @@ def remove_group(ctx, group, recursive, force, keep_files):
     (If any ``GROUP`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = ctx.workspace()
     for g in group:
         workspace.remove_file_group(g, recursive=recursive, force=force, keep_files=keep_files)
     workspace.save_mets()
@@ -571,7 +567,7 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
     (If any ``FILTER`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = ctx.workspace()
     with pushd_popd(workspace.directory):
         for f in workspace.find_files(
             file_id=file_id,
@@ -608,8 +604,7 @@ def clean(ctx, dry_run, directories, path_glob):
     If no PATH_GLOB are specified, then all files and directories
     may match.
     """
-    log = getLogger('ocrd.cli.workspace.clean')
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = ctx.workspace()
     allowed_files = [normpath(f.local_filename) for f in workspace.find_files(local_only=True)]
     allowed_files.append(relpath(workspace.mets_target, start=workspace.directory))
     allowed_dirs = set(dirname(path) for path in allowed_files)
@@ -627,7 +622,7 @@ def clean(ctx, dry_run, directories, path_glob):
             if normpath(path) in allowed_files:
                 continue
             if dry_run:
-                log.info('unlink(%s)' % path)
+                ctx.log.info('unlink(%s)' % path)
             else:
                 unlink(path)
         if not directories:
@@ -637,7 +632,7 @@ def clean(ctx, dry_run, directories, path_glob):
             if normpath(path) in allowed_dirs:
                 continue
             if dry_run:
-                log.info('rmdir(%s)' % path)
+                ctx.log.info('rmdir(%s)' % path)
             else:
                 rmdir(path)
 
@@ -651,7 +646,7 @@ def list_groups(ctx):
     """
     List fileGrp USE attributes
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = ctx.workspace()
     print("\n".join(workspace.mets.file_groups))
 
 # ----------------------------------------------------------------------
@@ -677,7 +672,7 @@ def list_pages(ctx, output_field, output_format, chunk_number, chunk_index, page
     (If any ``FILTER`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = ctx.workspace()
     find_kwargs = {}
     if page_id_range and 'ID' in output_field:
         find_kwargs['pageId'] = page_id_range
@@ -724,7 +719,7 @@ def get_id(ctx):
     """
     Get METS id if any
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename)
+    workspace = ctx.workspace()
     ID = workspace.mets.unique_identifier
     if ID:
         print(ID)
@@ -744,7 +739,7 @@ def set_id(ctx, id):   # pylint: disable=redefined-builtin
 
     Otherwise will create a new <mods:identifier type="purl">{{ ID }}</mods:identifier>.
     """
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = ctx.workspace()
     workspace.mets.unique_identifier = id
     workspace.save_mets()
 
@@ -767,7 +762,7 @@ def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     if contentids:
         update_kwargs['CONTENTIDS'] = contentids
     try:
-        workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+        workspace = ctx.workspace()
         workspace.mets.update_physical_page_attributes(page_id, **update_kwargs)
         workspace.save_mets()
     except Exception as err:
@@ -805,7 +800,7 @@ def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pa
     mets_path = Path(mets_path)
     if filegrp_mapping:
         filegrp_mapping = loads(filegrp_mapping)
-    workspace = Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup)
+    workspace = ctx.workspace()
     other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
     workspace.merge(
         other_workspace,
@@ -829,11 +824,12 @@ def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pa
 # ----------------------------------------------------------------------
 
 @workspace_cli.group('backup')
-@click.pass_context
+@pass_workspace
 def workspace_backup_cli(ctx): # pylint: disable=unused-argument
     """
     Backing and restoring workspaces - dev edition
     """
+    assert not ctx.mets_server_url, "Workspace backups currently not interoperable with METS Server"
 
 @workspace_backup_cli.command('add')
 @pass_workspace
@@ -841,7 +837,7 @@ def workspace_backup_add(ctx):
     """
     Create a new backup
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = ctx.backup_manager()
     backup_manager.add()
 
 @workspace_backup_cli.command('list')
@@ -850,7 +846,7 @@ def workspace_backup_list(ctx):
     """
     List backups
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = ctx.backup_manager()
     for b in backup_manager.list():
         print(b)
 
@@ -862,7 +858,7 @@ def workspace_backup_restore(ctx, choose_first, bak):
     """
     Restore backup BAK
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = ctx.backup_manager()
     backup_manager.restore(bak, choose_first)
 
 @workspace_backup_cli.command('undo')
@@ -871,7 +867,7 @@ def workspace_backup_undo(ctx):
     """
     Restore the last backup
     """
-    backup_manager = WorkspaceBackupManager(Workspace(ctx.resolver, directory=ctx.directory, mets_basename=ctx.mets_basename, automatic_backup=ctx.automatic_backup))
+    backup_manager = ctx.backup_manager()
     backup_manager.undo()
 
 
@@ -888,13 +884,8 @@ def workspace_serve_cli(ctx): # pylint: disable=unused-argument
 @workspace_serve_cli.command('stop')
 @pass_workspace
 def workspace_serve_stop(ctx): # pylint: disable=unused-argument
-    """Stop the METS server"""
-    workspace = Workspace(
-        ctx.resolver,
-        directory=ctx.directory,
-        mets_basename=ctx.mets_basename,
-        mets_server_url=ctx.mets_server_url,
-    )
+    """Stop the METS server (saving changes to disk)"""
+    workspace = ctx.workspace()
     workspace.mets.stop()
 
 @workspace_serve_cli.command('start')
