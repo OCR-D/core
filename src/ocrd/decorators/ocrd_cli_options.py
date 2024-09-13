@@ -43,6 +43,7 @@ def ocrd_cli_options(f):
         option('--address', type=ServerAddressParamType()),
         option('--queue', type=QueueServerParamType()),
         option('--database', type=DatabaseParamType()),
+        option('-R', '--resolve-resource'),
         option('-C', '--show-resource'),
         option('-L', '--list-resources', is_flag=True, default=False),
         option('-J', '--dump-json', is_flag=True, default=False),
