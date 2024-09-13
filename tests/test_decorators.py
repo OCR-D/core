@@ -15,7 +15,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging, get_logging_config_files
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging, get_logging_config_files, config
 
 @click.command()
 @ocrd_cli_options
@@ -44,6 +44,10 @@ class TestDecorators(TestCase):
     def setUp(self):
         super().setUp()
         disableLogging()
+
+    def tearDown(self):
+        super().tearDown()
+        config.reset_defaults()
 
     def test_minimal(self):
         exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
