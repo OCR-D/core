@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import UploadFile
 from functools import wraps
 from hashlib import md5
-from json import loads
+from json import JSONDecodeError, loads
 from pathlib import Path
 from re import compile as re_compile, split as re_split
 from requests import get as requests_get, Session as Session_TCP
@@ -146,8 +146,10 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
                 return response.status_code == 200
             except OSError:
                 return False
-    except Exception:
-        getLogger("ocrd_network.utils").exception("Unexpected exception in is_mets_server_running: ")
+    except JSONDecodeError as err:
+        getLogger("ocrd_network.utils").exception(f"Server returned invalid JSON {err}\n{err.doc}")
+    except Exception as e:
+        getLogger("ocrd_network.utils").exception(f"Unexpected exception in is_mets_server_running: {e}")
         return False
 
 
