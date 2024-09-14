@@ -2,6 +2,7 @@
 from typing import Optional
 
 from lxml import etree
+import elementpath
 import click
 
 from ocrd import Processor, OcrdPageResult, OcrdPageResultImage
@@ -20,33 +21,31 @@ from ocrd_utils import (
 )
 from ocrd_modelfactory import page_from_file
 
+PARSER = elementpath.XPath2Parser(namespaces={**NAMESPACES, 'pc': NAMESPACES['page']})
+
 def xpath(func, *, ns_uri: Optional[str] = None, ns_prefix: Optional[str] = ''):
-    ns = etree.FunctionNamespace(ns_uri)
-    if ns_prefix:
-        # FIXME: this crashes lxml (even with just a single thread) when called repeatedly
-        # we work around this by using the `extensions` kwarg to XPath init in setup() below
-        # (i.e. registerLocalFunctions instead of registerGlobalFunctions)
-        #ns.prefix = ns_prefix
-        raise NotImplementedError()
     name = func.__name__.replace('_', '-')
     if ns_prefix and name.startswith(ns_prefix):
         name = name[len(ns_prefix):]
         if name.startswith('-'):
             name = name[1:]
-    ns[name] = func
+    # register
+    PARSER.external_function(func, name=name, prefix=ns_prefix)
     return func
 
 def pc_xpath(func):
     return xpath(func, ns_uri=NAMESPACES['page'], ns_prefix='pc')
 
-#@pc_xpath
-def pc_area(ctxt, nodes):
+@pc_xpath
+def pc_pixelarea(nodes):
     """
     Extract Coords/@points from all nodes, calculate the bounding
     box, and accumulate areas.
     """
     area = 0
     for node in nodes:
+        # FIXME: find out why we need to go to the parent here
+        node = node.parent.value
         coords = node.find(f'{node.prefix}:Coords', node.nsmap)
         if coords is None:
             continue
@@ -55,14 +54,16 @@ def pc_area(ctxt, nodes):
         area += xywh['w'] * xywh['h']
     return area
 
-#@pc_xpath
-def pc_text(ctxt, nodes):
+@pc_xpath
+def pc_textequiv(nodes):
     """
     Extract TextEquiv/Unicode from all nodes, then concatenate
     (interspersed with spaces or newlines).
     """
     text = ''
     for node in nodes:
+        # FIXME: find out why we need to go to the parent here
+        node = node.parent.value
         if text and node.tag.endswith('Region'):
             text += '\n'
         if text and node.tag.endswith('Line'):
@@ -101,39 +102,26 @@ _SEGTYPES = [
 
 class FilterProcessor(Processor):
     def setup(self):
-        NS = {'re': 'http://exslt.org/regular-expressions',
-              'pc': NAMESPACES['page']}
-        extensions = {(NAMESPACES['page'], 'area'): pc_area,
-                      (NAMESPACES['page'], 'text'): pc_text}
-        segtype = self.parameter['type']
-        if segtype == 'all':
-            segtype = '|'.join('//pc:' + segtype for segtype in _SEGTYPES)
-        elif segtype == 'region':
-            segtype = '|'.join('//pc:' + segtype for segtype in _SEGTYPES if segtype.endswith('Region'))
-        elif segtype == 'line':
-            segtype = '//pc:TextLine'
-        elif segtype == 'word':
-            segtype = '//pc:Word'
-        elif segtype == 'glyph':
-            segtype = '//pc:Glyph'
-        else:
-            segtype = '//pc:' + segtype
-        self.segtypexpath = etree.XPath(segtype, namespaces=NS, extensions=extensions)
-        segpred = self.parameter['query']
-        if segpred:
-            self.segpredxpath = etree.XPath(segpred, namespaces=NS, extensions=extensions)
-        else:
-            self.segpredxpath = lambda: True
+        token = PARSER.parse(self.parameter['select'])
+        def select(root):
+            context = elementpath.XPathContext(root)
+            return token.get_results(context)
+        self.selectxpath = select
 
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """
-        Remove segments based on flexible selection criteria.
+        Remove PAGE segment hierarchy elements based on flexible selection criteria.
 
         Open and deserialise PAGE input file, then iterate over the segment hierarchy
-        down to the level required for ``type``.
+        down to the level required for ``select`` (which could be multiple levels at once).
 
-        Remove any segments of type ``type`` which also evaluate the XPath predicate ``query``
-        to true (or non-empty).
+        Remove any segments matching XPath query ``select`` from that hierarchy (and from
+        the `ReadingOrder` if it is a region type).
+
+        \b
+        Besides full XPath 2.0 syntax, this supports extra predicates:
+        - `pc:pixelarea()` for the number of pixels of the bounding box (or sum area on node sets),
+        - `pc:textequiv()` for the first TextEquiv unicode string (or concatenated string on node sets).
 
         If ``plot`` is `true`, then extract and write an image file for all removed segments
         to the output fileGrp (without reference to the PAGE).
@@ -142,9 +130,7 @@ class FilterProcessor(Processor):
         """
         pcgts = input_pcgts[0]
         result = OcrdPageResult(pcgts)
-        nodes = [node.attrib['id'] for node in self.segtypexpath(pcgts.etree)]
-        if self.segtypexpath.error_log:
-            self.logger.error(self.segtypexpath.error_log)
+        nodes = [node.attrib['id'] for node in self.selectxpath(pcgts.etree) if 'id' in node.attrib]
         # get PAGE objects from matching etree nodes
         # FIXME: this should be easier (OcrdPage should have id lookup mechanism)
         regions = pcgts.get_Page().get_AllRegions()
@@ -163,37 +149,34 @@ class FilterProcessor(Processor):
         for segment in segments:
             node = pcgts.mapping[id(segment)]
             assert isinstance(node, etree._Element)
-            if self.segpredxpath(node):
-                segtype = segment.original_tagname_
-                self.logger.info("matched %s segment %s", segtype, segment.id)
-                parent = segment.parent_object_
-                partype = parent.__class__.__name__.replace('Type', '')
-                if partype == 'Page':
+            segtype = segment.original_tagname_
+            self.logger.info("matched %s segment %s", segtype, segment.id)
+            parent = segment.parent_object_
+            partype = parent.__class__.__name__.replace('Type', '')
+            if partype == 'Page':
+                getattr(parent, 'get_' + segtype)().remove(segment)
+            elif partype.endswith('Region'):
+                if segtype.endswith('Region'):
                     getattr(parent, 'get_' + segtype)().remove(segment)
-                elif partype.endswith('Region'):
-                    if segtype.endswith('Region'):
-                        getattr(parent, 'get_' + segtype)().remove(segment)
-                    else:
-                        parent.TextLine.remove(segment)
-                elif partype == 'TextLine':
-                    parent.Word.remove(segment)
-                elif partype == 'Word':
-                    parent.Glyph.remove(segment)
                 else:
-                    raise Exception(f"unexpected type ({partype}) of parent for matched segment ({segtype})")
-                segment.parent_object_ = None
-                if segtype.endswith('Region') and segment.id in rodict:
-                    # remove from ReadingOrder as well
-                    roelem = rodict[segment.id]
-                    rorefs = getattr(roelem.parent_object_, roelem.__class__.__name__.replace('Type', ''))
-                    rorefs.remove(roelem)
-                    roelem.parent_object_ = None
-                    del rodict[segment.id]
-                if self.parameter['plot']:
-                    segment_image, _ = self.workspace.image_from_segment(segment, page_image, page_coords)
-                    result.images.append(OcrdPageResultImage(segment_image, segment.id + '.IMG', None))
-            if self.segpredxpath.error_log:
-                self.logger.error(self.segpredxpath.error_log)
+                    parent.TextLine.remove(segment)
+            elif partype == 'TextLine':
+                parent.Word.remove(segment)
+            elif partype == 'Word':
+                parent.Glyph.remove(segment)
+            else:
+                raise Exception(f"unexpected type ({partype}) of parent for matched segment ({segtype})")
+            segment.parent_object_ = None
+            if segtype.endswith('Region') and segment.id in rodict:
+                # remove from ReadingOrder as well
+                roelem = rodict[segment.id]
+                rorefs = getattr(roelem.parent_object_, roelem.__class__.__name__.replace('Type', ''))
+                rorefs.remove(roelem)
+                roelem.parent_object_ = None
+                del rodict[segment.id]
+            if self.parameter['plot']:
+                segment_image, _ = self.workspace.image_from_segment(segment, page_image, page_coords)
+                result.images.append(OcrdPageResultImage(segment_image, segment.id + '.IMG', None))
         return result
 
     @property
