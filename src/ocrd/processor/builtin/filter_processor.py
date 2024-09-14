@@ -2,112 +2,13 @@
 from typing import Optional
 
 from lxml import etree
-import elementpath
 import click
 
 from ocrd import Processor, OcrdPageResult, OcrdPageResultImage
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
-from ocrd_models.ocrd_file import OcrdFileType
-from ocrd_models.ocrd_page import OcrdPage, to_xml
-from ocrd_models.constants import NAMESPACES
-from ocrd_utils import (
-    make_file_id,
-    MIME_TO_EXT,
-    MIMETYPE_PAGE,
-    xywh_from_points,
-    parse_json_string_with_comments,
-    resource_string,
-    config
-)
-from ocrd_modelfactory import page_from_file
-
-PARSER = elementpath.XPath2Parser(namespaces={**NAMESPACES, 'pc': NAMESPACES['page']})
-
-def xpath(func, *, ns_uri: Optional[str] = None, ns_prefix: Optional[str] = ''):
-    name = func.__name__.replace('_', '-')
-    if ns_prefix and name.startswith(ns_prefix):
-        name = name[len(ns_prefix):]
-        if name.startswith('-'):
-            name = name[1:]
-    # register
-    PARSER.external_function(func, name=name, prefix=ns_prefix)
-    return func
-
-def pc_xpath(func):
-    return xpath(func, ns_uri=NAMESPACES['page'], ns_prefix='pc')
-
-@pc_xpath
-def pc_pixelarea(nodes):
-    """
-    Extract Coords/@points from all nodes, calculate the bounding
-    box, and accumulate areas.
-    """
-    area = 0
-    for node in nodes:
-        # FIXME: find out why we need to go to the parent here
-        node = node.parent.value
-        coords = node.find(f'{node.prefix}:Coords', node.nsmap)
-        if coords is None:
-            continue
-        points = coords.attrib['points']
-        xywh = xywh_from_points(points)
-        area += xywh['w'] * xywh['h']
-    return area
-
-@pc_xpath
-def pc_textequiv(nodes):
-    """
-    Extract TextEquiv/Unicode from all nodes, then concatenate
-    (interspersed with spaces or newlines).
-    """
-    text = ''
-    for node in nodes:
-        # FIXME: find out why we need to go to the parent here
-        node = node.parent.value
-        if text and node.tag.endswith('Region'):
-            text += '\n'
-        if text and node.tag.endswith('Line'):
-            text += '\n'
-        if text and node.tag.endswith('Word'):
-            text += ' '
-        equiv = node.find(f'{node.prefix}:TextEquiv', node.nsmap)
-        if equiv is None:
-            continue
-        string = equiv.find(f'{node.prefix}:Unicode', node.nsmap)
-        if string is None:
-            continue
-        text += str(string.text)
-    return text
-
-_SEGTYPES = [
-    "NoiseRegion",
-    "LineDrawingRegion",
-    "AdvertRegion",
-    "ImageRegion",
-    "ChartRegion",
-    "MusicRegion",
-    "GraphicRegion",
-    "UnknownRegion",
-    "CustomRegion",
-    "SeparatorRegion",
-    "MathsRegion",
-    "TextRegion",
-    "MapRegion",
-    "ChemRegion",
-    "TableRegion",
-    "TextLine",
-    "Word",
-    "Glyph"
-]
+from ocrd_models import OcrdPage
 
 class FilterProcessor(Processor):
-    def setup(self):
-        token = PARSER.parse(self.parameter['select'])
-        def select(root):
-            context = elementpath.XPathContext(root)
-            return token.get_results(context)
-        self.selectxpath = select
-
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """
         Remove PAGE segment hierarchy elements based on flexible selection criteria.
@@ -130,7 +31,9 @@ class FilterProcessor(Processor):
         """
         pcgts = input_pcgts[0]
         result = OcrdPageResult(pcgts)
-        nodes = [node.attrib['id'] for node in self.selectxpath(pcgts.etree) if 'id' in node.attrib]
+        nodes = [node.attrib['id']
+                 for node in pcgts.xpath(self.parameter['select'])
+                 if 'id' in node.attrib]
         # get PAGE objects from matching etree nodes
         # FIXME: this should be easier (OcrdPage should have id lookup mechanism)
         regions = pcgts.get_Page().get_AllRegions()
