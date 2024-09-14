@@ -16,8 +16,8 @@ Changes as of 2023-08-20:
     - Try to be less intrusive with OCR-D specific logging conventions to
       make it easier and less surprising to define logging behavior when
       using OCR-D/core as a library
-    - Change setOverrideLogLevel to only override the log level of the ``ocrd``
-      logger and its descendants
+    - Change setOverrideLogLevel to only override the log level of the
+      ROOT_OCRD_LOGGERS and its descendants
     - initLogging will set exactly one handler, for the root logger or for the
       ``ocrd`` logger.
     - Child loggers should propagate to the ancestor logging (default
@@ -51,11 +51,13 @@ __all__ = [
 # These are the loggers we add handlers to
 ROOT_OCRD_LOGGERS = [
     'ocrd',
-    'ocrd_network'
+    'ocrd_network',
+    'processor',
 ]
 
 LOGGING_DEFAULTS = {
-    'ocrd': logging.DEBUG,
+    'ocrd': logging.INFO,
+    'processor': logging.INFO,
     'ocrd_network': logging.INFO,
     # 'ocrd.resolver': logging.INFO,
     # 'ocrd.resolver.download_to_directory': logging.INFO,
@@ -227,4 +229,4 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
 # Also, we even have to block log output for libraries
 # (like matplotlib/tensorflow) which set up logging
 # themselves already:
-disableLogging()
+#disableLogging()
