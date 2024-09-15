@@ -101,5 +101,11 @@ def page_from_file(input_file, **kwargs) -> OcrdPage:
     if input_file.mimetype.startswith('image'):
         return page_from_image(input_file)
     if input_file.mimetype == MIMETYPE_PAGE:
-        return OcrdPage(*parseEtree(input_file.local_filename, silence=True))
+        revmap = {}
+        # the old/default gds.reverse_node_mapping is useless
+        # since 2.39.4, we can actually get the exact reverse mapping for perfect round-trip
+        # but awkwardly, we have to pass the dict in for that
+        page = OcrdPage(*parseEtree(input_file.local_filename, reverse_mapping=revmap, silence=True))
+        page.revmap = revmap
+        return page
     raise ValueError("Unsupported mimetype '%s'" % input_file.mimetype)

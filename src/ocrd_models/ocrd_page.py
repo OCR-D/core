@@ -2,7 +2,7 @@
 API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
-from typing import Dict, Union
+from typing import Dict, Union, Any
 from lxml import etree as ET
 from elementpath import XPath2Parser, XPathContext
 
@@ -191,7 +191,7 @@ class OcrdPage():
         pcgts : PcGtsType,
         etree : ET._Element,
         mapping : Dict[str, ET._Element],
-        revmap : Dict[ET._Element, str],
+        revmap : Dict[ET._Element, Any],
     ):
         self._pcgts = pcgts
         self.etree = etree
