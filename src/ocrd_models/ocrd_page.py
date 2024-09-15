@@ -223,11 +223,15 @@ def to_xml(el, skip_declaration=False) -> str:
     # XXX remove potential empty ReadingOrder
     if hasattr(el, 'prune_ReadingOrder'):
         el.prune_ReadingOrder()
+    if hasattr(el, 'original_tagname_'):
+        name = el.original_tagname_ or 'PcGts'
+    else:
+        name = 'PcGts'
     sio = StringIO()
     el.export(
             outfile=sio,
             level=0,
-            name_='PcGts',
+            name_=name,
             namespaceprefix_='pc:',
             namespacedef_='xmlns:pc="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
                 NAMESPACES['page'],
