@@ -8,6 +8,27 @@ from ocrd import Processor, OcrdPageResult, OcrdPageResultImage
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
 from ocrd_models import OcrdPage
 
+_SEGTYPES = [
+    "NoiseRegion",
+    "LineDrawingRegion",
+    "AdvertRegion",
+    "ImageRegion",
+    "ChartRegion",
+    "MusicRegion",
+    "GraphicRegion",
+    "UnknownRegion",
+    "CustomRegion",
+    "SeparatorRegion",
+    "MathsRegion",
+    "TextRegion",
+    "MapRegion",
+    "ChemRegion",
+    "TableRegion",
+    "TextLine",
+    "Word",
+    "Glyph"
+]
+
 class FilterProcessor(Processor):
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """
@@ -31,18 +52,11 @@ class FilterProcessor(Processor):
         """
         pcgts = input_pcgts[0]
         result = OcrdPageResult(pcgts)
-        nodes = [node.attrib['id']
-                 for node in pcgts.xpath(self.parameter['select'])
-                 if 'id' in node.attrib]
+        nodes = pcgts.xpath(self.parameter['select'])
         # get PAGE objects from matching etree nodes
-        # FIXME: this should be easier (OcrdPage should have id lookup mechanism)
-        regions = pcgts.get_Page().get_AllRegions()
-        textregions = [region for region in regions if region.original_tagname_ == 'TextRegion']
-        lines = [line for region in textregions for line in region.get_TextLine() or []]
-        words = [word for line in lines for word in line.get_Word() or []]
-        glyphs = [glyph for word in words for glyph in word.get_Glyph() or []]
-        segments = [segment for segment in regions + lines + words + glyphs
-                    if segment.id in nodes]
+        # but allow only hierarchy segments
+        segments = [segment for segment in map(pcgts.revmap.get, nodes)
+                    if segment.__class__.__name__.replace('Type', '') in _SEGTYPES]
         if not(len(segments)):
             self.logger.info("no matches")
             return result
@@ -50,8 +64,6 @@ class FilterProcessor(Processor):
         if self.parameter['plot']:
             page_image, page_coords, _ = self.workspace.image_from_page(pcgts.get_Page(), page_id)
         for segment in segments:
-            node = pcgts.mapping[id(segment)]
-            assert isinstance(node, etree._Element)
             segtype = segment.original_tagname_
             self.logger.info("matched %s segment %s", segtype, segment.id)
             parent = segment.parent_object_
