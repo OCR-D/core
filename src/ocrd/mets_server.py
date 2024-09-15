@@ -88,6 +88,14 @@ class OcrdFileGroupListModel(BaseModel):
         return OcrdFileGroupListModel(file_groups=file_groups)
 
 
+class OcrdPageListModel(BaseModel):
+    physical_pages: List[str] = Field()
+
+    @staticmethod
+    def create(physical_pages: List[str]):
+        return OcrdPageListModel(physical_pages=physical_pages)
+
+
 class OcrdAgentListModel(BaseModel):
     agents: List[OcrdAgentModel] = Field()
 
@@ -209,6 +217,17 @@ class ClientSideOcrdMets:
                 json=MpxReq.workspace_path(self.ws_dir_path)
             ).json()["text"]
             return self.ws_dir_path
+
+    @property
+    def physical_pages(self) -> List[str]:
+        if not self.multiplexing_mode:
+            return self.session.request("GET", f"{self.url}/physical_pages").json()["physical_pages"]
+        else:
+            return self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.physical_pages(self.ws_dir_path)
+            ).json()["physical_pages"]
 
     @property
     def file_groups(self):
@@ -350,6 +369,11 @@ class MpxReq:
             ws_dir_path, method_type="GET", response_type="text", request_url="workspace_path", request_data={})
 
     @staticmethod
+    def physical_pages(ws_dir_path: str) -> Dict:
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="GET", response_type="dict", request_url="physical_pages", request_data={})
+
+    @staticmethod
     def file_groups(ws_dir_path: str) -> Dict:
         return MpxReq.__args_wrapper(
             ws_dir_path, method_type="GET", response_type="dict", request_url="file_groups", request_data={})
@@ -467,6 +491,10 @@ class OcrdMetsServer:
         @app.get(path='/workspace_path', response_model=str)
         async def workspace_path():
             return Response(content=workspace.directory, media_type="text/plain")
+
+        @app.get(path='/physical_pages', response_model=OcrdPageListModel)
+        async def physical_pages():
+            return {'physical_pages': workspace.mets.physical_pages}
 
         @app.get(path='/file_groups', response_model=OcrdFileGroupListModel)
         async def file_groups():
