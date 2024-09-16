@@ -5,6 +5,35 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0b5] - 2024-09-16
+
+TODO
+  - update OcrdPage from generateds  (HEAD -> new-processor-api, bertsky/new-processor-api)
+  - OcrdPage: add PageType.get_ReadingOrderGroups()
+  - tests: make sure ocrd_utils.config gets reset whenever changing it globally
+  - test processors: no need for 'force' kwarg anymore
+  - Processor / Workspace.add_file: always force if config.OCRD_EXISTING_OUTPUT==OVERWRITE
+  - lib.bash input-files: do not try to validate tasks here (impossible to get right with required parameters, and now covered by wrapped Processor.verify() already)
+  - lib.bash input-files: pass on --mets-server-url, --overwrite, and parameters (necessary for required params)
+  - lib.bash: fix errexit
+  - run_processor: be robust if ocrd_tool is missing steps
+  - Processor.verify: check output fileGrps as well (or OCRD_EXISTING_OUTPUT=OVERWRITE|SKIP or disjoint --page-id)
+  - Processor.process_workspace(): do not show NotImplementedError context if fallback process() raises anything itself
+  - ocrd.cli.validate tasks: pass on --mets-server-url, too
+  - ocrd.cli.bashlib input-files: pass on --mets-server-url, too
+  - ocrd.cli.workspace server: add 'reload' and 'save'
+  - ocrd.cli.workspace: consistently pass on --mets-server-url and --backup (also, simplify)
+  - METS Server: also export+delegate physical_pages
+  - processor CLI: delegate --resolve-resource, too
+  - ocrd.cli.ocrd-tool resolve-resource: fix (forgot to print result)
+  - PcGts.Page.id / make_xml_id: replace '/' with '_'
+  - Processor.process_page_file / OcrdPageResultImage: allow None instead of AlternativeImageType
+  - Processor.verify: revert 5819c816 (we still have no defaults in json loaded from v2)
+  - typing, extend docs
+  - test_processor: add test for force (overwrite) w/ METS Server
+  - test_mets_server: add test for force (overwrite)
+  - OcrdMetsServer.add_file: pass on 'force' kwarg, too
+
 ## [3.0.0b4] - 2024-09-02
 
 Fixed:
