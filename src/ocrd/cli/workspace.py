@@ -150,7 +150,8 @@ def workspace_clone(ctx, clobber_mets, download, file_grp, file_id, page_id, mim
         LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR clone' instead of argument 'WORKSPACE_DIR' ('%s')" % workspace_dir))
         ctx.directory = workspace_dir
 
-    assert not ctx.mets_server_url
+    assert not ctx.mets_server_url, \
+        f"clone cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
     workspace = ctx.resolver.workspace_from_url(
         mets_url,
         dst_dir=ctx.directory,
@@ -186,7 +187,8 @@ def workspace_init(ctx, clobber_mets, directory):
     if directory:
         LOG.warning(DeprecationWarning("Use 'ocrd workspace --directory DIR init' instead of argument 'DIRECTORY' ('%s')" % directory))
         ctx.directory = directory
-    assert not ctx.mets_server_url
+    assert not ctx.mets_server_url, \
+        f"init cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
     workspace = ctx.resolver.workspace_from_nothing(
         directory=ctx.directory,
         mets_basename=ctx.mets_basename,
@@ -506,6 +508,8 @@ def workspace_remove_file(ctx, id, force, keep_file):  # pylint: disable=redefin
     (If any ``ID`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
+    assert not ctx.mets_server_url, \
+        f"remove cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
     workspace = ctx.workspace()
     for i in id:
         workspace.remove_file(i, force=force, keep_file=keep_file)
@@ -524,6 +528,8 @@ def rename_group(ctx, old, new):
     """
     Rename fileGrp (USE attribute ``NEW`` to ``OLD``).
     """
+    assert not ctx.mets_server_url, \
+        f"rename-group cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
     workspace = ctx.workspace()
     workspace.rename_file_group(old, new)
     workspace.save_mets()
@@ -545,6 +551,8 @@ def remove_group(ctx, group, recursive, force, keep_files):
     (If any ``GROUP`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
+    assert not ctx.mets_server_url, \
+        f"remove-group cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
     workspace = ctx.workspace()
     for g in group:
         workspace.remove_file_group(g, recursive=recursive, force=force, keep_files=keep_files)
@@ -567,6 +575,8 @@ def prune_files(ctx, file_grp, mimetype, page_id, file_id):
     (If any ``FILTER`` starts with ``//``, then its remainder
      will be interpreted as a regular expression.)
     """
+    assert not ctx.mets_server_url, \
+        f"prune-files cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
     workspace = ctx.workspace()
     with pushd_popd(workspace.directory):
         for f in workspace.find_files(
@@ -762,6 +772,8 @@ def update_page(ctx, attr_value_pairs, order, orderlabel, contentids, page_id):
     if contentids:
         update_kwargs['CONTENTIDS'] = contentids
     try:
+        assert not ctx.mets_server_url, \
+            f"update-page cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
         workspace = ctx.workspace()
         workspace.mets.update_physical_page_attributes(page_id, **update_kwargs)
         workspace.save_mets()
@@ -800,6 +812,8 @@ def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pa
     mets_path = Path(mets_path)
     if filegrp_mapping:
         filegrp_mapping = loads(filegrp_mapping)
+    assert not ctx.mets_server_url, \
+        f"merge cannot be performed with METS Server - stop server, rerun without -U {ctx.mets_server_url}"
     workspace = ctx.workspace()
     other_workspace = Workspace(ctx.resolver, directory=str(mets_path.parent), mets_basename=str(mets_path.name))
     workspace.merge(
