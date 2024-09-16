@@ -7,32 +7,31 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## [3.0.0b5] - 2024-09-16
 
-TODO
-  - update OcrdPage from generateds  (HEAD -> new-processor-api, bertsky/new-processor-api)
-  - OcrdPage: add PageType.get_ReadingOrderGroups()
-  - tests: make sure ocrd_utils.config gets reset whenever changing it globally
-  - test processors: no need for 'force' kwarg anymore
-  - Processor / Workspace.add_file: always force if config.OCRD_EXISTING_OUTPUT==OVERWRITE
-  - lib.bash input-files: do not try to validate tasks here (impossible to get right with required parameters, and now covered by wrapped Processor.verify() already)
-  - lib.bash input-files: pass on --mets-server-url, --overwrite, and parameters (necessary for required params)
-  - lib.bash: fix errexit
-  - run_processor: be robust if ocrd_tool is missing steps
-  - Processor.verify: check output fileGrps as well (or OCRD_EXISTING_OUTPUT=OVERWRITE|SKIP or disjoint --page-id)
-  - Processor.process_workspace(): do not show NotImplementedError context if fallback process() raises anything itself
-  - ocrd.cli.validate tasks: pass on --mets-server-url, too
-  - ocrd.cli.bashlib input-files: pass on --mets-server-url, too
-  - ocrd.cli.workspace server: add 'reload' and 'save'
-  - ocrd.cli.workspace: consistently pass on --mets-server-url and --backup (also, simplify)
-  - METS Server: also export+delegate physical_pages
-  - processor CLI: delegate --resolve-resource, too
-  - ocrd.cli.ocrd-tool resolve-resource: fix (forgot to print result)
-  - PcGts.Page.id / make_xml_id: replace '/' with '_'
-  - Processor.process_page_file / OcrdPageResultImage: allow None instead of AlternativeImageType
-  - Processor.verify: revert 5819c816 (we still have no defaults in json loaded from v2)
-  - typing, extend docs
-  - test_processor: add test for force (overwrite) w/ METS Server
-  - test_mets_server: add test for force (overwrite)
-  - OcrdMetsServer.add_file: pass on 'force' kwarg, too
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `ocrd.cli.bashlib "input-files"`: pass on `--mets-server-url`
+  - `lib.bash input-files`: pass on `--mets-server-url`, `--overwrite`, and parameters
+  - `lib.bash`: fix `errexit` handling
+  - `ocrd.cli.ocrd-tool "resolve-resource"`: forgot to actually print result
+
+Changed:
+  - :fire: `Processor` / `Workspace.add_file`: always `force` if `OCRD_EXISTING_OUTPUT==OVERWRITE`
+  - :fire: `Processor.verify`: revert 3.0.0b1 enforcing cardinality checks (stay backwards compatible)
+  - :fire: `Processor.verify`: check output fileGrps, too
+     (must not exist unless `OCRD_EXISTING_OUTPUT=OVERWRITE|SKIP` or disjoint `--page-id` range)
+  - lib.bash `input-files`: do not try to validate tasks here (now covered by `Processor.verify()`)
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - METS Server: export and delegate `physical_pages`
+  - processor CLI: delegate `--resolve-resource`, too
+  - `Processor.process_page_file` / `OcrdPageResultImage`: allow `None` besides `AlternativeImageType`
 
 ## [3.0.0b4] - 2024-09-02
 
@@ -2288,6 +2287,8 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.0b5]: ../../compare/v3.0.0b5..v3.0.0b4
+[3.0.0b4]: ../../compare/v3.0.0b4..v3.0.0b3
 [3.0.0b3]: ../../compare/v3.0.0b3..v3.0.0b2
 [3.0.0b2]: ../../compare/v3.0.0b2..v3.0.0b1
 [3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
