@@ -193,6 +193,7 @@ def send_workflow_job_request(
     assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
+        print(f"Polling state of workflow job {workflow_job_id}")
         state = client.poll_workflow_status(job_id=workflow_job_id)
         if state != JobState.success:
             print(f"Workflow failed with {state}")
