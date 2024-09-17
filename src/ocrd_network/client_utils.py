@@ -1,6 +1,11 @@
-from requests import get as request_get, post as request_post
+from requests import Session, get as request_get, post as request_post
 from time import sleep
 import json
+
+from requests.adapters import Retry
+from requests.sessions import HTTPAdapter
+
+from ocrd_utils import config
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
@@ -59,7 +64,22 @@ def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) ->
 
 def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> JobState:
     request_url = f"{ps_server_host}/workflow/job-simple/{workflow_job_id}"
-    response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
+    retries = Retry(total=5,
+                    status_forcelist=[
+                        500, # Internal Server Error
+                        503, # Service Unavailable
+                        504, # Gateway Timeout
+                        509, # Bandwidth Limit Exceeded
+                        529, # Site Overloaded
+                        598, # Proxy Read Timeout
+                        599, # Proxy Connect Timeout
+            ])
+    adapter = HTTPAdapter(max_retries=retries)
+    session = Session()
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    response = session.get(request_url, headers={"accept": "application/json; charset=utf-8"})
+    response.raise_for_status()
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
     job_state = response.json()["state"]
     assert job_state
