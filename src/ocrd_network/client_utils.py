@@ -105,7 +105,7 @@ def post_ps_processing_request(ps_server_host: str, processor: str, job_input: d
 
 # TODO: Can be extended to include other parameters such as page_wise
 def post_ps_workflow_request(ps_server_host: str, path_to_wf: str, path_to_mets: str) -> str:
-    request_url = f"{ps_server_host}/workflow/run?mets_path={path_to_mets}&page_wise=True"
+    request_url = f"{ps_server_host}/workflow/run?mets_path={path_to_mets}&page_wise=False"
     session = _get_retrying_session()
     response = session.post(
         url=request_url,
