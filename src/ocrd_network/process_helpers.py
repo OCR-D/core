@@ -1,5 +1,6 @@
 from contextlib import nullcontext
 from json import dumps
+from logging import Logger
 from pathlib import Path
 from typing import List, Optional
 
@@ -17,9 +18,10 @@ def invoke_processor(
     output_file_grps: List[str],
     page_id: str,
     parameters: dict,
+    logger : Optional[Logger],
     mets_server_url: Optional[str] = None,
     log_filename: Optional[Path] = None,
-    log_level: str = "DEBUG"
+    log_level: str = "DEBUG",
 ) -> None:
     if not (processor_class or executable):
         raise ValueError("Missing processor class and executable")
@@ -28,23 +30,20 @@ def invoke_processor(
 
     workspace = get_ocrd_workspace_instance(mets_path=abs_path_to_mets, mets_server_url=mets_server_url)
     if processor_class:
-        ctx_mgr = redirect_stderr_and_stdout_to_file(log_filename) if log_filename else nullcontext()
-        with ctx_mgr:
-            initLogging(force_reinit=True)
-            try:
-                run_processor(
-                    processorClass=processor_class,
-                    workspace=workspace,
-                    input_file_grp=input_file_grps_str,
-                    output_file_grp=output_file_grps_str,
-                    page_id=page_id,
-                    parameter=parameters,
-                    instance_caching=True,
-                    mets_server_url=mets_server_url,
-                    log_level=log_level
-                )
-            except Exception as error:
-                raise RuntimeError(f"Python executable '{processor_class.__dict__}', error: {error}")
+        try:
+            run_processor(
+                processorClass=processor_class,
+                workspace=workspace,
+                input_file_grp=input_file_grps_str,
+                output_file_grp=output_file_grps_str,
+                page_id=page_id,
+                parameter=parameters,
+                instance_caching=True,
+                mets_server_url=mets_server_url,
+                log_level=log_level
+            )
+        except Exception as error:
+            raise RuntimeError(f"Python executable '{processor_class.__dict__}', error: {error}")
     else:
         return_code = run_cli(
             executable=executable,

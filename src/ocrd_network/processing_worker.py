@@ -192,7 +192,8 @@ class ProcessingWorker:
                 page_id=page_id,
                 log_filename=job_log_file,
                 parameters=processing_message.parameters,
-                mets_server_url=mets_server_url
+                mets_server_url=mets_server_url,
+                logger=self.log
             )
         except Exception as error:
             message = (
