@@ -1,5 +1,6 @@
 from requests import get as request_get, post as request_post
 from time import sleep
+import json
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
@@ -88,10 +89,11 @@ def post_ps_workflow_request(ps_server_host: str, path_to_wf: str, path_to_mets:
     )
     # print(response.json())
     # print(response.__dict__)
-    json_resp = response.json()
-    print(json_resp)
+    json_resp_raw = response.text
+    print(f'post_ps_workflow_request >> {response.status_code}')
+    print(f'post_ps_workflow_request >> {json_resp_raw}')
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
-    wf_job_id = json_resp["job_id"]
+    wf_job_id = json.loads(json_resp_raw)["job_id"]
     assert wf_job_id
     return wf_job_id
 
