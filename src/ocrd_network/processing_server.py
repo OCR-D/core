@@ -92,6 +92,7 @@ class ProcessingServer(FastAPI):
 
         self.log.info(f"Loading ocrd all tool json")
         self.ocrd_all_tool_json = load_ocrd_all_tool_json()
+        print(self.ocrd_all_tool_json)
         self.hostname = host
         self.port = port
 
