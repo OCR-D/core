@@ -327,7 +327,11 @@ class ProcessingServer(FastAPI):
         """
         request_body = await request.json()
         ws_dir_path = request_body["workspace_path"]
-        self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
+        try:
+            self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
+        except FileNotFoundError as e:
+            self.log.exception(e)
+            pass
         return self.mets_server_proxy.forward_tcp_request(request_body=request_body)
 
     async def home_page(self):
