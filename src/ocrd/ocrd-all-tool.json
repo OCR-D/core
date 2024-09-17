@@ -774,6 +774,82 @@
       }
     ]
   },
+  "ocrd-page2alto-transform": {
+    "executable": "ocrd-page2alto-transform",
+    "categories": ["Layout analysis"],
+    "description": "Transform PAGE-XML to ALTO",
+    "input_file_grp": ["OBSOLETE"],
+    "output_file_grp": ["ALSO-OBSOLETE"],
+    "steps": ["whatevs"],
+    "parameters": {
+      "check_border": {
+        "type": "boolean",
+        "description": "Whether to create full-page WIDTH/HEIGHT etc. if no border/pagespace present",
+        "default": false
+      },
+      "check_words": {
+        "type": "boolean",
+        "description": "Check whether PAGE-XML contains any Words and fail if not",
+        "default": true
+      },
+      "skip_empty_lines": {
+        "type": "boolean",
+        "description": "Whether to omit or keep empty lines in PAGE-XML",
+        "default": false
+      },
+      "trailing_dash_to_hyp": {
+        "type": "boolean",
+        "description": "Whether to add a <HYP/> element if the last word in a line ends in '-'",
+        "default": false
+      },
+      "dummy_word": {
+        "type": "boolean",
+        "description": "Whether to create a Word for TextLine that have TextEquiv/Unicode but no Word",
+        "default": true
+      },
+      "dummy_textline": {
+        "type": "boolean",
+        "description": "Whether to create a TextLine for regions that have TextEquiv/Unicode but no TextLine",
+        "default": true
+      },
+      "textequiv_index": {
+        "type": "number",
+        "description": "If multiple textequiv, use the n-th TextEquiv by @index",
+        "default": 0
+      },
+      "region_order": {
+        "type": "string",
+        "description": "Order in which to iterate over the regions",
+        "enum": ["document", "reading-order", "reading-order-only"],
+        "default": "document"
+      },
+      "textline_order": {
+        "type": "string",
+        "description": "Order in which to iterate over the textlines",
+        "enum": ["document", "index", "textline-order"],
+        "default": "document"
+      },
+      "textequiv_fallback_strategy": {
+        "type": "string",
+        "description": "What to do if selected TextEquiv @index is not available: 'raise' will lead to a runtime error, 'first' will use the first TextEquiv, 'last' will use the last TextEquiv on the element",
+        "enum": ["raise", "first", "last"],
+        "default": "first"
+      },
+      "alto_version": {
+        "type": "string",
+        "description": "Whether to create full-page WIDTH/HEIGHT etc. if no border/pagespace present",
+        "default": "v4.2",
+        "enum": ["v4.2", "v4.1", "v4.0", "v3.1", "v3.0", "v2.1", "v2.0"]
+      },
+      "timestamp_src": {
+        "type": "string",
+        "description": "Which element to use for the timestamp",
+        "default": "LastChange",
+        "enum": ["Created", "LastChange", "none"]
+      }
+    },
+    "resources": []
+  }
   "ocrd-dummy": {
     "executable": "ocrd-dummy",
     "description": "Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group",
