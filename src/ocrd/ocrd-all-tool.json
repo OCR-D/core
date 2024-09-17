@@ -849,7 +849,7 @@
       }
     },
     "resources": []
-  }
+  },
   "ocrd-dummy": {
     "executable": "ocrd-dummy",
     "description": "Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group",
