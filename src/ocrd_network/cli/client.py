@@ -177,19 +177,25 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-m', '--path-to-mets', required=True)
 @click.option('-w', '--path-to-workflow', required=True)
-@click.option('-b', '--block', default=False,
+@click.option('-P', '--page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
+@click.option('-b', '--block', is_flag=True, default=False,
               help='If set, the client will block till job timeout, fail or success.')
 def send_workflow_job_request(
     address: Optional[str],
     path_to_mets: str,
     path_to_workflow: str,
+    page_wise : bool,
     block: Optional[bool]
 ):
     """
     Submit a workflow job to the processing server.
     """
     client = Client(server_addr_processing=address)
-    workflow_job_id = client.send_workflow_job_request(path_to_wf=path_to_workflow, path_to_mets=path_to_mets)
+    workflow_job_id = client.send_workflow_job_request(
+        path_to_wf=path_to_workflow,
+        path_to_mets=path_to_mets,
+        page_wise=page_wise,
+    )
     assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
