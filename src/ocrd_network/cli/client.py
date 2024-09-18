@@ -177,7 +177,7 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-m', '--path-to-mets', required=True)
 @click.option('-w', '--path-to-workflow', required=True)
-@click.option('-P', '--page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
+@click.option('-p/-P', '--page-wise/--no-page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
 @click.option('-b', '--block', is_flag=True, default=False,
               help='If set, the client will block till job timeout, fail or success.')
 def send_workflow_job_request(
