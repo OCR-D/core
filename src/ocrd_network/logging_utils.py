@@ -21,7 +21,7 @@ def get_root_logging_dir(module_name: NetworkLoggingDirs) -> Path:
 def force_symlink_stdout(log_path):
     if log_path.exists():
         log_path.unlink()
-    symlink('/dev/stdout', log_path)
+    symlink('/proc/1/fd/1', log_path)
     return log_path
 
 def get_cache_locked_pages_logging_file_path() -> Path:
