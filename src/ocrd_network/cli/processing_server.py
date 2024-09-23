@@ -18,5 +18,5 @@ def processing_server_cli(path_to_config, address: str):
 
     # Note, the address is already validated with the type field
     host, port = address.split(':')
-    processing_server = ProcessingServer(path_to_config, host, port)
+    processing_server = ProcessingServer(path_to_config, host, int(port))
     processing_server.start()

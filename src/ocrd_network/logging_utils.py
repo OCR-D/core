@@ -1,4 +1,5 @@
 from logging import FileHandler, Formatter, Logger
+from os import symlink
 from pathlib import Path
 
 from ocrd_utils import config, LOG_FORMAT, safe_filename
@@ -19,34 +20,48 @@ def get_root_logging_dir(module_name: NetworkLoggingDirs) -> Path:
 
 def get_cache_locked_pages_logging_file_path() -> Path:
     log_file: str = "cache_locked_pages.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
+    log_path = Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
+    symlink('/dev/stdout', log_path)
+    return log_path
 
 
 def get_cache_processing_requests_logging_file_path() -> Path:
     log_file: str = "cache_processing_requests.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
+    log_path = Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
+    symlink('/dev/stdout', log_path)
+    return log_path
 
 
 def get_mets_server_logging_file_path(mets_path: str) -> Path:
     log_file: str = f"{safe_filename(mets_path)}.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.METS_SERVERS), log_file)
+    log_path = Path(get_root_logging_dir(NetworkLoggingDirs.METS_SERVERS), log_file)
+    symlink('/dev/stdout', log_path)
+    return log_path
 
 
 def get_processing_job_logging_file_path(job_id: str) -> Path:
     log_file: str = f"{job_id}.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_JOBS), log_file)
+    log_path = Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_JOBS), log_file)
+    symlink('/dev/stdout', log_path)
+    return log_path
 
 
 def get_processing_server_logging_file_path(pid: int) -> Path:
     log_file: str = f"processing_server.{pid}.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
+    log_path = Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_SERVERS), log_file)
+    symlink('/dev/stdout', log_path)
+    return log_path
 
 
 def get_processing_worker_logging_file_path(processor_name: str, pid: int) -> Path:
     log_file: str = f"{AgentType.PROCESSING_WORKER}.{pid}.{processor_name}.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_WORKERS), log_file)
+    log_path = Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_WORKERS), log_file)
+    symlink('/dev/stdout', log_path)
+    return log_path
 
 
 def get_processor_server_logging_file_path(processor_name: str, pid: int) -> Path:
     log_file: str = f"{AgentType.PROCESSOR_SERVER}.{pid}.{processor_name}.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSOR_SERVERS), log_file)
+    log_path = Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSOR_SERVERS), log_file)
+    symlink('/dev/stdout', log_path)
+    return log_path
