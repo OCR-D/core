@@ -18,7 +18,6 @@ from ocrd_utils import (
 )
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
-from ocrd_models.constants import NAMESPACES as NS
 from ocrd_models.utils import handle_oai_response
 
 class Resolver():
@@ -310,5 +309,3 @@ class Resolver():
                         raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
 
         return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_url
-
-

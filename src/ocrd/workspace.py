@@ -1,7 +1,7 @@
 import io
 from os import makedirs, unlink, listdir, path
 from pathlib import Path
-from shutil import move, copyfileobj
+from shutil import copyfileobj
 from re import sub
 from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
@@ -19,11 +19,13 @@ from ocrd_models.ocrd_page import parse, BorderType, to_xml
 from ocrd_modelfactory import exif_from_filename, page_from_file
 from ocrd_utils import (
     atomic_write,
+    config,
     getLogger,
     image_from_polygon,
     coordinates_of_segment,
     adjust_canvas_to_rotation,
     adjust_canvas_to_transposition,
+    scale_coordinates,
     shift_coordinates,
     rotate_coordinates,
     transform_coordinates,
@@ -41,7 +43,7 @@ from ocrd_utils import (
     MIME_TO_EXT,
     MIME_TO_PIL,
     MIMETYPE_PAGE,
-    REGEX_PREFIX
+    REGEX_PREFIX,
 )
 
 from .workspace_backup import WorkspaceBackupManager
@@ -74,7 +76,6 @@ class Workspace():
             `OcrdMets` of this workspace. If `None`, then the METS will be read from and written to
             the filesystem directly.
         baseurl (string, None) : Base URL to prefix to relative URL.
-        overwrite_mode (boolean, False) : Whether to force add operations on this workspace globally
     """
 
     def __init__(
@@ -90,14 +91,13 @@ class Workspace():
         self.resolver = resolver
         self.directory = directory
         self.mets_target = str(Path(directory, mets_basename))
-        self.overwrite_mode = False
         self.is_remote = bool(mets_server_url)
         if mets is None:
             if self.is_remote:
                 mets = ClientSideOcrdMets(mets_server_url, self.directory)
                 if mets.workspace_path != self.directory:
-                    raise ValueError(f"METS server {mets_server_url} workspace directory {mets.workspace_path} differs "
-                            f"from local workspace directory {self.directory}. These are not the same workspaces.")
+                    raise ValueError(f"METS server {mets_server_url} workspace directory '{mets.workspace_path}' differs "
+                            f"from local workspace directory '{self.directory}'. These are not the same workspaces.")
             else:
                 mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -111,7 +111,7 @@ class Workspace():
 
     def __repr__(self):
         return 'Workspace[remote=%s, directory=%s, baseurl=%s, file_groups=%s, files=%s]' % (
-            not not self.is_remote,
+            self.is_remote,
             self.directory,
             self.baseurl,
             self.mets.file_groups,
@@ -122,7 +122,10 @@ class Workspace():
         """
         Reload METS from the filesystem.
         """
-        self.mets = OcrdMets(filename=self.mets_target)
+        if self.is_remote:
+            self.mets.reload()
+        else:
+            self.mets = OcrdMets(filename=self.mets_target)
 
     @deprecated_alias(pageId="page_id")
     @deprecated_alias(ID="file_id")
@@ -242,8 +245,6 @@ class Workspace():
         """
         log = getLogger('ocrd.workspace.remove_file')
         log.debug('Deleting mets:file %s', file_id)
-        if self.overwrite_mode:
-            force = True
         if isinstance(file_id, OcrdFile):
             file_id = file_id.ID
         try:
@@ -295,9 +296,6 @@ class Workspace():
             page_same_group (boolean): Remove only images in the same file group as the PAGE-XML.
                 Has no effect unless ``page_recursive`` is `True`.
         """
-        if not force and self.overwrite_mode:
-            force = True
-
         if (not USE.startswith(REGEX_PREFIX)) and (USE not in self.mets.file_groups) and (not force):
             raise Exception("No such fileGrp: %s" % USE)
 
@@ -418,8 +416,6 @@ class Workspace():
             raise ValueError("workspace.add_file must be passed a 'page_id' kwarg, even if it is None.")
         if content is not None and not kwargs.get('local_filename'):
             raise Exception("'content' was set but no 'local_filename'")
-        if self.overwrite_mode:
-            kwargs['force'] = True
 
         with pushd_popd(self.directory):
             if kwargs.get('local_filename'):
@@ -432,6 +428,8 @@ class Workspace():
             kwargs["pageId"] = kwargs.pop("page_id")
             if "file_id" in kwargs:
                 kwargs["ID"] = kwargs.pop("file_id")
+            if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
+                kwargs["force"] = True
 
             ret = self.mets.add_file(file_grp, **kwargs)
 
@@ -613,7 +611,6 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to ``fill``:
 
-        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
         - else if `"none"`, then avoid masking polygons where possible
@@ -635,6 +632,7 @@ class Workspace():
                    i.e. after cropping to the page's border / bounding box (if any)
                    and deskewing with the page's orientation angle (if any)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
+               - `"DPI"`: the pixel density of the original image,
                - `"features"`: the `AlternativeImage` `@comments` for the image, i.e.
                  names of all applied operations that lead up to this result,
              * an :py:class:`ocrd_models.ocrd_exif.OcrdExif` instance associated with
@@ -655,7 +653,7 @@ class Workspace():
         log = getLogger('ocrd.workspace.image_from_page')
         page_image_info = self.resolve_image_exif(page.imageFilename)
         page_image = self._resolve_image_as_pil(page.imageFilename)
-        page_coords = dict()
+        page_coords = {}
         # use identity as initial affine coordinate transform:
         page_coords['transform'] = np.eye(3)
         # interim bbox (updated with each change to the transform):
@@ -676,6 +674,13 @@ class Workspace():
         page_coords['angle'] = 0 # nothing applied yet (depends on filters)
         log.debug("page '%s' has %s orientation=%d skew=%.2f",
                   page_id, "border," if border else "", orientation, skew)
+        if page_image_info.resolution != 1:
+            dpi = page_image_info.resolution
+            if page_image_info.resolutionUnit == 'cm':
+                dpi = round(dpi * 2.54)
+            dpi = int(dpi)
+            log.debug("page '%s' images will use %d DPI from image meta-data", page_id, dpi)
+            page_coords['DPI'] = dpi
 
         # initialize AlternativeImage@comments classes as empty:
         page_coords['features'] = ''
@@ -794,6 +799,11 @@ class Workspace():
                             'filter="%s" in page "%s"' % (
                                 feature_filter, page_id))
         page_image.format = 'PNG' # workaround for tesserocr#194
+        # ensure DPI will be set in image meta-data again
+        if 'DPI' in page_coords:
+            dpi = page_coords['DPI']
+            if 'dpi' not in page_image.info:
+                page_image.info['dpi'] = (dpi, dpi)
         return page_image, page_coords, page_image_info
 
     def image_from_segment(self, segment, parent_image, parent_coords,
@@ -814,6 +824,7 @@ class Workspace():
                  converts from absolute coordinates to those relative to the image,
                  i.e. after applying all operations (starting with the original image)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
+               - `"DPI"`: the pixel density of the parent image,
                - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all operations that lead up to this result, and
         Keyword Args:
@@ -843,7 +854,6 @@ class Workspace():
         Cropping uses a polygon mask (not just the bounding box rectangle).
         Areas outside the polygon will be filled according to `fill`:
 
-        \b
         - if `"background"` (the default),
           then fill with the median color of the image;
         - else if `"none"`, then avoid masking polygons where possible
@@ -879,6 +889,7 @@ class Workspace():
                    the segment's bounding box, and deskewing with the segment's
                    orientation angle (if any)
                - `"angle"`: the rotation/reflection angle applied to the image so far,
+               - `"DPI"`: the pixel density of this image,
                - `"features"`: the ``AlternativeImage/@comments`` for the image, i.e.
                  names of all applied operations that lead up to this result.
 
@@ -941,6 +952,8 @@ class Workspace():
             orientation = 0
             skew = 0
         segment_coords['angle'] = parent_coords['angle'] # nothing applied yet (depends on filters)
+        if 'DPI' in parent_coords:
+            segment_coords['DPI'] = parent_coords['DPI'] # not rescaled yet
 
         # initialize AlternativeImage@comments classes from parent, except
         # for those operations that can apply on multiple hierarchy levels:
@@ -1048,15 +1061,21 @@ class Workspace():
                             'filter="%s" in segment "%s"' % (
                                 feature_filter, segment.id))
         segment_image.format = 'PNG' # workaround for tesserocr#194
+        # ensure DPI will be set in image meta-data again
+        if 'DPI' in segment_coords:
+            dpi = segment_coords['DPI']
+            if 'dpi' not in segment_image.info:
+                segment_image.info['dpi'] = (dpi, dpi)
         return segment_image, segment_coords
 
     # pylint: disable=redefined-builtin
-    def save_image_file(self, image,
-                        file_id,
-                        file_grp,
-                        page_id=None,
-                        mimetype='image/png',
-                        force=False):
+    def save_image_file(self, image : Image.Image,
+                        file_id : str,
+                        file_grp : str,
+                        file_path : Optional[str] = None,
+                        page_id : Optional[str] = None,
+                        mimetype : str = 'image/png',
+                        force : bool = False) -> str:
         """Store an image in the filesystem and reference it as new file in the METS.
 
         Args:
@@ -1064,22 +1083,26 @@ class Workspace():
             file_id (string): `@ID` of the METS `file` to use
             file_grp (string): `@USE` of the METS `fileGrp` to use
         Keyword Args:
+            file_path (string): `@href` of the METS `file/FLocat` to use.
             page_id (string): `@ID` in the METS physical `structMap` to use
             mimetype (string): MIME type of the image format to serialize as
             force (boolean): whether to replace any existing `file` with that `@ID`
 
         Serialize the image into the filesystem, and add a `file` for it in the METS.
-        Use a filename extension based on ``mimetype``.
+        Use ``file_grp`` as directory and ``file_id`` concatenated with extension
+        based on ``mimetype`` as file name, unless directly passing ``file_path``.
 
         Returns:
             The (absolute) path of the created file.
         """
         log = getLogger('ocrd.workspace.save_image_file')
-        if self.overwrite_mode:
-            force = True
+        saveargs = {}
+        if 'dpi' in image.info:
+            saveargs['dpi'] = image.info['dpi']
         image_bytes = io.BytesIO()
-        image.save(image_bytes, format=MIME_TO_PIL[mimetype])
-        file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
+        image.save(image_bytes, format=MIME_TO_PIL[mimetype], **saveargs)
+        if file_path is None:
+            file_path = str(Path(file_grp, '%s%s' % (file_id, MIME_TO_EXT[mimetype])))
         out = self.add_file(
             file_grp,
             file_id=file_id,
@@ -1150,9 +1173,9 @@ def _reflect(log, name, orientation, segment_image, segment_coords, segment_xywh
     # Transpose in affine coordinate transform:
     # (consistent with image transposition or AlternativeImage below)
     transposition = {
-        90: Image.ROTATE_90,
-        180: Image.ROTATE_180,
-        270: Image.ROTATE_270
+        90: Image.Transpose.ROTATE_90,
+        180: Image.Transpose.ROTATE_180,
+        270: Image.Transpose.ROTATE_270
     }.get(orientation) # no default
     segment_coords['transform'] = transpose_coordinates(
         segment_coords['transform'], transposition,
@@ -1220,5 +1243,5 @@ def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwa
         segment_image = segment_image.resize((int(segment_image.width * factor),
                                               int(segment_image.height * factor)),
                                              # slowest, but highest quality:
-                                             Image.BICUBIC)
+                                             Image.Resampling.BICUBIC)
     return segment_image, segment_coords, segment_xywh

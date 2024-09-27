@@ -21,6 +21,7 @@ class OcrdExif():
             * ``RGB`` for 24-bit truecolor,
             * ``I`` for 32-bit signed integer grayscale,
             * ``F`` for floating-point grayscale
+
           (see PIL concept **mode**)
         resolution (int): pixel density
         xResolution (int): pixel density
@@ -101,7 +102,7 @@ class OcrdExif():
         Serialize all properties as XML string.
         """
         ret = '<exif>'
-        for k in self.__dict__:
-            ret += '<%s>%s</%s>' % (k, self.__dict__[k], k)
+        for k, v in self.__dict__.items():
+            ret += f'<{k}>{v}</{k}>'
         ret += '</exif>'
         return ret

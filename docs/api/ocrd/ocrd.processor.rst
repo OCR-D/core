@@ -22,3 +22,4 @@ Submodules
 
    ocrd.processor.base
    ocrd.processor.helpers
+   ocrd.processor.ocrd_page_result

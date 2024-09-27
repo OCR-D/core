@@ -1,15 +1,18 @@
 {
-  "version": "1.0",
+  "version": "1.0.0",
   "tools": {
     "ocrd-cp": {
       "executable": "ocrd-cp",
       "description": "dummy processor copying",
       "steps": ["preprocessing/optimization"],
       "categories": ["Image preprocessing"],
+      # we allow 1 or 2 input file grps
+      # the output cardinality gets expanded from default
+      "input_file_grp_cardinality": [1,2],
       "parameters": {
         "message": {
           "type": "string",
-          "default": "",
+          "default": "hello by default",
           "description": "message to print on stdout"
         }
       }

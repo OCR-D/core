@@ -5,6 +5,129 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0b5] - 2024-09-16
+
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `ocrd.cli.bashlib "input-files"`: pass on `--mets-server-url`
+  - `lib.bash input-files`: pass on `--mets-server-url`, `--overwrite`, and parameters
+  - `lib.bash`: fix `errexit` handling
+  - `ocrd.cli.ocrd-tool "resolve-resource"`: forgot to actually print result
+
+Changed:
+  - :fire: `Processor` / `Workspace.add_file`: always `force` if `OCRD_EXISTING_OUTPUT==OVERWRITE`
+  - :fire: `Processor.verify`: revert 3.0.0b1 enforcing cardinality checks (stay backwards compatible)
+  - :fire: `Processor.verify`: check output fileGrps, too
+     (must not exist unless `OCRD_EXISTING_OUTPUT=OVERWRITE|SKIP` or disjoint `--page-id` range)
+  - lib.bash `input-files`: do not try to validate tasks here (now covered by `Processor.verify()`)
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - METS Server: export and delegate `physical_pages`
+  - processor CLI: delegate `--resolve-resource`, too
+  - `Processor.process_page_file` / `OcrdPageResultImage`: allow `None` besides `AlternativeImageType`
+
+## [3.0.0b4] - 2024-09-02
+
+Fixed:
+
+  * `Processor.metadata_location`: `src` workaround respects namespace packages, qurator-spk/eynollah#134
+  * `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+
+## [3.0.0b3] - 2024-08-30
+
+Added:
+
+  * `OcrdConfig.reset_defaults` to reset config variables to their defaults
+
+## [3.0.0b2] - 2024-08-30
+
+Added:
+ - `Processor.max_workers`: class attribute to control per-page parallelism of this implementation
+ - `Processor.max_page_seconds`: class attribute to control per-page timeout of this implementation
+ - `OCRD_MAX_PARALLEL_PAGES` for whether and how many workers should process pages in parallel
+ - `OCRD_PROCESSING_PAGE_TIMEOUT` for whether and how long processors should wait for single pages
+ - `OCRD_MAX_MISSING_OUTPUTS` for maximum rate (fraction) of pages before making `OCRD_MISSING_OUTPUT=abort`
+
+Fixed:
+  - `disableLogging`: also re-instate root logger to Python defaults
+
+## [3.0.0b1] - 2024-08-26
+
+Fixed:
+  - actually apply CLI `--log-filename`, and show in `--help`
+  - adapt to Pillow changes
+  - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
+
+Changed:
+  - :fire: `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are not published
+    as separate packages anymore, everything is contained in `ocrd` - you should adapt your `requirements.txt` accordingly
+  - :fire: `Processor.parameter` now a property (attribute always exists, but `None` for non-processing contexts)
+  - :fire: `Processor.parameter` is now a `frozendict` (contents immutable)
+  - :fire: `Processor.parameter` validate when(ever) set instead of (just) the constructor
+  - setting `Processor.parameter` will also trigger (`Processor.shutdown() and) `Processor.setup()`
+  - `get_processor(... instance_caching=True)`: use `min(max_instances, OCRD_MAX_PROCESSOR_CACHE)`
+  - :fire: `Processor.verify` always validates fileGrp cardinalities (because we have `ocrd-tool.json` defaults now)
+  - :fire: `OcrdMets.add_agent` without positional arguments
+  - `ocrd bashlib input-files` now uses normal Processor decorator, and gets passed actual `ocrd-tool.json` and tool name
+    from bashlib's `ocrd__wrap`
+
+Added:
+  - `Processor.metadata_filename`: expose to make local path of `ocrd-tool.json` in Python distribution reusable+overridable
+  - `Processor.metadata_location`: expose to make absolute path of `ocrd-tool.json` reusable+overridable
+  - `Processor.metadata_rawdict`: expose to make in-memory contents of `ocrd-tool.json` reusable+overridable
+  - `Processor.metadata`: expose to make validated and default-expanded contents of `ocrd-tool.json` reusable+overridable
+  - `Processor.shutdown`: to shut down processor after processing, optional
+  - `Processor.max_instances`: class attribute to control instance caching of this implementation
+
+## [3.0.0a2] - 2024-08-22
+
+Changed:
+ - :fire: `OcrdPage` as proxy of `PcGtsType` instead of alias; also contains `etree` and `mapping` now
+ - :fire: `page_from_file`: removed kwarg `with_tree` - use `OcrdPage.etree` and `OcrdPage.mapping` instead
+ - :fire: `Processor.zip_input_files` now can throw `ocrd.NonUniqueInputFile` and `ocrd.MissingInputFile`
+   (the latter only if `OCRD_MISSING_INPUT=ABORT`)
+ - :fire: `Processor.zip_input_files` does not by default use `require_first` anymore
+   (so the first file in any input file tuple per page can be `None` as well)
+ - :fire: no more `Workspace.overwrite_mode`, merely delegate to `OCRD_EXISTING_OUTPUT=OVERWRITE`
+ - :art: improve on docs result for `ocrd_utils.config`
+
+Added:
+  - :point_right: `OCRD_DOWNLOAD_INPUT` for whether input files should be downloaded before processing
+  - :point_right: `OCRD_MISSING_INPUT` for how to handle missing input files (**`SKIP`** or `ABORT`)
+  - :point_right: `OCRD_MISSING_OUTPUT` for how to handle processing failures (**`SKIP`** or `ABORT` or `COPY`)
+     the latter behaves like ocrd-dummy for the failed page(s)
+  - :point_right: `OCRD_EXISTING_OUTPUT` for how to handle existing output files (**`SKIP`** or `ABORT` or `OVERWRITE`)
+  - new CLI option `--debug` as short-hand for `ABORT` choices above
+  - `Processor.logger` set up by constructor already (for re-use by processor implementors)
+  - `default`-expand and validate `ocrd_tool.json` in `Processor` constructor, log invalidities
+  - handle JSON `deprecation` in `ocrd_tool.json` by reporting warnings
+
+## [3.0.0a1] - 2024-08-15
+
+Changed:
+  - :fire: Deprecate `Processor.process`
+  - update spec to v3.25.0, which requires annotating fileGrp cardinality in `ocrd-tool.json`
+  - :fire: Remove passing non-processing kwargs to `Processor` constructor, add as members  
+     (i.e. `show_help`, `dump_json`, `dump_module_dir`, `list_resources`, `show_resource`, `resolve_resource`)
+  - :fire: Deprecate passing processing arg / kwargs to `Processor` constructor  
+     (i.e. `workspace`, `page_id`, `input_file_grp`, `output_file_grp`; now all set by `run_processor`)
+  - :fire: Deprecate passing `ocrd-tool.json` metadata to `Processor` constructor
+  - `ocrd.processor`: Handle loading of bundled `ocrd-tool.json` generically
+
+Added:
+  - `Processor.process_workspace`: process a complete workspace, with default implementation
+  - `Processor.process_page_file`: process an OcrdFile, with default implementation
+  - `Processor.process_page_pcgts`: process a single OcrdPage, produce a single OcrdPage, required to implement
+  - `Processor.verify`: handle fileGrp cardinality verification, with default implementation
+  - `Processor.setup`: to set up processor before processing, optional
+
 ## [2.68.0] - 2024-08-23
 
 Changed:
@@ -2164,6 +2287,13 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.0b5]: ../../compare/v3.0.0b5..v3.0.0b4
+[3.0.0b4]: ../../compare/v3.0.0b4..v3.0.0b3
+[3.0.0b3]: ../../compare/v3.0.0b3..v3.0.0b2
+[3.0.0b2]: ../../compare/v3.0.0b2..v3.0.0b1
+[3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
+[3.0.0a2]: ../../compare/v3.0.0a2..v3.0.0a1
+[3.0.0a1]: ../../compare/v3.0.0a1..v2.67.2
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0

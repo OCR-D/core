@@ -40,7 +40,7 @@ def validate_cli():
 @click.argument('ocrd_tool', required=False, nargs=1)
 def validate_ocrd_tool(ocrd_tool):
     '''
-    Validate OCRD_TOOL as an ocrd-tool.json file.
+    Validate OCRD_TOOL as an `ocrd-tool.json` file.
     '''
     if not ocrd_tool:
         ocrd_tool = 'ocrd-tool.json'
@@ -102,16 +102,19 @@ def validate_page(page, **kwargs):
 @validate_cli.command('tasks')
 @click.option('--workspace', nargs=1, required=False, help='Workspace directory these tasks are to be run. If omitted, only validate syntax')
 @click.option('-M', '--mets-basename', nargs=1, default=DEFAULT_METS_BASENAME, help='Basename of the METS file, used in conjunction with --workspace')
+@click.option('-U', '--mets-server-url', help='TCP host URI or UDS path of METS server')
 @click.option('--overwrite', is_flag=True, default=False, help='When checking against a concrete workspace, simulate overwriting output or page range.')
 @click.option('-g', '--page-id', help="ID(s) of the pages to process")
 @click.argument('tasks', nargs=-1, required=True)
-def validate_process(tasks, workspace, mets_basename, overwrite, page_id):
+def validate_process(tasks, workspace, mets_basename, mets_server_url, overwrite, page_id):
     '''
-    Validate a sequence of tasks passable to 'ocrd process'
+    Validate a sequence of tasks passable to `ocrd process`
     '''
     if workspace:
-        _inform_of_result(validate_tasks([ProcessorTask.parse(t) for t in tasks],
-            Workspace(Resolver(), directory=workspace, mets_basename=mets_basename), page_id=page_id, overwrite=overwrite))
+        _inform_of_result(validate_tasks(
+            [ProcessorTask.parse(t) for t in tasks],
+            Workspace(Resolver(), directory=workspace, mets_basename=mets_basename, mets_server_url=mets_server_url),
+            page_id=page_id, overwrite=overwrite))
     else:
         for t in [ProcessorTask.parse(t) for t in tasks]:
             _inform_of_result(t.validate())

@@ -37,22 +37,22 @@ class TestXsdValidator(TestCase):
     def test_validate_simple_protected_str(self):
         val = XsdValidator(XSD_METS_URL)
         report = val._validate(self.ws.mets.to_xml())
-        self.assertTrue(report.is_valid)
+        self.assertTrue(report.is_valid, str(report.to_xml()))
 
     def test_validate_simple_protected_doc(self):
         val = XsdValidator(XSD_METS_URL)
         report = val._validate(self.ws.mets._tree)
-        self.assertTrue(report.is_valid)
+        self.assertTrue(report.is_valid, str(report.to_xml()))
 
     def test_validate_simple_static_doc(self):
         report = XsdValidator.validate(XSD_METS_URL, self.ws.mets._tree)
-        self.assertTrue(report.is_valid)
+        self.assertTrue(report.is_valid, str(report.to_xml()))
 
 class TestXsdPageValidator(TestCase):
 
     def test_validate_page_simple_static_doc(self):
         report = XsdPageValidator.validate(simple_page)
-        self.assertTrue(report.is_valid)
+        self.assertTrue(report.is_valid, str(report.to_xml()))
 
 if __name__ == '__main__':
     main(__file__)

@@ -230,12 +230,12 @@ class ClientSideOcrdFile:
 
     def __init__(
         self,
-        el,
+        el, # pylint: disable=unused-argument
         mimetype: str = '',
         pageId: str = '',
         loctype: str ='OTHER',
         local_filename: Optional[str] = None,
-        mets : Any = None,
+        mets : Any = None, # pylint: disable=unused-argument
         url: str = '',
         ID: str = '',
         fileGrp: str = ''
@@ -266,3 +266,5 @@ class ClientSideOcrdFile:
             for k in ['fileGrp', 'ID', 'mimetype', 'url', 'local_filename']
         ])
         return '<ClientSideOcrdFile %s]/>' % (props)
+
+OcrdFileType = Union[OcrdFile, ClientSideOcrdFile]

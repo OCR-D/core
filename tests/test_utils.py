@@ -242,12 +242,16 @@ def test_set_json_key_value_overrides():
 
 def test_assert_file_grp_cardinality():
     with raises(AssertionError, match="Expected exactly 5 output file groups, but '.'FOO', 'BAR'.' has 2"):
-        assert_file_grp_cardinality('FOO,BAR', 5)
+        with warns(DeprecationWarning, match="file_grp_cardinality in ocrd-tool.json instead"):
+            assert_file_grp_cardinality('FOO,BAR', 5)
     with raises(AssertionError, match="Expected exactly 1 output file group, but '.'FOO', 'BAR'.' has 2"):
-        assert_file_grp_cardinality('FOO,BAR', 1)
-    assert_file_grp_cardinality('FOO,BAR', 2)
+        with warns(DeprecationWarning, match="file_grp_cardinality in ocrd-tool.json instead"):
+            assert_file_grp_cardinality('FOO,BAR', 1)
+    with warns(DeprecationWarning, match="file_grp_cardinality in ocrd-tool.json instead"):
+        assert_file_grp_cardinality('FOO,BAR', 2)
     with raises(AssertionError, match="Expected exactly 1 output file group .foo bar., but '.'FOO', 'BAR'.' has 2"):
-        assert_file_grp_cardinality('FOO,BAR', 1, 'foo bar')
+        with warns(DeprecationWarning, match="file_grp_cardinality in ocrd-tool.json instead"):
+            assert_file_grp_cardinality('FOO,BAR', 1, 'foo bar')
 
 def test_make_file_id_simple():
     f = create_ocrd_file('MAX', ID="MAX_0012")

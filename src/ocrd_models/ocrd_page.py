@@ -2,12 +2,15 @@
 API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
+from typing import Dict, Union
+from lxml import etree as ET
 
 __all__ = [
     'parse',
     'parseEtree',
     'parseString',
     'OcrdPage',
+    'OcrdPageType',
 
     "AdvertRegionType",
     "AlternativeImageType",
@@ -174,10 +177,31 @@ parseString.__doc__ = (
     """
 )
 
-# add alias for DOM root
-OcrdPage = PcGtsType
+class OcrdPage():
+    """
+    Proxy object for :py:class:`ocrd_models.PcGtsType` (i.e. PRImA PAGE-XML
+    for page content, rendered as object model by generateDS) that also offers access
+    to the underlying etree, element-node mapping and reverse mapping, too (cf.
+    :py:func:`ocrd_models.ocrd_page.parseEtree`)
+    """
+    def __init__(
+        self,
+        pcgts : PcGtsType,
+        etree : ET._Element,
+        mapping : Dict[str, ET._Element],
+        revmap : Dict[ET._Element, str],
+    ):
+        self._pcgts = pcgts
+        self.etree = etree
+        self.mapping = mapping
+        self.revmap = revmap
 
-def to_xml(el, skip_declaration=False):
+    def __getattr__(self, name):
+        return getattr(self._pcgts, name)
+
+OcrdPageType = Union[OcrdPage, PcGtsType]
+
+def to_xml(el, skip_declaration=False) -> str:
     """
     Serialize ``pc:PcGts`` document as string.
     """

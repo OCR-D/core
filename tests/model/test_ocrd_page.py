@@ -460,7 +460,7 @@ def test_id():
 
     # TODO: is this *really* desired?
     # I would expect for a single Page-Element the ID is like from the top-level-Pgts-Container, not like a fileName
-    assert pcgts.get_Page().id == 'OCR-D-IMG/INPUT_0017.tif'
+    assert pcgts.get_Page().id == 'OCR-D-IMG_INPUT_0017.tif'
 
 
 if __name__ == '__main__':
