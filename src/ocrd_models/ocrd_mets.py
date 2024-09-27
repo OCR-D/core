@@ -599,7 +599,16 @@ class OcrdMets(OcrdXmlDocument):
         If return_divs is set, returns div memory objects instead of strings of ids
         """
         if for_fileIds is None and for_pageIds is None:
+            if return_divs:
+                if self._cache_flag:
+                    return list(self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID].values())
+
+                return [x for x in self._tree.getroot().xpath(
+                    'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
+                    namespaces=NS)]
+
             return self.physical_pages
+
         # log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
         if for_pageIds is not None:
             ret = []
