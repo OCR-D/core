@@ -673,19 +673,15 @@ def list_pages(ctx, output_field, output_format, chunk_number, chunk_index, page
      will be interpreted as a regular expression.)
     """
     workspace = ctx.workspace()
-    find_kwargs = {}
-    if page_id_range and 'ID' in output_field:
-        find_kwargs['pageId'] = page_id_range
-    page_ids = sorted({x.pageId for x in workspace.mets.find_files(**find_kwargs) if x.pageId})
     ret = []
-
-    if output_field == ['ID']:
-        ret = [[x] for x in page_ids]
-    else:
-        for i, page_div in enumerate(workspace.mets.get_physical_pages(for_pageIds=','.join(page_ids), return_divs=True)):
+    if page_id_range or list(output_field) != ['ID']:
+        for i, page_div in enumerate(workspace.mets.get_physical_pages(for_pageIds=page_id_range, return_divs=True)):
             ret.append([])
             for k in output_field:
                 ret[i].append(page_div.get(k, 'None'))
+    else:
+        for page_id in workspace.mets.physical_pages:
+            ret.append([page_id])
 
     if numeric_range:
         start, end = map(int, numeric_range.split('..'))
