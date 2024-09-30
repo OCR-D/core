@@ -5,8 +5,6 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-## [2.69.0] - 2024-09-30
-
 Fixed:
   - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
   - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
@@ -20,6 +18,7 @@ Fixed:
   - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
   - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
   - `disableLogging`: also re-instate root logger to Python defaults
+  - `OcrdExif`: handle multi-frame TIFFs gracefully in `identify` callout, #1276
 
 Changed:
   - `run_processor`: be robust if `ocrd_tool` is missing `steps`
