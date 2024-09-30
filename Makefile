@@ -274,7 +274,7 @@ test-logging: assets
 	cp src/ocrd_utils/ocrd_logging.conf $$tempdir; \
 	cd $$tempdir; \
 	$(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR); \
-	rm -r $$tempdir/ocrd_logging.conf $$tempdir/.benchmarks; \
+	rm -r $$tempdir/ocrd_logging.conf $$tempdir/ocrd.log $$tempdir/.benchmarks; \
 	rm -rf $$tempdir/.coverage; \
 	rmdir $$tempdir
 

@@ -88,6 +88,14 @@ class OcrdFileGroupListModel(BaseModel):
         return OcrdFileGroupListModel(file_groups=file_groups)
 
 
+class OcrdPageListModel(BaseModel):
+    physical_pages: List[str] = Field()
+
+    @staticmethod
+    def create(physical_pages: List[str]):
+        return OcrdPageListModel(physical_pages=physical_pages)
+
+
 class OcrdAgentListModel(BaseModel):
     agents: List[OcrdAgentModel] = Field()
 
@@ -120,7 +128,7 @@ class ClientSideOcrdMets:
 
     def __init__(self, url, workspace_path: Optional[str] = None):
         self.protocol = "tcp" if url.startswith("http://") else "uds"
-        self.log = getLogger(f"ocrd.mets_client[{url}]")
+        self.log = getLogger(f"ocrd.models.ocrd_mets.client.{url}")
         self.url = url if self.protocol == "tcp" else f'http+unix://{url.replace("/", "%2F")}'
         self.ws_dir_path = workspace_path if workspace_path else None
 
@@ -211,6 +219,17 @@ class ClientSideOcrdMets:
             return self.ws_dir_path
 
     @property
+    def physical_pages(self) -> List[str]:
+        if not self.multiplexing_mode:
+            return self.session.request("GET", f"{self.url}/physical_pages").json()["physical_pages"]
+        else:
+            return self.session.request(
+                "POST",
+                self.url,
+                json=MpxReq.physical_pages(self.ws_dir_path)
+            ).json()["physical_pages"]
+
+    @property
     def file_groups(self):
         if not self.multiplexing_mode:
             return self.session.request("GET", f"{self.url}/file_groups").json()["file_groups"]
@@ -236,7 +255,7 @@ class ClientSideOcrdMets:
             agent_dict["_type"] = agent_dict.pop("type")
         return [ClientSideOcrdAgent(None, **agent_dict) for agent_dict in agent_dicts]
 
-    def add_agent(self, *args, **kwargs):
+    def add_agent(self, **kwargs):
         if not self.multiplexing_mode:
             return self.session.request("POST", f"{self.url}/agent", json=OcrdAgentModel.create(**kwargs).dict())
         else:
@@ -247,11 +266,9 @@ class ClientSideOcrdMets:
             ).json()
             return OcrdAgentModel.create(**kwargs)
 
-    @deprecated_alias(ID="file_id")
-    @deprecated_alias(pageId="page_id")
-    @deprecated_alias(fileGrp="file_grp")
     def find_files(self, **kwargs):
         self.log.debug("find_files(%s)", kwargs)
+        # translate from native OcrdMets kwargs to OcrdMetsServer REST params
         if "pageId" in kwargs:
             kwargs["page_id"] = kwargs.pop("pageId")
         if "ID" in kwargs:
@@ -277,28 +294,31 @@ class ClientSideOcrdMets:
     def find_all_files(self, *args, **kwargs):
         return list(self.find_files(*args, **kwargs))
 
-    @deprecated_alias(pageId="page_id")
-    @deprecated_alias(ID="file_id")
     def add_file(
-        self, file_grp, content=None, file_id=None, url=None, local_filename=None, mimetype=None, page_id=None, **kwargs
+        self, file_grp, content=None, ID=None, url=None, local_filename=None, mimetype=None, pageId=None, **kwargs
     ):
         data = OcrdFileModel.create(
-            file_id=file_id, file_grp=file_grp, page_id=page_id, mimetype=mimetype, url=url,
-            local_filename=local_filename
+            file_grp=file_grp,
+            # translate from native OcrdMets kwargs to OcrdMetsServer REST params
+            file_id=ID, page_id=pageId,
+            mimetype=mimetype, url=url, local_filename=local_filename
         )
+        # add force+ignore
+        kwargs = {**kwargs, **data.dict()}
 
         if not self.multiplexing_mode:
-            r = self.session.request("POST", f"{self.url}/file", data=data.dict())
-            if not r:
-                raise RuntimeError("Add file failed. Please check provided parameters")
+            r = self.session.request("POST", f"{self.url}/file", data=kwargs)
+            if not r.ok:
+                raise RuntimeError(f"Failed to add file ({str(data)}): {r.json()}")
         else:
-            r = self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, data.dict()))
-            if "error" in r:
-                raise RuntimeError(f"Add file failed: Msg: {r['error']}")
+            r = self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, kwargs))
+            if not r.ok:
+                raise RuntimeError(f"Failed to add file ({str(data)}): {r.json()[errors]}")
 
         return ClientSideOcrdFile(
-            None, ID=file_id, fileGrp=file_grp, url=url, pageId=page_id, mimetype=mimetype,
-            local_filename=local_filename
+            None, fileGrp=file_grp,
+            ID=ID, pageId=pageId,
+            url=url, mimetype=mimetype, local_filename=local_filename
         )
 
 
@@ -347,6 +367,11 @@ class MpxReq:
     def workspace_path(ws_dir_path: str) -> Dict:
         return MpxReq.__args_wrapper(
             ws_dir_path, method_type="GET", response_type="text", request_url="workspace_path", request_data={})
+
+    @staticmethod
+    def physical_pages(ws_dir_path: str) -> Dict:
+        return MpxReq.__args_wrapper(
+            ws_dir_path, method_type="GET", response_type="dict", request_url="physical_pages", request_data={})
 
     @staticmethod
     def file_groups(ws_dir_path: str) -> Dict:
@@ -468,6 +493,10 @@ class OcrdMetsServer:
         async def workspace_path():
             return Response(content=workspace.directory, media_type="text/plain")
 
+        @app.get(path='/physical_pages', response_model=OcrdPageListModel)
+        async def physical_pages():
+            return {'physical_pages': workspace.mets.physical_pages}
+
         @app.get(path='/file_groups', response_model=OcrdFileGroupListModel)
         async def file_groups():
             return {'file_groups': workspace.mets.file_groups}
@@ -507,7 +536,8 @@ class OcrdMetsServer:
             page_id: Optional[str] = Form(),
             mimetype: str = Form(),
             url: Optional[str] = Form(None),
-            local_filename: Optional[str] = Form(None)
+            local_filename: Optional[str] = Form(None),
+            force: bool = Form(False),
         ):
             """
             Add a file
@@ -519,7 +549,7 @@ class OcrdMetsServer:
             )
             # Add to workspace
             kwargs = file_resource.dict()
-            workspace.add_file(**kwargs)
+            workspace.add_file(**kwargs, force=force)
             return file_resource
 
         # ------------- #

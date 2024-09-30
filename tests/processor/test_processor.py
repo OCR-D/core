@@ -6,8 +6,9 @@ from pathlib import Path
 from os import environ
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor, DummyProcessorWithRequiredParameters, DummyProcessorWithOutput, IncompleteProcessor
+from tests.test_mets_server import fixture_start_mets_server
 
-from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging
+from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging, config
 from ocrd.resolver import Resolver
 from ocrd.processor.base import Processor, run_processor, run_cli
 
@@ -27,6 +28,10 @@ class TestProcessor(TestCase):
             stack.enter_context(pushd_popd(self.workdir))
             self.workspace = self.resolver.workspace_from_url('mets.xml')
             self.addCleanup(stack.pop_all().close)
+
+    def tearDown(self):
+        super().tearDown()
+        config.reset_defaults()
 
     def test_incomplete_processor(self):
         proc = IncompleteProcessor(None)
@@ -125,8 +130,8 @@ class TestProcessor(TestCase):
     def test_run_output0(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
@@ -135,10 +140,10 @@ class TestProcessor(TestCase):
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar1', pageId='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, ID='foobar2', pageId='phys_0002')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
+            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
             ws.overwrite_mode = True
-            ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, ID='OCR-D-OUT_phys_0001', pageId='phys_0001')
+            ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, file_id='OCR-D-OUT_phys_0001', page_id='phys_0001')
             ws.overwrite_mode = False
             with pytest.raises(Exception) as exc:
                 run_processor(DummyProcessorWithOutput, workspace=ws,
@@ -242,7 +247,29 @@ class TestProcessor(TestCase):
                     proc = ZipTestProcessor(workspace=ws, input_file_grp='GRP1,GRP2', page_id=page_id)
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
         r = self.capture_out_err()
-        assert 'ERROR ocrd.processor.base - found no page phys_0001 in file group GRP1' in r.err
+        assert 'ERROR ocrd.processor.base - Found no page phys_0001 in file group GRP1' in r.err
+
+def test_run_output_metsserver(start_mets_server):
+    mets_server_url, ws = start_mets_server
+    run_processor(DummyProcessorWithOutput, workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  mets_server_url=mets_server_url)
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+    ws.overwrite_mode = True
+    run_processor(DummyProcessorWithOutput, workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  mets_server_url=mets_server_url)
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+    ws.overwrite_mode = False
+    with pytest.raises(Exception) as exc:
+        run_processor(DummyProcessorWithOutput, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      mets_server_url=mets_server_url)
+    assert "already exists" in str(exc.value)
+
 
 if __name__ == "__main__":
     main(__file__)

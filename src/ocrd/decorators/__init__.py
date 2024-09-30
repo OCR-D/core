@@ -1,4 +1,5 @@
 import sys
+from contextlib import nullcontext
 
 from ocrd_utils import (
     config,
@@ -9,6 +10,7 @@ from ocrd_utils import (
     parse_json_string_with_comments,
     set_json_key_value_overrides,
     parse_json_string_or_file,
+    redirect_stderr_and_stdout_to_file,
 )
 from ocrd_validators import WorkspaceValidator
 from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
@@ -36,6 +38,7 @@ def ocrd_cli_wrap_processor(
     profile_file=None,
     version=False,
     overwrite=False,
+    resolve_resource=None,
     show_resource=None,
     list_resources=False,
     # ocrd_network params start #
@@ -50,7 +53,7 @@ def ocrd_cli_wrap_processor(
     if not sys.argv[1:]:
         processorClass(None, show_help=True)
         sys.exit(1)
-    if dump_json or dump_module_dir or help or version or show_resource or list_resources:
+    if dump_json or dump_module_dir or help or version or resolve_resource or show_resource or list_resources:
         processorClass(
             None,
             dump_json=dump_json,
@@ -58,6 +61,7 @@ def ocrd_cli_wrap_processor(
             show_help=help,
             subcommand=subcommand,
             show_version=version,
+            resolve_resource=resolve_resource,
             show_resource=show_resource,
             list_resources=list_resources
         )
@@ -139,7 +143,7 @@ def ocrd_cli_wrap_processor(
         print("Profiling...")
         pr = cProfile.Profile()
         pr.enable()
-        def exit():
+        def goexit():
             pr.disable()
             print("Profiling completed")
             if profile_file:
@@ -148,8 +152,13 @@ def ocrd_cli_wrap_processor(
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
             print(s.getvalue())
-        atexit.register(exit)
-    run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
+        atexit.register(goexit)
+    if log_filename:
+        log_ctx = redirect_stderr_and_stdout_to_file(log_filename)
+    else:
+        log_ctx = nullcontext()
+    with log_ctx:
+        run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
 
 
 def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, database: str, queue: str):

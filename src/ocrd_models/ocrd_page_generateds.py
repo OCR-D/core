@@ -2,29 +2,27 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Nov  3 12:30:32 2021 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Jan 26 2021, 15:33:00)  [GCC 8.4.0]
+# Generated Sat Sep  7 14:17:39 2024 by generateDS.py version 2.35.20.
+# Python 3.8.17+ (heads/3.8-dirty:1663f8ba84, Aug 15 2023, 18:13:01)  [GCC 8.3.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
-#   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
+#   ('-o', 'src/ocrd_models/ocrd_page_generateds.py')
 #   ('--silence', '')
 #   ('--export', 'write etree')
 #   ('--disable-generatedssuper-lookup', '')
-#   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
+#   ('--user-methods', 'src/ocrd_page_user_methods.py')
 #
 # Command line arguments:
-#   ocrd_validators/ocrd_validators/page.xsd
+#   src/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --silence --export="write etree" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   /data/ocr-d/ocrd_all/venv38/bin/generateDS -f --root-element="PcGts" -o "src/ocrd_models/ocrd_page_generateds.py" --silence --export="write etree" --disable-generatedssuper-lookup --user-methods="src/ocrd_page_user_methods.py" src/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
 #
-
-# type: ignore
 
 from itertools import zip_longest
 import os
@@ -223,7 +221,7 @@ class GeneratedsSuper(object):
             try:
                 int(value)
             except (TypeError, ValueError):
-                raise_parse_error(node, 'Requires sequence of integer values')
+                raise_parse_error(node, 'Requires sequence of integer valuess')
         return values
     def gds_format_float(self, input_data, input_name=''):
         return ('%.15f' % input_data).rstrip('0')
@@ -1230,9 +1228,10 @@ class PcGtsType(GeneratedsSuper):
         return hash(self.id)
     @property
     def id(self):
+        from ocrd_utils import make_xml_id
         if hasattr(self, 'pcGtsId'):
             return self.pcGtsId or ''
-        return self.imageFilename
+        return make_xml_id(self.imageFilename)
     def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
         Get all the ``pc:AlternativeImage/@filename`` paths referenced in the PAGE-XML document.
@@ -3116,9 +3115,10 @@ class PageType(GeneratedsSuper):
         return hash(self.id)
     @property
     def id(self):
+        from ocrd_utils import make_xml_id
         if hasattr(self, 'pcGtsId'):
             return self.pcGtsId or ''
-        return self.imageFilename
+        return make_xml_id(self.imageFilename)
     # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
     def _region_class(self, x): # pylint: disable=unused-argument
         return x.__class__.__name__.replace('RegionType', '')
@@ -3314,6 +3314,39 @@ class PageType(GeneratedsSuper):
                 ret += lines if lo in ['top-to-bottom', 'left-to-right'] else list(reversed(lines))
         return ret
     
+    def get_ReadingOrderGroups(self) -> dict:
+        """
+        Aggregate recursive ReadingOrder into a dictionary, mapping each regionRef
+        (i.e. segment `@id`) to its referring group object (i.e one of
+    
+        \b
+        - :py:class:`.RegionRefType`
+        - :py:class:`.RegionRefIndexedType`
+        - :py:class:`.OrderedGroupType`
+        - :py:class:`.OrderedGroupIndexedType`
+        - :py:class:`.UnoderedGroupType`
+        - :py:class:`.UnoderedGroupIndexedType`
+        """
+        def get_groupdict(group):
+            regionrefs = list()
+            if isinstance(group, (OrderedGroupType, OrderedGroupIndexedType)):
+                regionrefs = (group.get_RegionRefIndexed() +
+                              group.get_OrderedGroupIndexed() +
+                              group.get_UnorderedGroupIndexed())
+            if isinstance(group, (UnorderedGroupType, UnorderedGroupIndexedType)):
+                regionrefs = (group.get_RegionRef() +
+                              group.get_OrderedGroup() +
+                              group.get_UnorderedGroup())
+            refdict = {}
+            for elem in regionrefs:
+                refdict[elem.get_regionRef()] = elem
+                if not isinstance(elem, (RegionRefType, RegionRefIndexedType)):
+                    refdict = {**refdict, **get_groupdict(elem)}
+            return refdict
+        ro = self.get_ReadingOrder()
+        if ro is None:
+            return {}
+        return get_groupdict(ro.get_OrderedGroup() or ro.get_UnorderedGroup())
     def set_orientation(self, orientation):
         """
         Set deskewing angle to given `orientation` number.

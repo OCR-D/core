@@ -27,6 +27,7 @@ ocrd__log () {
 ## Ensure minimum version
 # ht https://stackoverflow.com/posts/4025065
 ocrd__minversion () {
+    set -e
     local minversion="$1"
     local version=$(ocrd --version|sed 's/ocrd, version //')
     #echo "$minversion < $version?"
@@ -108,6 +109,7 @@ ocrd__usage () {
 ## declare -A ocrd__argv=()
 ## ```
 ocrd__parse_argv () {
+    set -e
 
     # if [[ -n "$ZSH_VERSION" ]];then
     #     print -r -- ${+ocrd__argv} ${(t)ocrd__argv}
@@ -147,6 +149,7 @@ ocrd__parse_argv () {
     while [[ "${1:-}" = -* ]];do
         case "$1" in
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
+            --log-filename) exec 2> "$2" ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
             -D|--dump-module-dir) echo $(dirname "$OCRD_TOOL_JSON"); exit ;;
@@ -255,6 +258,7 @@ $params_parsed"
 }
 
 ocrd__wrap () {
+    set -e
 
     declare -gx OCRD_TOOL_JSON="$1"
     declare -gx OCRD_TOOL_NAME="$2"

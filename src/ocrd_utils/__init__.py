@@ -13,6 +13,7 @@ Utility functions and constants usable in various circumstances.
     :py:meth:`ocrd.workspace.Workspace.image_from_segment`.)
 
 * :py:func:`rotate_coordinates`, 
+  :py:func:`scale_coordinates`,
   :py:func:`shift_coordinates`,
   :py:func:`transpose_coordinates`,
   :py:func:`transform_coordinates`
@@ -148,6 +149,7 @@ from .image import (
     polygon_mask,
     rotate_coordinates,
     rotate_image,
+    scale_coordinates,
     shift_coordinates,
     transform_coordinates,
     transpose_coordinates,

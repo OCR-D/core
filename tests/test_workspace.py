@@ -734,7 +734,7 @@ def _fixture_metsDocumentID(tmp_path):
 def test_agent_before_metsDocumentID(workspace_metsDocumentID):
     report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
     assert report.is_valid
-    workspace_metsDocumentID.mets.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'OTHER')
+    workspace_metsDocumentID.mets.add_agent(name='foo bar v0.0.1', _type='OTHER', othertype='OTHER', role='OTHER')
     workspace_metsDocumentID.save_mets()
     report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
     print(report.errors)
