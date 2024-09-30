@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.69.0] - 2024-09-30
+
 Fixed:
   - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
   - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
