@@ -9,28 +9,31 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
   - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
-  - `OcrdMetsServer.add_file`: pass on `force` kwarg
   - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.workspace`: make `list-page` work w/ METS Server
   - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
   - `lib.bash`: fix `errexit` handling
-  - `ocrd.cli.ocrd-tool "resolve-resource"`: forgot to actually print result
-  - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
-  - `disableLogging`: also re-instate root logger to Python defaults
   - actually apply CLI `--log-filename`, and show in `--help`
   - adapt to Pillow changes
   - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
-  - :fire: `OcrdMets.add_agent` without positional arguments
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+  - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
+  - `disableLogging`: also re-instate root logger to Python defaults
 
 Changed:
   - `run_processor`: be robust if `ocrd_tool` is missing `steps`
   - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+  - `ClientSideOcrdMets`: use same logger name prefix as METS Server
+  - `Processor.zip_input_files`: when `--page-id` yields empty list, just log instead of raise
 
 Added:
   - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
-  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
   - METS Server: export and delegate `physical_pages`
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
   - processor CLI: delegate `--resolve-resource`, too
-  * `OcrdConfig.reset_defaults` to reset config variables to their defaults
+  - `OcrdConfig.reset_defaults` to reset config variables to their defaults
+  - `ocrd_utils.scale_coordinates` for resizing images
 
 ## [2.68.0] - 2024-08-23
 
