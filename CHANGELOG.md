@@ -5,6 +5,36 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.69.0] - 2024-09-30
+
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `ocrd.cli.bashlib "input-files"`: pass on `--mets-server-url`
+  - `lib.bash input-files`: pass on `--mets-server-url`, `--overwrite`, and parameters
+  - `lib.bash`: fix `errexit` handling
+  - `ocrd.cli.ocrd-tool "resolve-resource"`: forgot to actually print result
+  - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+  - `disableLogging`: also re-instate root logger to Python defaults
+  - actually apply CLI `--log-filename`, and show in `--help`
+  - adapt to Pillow changes
+  - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
+  - :fire: `OcrdMets.add_agent` without positional arguments
+
+Changed:
+  - lib.bash `input-files`: do not try to validate tasks here (now covered by `Processor.verify()`)
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - METS Server: export and delegate `physical_pages`
+  - processor CLI: delegate `--resolve-resource`, too
+  * `OcrdConfig.reset_defaults` to reset config variables to their defaults
+
 ## [2.68.0] - 2024-08-23
 
 Changed:
@@ -2164,6 +2194,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.69.0]: ../../compare/v2.69.0..v2.68.0
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0
