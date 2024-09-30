@@ -12,8 +12,6 @@ Fixed:
   - `OcrdMetsServer.add_file`: pass on `force` kwarg
   - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
   - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
-  - `ocrd.cli.bashlib "input-files"`: pass on `--mets-server-url`
-  - `lib.bash input-files`: pass on `--mets-server-url`, `--overwrite`, and parameters
   - `lib.bash`: fix `errexit` handling
   - `ocrd.cli.ocrd-tool "resolve-resource"`: forgot to actually print result
   - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
@@ -24,7 +22,6 @@ Fixed:
   - :fire: `OcrdMets.add_agent` without positional arguments
 
 Changed:
-  - lib.bash `input-files`: do not try to validate tasks here (now covered by `Processor.verify()`)
   - `run_processor`: be robust if `ocrd_tool` is missing `steps`
   - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
 
