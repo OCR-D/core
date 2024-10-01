@@ -3,7 +3,7 @@ from time import sleep
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
-def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int):
+def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int, print_output: bool):
     if job_type not in ["workflow", "processor"]:
         raise ValueError(f"Unknown job type '{job_type}', expected 'workflow' or 'processor'")
     job_state = JobState.unset
@@ -13,18 +13,22 @@ def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries
             job_state = get_ps_processing_job_status(ps_server_host, job_id)
         if job_type == "workflow":
             job_state = get_ps_workflow_job_status(ps_server_host, job_id)
+        if print_output:
+            print(f"State of the {job_type} job {job_id}: {job_state}")
         if job_state == JobState.success or job_state == JobState.failed:
             break
         tries -= 1
     return job_state
 
 
-def poll_job_status_till_timeout_fail_or_success(ps_server_host: str, job_id: str, tries: int, wait: int) -> JobState:
-    return _poll_endpoint_status(ps_server_host, job_id, "processor", tries, wait)
+def poll_job_status_till_timeout_fail_or_success(
+    ps_server_host: str, job_id: str, tries: int, wait: int, print_output: bool) -> JobState:
+    return _poll_endpoint_status(ps_server_host, job_id, "processor", tries, wait, print_output)
 
 
-def poll_wf_status_till_timeout_fail_or_success(ps_server_host: str, job_id: str, tries: int, wait: int) -> JobState:
-    return _poll_endpoint_status(ps_server_host, job_id, "workflow", tries, wait)
+def poll_wf_status_till_timeout_fail_or_success(
+    ps_server_host: str, job_id: str, tries: int, wait: int, print_output: bool) -> JobState:
+    return _poll_endpoint_status(ps_server_host, job_id, "workflow", tries, wait, print_output)
 
 
 def get_ps_deployed_processors(ps_server_host: str):

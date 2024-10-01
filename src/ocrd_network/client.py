@@ -19,7 +19,8 @@ class Client:
         self,
         server_addr_processing: Optional[str],
         timeout: int = config.OCRD_NETWORK_CLIENT_POLLING_TIMEOUT,
-        wait: int = config.OCRD_NETWORK_CLIENT_POLLING_SLEEP
+        wait: int = config.OCRD_NETWORK_CLIENT_POLLING_SLEEP,
+        print_output: bool = config.OCRD_NETWORK_CLIENT_POLLING_PRINT
     ):
         self.log = getLogger(f"ocrd_network.client")
         if not server_addr_processing:
@@ -29,6 +30,7 @@ class Client:
         self.polling_timeout = timeout
         self.polling_wait = wait
         self.polling_tries = int(timeout / wait)
+        self.polling_print_output = print_output
 
     def check_deployed_processors(self):
         return get_ps_deployed_processors(ps_server_host=self.server_addr_processing)
@@ -48,11 +50,13 @@ class Client:
 
     def poll_job_status(self, job_id: str) -> str:
         return poll_job_status_till_timeout_fail_or_success(
-            ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait)
+            ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait,
+            print_output=self.polling_print_output)
 
     def poll_workflow_status(self, job_id: str) -> str:
         return poll_wf_status_till_timeout_fail_or_success(
-            ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait)
+            ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait,
+            print_output=self.polling_print_output)
 
     def send_processing_job_request(self, processor_name: str, req_params: dict) -> str:
         return post_ps_processing_request(

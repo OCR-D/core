@@ -160,12 +160,17 @@ config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
 config.add("OCRD_NETWORK_CLIENT_POLLING_SLEEP",
            description="How many seconds to sleep before trying again.",
            parser=int,
-           default=(True, 30))
+           default=(True, 10))
 
 config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
            description="Timeout for a blocking ocrd network client (in seconds).",
            parser=int,
            default=(True, 3600))
+
+config.add("OCRD_NETWORK_CLIENT_POLLING_PRINT",
+           description="Timeout for a blocking ocrd network client (in seconds).",
+           parser=bool,
+           default=(True, False))
 
 config.add("OCRD_NETWORK_SERVER_ADDR_WORKFLOW",
         description="Default address of Workflow Server to connect to (for `ocrd network client workflow`).",
