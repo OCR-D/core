@@ -46,12 +46,12 @@ class Client:
     def check_workflow_status(self, workflow_job_id: str):
         return get_ps_workflow_job_status(self.server_addr_processing, workflow_job_id=workflow_job_id)
 
-    def poll_job_status(self, job_id: str, print_state: bool) -> str:
+    def poll_job_status(self, job_id: str, print_state: bool = False) -> str:
         return poll_job_status_till_timeout_fail_or_success(
             ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait,
             print_state=print_state)
 
-    def poll_workflow_status(self, job_id: str, print_state: bool) -> str:
+    def poll_workflow_status(self, job_id: str, print_state: bool = False) -> str:
         return poll_wf_status_till_timeout_fail_or_success(
             ps_server_host=self.server_addr_processing, job_id=job_id, tries=self.polling_tries, wait=self.polling_wait,
             print_state=print_state)
