@@ -105,8 +105,10 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 @click.option('--result-queue-name')
 @click.option('--callback-url')
 @click.option('--agent-type', default='worker')
-@click.option('-b', '--block', default=False,
+@click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
+@click.option('-p', '--print-state', default=False, is_flag=True,
+              help='If set, the client will print job states by each iteration.')
 def send_processing_job_request(
     address: Optional[str],
     processor_name: str,
@@ -121,7 +123,8 @@ def send_processing_job_request(
     # TODO: This is temporally available to toggle
     #  between the ProcessingWorker/ProcessorServer
     agent_type: Optional[str],
-    block: Optional[bool]
+    block: Optional[bool],
+    print_state: Optional[bool]
 ):
     """
     Submit a processing job to the processing server.
@@ -147,7 +150,7 @@ def send_processing_job_request(
     assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
     if block:
-        client.poll_job_status(job_id=processing_job_id)
+        client.poll_job_status(job_id=processing_job_id, print_state=print_state)
 
 
 @client_cli.group('workflow')
@@ -178,14 +181,17 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
 @click.option('-m', '--path-to-mets', required=True)
 @click.option('-w', '--path-to-workflow', required=True)
 @click.option('-p/-P', '--page-wise/--no-page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
-@click.option('-b', '--block', is_flag=True, default=False,
+@click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
+@click.option('-p', '--print-state', default=False, is_flag=True,
+              help='If set, the client will print job states by each iteration.')
 def send_workflow_job_request(
     address: Optional[str],
     path_to_mets: str,
     path_to_workflow: str,
     page_wise : bool,
-    block: Optional[bool]
+    block: bool,
+    print_state: bool
 ):
     """
     Submit a workflow job to the processing server.
@@ -200,14 +206,13 @@ def send_workflow_job_request(
     print(f"Workflow job id: {workflow_job_id}")
     if block:
         print(f"Polling state of workflow job {workflow_job_id}")
-        state = client.poll_workflow_status(job_id=workflow_job_id)
+        state = client.poll_workflow_status(job_id=workflow_job_id, print_state=print_state)
         if state != JobState.success:
             print(f"Workflow failed with {state}")
             exit(1)
         else:
             print(f"Workflow succeeded")
             exit(0)
-
 
 @client_cli.group('workspace')
 def workspace_cli():
