@@ -3,7 +3,8 @@ from time import sleep
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
-def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int, print_output: bool):
+def _poll_endpoint_status(
+    ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int, print_output: bool = False):
     if job_type not in ["workflow", "processor"]:
         raise ValueError(f"Unknown job type '{job_type}', expected 'workflow' or 'processor'")
     job_state = JobState.unset
@@ -22,12 +23,12 @@ def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries
 
 
 def poll_job_status_till_timeout_fail_or_success(
-    ps_server_host: str, job_id: str, tries: int, wait: int, print_output: bool) -> JobState:
+    ps_server_host: str, job_id: str, tries: int, wait: int, print_output: bool = False) -> JobState:
     return _poll_endpoint_status(ps_server_host, job_id, "processor", tries, wait, print_output)
 
 
 def poll_wf_status_till_timeout_fail_or_success(
-    ps_server_host: str, job_id: str, tries: int, wait: int, print_output: bool) -> JobState:
+    ps_server_host: str, job_id: str, tries: int, wait: int, print_output: bool = False) -> JobState:
     return _poll_endpoint_status(ps_server_host, job_id, "workflow", tries, wait, print_output)
 
 
