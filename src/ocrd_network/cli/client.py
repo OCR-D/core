@@ -122,7 +122,8 @@ def send_processing_job_request(
     # TODO: This is temporally available to toggle
     #  between the ProcessingWorker/ProcessorServer
     agent_type: Optional[str],
-    block: Optional[bool]
+    block: Optional[bool],
+    print_state: Optional[bool]
 ):
     """
     Submit a processing job to the processing server.
@@ -186,7 +187,8 @@ def send_workflow_job_request(
     address: Optional[str],
     path_to_mets: str,
     path_to_workflow: str,
-    block: Optional[bool]
+    block: Optional[bool],
+    print_state: Optional[bool]
 ):
     """
     Submit a workflow job to the processing server.
