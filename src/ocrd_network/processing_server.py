@@ -580,6 +580,7 @@ class ProcessingServer(FastAPI):
         # Check whether the internal queue for the workspace key still exists
         if workspace_key not in self.cache_processing_requests.processing_requests:
             self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
+            self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url)
             return []
 
         # decrease the internal cache counter by 1
