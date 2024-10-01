@@ -2,6 +2,7 @@ import click
 from json import dumps
 from typing import List, Optional, Tuple
 from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
+from ocrd_network.constants import JobState
 from ocrd_utils import DEFAULT_METS_BASENAME
 from ocrd_utils.introspect import set_json_key_value_overrides
 from ocrd_utils.str import parse_json_string_or_file
@@ -176,23 +177,36 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-m', '--path-to-mets', required=True)
 @click.option('-w', '--path-to-workflow', required=True)
-@click.option('-b', '--block', default=False,
+@click.option('-p/-P', '--page-wise/--no-page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
+@click.option('-b', '--block', is_flag=True, default=False,
               help='If set, the client will block till job timeout, fail or success.')
 def send_workflow_job_request(
     address: Optional[str],
     path_to_mets: str,
     path_to_workflow: str,
+    page_wise : bool,
     block: Optional[bool]
 ):
     """
     Submit a workflow job to the processing server.
     """
     client = Client(server_addr_processing=address)
-    workflow_job_id = client.send_workflow_job_request(path_to_wf=path_to_workflow, path_to_mets=path_to_mets)
+    workflow_job_id = client.send_workflow_job_request(
+        path_to_wf=path_to_workflow,
+        path_to_mets=path_to_mets,
+        page_wise=page_wise,
+    )
     assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
-        client.poll_workflow_status(job_id=workflow_job_id)
+        print(f"Polling state of workflow job {workflow_job_id}")
+        state = client.poll_workflow_status(job_id=workflow_job_id)
+        if state != JobState.success:
+            print(f"Workflow failed with {state}")
+            exit(1)
+        else:
+            print(f"Workflow succeeded")
+            exit(0)
 
 
 @client_cli.group('workspace')
