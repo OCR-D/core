@@ -104,7 +104,7 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 @click.option('--result-queue-name')
 @click.option('--callback-url')
 @click.option('--agent-type', default='worker')
-@click.option('-b', '--block', default=False,
+@click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
 def send_processing_job_request(
     address: Optional[str],
@@ -176,7 +176,7 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
                                 'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-m', '--path-to-mets', required=True)
 @click.option('-w', '--path-to-workflow', required=True)
-@click.option('-b', '--block', default=False,
+@click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
 def send_workflow_job_request(
     address: Optional[str],
