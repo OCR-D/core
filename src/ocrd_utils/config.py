@@ -168,7 +168,7 @@ config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
            default=(True, 3600))
 
 config.add("OCRD_NETWORK_CLIENT_POLLING_PRINT",
-           description="Timeout for a blocking ocrd network client (in seconds).",
+           description="Whether the blocking client commands should print status output each iteration.",
            parser=bool,
            default=(True, False))
 
