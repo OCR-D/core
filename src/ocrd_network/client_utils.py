@@ -1,5 +1,9 @@
-from requests import get as request_get, post as request_post
+from requests import Session, get as request_get
 from time import sleep
+
+from requests.adapters import Retry
+from requests.sessions import HTTPAdapter
+
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
@@ -61,9 +65,28 @@ def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) ->
     return job_state
 
 
+def _get_retrying_session():
+    retries = Retry(total=5,
+                    status_forcelist=[
+                        500, # Internal Server Error
+                        502, # Bad Gateway
+                        503, # Service Unavailable
+                        504, # Gateway Timeout
+                        509, # Bandwidth Limit Exceeded
+                        529, # Site Overloaded
+                        598, # Proxy Read Timeout
+                        599, # Proxy Connect Timeout
+            ])
+    adapter = HTTPAdapter(max_retries=retries)
+    session = Session()
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
 def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> str:
     request_url = f"{ps_server_host}/workflow/job-simple/{workflow_job_id}"
-    response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
+    session = _get_retrying_session()
+    response = session.get(request_url, headers={"accept": "application/json; charset=utf-8"})
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
     job_state = response.json()["state"]
     assert job_state
@@ -72,7 +95,8 @@ def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> str
 
 def post_ps_processing_request(ps_server_host: str, processor: str, job_input: dict) -> str:
     request_url = f"{ps_server_host}/processor/run/{processor}"
-    response = request_post(
+    session = _get_retrying_session()
+    response = session.post(
         url=request_url,
         headers={"accept": "application/json; charset=utf-8"},
         json=job_input
@@ -86,7 +110,8 @@ def post_ps_processing_request(ps_server_host: str, processor: str, job_input: d
 # TODO: Can be extended to include other parameters such as page_wise
 def post_ps_workflow_request(ps_server_host: str, path_to_wf: str, path_to_mets: str) -> str:
     request_url = f"{ps_server_host}/workflow/run?mets_path={path_to_mets}&page_wise=True"
-    response = request_post(
+    session = _get_retrying_session()
+    response = session.post(
         url=request_url,
         headers={"accept": "application/json; charset=utf-8"},
         files={"workflow": open(path_to_wf, "rb")}
