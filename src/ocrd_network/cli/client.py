@@ -106,6 +106,8 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 @click.option('--agent-type', default='worker')
 @click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
+@click.option('-p', '--print-state', default=False, is_flag=True,
+              help='If set, the client will print job states by each iteration.')
 def send_processing_job_request(
     address: Optional[str],
     processor_name: str,
@@ -146,7 +148,7 @@ def send_processing_job_request(
     assert processing_job_id
     print(f"Processing job id: {processing_job_id}")
     if block:
-        client.poll_job_status(job_id=processing_job_id)
+        client.poll_job_status(job_id=processing_job_id, print_state=print_state)
 
 
 @client_cli.group('workflow')
@@ -178,6 +180,8 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
 @click.option('-w', '--path-to-workflow', required=True)
 @click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
+@click.option('-p', '--print-state', default=False, is_flag=True,
+              help='If set, the client will print job states by each iteration.')
 def send_workflow_job_request(
     address: Optional[str],
     path_to_mets: str,
@@ -192,7 +196,7 @@ def send_workflow_job_request(
     assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
-        client.poll_workflow_status(job_id=workflow_job_id)
+        client.poll_workflow_status(job_id=workflow_job_id, print_state=print_state)
 
 
 @client_cli.group('workspace')
