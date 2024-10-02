@@ -82,7 +82,6 @@ def post_ps_processing_request(ps_server_host: str, processor: str, job_input: d
     return processing_job_id
 
 
-# TODO: Can be extended to include other parameters such as page_wise
 def post_ps_workflow_request(
     ps_server_host: str,
     path_to_wf: str,
