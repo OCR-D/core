@@ -430,7 +430,12 @@ class OcrdMetsServer:
 
     @staticmethod
     def kill_process(mets_server_pid: int):
-        return os.kill(mets_server_pid, signal.SIGTERM)
+        os.kill(mets_server_pid, signal.SIGINT)
+        sleep(3)
+        try:
+            os.kill(mets_server_pid, signal.SIGKILL)
+        except ProcessLookupError as e:
+            pass
 
     def shutdown(self):
         if self.is_uds:
