@@ -165,6 +165,9 @@ class Deployer:
                 raise Exception(message)
             mets_server_pid = self.mets_servers[Path(mets_server_url)]
             OcrdMetsServer.kill_process(mets_server_pid=mets_server_pid)
+            if Path(mets_server_url).exists():
+                self.log.warning(f"Deployer is removing the existing UDS socket file: {mets_server_url}")
+                Path(mets_server_url).unlink()
             return
         # TODO: Reconsider this again
         #  Not having this sleep here causes connection errors
