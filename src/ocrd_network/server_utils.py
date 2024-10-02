@@ -249,7 +249,7 @@ def validate_first_task_input_file_groups_existence(logger: Logger, mets_path: s
             raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
 
-def kill_mets_server_zombies(minutes_ago=60) -> list[int]:
+def kill_mets_server_zombies(minutes_ago=60) -> List[int]:
     now = time()
     cmdline_pat = r'.*ocrd workspace -U.*server start $'
     ret = []
