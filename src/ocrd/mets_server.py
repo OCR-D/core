@@ -434,7 +434,7 @@ class OcrdMetsServer:
     def shutdown(self):
         if self.is_uds:
             if Path(self.url).exists():
-                self.log.debug(f'UDS socket {self.url} still exists, removing it')
+                self.log.warning(f"Due to a server shutdown, removing the existing UDS socket file: {self.url}")
                 Path(self.url).unlink()
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)
