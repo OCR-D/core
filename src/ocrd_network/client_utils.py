@@ -87,7 +87,7 @@ def post_ps_workflow_request(
     ps_server_host: str,
     path_to_wf: str,
     path_to_mets: str,
-    page_wise : bool,
+    page_wise: bool,
 ) -> str:
     request_url = f"{ps_server_host}/workflow/run?mets_path={path_to_mets}&page_wise={'True' if page_wise else 'False'}"
     response = request_post(

@@ -189,7 +189,7 @@ def send_workflow_job_request(
     address: Optional[str],
     path_to_mets: str,
     path_to_workflow: str,
-    page_wise : bool,
+    page_wise: bool,
     block: bool,
     print_state: bool
 ):
