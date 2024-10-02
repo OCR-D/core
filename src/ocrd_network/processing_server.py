@@ -48,6 +48,7 @@ from .server_utils import (
     get_workflow_content,
     get_from_database_workspace,
     get_from_database_workflow_job,
+    kill_mets_server_zombies,
     parse_workflow_tasks,
     raise_http_exception,
     request_processor_server_tool_json,
@@ -199,6 +200,14 @@ class ProcessingServer(FastAPI):
             endpoint=self.forward_tcp_request_to_uds_mets_server,
             tags=[ServerApiTags.WORKSPACE],
             summary="Forward a TCP request to UDS mets server"
+        )
+        others_router.add_api_route(
+            path="/kill_mets_server_zombies",
+            endpoint=self.kill_mets_server_zombies,
+            methods=["DELETE"],
+            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
+            status_code=status.HTTP_200_OK,
+            summary="!! Workaround Do Not Use Unless You Have A Reason !! Kill all METS servers on this machine that have been created more than 60 minutes ago."
         )
         self.include_router(others_router)
 
@@ -816,6 +825,10 @@ class ProcessingServer(FastAPI):
         jobs = await db_get_processing_jobs(job_ids)
         response = self._produce_workflow_status_response(processing_jobs=jobs)
         return response
+
+    async def kill_mets_server_zombies(self) -> List[int]:
+        pids_killed = kill_mets_server_zombies(minutes_ago=60)
+        return pids_killed
 
     async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, JobState]:
         """
