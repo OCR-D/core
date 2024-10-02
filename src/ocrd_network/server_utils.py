@@ -249,9 +249,10 @@ def validate_first_task_input_file_groups_existence(logger: Logger, mets_path: s
             raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
 
-def kill_mets_server_zombies(minutes_ago=60):
+def kill_mets_server_zombies(minutes_ago=60) -> list[int]:
     now = time()
     cmdline_pat = r'.*ocrd workspace -U.*server start $'
+    ret = []
     for procdir in sorted(Path('/proc').glob('*'), key=os.path.getctime):
         if not procdir.is_dir():
             continue
@@ -264,5 +265,7 @@ def kill_mets_server_zombies(minutes_ago=60):
         cmdline = cmdline_file.read_text().replace('\x00', ' ')
         if re.match(cmdline_pat, cmdline):
             pid = procdir.name
+            ret.append(pid)
             print(f'METS Server with PID {pid} was created {ctime_ago} minutes ago, more than {minutes_ago}, so killing (cmdline="{cmdline})', file=sys.stderr)
             os.kill(int(pid), signal.SIGTERM)
+    return ret
