@@ -1,10 +1,10 @@
+import json
 from requests import get as request_get, post as request_post
 from time import sleep
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
-def _poll_endpoint_status(
-    ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int, print_state: bool = False):
+def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int, print_state: bool = False) -> JobState:
     if job_type not in ["workflow", "processor"]:
         raise ValueError(f"Unknown job type '{job_type}', expected 'workflow' or 'processor'")
     job_state = JobState.unset
@@ -52,22 +52,21 @@ def get_ps_processing_job_log(ps_server_host: str, processing_job_id: str):
     return response
 
 
-def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) -> str:
+def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) -> JobState:
     request_url = f"{ps_server_host}/processor/job/{processing_job_id}"
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
     job_state = response.json()["state"]
     assert job_state
-    return job_state
+    return getattr(JobState, job_state.lower())
 
-
-def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> str:
+def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> JobState:
     request_url = f"{ps_server_host}/workflow/job-simple/{workflow_job_id}"
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
     job_state = response.json()["state"]
     assert job_state
-    return job_state
+    return getattr(JobState, job_state.lower())
 
 
 def post_ps_processing_request(ps_server_host: str, processor: str, job_input: dict) -> str:
@@ -83,9 +82,13 @@ def post_ps_processing_request(ps_server_host: str, processor: str, job_input: d
     return processing_job_id
 
 
-# TODO: Can be extended to include other parameters such as page_wise
-def post_ps_workflow_request(ps_server_host: str, path_to_wf: str, path_to_mets: str) -> str:
-    request_url = f"{ps_server_host}/workflow/run?mets_path={path_to_mets}&page_wise=True"
+def post_ps_workflow_request(
+    ps_server_host: str,
+    path_to_wf: str,
+    path_to_mets: str,
+    page_wise: bool,
+) -> str:
+    request_url = f"{ps_server_host}/workflow/run?mets_path={path_to_mets}&page_wise={'True' if page_wise else 'False'}"
     response = request_post(
         url=request_url,
         headers={"accept": "application/json; charset=utf-8"},
@@ -93,8 +96,11 @@ def post_ps_workflow_request(ps_server_host: str, path_to_wf: str, path_to_mets:
     )
     # print(response.json())
     # print(response.__dict__)
+    json_resp_raw = response.text
+    # print(f'post_ps_workflow_request >> {response.status_code}')
+    # print(f'post_ps_workflow_request >> {json_resp_raw}')
     assert response.status_code == 200, f"Processing server: {request_url}, {response.status_code}"
-    wf_job_id = response.json()["job_id"]
+    wf_job_id = json.loads(json_resp_raw)["job_id"]
     assert wf_job_id
     return wf_job_id
 
