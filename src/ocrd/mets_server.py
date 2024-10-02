@@ -1,8 +1,10 @@
 """
 # METS server functionality
 """
+import os
 import re
 from os import _exit, chmod
+import signal
 from typing import Dict, Optional, Union, List, Tuple
 from time import sleep
 from pathlib import Path
@@ -428,8 +430,7 @@ class OcrdMetsServer:
 
     @staticmethod
     def kill_process(mets_server_pid: int):
-        subprocess_run(args=["kill", "-s", "SIGINT", f"{mets_server_pid}"], shell=False, universal_newlines=True)
-        return
+        return os.kill(mets_server_pid, signal.SIGTERM)
 
     def shutdown(self):
         if self.is_uds:
