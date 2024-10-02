@@ -202,7 +202,7 @@ class ProcessingServer(FastAPI):
             summary="Forward a TCP request to UDS mets server"
         )
         others_router.add_api_route(
-            path="/kill-mets-server-zombies",
+            path="/kill_mets_server_zombies",
             endpoint=self.kill_mets_server_zombies,
             methods=["DELETE"],
             tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
