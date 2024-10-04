@@ -151,7 +151,7 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
         return False
 
 
-def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
+def stop_mets_server(mets_server_url: str, ws_dir_path: Path = None) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
     session = Session_TCP() if protocol == "tcp" else Session_UDS()
     if protocol == "uds":
@@ -160,7 +160,7 @@ def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
         if 'tcp_mets' in mets_server_url:
             if not ws_dir_path:
                 return False
-            response = session.post(url=f"{mets_server_url}", json=MpxReq.stop(ws_dir_path))
+            response = session.post(url=f"{mets_server_url}", json=MpxReq.stop(str(ws_dir_path)))
         else:
             response = session.delete(url=f"{mets_server_url}/")
     except Exception:
