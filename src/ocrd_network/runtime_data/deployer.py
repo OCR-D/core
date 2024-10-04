@@ -162,8 +162,8 @@ class Deployer:
     def stop_uds_mets_server(self, mets_server_url: str, path_to_mets: str, stop_with_pid: bool = False) -> None:
         self.log.info(f"Stopping UDS mets server: {mets_server_url}")
         self.log.info(f"Path to the mets file: {path_to_mets}")
-        self.log.info(f"mets_server: {self.mets_servers}")
-        self.log.info(f"mets_server_paths: {self.mets_servers_paths}")
+        self.log.debug(f"mets_server: {self.mets_servers}")
+        self.log.debug(f"mets_server_paths: {self.mets_servers_paths}")
         if stop_with_pid:
             mets_server_url_uds = self.mets_servers_paths[str(Path(path_to_mets).parent)]
             if Path(mets_server_url_uds) not in self.mets_servers:
