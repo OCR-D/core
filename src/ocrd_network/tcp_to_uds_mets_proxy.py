@@ -34,6 +34,10 @@ class MetsServerProxy:
         ws_unix_socket_url = f'http+unix://{ws_socket_file.replace("/", "%2F")}'
         uds_request_url = f"{ws_unix_socket_url}/{request_url}"
 
+        self.log.info(f"Forwarding TCP mets server request to UDS url: {uds_request_url}")
+        self.log.info(f"Forwarding method type {method_type}, request data: {request_data}, "
+                      f"expected response type: {response_type}")
+
         if not request_data:
             response = self.session.request(method_type, uds_request_url)
         elif "params" in request_data:
