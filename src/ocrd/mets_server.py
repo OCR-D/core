@@ -440,7 +440,8 @@ class OcrdMetsServer:
     @staticmethod
     def shutdown():
         # os._exit because uvicorn catches SystemExit raised by sys.exit
-        _exit(0)
+        # _exit(0)
+        os.kill(os.getpid(), signal.SIGTERM)
 
     def startup(self):
         self.log.info("Starting up METS server")
