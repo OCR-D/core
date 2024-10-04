@@ -437,14 +437,15 @@ class OcrdMetsServer:
         except ProcessLookupError as e:
             pass
 
-    @staticmethod
-    def shutdown():
+    def shutdown(self):
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         # _exit(0)
-        os.kill(os.getpid(), signal.SIGTERM)
+        pid = os.getpid()
+        self.log.info(f"Shutdown method of mets server[{pid}] invoked, sending SIGTERM signal.")
+        os.kill(pid, signal.SIGTERM)
 
     def startup(self):
-        self.log.info(f"Starting up METS server: {self.url}")
+        self.log.info(f"Configuring up the Mets Server")
 
         workspace = self.workspace
 
@@ -471,17 +472,20 @@ class OcrdMetsServer:
             Write current changes to the file system
             """
             workspace.save_mets()
-            return Response(status_code=200, content="The Mets Server is writing changes to disk.")
+            response = Response(content="The Mets Server is writing changes to disk.", media_type='text/plain')
+            self.log.info(f"PUT / -> {response.__dict__}")
+            return response
 
         @app.delete(path='/')
         async def stop():
             """
             Stop the mets server
             """
-            getLogger('ocrd.models.ocrd_mets').info(f'Shutting down METS Server {self.url}')
             workspace.save_mets()
+            response = Response(content="The Mets Server will shut down soon...", media_type='text/plain')
             self.shutdown()
-            return Response(status_code=200, content="The Mets Server is shutting down...")
+            self.log.info(f"POST /reload -> {response.__dict__}")
+            return response
 
         @app.post(path='/reload')
         async def workspace_reload_mets():
@@ -489,34 +493,48 @@ class OcrdMetsServer:
             Reload mets file from the file system
             """
             workspace.reload_mets()
-            return Response(content=f'Reloaded from {workspace.directory}', media_type="text/plain")
+            response = Response(content=f"Reloaded from {workspace.directory}", media_type='text/plain')
+            self.log.info(f"POST /reload -> {response.__dict__}")
+            return response
 
         @app.get(path='/unique_identifier', response_model=str)
         async def unique_identifier():
-            return Response(content=workspace.mets.unique_identifier, media_type='text/plain')
+            response = Response(content=workspace.mets.unique_identifier, media_type='text/plain')
+            self.log.info(f"GET /unique_identifier -> {response.__dict__}")
+            return response
 
         @app.get(path='/workspace_path', response_model=str)
         async def workspace_path():
-            return Response(content=workspace.directory, media_type="text/plain")
+            response = Response(content=workspace.directory, media_type="text/plain")
+            self.log.info(f"GET /workspace_path -> {response.__dict__}")
+            return response
 
         @app.get(path='/physical_pages', response_model=OcrdPageListModel)
         async def physical_pages():
-            return {'physical_pages': workspace.mets.physical_pages}
+            response = {'physical_pages': workspace.mets.physical_pages}
+            self.log.info(f"GET /physical_pages -> {response.__dict__}")
+            return response
 
         @app.get(path='/file_groups', response_model=OcrdFileGroupListModel)
         async def file_groups():
-            return {'file_groups': workspace.mets.file_groups}
+            response = {'file_groups': workspace.mets.file_groups}
+            self.log.info(f"GET /file_groups -> {response.__dict__}")
+            return response
 
         @app.get(path='/agent', response_model=OcrdAgentListModel)
         async def agents():
-            return OcrdAgentListModel.create(workspace.mets.agents)
+            response = OcrdAgentListModel.create(workspace.mets.agents)
+            self.log.info(f"GET /agent -> {response.__dict__}")
+            return response
 
         @app.post(path='/agent', response_model=OcrdAgentModel)
         async def add_agent(agent: OcrdAgentModel):
             kwargs = agent.dict()
             kwargs['_type'] = kwargs.pop('type')
             workspace.mets.add_agent(**kwargs)
-            return agent
+            response = agent
+            self.log.info(f"POST /agent -> {response.__dict__}")
+            return response
 
         @app.get(path="/file", response_model=OcrdFileListModel)
         async def find_files(
@@ -533,7 +551,9 @@ class OcrdMetsServer:
             found = workspace.mets.find_all_files(
                 fileGrp=file_grp, ID=file_id, pageId=page_id, mimetype=mimetype, local_filename=local_filename, url=url
             )
-            return OcrdFileListModel.create(found)
+            response = OcrdFileListModel.create(found)
+            self.log.info(f"GET /file -> {response.__dict__}")
+            return response
 
         @app.post(path='/file', response_model=OcrdFileModel)
         async def add_file(
@@ -556,7 +576,9 @@ class OcrdMetsServer:
             # Add to workspace
             kwargs = file_resource.dict()
             workspace.add_file(**kwargs, force=force)
-            return file_resource
+            response = file_resource
+            self.log.info(f"POST /file -> {response.__dict__}")
+            return response
 
         # ------------- #
 
@@ -581,7 +603,7 @@ class OcrdMetsServer:
         uvicorn_kwargs['log_config'] = None
         uvicorn_kwargs['access_log'] = False
 
-        self.log.debug("Starting uvicorn")
+        self.log.info("Starting the uvicorn Mets Server")
         uvicorn.run(app, **uvicorn_kwargs)
 
 # TODO: Not required after #1284, consider removing
