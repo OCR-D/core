@@ -443,6 +443,10 @@ class OcrdMetsServer:
         pid = os.getpid()
         self.log.info(f"Shutdown method of mets server[{pid}] invoked, sending SIGTERM signal.")
         os.kill(pid, signal.SIGTERM)
+        if self.is_uds:
+            if Path(self.url).exists():
+                self.log.warning(f"Due to a server shutdown, removing the existing UDS socket file: {self.url}")
+                Path(self.url).unlink()
 
     def startup(self):
         self.log.info(f"Configuring up the Mets Server")
