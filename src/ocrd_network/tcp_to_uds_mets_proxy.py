@@ -1,5 +1,5 @@
 from requests_unixsocket import Session as requests_unixsocket_session
-from .utils import get_uds_path
+from .utils import get_uds_path, convert_url_to_uds_format
 from typing import Dict
 from ocrd_utils import getLogger
 
@@ -31,7 +31,7 @@ class MetsServerProxy:
         if method_type not in SUPPORTED_METHOD_TYPES:
             raise NotImplementedError(f"Method type: {method_type} not recognized")
         ws_socket_file = str(get_uds_path(ws_dir_path=ws_dir_path))
-        ws_unix_socket_url = f'http+unix://{ws_socket_file.replace("/", "%2F")}'
+        ws_unix_socket_url = convert_url_to_uds_format(ws_socket_file)
         uds_request_url = f"{ws_unix_socket_url}/{request_url}"
 
         self.log.info(f"Forwarding TCP mets server request to UDS url: {uds_request_url}")

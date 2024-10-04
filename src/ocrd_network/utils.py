@@ -152,28 +152,32 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
         return False
 
 
-def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str = None) -> bool:
+def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
-    session = Session_TCP() if protocol == "tcp" else Session_UDS()
+    # If the mets server URL is the proxy endpoint
+    if protocol == "tcp" and "tcp_mets" in mets_server_url:
+        # Convert the mets server url to UDS format
+        ws_socket_file = str(get_uds_path(ws_dir_path))
+        mets_server_url = convert_url_to_uds_format(ws_socket_file)
+        protocol = "uds"
+    if protocol == "tcp":
+        request_json = MpxReq.stop(ws_dir_path)
+        logger.info(f"Sending POST request to: {mets_server_url}, request_json: {request_json}")
+        response = Session_TCP().post(url=f"{mets_server_url}", json=request_json)
+        return response.status_code == 200
+    elif protocol == "uds":
+        logger.info(f"Sending DELETE request to: {mets_server_url}/")
+        response = Session_UDS().delete(url=f"{mets_server_url}/")
+        return response.status_code == 200
+    else:
+        ValueError(f"Unexpected protocol type: {protocol}")
     if protocol == "uds":
-        mets_server_url = convert_url_to_uds_format(mets_server_url)
-    try:
-        if 'tcp_mets' in mets_server_url:
-            if not ws_dir_path:
-                logger.warning("Multiplexing through the Processing Server to reach a mets server but no workspace "
-                               "path is specified. There is no way for the Processing Server to know to which Mets "
-                               "Server the incoming requests should be forwarded.")
-                return False
-            request_json = MpxReq.stop(ws_dir_path)
-            logger.info(f"Sending POST request to: {mets_server_url}, request_json: {request_json}")
-            response = session.post(url=f"{mets_server_url}", json=request_json)
+        ws_socket_file = str(get_uds_path(ws_dir_path))
+        if Path(ws_socket_file).exists():
+            logger.info(f"Removing the inactive UDS file: {ws_socket_file}")
+            Path(ws_socket_file).unlink()
         else:
-            logger.info(f"Sending DELETE request to: {mets_server_url}/")
-            response = session.delete(url=f"{mets_server_url}/")
-    except Exception:
-        return False
-    return response.status_code == 200
-
+            logger.warning(f"The UDS file to be removed is not existing: {ws_socket_file}")
 
 def get_uds_path(ws_dir_path: str) -> Path:
     return Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(ws_dir_path)}.sock")

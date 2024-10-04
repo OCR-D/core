@@ -437,11 +437,8 @@ class OcrdMetsServer:
         except ProcessLookupError as e:
             pass
 
-    def shutdown(self):
-        if self.is_uds:
-            if Path(self.url).exists():
-                self.log.warning(f"Due to a server shutdown, removing the existing UDS socket file: {self.url}")
-                Path(self.url).unlink()
+    @staticmethod
+    def shutdown():
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)
 
@@ -472,7 +469,8 @@ class OcrdMetsServer:
             """
             Write current changes to the file system
             """
-            return workspace.save_mets()
+            workspace.save_mets()
+            return Response(status_code=200, content="The Mets Server is writing changes to disk.")
 
         @app.delete(path='/')
         async def stop():
@@ -482,6 +480,7 @@ class OcrdMetsServer:
             getLogger('ocrd.models.ocrd_mets').info(f'Shutting down METS Server {self.url}')
             workspace.save_mets()
             self.shutdown()
+            return Response(status_code=200, content="The Mets Server is shutting down...")
 
         @app.post(path='/reload')
         async def workspace_reload_mets():
