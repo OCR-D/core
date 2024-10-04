@@ -49,12 +49,11 @@ class MetsServerProxy:
         else:
             raise ValueError("Expecting request_data to be empty or containing single key: params,"
                              f"form, or class but not {request_data.keys}")
-
+        if response_type == "empty":
+            return {}
         if not response:
             self.log.error(f"Uds-Mets-Server gives unexpected error. Response: {response.__dict__}")
             return {"error": response.text}
-        elif response_type == "empty":
-            return {}
         elif response_type == "text":
             return {"text": response.text}
         elif response_type == "class" or response_type == "dict":
