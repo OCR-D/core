@@ -167,17 +167,19 @@ def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str) -> 
         return response.status_code == 200
     elif protocol == "uds":
         logger.info(f"Sending DELETE request to: {mets_server_url}/")
-        response = Session_UDS().delete(url=f"{mets_server_url}/")
-        return response.status_code == 200
+        try:
+            response = Session_UDS().delete(url=f"{mets_server_url}/")
+            return response.status_code == 200
+        finally:
+            if protocol == "uds":
+                ws_socket_file = str(get_uds_path(ws_dir_path))
+                if Path(ws_socket_file).exists():
+                    logger.info(f"Removing the inactive UDS file: {ws_socket_file}")
+                    Path(ws_socket_file).unlink()
+                else:
+                    logger.warning(f"The UDS file to be removed is not existing: {ws_socket_file}")
     else:
         ValueError(f"Unexpected protocol type: {protocol}")
-    if protocol == "uds":
-        ws_socket_file = str(get_uds_path(ws_dir_path))
-        if Path(ws_socket_file).exists():
-            logger.info(f"Removing the inactive UDS file: {ws_socket_file}")
-            Path(ws_socket_file).unlink()
-        else:
-            logger.warning(f"The UDS file to be removed is not existing: {ws_socket_file}")
 
 def get_uds_path(ws_dir_path: str) -> Path:
     return Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(ws_dir_path)}.sock")
