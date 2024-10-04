@@ -484,7 +484,7 @@ class OcrdMetsServer:
             workspace.save_mets()
             response = Response(content="The Mets Server will shut down soon...", media_type='text/plain')
             self.shutdown()
-            self.log.info(f"POST /reload -> {response.__dict__}")
+            self.log.info(f"DELETE / -> {response.__dict__}")
             return response
 
         @app.post(path='/reload')
