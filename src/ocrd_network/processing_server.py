@@ -602,8 +602,7 @@ class ProcessingServer(FastAPI):
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
 
-                self.deployer.stop_uds_mets_server(
-                    mets_server_url=mets_server_url, path_to_mets=path_to_mets, stop_with_pid=True)
+                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
 
                 try:
                     # The queue is empty - delete it
