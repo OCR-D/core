@@ -4,6 +4,7 @@ from fastapi import UploadFile
 from functools import wraps
 from hashlib import md5
 from json import loads
+from logging import Logger
 from pathlib import Path
 from re import compile as re_compile, split as re_split
 from requests import get as requests_get, Session as Session_TCP
@@ -151,7 +152,7 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
         return False
 
 
-def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
+def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str = None) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
     session = Session_TCP() if protocol == "tcp" else Session_UDS()
     if protocol == "uds":
@@ -159,9 +160,15 @@ def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
     try:
         if 'tcp_mets' in mets_server_url:
             if not ws_dir_path:
+                logger.warning("Multiplexing through the Processing Server to reach a mets server but no workspace "
+                               "path is specified. There is no way for the Processing Server to know to which Mets "
+                               "Server the incoming requests should be forwarded.")
                 return False
-            response = session.post(url=f"{mets_server_url}", json=MpxReq.stop(ws_dir_path))
+            request_json = MpxReq.stop(ws_dir_path)
+            logger.info(f"Sending POST request to: {mets_server_url}, request_json: {request_json}")
+            response = session.post(url=f"{mets_server_url}", json=request_json)
         else:
+            logger.info(f"Sending DELETE request to: {mets_server_url}/")
             response = session.delete(url=f"{mets_server_url}/")
     except Exception:
         return False

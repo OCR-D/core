@@ -601,7 +601,6 @@ class ProcessingServer(FastAPI):
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
-
                 self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
 
                 try:

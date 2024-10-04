@@ -182,5 +182,5 @@ class Deployer:
         #  on the last request processed by the processing worker.
         #  Sometimes 3 seconds is enough, sometimes not.
         sleep(5)
-        stop_mets_server(mets_server_url=mets_server_url, ws_dir_path=Path(path_to_mets).parent)
+        stop_mets_server(self.log, mets_server_url=mets_server_url, ws_dir_path=str(Path(path_to_mets).parent))
         return
