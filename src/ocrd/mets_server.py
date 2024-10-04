@@ -516,13 +516,13 @@ class OcrdMetsServer:
         @app.get(path='/physical_pages', response_model=OcrdPageListModel)
         async def physical_pages():
             response = {'physical_pages': workspace.mets.physical_pages}
-            self.log.info(f"GET /physical_pages -> {response.__dict__}")
+            self.log.info(f"GET /physical_pages -> {response}")
             return response
 
         @app.get(path='/file_groups', response_model=OcrdFileGroupListModel)
         async def file_groups():
             response = {'file_groups': workspace.mets.file_groups}
-            self.log.info(f"GET /file_groups -> {response.__dict__}")
+            self.log.info(f"GET /file_groups -> {response}")
             return response
 
         @app.get(path='/agent', response_model=OcrdAgentListModel)
