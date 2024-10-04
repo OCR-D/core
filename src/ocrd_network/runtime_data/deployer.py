@@ -8,6 +8,7 @@ Each Processing Worker is an instance of an OCR-D processor.
 """
 from __future__ import annotations
 from pathlib import Path
+import psutil
 from time import sleep
 from typing import Dict, List, Union
 
@@ -182,5 +183,13 @@ class Deployer:
         #  on the last request processed by the processing worker.
         #  Sometimes 3 seconds is enough, sometimes not.
         sleep(5)
+        mets_server_pid = self.mets_servers[str(self.mets_servers_paths[str(Path(path_to_mets).parent)])]
+        self.log.info(f"Terminating mets server with pid: {mets_server_pid}")
+        p = psutil.Process(mets_server_pid)
         stop_mets_server(self.log, mets_server_url=mets_server_url, ws_dir_path=str(Path(path_to_mets).parent))
+        if p.is_running():
+            p.wait()
+            self.log.info(f"Terminated mets server with pid: {mets_server_pid}")
+        else:
+            self.log.info(f"Mets server has already terminated with pid: {mets_server_pid}")
         return
