@@ -8,7 +8,9 @@ on:
 env:
   # FIXME: linux/arm/v7 disabled as long as scikit-build/cmake-python-distributions#503 is unresolved
   # PLATFORMS: linux/amd64,linux/arm/v7,linux/arm64/v8,linux/ppc64le
-  PLATFORMS: linux/amd64,linux/arm64/v8,linux/ppc64le
+  # FIXME: linux/ppc64le probably similar cause for "Installing build dependencies: still running..."
+  # PLATFORMS: linux/amd64,linux/arm64/v8,linux/ppc64le
+  PLATFORMS: linux/amd64,linux/arm64/v8
 
 jobs:
 
@@ -19,17 +21,19 @@ jobs:
       packages: write
       contents: read
     env:
+      # build both tags at once:
       DOCKER_BASE_TAG: ghcr.io/ocr-d docker.io/ocrd
-      # TODO(kba): make the interpolation work correctly
-      # DOCKER_BUILD: docker buildx build --progress=plain --platform ${{ env.PLATFORMS }} --push
-      # TODO(kba): Investigate why ppc64le build hangs on "Installing build dependencies"
-      # TODO(kba): Investigate why arm64 fails with .buildkit_qemu_emulator: /usr/local/bin/conda: Invalid ELF image for this architecture
-      DOCKER_BUILD: docker buildx build --progress=plain --platform linux/amd64 --push
+      # replace native build with buildx
+      DOCKER_BUILD_CMD: docker buildx build --progress=plain --push --platform
     steps:
     - name: Export variables
       run: |
         echo "DOCKER_BASE_TAG=${{ env.DOCKER_BASE_TAG }}" >> $GITHUB_ENV
-        echo "DOCKER_BUILD=${{ env.DOCKER_BUILD }}" >> $GITHUB_ENV
+        echo "DOCKER_BUILD=${{ env.DOCKER_BUILD_CMD }} ${{ env.PLATFORMS }}" >> $GITHUB_ENV
+    - name: Print variables
+      run: |
+        echo DOCKER_BASE_TAG=${DOCKER_BASE_TAG}
+        echo DOCKER_BUILD=${DOCKER_BUILD}
     - name: Checkout
       uses: actions/checkout@v4
       with:
