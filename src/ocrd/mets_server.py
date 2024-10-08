@@ -601,14 +601,3 @@ class OcrdMetsServer:
 
         self.log.info("Starting the uvicorn Mets Server")
         uvicorn.run(app, **uvicorn_kwargs)
-
-# TODO: Not required after #1284, consider removing
-def is_socket_in_use(socket_path):
-    if Path(socket_path).exists():
-        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            client.connect(socket_path)
-        except OSError:
-            return False
-        client.close()
-        return True
