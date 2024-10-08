@@ -191,5 +191,5 @@ class Deployer:
             p.wait()
             self.log.info(f"Terminated mets server with pid: {mets_server_pid}")
         else:
-            self.log.info(f"Mets server has already terminated with pid: {mets_server_pid}")
+            self.log.info(f"Mets server with pid: {mets_server_pid} has already terminated.")
         return
