@@ -167,6 +167,7 @@ class CacheProcessingRequests:
             self.log.info(f"Creating an internal request counter for workspace key: {workspace_key}")
             self.processing_counter[workspace_key] = 0
         self.processing_counter[workspace_key] = self.processing_counter[workspace_key] + by_value
+        self.log.info(f"The new request counter of {workspace_key}: {self.processing_counter[workspace_key]}")
         return self.processing_counter[workspace_key]
 
     def cache_request(self, workspace_key: str, data: PYJobInput):
@@ -176,6 +177,7 @@ class CacheProcessingRequests:
             self.processing_requests[workspace_key] = []
         self.__print_job_input_debug_message(job_input=data)
         # Add the processing request to the end of the internal queue
+        self.log.info(f"Caching a processing request of {workspace_key}: {data.job_id}")
         self.processing_requests[workspace_key].append(data)
 
     async def cancel_dependent_jobs(self, workspace_key: str, processing_job_id: str) -> List[PYJobInput]:
@@ -229,4 +231,6 @@ class CacheProcessingRequests:
         if not len(self.processing_requests[workspace_key]):
             self.log.info(f"The processing requests cache is empty for workspace key: {workspace_key}")
             return False
+        self.log.info(f"The processing requests cache has {len(self.processing_requests[workspace_key])} "
+                      f"entries for workspace key: {workspace_key} ")
         return True
