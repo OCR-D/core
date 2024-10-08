@@ -588,12 +588,6 @@ class OcrdMetsServer:
             # Create socket and change to world-readable and -writable to avoid permission errors
             self.log.debug(f"chmod 0o677 {self.url}")
             server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            # TODO: Not required after #1284, consider removing
-            """
-            if Path(self.url).exists() and not is_socket_in_use(self.url):
-                # remove leftover unused socket which blocks startup
-                Path(self.url).unlink()
-            """
             server.bind(self.url)  # creates the socket file
             atexit.register(self.shutdown)
             server.close()
