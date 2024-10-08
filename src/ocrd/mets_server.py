@@ -479,7 +479,7 @@ class OcrdMetsServer:
             return response
 
         @app.delete(path='/')
-        async def stop():
+        def stop():
             """
             Stop the mets server
             """
@@ -490,7 +490,7 @@ class OcrdMetsServer:
             return response
 
         @app.post(path='/reload')
-        async def workspace_reload_mets():
+        def workspace_reload_mets():
             """
             Reload mets file from the file system
             """
