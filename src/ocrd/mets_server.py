@@ -438,8 +438,6 @@ class OcrdMetsServer:
             pass
 
     def shutdown(self):
-        # os._exit because uvicorn catches SystemExit raised by sys.exit
-        # _exit(0)
         pid = os.getpid()
         self.log.info(f"Shutdown method of mets server[{pid}] invoked, sending SIGTERM signal.")
         os.kill(pid, signal.SIGTERM)
