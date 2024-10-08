@@ -164,11 +164,6 @@ class Deployer:
         self.log.info(f"Path to the mets file: {path_to_mets}")
         self.log.debug(f"mets_server: {self.mets_servers}")
         self.log.debug(f"mets_server_paths: {self.mets_servers_paths}")
-        # TODO: Reconsider this again
-        #  Not having this sleep here causes connection errors
-        #  on the last request processed by the processing worker.
-        #  Sometimes 3 seconds is enough, sometimes not.
-        sleep(5)
         mets_server_pid = self.mets_servers[str(self.mets_servers_paths[str(Path(path_to_mets).parent)])]
         self.log.info(f"Terminating mets server with pid: {mets_server_pid}")
         p = psutil.Process(mets_server_pid)
