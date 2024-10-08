@@ -447,7 +447,7 @@ class OcrdMetsServer:
                 Path(self.url).unlink()
 
     def startup(self):
-        self.log.info(f"Configuring up the Mets Server")
+        self.log.info(f"Configuring the Mets Server")
 
         workspace = self.workspace
 
