@@ -157,13 +157,13 @@ class ClientSideOcrdMets:
         Request writing the changes to the file system
         """
         if not self.multiplexing_mode:
-            self.session.request("PUT", url=self.url)
+            return self.session.request("PUT", url=self.url).text
         else:
-            self.session.request(
+            return self.session.request(
                 "POST",
                 self.url,
                 json=MpxReq.save(self.ws_dir_path)
-            )
+            ).json()["text"]
 
     def stop(self):
         """
@@ -171,14 +171,13 @@ class ClientSideOcrdMets:
         """
         try:
             if not self.multiplexing_mode:
-                self.session.request("DELETE", self.url)
-                return
+                return self.session.request("DELETE", self.url).text
             else:
-                self.session.request(
+                return self.session.request(
                     "POST",
                     self.url,
                     json=MpxReq.stop(self.ws_dir_path)
-                )
+                ).json()["text"]
         except ConnectionError:
             # Expected because we exit the process without returning
             pass
@@ -348,12 +347,12 @@ class MpxReq:
     @staticmethod
     def save(ws_dir_path: str) -> Dict:
         return MpxReq.__args_wrapper(
-            ws_dir_path, method_type="PUT", response_type="empty", request_url="", request_data={})
+            ws_dir_path, method_type="PUT", response_type="text", request_url="", request_data={})
 
     @staticmethod
     def stop(ws_dir_path: str) -> Dict:
         return MpxReq.__args_wrapper(
-            ws_dir_path, method_type="DELETE", response_type="empty", request_url="", request_data={})
+            ws_dir_path, method_type="DELETE", response_type="text", request_url="", request_data={})
 
     @staticmethod
     def reload(ws_dir_path: str) -> Dict:
