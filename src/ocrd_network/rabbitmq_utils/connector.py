@@ -6,6 +6,7 @@ RabbitMQ documentation.
 from typing import Any, Optional, Union
 from pika import BasicProperties, BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
+from ocrd_utils import config
 from .constants import (
     DEFAULT_EXCHANGER_NAME,
     DEFAULT_EXCHANGER_TYPE,
@@ -69,8 +70,7 @@ class RMQConnector:
                 port=port,
                 virtual_host=vhost,
                 credentials=credentials,
-                # TODO: The heartbeat should not be disabled (0)!
-                heartbeat=0
+                heartbeat=config.OCRD_NETWORK_RABBITMQ_HEARTBEAT
             ),
         )
         return blocking_connection
