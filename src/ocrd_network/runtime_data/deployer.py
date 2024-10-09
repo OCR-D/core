@@ -154,7 +154,7 @@ class Deployer:
                 "Removing to avoid any weird behavior before starting the server.")
             Path(mets_server_url).unlink()
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
-        pid = OcrdMetsServer.create_process(mets_server_url=mets_server_url, ws_dir_path=ws_dir_path, log_file=log_file)
+        pid = OcrdMetsServer.create_process(mets_server_url=str(mets_server_url), ws_dir_path=str(ws_dir_path), log_file=str(log_file))
         self.mets_servers[str(mets_server_url)] = pid
         self.mets_servers_paths[str(ws_dir_path)] = str(mets_server_url)
         return mets_server_url
@@ -164,8 +164,9 @@ class Deployer:
         self.log.info(f"Path to the mets file: {path_to_mets}")
         self.log.debug(f"mets_server: {self.mets_servers}")
         self.log.debug(f"mets_server_paths: {self.mets_servers_paths}")
+        workspace_path = str(Path(path_to_mets).parent)
+        mets_server_url_uds = self.mets_servers_paths[workspace_path]
         if stop_with_pid:
-            mets_server_url_uds = self.mets_servers_paths[str(Path(path_to_mets).parent)]
             if Path(mets_server_url_uds) not in self.mets_servers:
                 message = f"UDS Mets server not found at URL: {mets_server_url_uds}, mets path: {path_to_mets}"
                 self.log.warning(message)
@@ -176,6 +177,8 @@ class Deployer:
             if Path(mets_server_url_uds).exists():
                 self.log.warning(f"Deployer is removing the existing UDS socket file: {mets_server_url_uds}")
                 Path(mets_server_url_uds).unlink()
+            del self.mets_servers_paths[workspace_path]
+            del self.mets_servers[mets_server_url_uds]
             self.log.info(f"Returning from the stop_uds_mets_server")
             return
         # TODO: Reconsider this again
@@ -183,13 +186,15 @@ class Deployer:
         #  on the last request processed by the processing worker.
         #  Sometimes 3 seconds is enough, sometimes not.
         sleep(5)
-        mets_server_pid = self.mets_servers[str(self.mets_servers_paths[str(Path(path_to_mets).parent)])]
+        mets_server_pid = self.mets_servers[mets_server_url_uds]
         self.log.info(f"Terminating mets server with pid: {mets_server_pid}")
         p = psutil.Process(mets_server_pid)
-        stop_mets_server(self.log, mets_server_url=mets_server_url, ws_dir_path=str(Path(path_to_mets).parent))
+        stop_mets_server(self.log, mets_server_url=mets_server_url, ws_dir_path=workspace_path)
         if p.is_running():
             p.wait()
             self.log.info(f"Terminated mets server with pid: {mets_server_pid}")
         else:
             self.log.info(f"Mets server with pid: {mets_server_pid} has already terminated.")
+        del self.mets_servers_paths[workspace_path]
+        del self.mets_servers[mets_server_url_uds]
         return
