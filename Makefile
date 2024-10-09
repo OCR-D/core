@@ -158,7 +158,7 @@ deps-tf2:
 	fi
 
 deps-torch:
-	$(PIP) install -i https://download.pytorch.org/whl/cu118 torch
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torch torchvision
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
