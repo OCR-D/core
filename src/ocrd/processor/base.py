@@ -23,7 +23,8 @@ import tarfile
 import io
 import weakref
 from frozendict import frozendict
-from concurrent.futures import ThreadPoolExecutor, TimeoutError
+from concurrent.futures import ProcessPoolExecutor, TimeoutError
+import multiprocessing as mp
 
 from click import wrap_text
 from deprecated import deprecated
@@ -465,11 +466,7 @@ class Processor():
             self.workspace = workspace
             self.verify()
             try:
-                nr_succeeded = 0
-                nr_skipped = 0
-                nr_copied = 0
-
-                # set up multithreading
+                # set up multitasking
                 max_workers = max(0, config.OCRD_MAX_PARALLEL_PAGES)
                 if self.max_workers > 0 and self.max_workers < config.OCRD_MAX_PARALLEL_PAGES:
                     self._base_logger.info("limiting number of threads from %d to %d", max_workers, self.max_workers)
@@ -481,80 +478,17 @@ class Processor():
                 if self.max_page_seconds > 0 and self.max_page_seconds < config.OCRD_PROCESSING_PAGE_TIMEOUT:
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
-                executor = ThreadPoolExecutor(
-                    max_workers=max_workers or 1,
-                    thread_name_prefix=f"pagetask.{workspace.mets.unique_identifier}"
-                )
-                self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
-                tasks = {}
 
-                for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
-                    input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
-                    page_id = next(input_file.pageId
-                                   for input_file in input_file_tuple
-                                   if input_file)
-                    self._base_logger.info(f"preparing page {page_id}")
-                    for i, input_file in enumerate(input_file_tuple):
-                        if input_file is None:
-                            # file/page not found in this file grp
-                            continue
-                        input_files[i] = input_file
-                        if not self.download:
-                            continue
-                        try:
-                            input_files[i] = self.workspace.download_file(input_file)
-                        except (ValueError, FileNotFoundError, HTTPError) as e:
-                            self._base_logger.error(repr(e))
-                            self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
-                    # process page
-                    tasks[executor.submit(self.process_page_file, *input_files)] = (page_id, input_files)
-                self._base_logger.debug("submitted %d processing tasks", len(tasks))
-
-                for task in tasks:
-                    # wait for results, handle errors
-                    page_id, input_files = tasks[task]
-                    # FIXME: differentiate error cases in various ways:
-                    # - ResourceNotFoundError → use ResourceManager to download (once), then retry
-                    # - transient (I/O or OOM) error → maybe sleep, retry
-                    # - persistent (data) error → skip / dummy / raise
-                    try:
-                        self._base_logger.debug("waiting for output of task %s (page %s) max_seconds=%d", task, page_id, max_seconds)
-                        task.result(timeout=max_seconds or None)
-                        nr_succeeded += 1
-                    # exclude NotImplementedError, so we can try process() below
-                    except NotImplementedError:
-                        raise
-                    # handle input failures separately
-                    except FileExistsError as err:
-                        if config.OCRD_EXISTING_OUTPUT == 'ABORT':
-                            raise err
-                        if config.OCRD_EXISTING_OUTPUT == 'SKIP':
-                            continue
-                        if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
-                            # too late here, must not happen
-                            raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
-                    # broad coverage of output failures (including TimeoutError)
-                    except (Exception, TimeoutError) as err:
-                        # FIXME: add re-usable/actionable logging
-                        if config.OCRD_MISSING_OUTPUT == 'ABORT':
-                            self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
-                            raise err
-                        self._base_logger.exception(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
-                        if config.OCRD_MISSING_OUTPUT == 'SKIP':
-                            nr_skipped += 1
-                            continue
-                        if config.OCRD_MISSING_OUTPUT == 'COPY':
-                            self._copy_page_file(input_files[0])
-                            nr_copied += 1
-                        else:
-                            desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
-                            raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
-
-                if nr_skipped > 0 and nr_succeeded / nr_skipped < config.OCRD_MAX_MISSING_OUTPUTS:
-                    raise Exception(f"too many failures with skipped output ({nr_skipped})")
-                if nr_copied > 0 and nr_succeeded / nr_copied < config.OCRD_MAX_MISSING_OUTPUTS:
-                    raise Exception(f"too many failures with fallback output ({nr_skipped})")
-                executor.shutdown()
+                with ProcessPoolExecutor(
+                        max_workers=max_workers or 1,
+                        # only forking method avoids pickling
+                        mp_context=mp.get_context('fork'),
+                        # share processor instance as global to avoid pickling
+                        initializer=_page_worker_set_ctxt,
+                        initargs=(self,),
+                ) as executor:
+                    self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
+                    self._process_workspace_run(executor, max_workers, max_seconds)
 
             except NotImplementedError:
                 # fall back to deprecated method
@@ -563,6 +497,80 @@ class Processor():
                 except Exception as err:
                     # suppress the NotImplementedError context
                     raise err from None
+
+    def _process_workspace_run(self, executor, max_workers, max_seconds):
+        nr_succeeded = 0
+        nr_skipped = 0
+        nr_copied = 0
+
+        tasks = {}
+        for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
+            input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
+            page_id = next(input_file.pageId
+                           for input_file in input_file_tuple
+                           if input_file)
+            self._base_logger.info(f"preparing page {page_id}")
+            for i, input_file in enumerate(input_file_tuple):
+                if input_file is None:
+                    # file/page not found in this file grp
+                    continue
+                input_files[i] = input_file
+                if not self.download:
+                    continue
+                try:
+                    input_files[i] = self.workspace.download_file(input_file)
+                except (ValueError, FileNotFoundError, HTTPError) as e:
+                    self._base_logger.error(repr(e))
+                    self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
+            # process page
+            #tasks[executor.submit(self.process_page_file, *input_files)] = (page_id, input_files)
+            tasks[executor.submit(_page_worker, *input_files)] = (page_id, input_files)
+        self._base_logger.debug("submitted %d processing tasks", len(tasks))
+
+        for task in tasks:
+            # wait for results, handle errors
+            page_id, input_files = tasks[task]
+            # FIXME: differentiate error cases in various ways:
+            # - ResourceNotFoundError → use ResourceManager to download (once), then retry
+            # - transient (I/O or OOM) error → maybe sleep, retry
+            # - persistent (data) error → skip / dummy / raise
+            try:
+                self._base_logger.debug("waiting for output of task %s (page %s) max_seconds=%d", task, page_id, max_seconds)
+                task.result(timeout=max_seconds or None)
+                nr_succeeded += 1
+            # exclude NotImplementedError, so we can try process() below
+            except NotImplementedError:
+                raise
+            # handle input failures separately
+            except FileExistsError as err:
+                if config.OCRD_EXISTING_OUTPUT == 'ABORT':
+                    raise err
+                if config.OCRD_EXISTING_OUTPUT == 'SKIP':
+                    continue
+                if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
+                    # too late here, must not happen
+                    raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
+            # broad coverage of output failures (including TimeoutError)
+            except (Exception, TimeoutError) as err:
+                # FIXME: add re-usable/actionable logging
+                if config.OCRD_MISSING_OUTPUT == 'ABORT':
+                    self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
+                    raise err
+                self._base_logger.exception(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
+                if config.OCRD_MISSING_OUTPUT == 'SKIP':
+                    nr_skipped += 1
+                    continue
+                if config.OCRD_MISSING_OUTPUT == 'COPY':
+                    self._copy_page_file(input_files[0])
+                    nr_copied += 1
+                else:
+                    desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
+                    raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
+
+        if nr_skipped > 0 and nr_succeeded / nr_skipped < config.OCRD_MAX_MISSING_OUTPUTS:
+            raise Exception(f"too many failures with skipped output ({nr_skipped})")
+        if nr_copied > 0 and nr_succeeded / nr_copied < config.OCRD_MAX_MISSING_OUTPUTS:
+            raise Exception(f"too many failures with fallback output ({nr_skipped})")
 
     def _copy_page_file(self, input_file : OcrdFileType) -> None:
         """
@@ -939,6 +947,14 @@ class Processor():
             if ifiles[0] or not require_first:
                 ifts.append(tuple(ifiles))
         return ifts
+
+_page_worker_processor = None
+def _page_worker_set_ctxt(processor):
+    global _page_worker_processor
+    _page_worker_processor = processor
+
+def _page_worker(*input_files):
+    _page_worker_processor.process_page_file(*input_files)
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.
