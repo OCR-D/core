@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.70.0] - 2024-10-10
+
 Added:
 
   - `ocrd network client workflow run`: Add `--print-status` flag to periodically print the job status, #1277
@@ -2214,6 +2216,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.70.0]: ../../compare/v2.70.0..v2.69.0
 [2.69.0]: ../../compare/v2.69.0..v2.68.0
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
