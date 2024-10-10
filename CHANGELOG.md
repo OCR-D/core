@@ -20,6 +20,7 @@ Fixed:
 
   - `ocrd/core-cuda-torch`: Install torchvision as well, #1286
   - Processing Server: remove shut down METS servers from deployer's cache, #1287
+  - typos, #1274
 
 ## [2.69.0] - 2024-09-30
 
