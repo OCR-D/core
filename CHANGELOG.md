@@ -15,6 +15,9 @@ Added:
 Changed:
 
   - significantly more detailed logging for the METS Server and Processing Server, #1284
+  - Only import `ocrd_network` in src/ocrd/decorators/__init__.py once needed, #1289
+
+
 
 Fixed:
 
