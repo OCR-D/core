@@ -10,6 +10,10 @@ Added:
   - `ocrd network client workflow run`: Add `--print-status` flag to periodically print the job status, #1277
   - Processing Server: `DELETE /mets_server_zombies` to kill any renegade METS servers, #1277
 
+Fixed:
+
+  - `ocrd/core-cuda-torch`: Install torchvision as well, #1286
+
 ## [2.69.0] - 2024-09-30
 
 Fixed:
