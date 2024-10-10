@@ -264,8 +264,8 @@ def kill_mets_server_zombies(minutes_ago=60) -> List[int]:
             continue
         cmdline = cmdline_file.read_text().replace('\x00', ' ')
         if re.match(cmdline_pat, cmdline):
-            pid = procdir.name
+            pid = int(procdir.name)
             ret.append(pid)
             print(f'METS Server with PID {pid} was created {ctime_ago} minutes ago, more than {minutes_ago}, so killing (cmdline="{cmdline})', file=sys.stderr)
-            os.kill(int(pid), signal.SIGTERM)
+            os.kill(pid, signal.SIGTERM)
     return ret
