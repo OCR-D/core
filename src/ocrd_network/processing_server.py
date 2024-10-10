@@ -583,26 +583,20 @@ class ProcessingServer(FastAPI):
         )
 
     async def _consume_cached_jobs_of_workspace(
-        self, workspace_key: str, mets_server_url: str
+        self, workspace_key: str, mets_server_url: str, path_to_mets: str
     ) -> List[PYJobInput]:
-
-        # Check whether the internal queue for the workspace key still exists
-        if workspace_key not in self.cache_processing_requests.processing_requests:
-            self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
-            return []
-
         # decrease the internal cache counter by 1
         request_counter = self.cache_processing_requests.update_request_counter(
             workspace_key=workspace_key, by_value=-1
         )
         self.log.debug(f"Internal processing job cache counter value: {request_counter}")
-        if not len(self.cache_processing_requests.processing_requests[workspace_key]):
+        if (workspace_key not in self.cache_processing_requests.processing_requests or
+            not len(self.cache_processing_requests.processing_requests[workspace_key])):
             if request_counter <= 0:
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
-
-                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url)
+                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
 
                 try:
                     # The queue is empty - delete it
@@ -617,6 +611,10 @@ class ProcessingServer(FastAPI):
                     self.log.debug(f"{output_file_grp}: {locked_pages[output_file_grp]}")
             else:
                 self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
+            return []
+        # Check whether the internal queue for the workspace key still exists
+        if workspace_key not in self.cache_processing_requests.processing_requests:
+            self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
             return []
         consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
         return consumed_requests
@@ -652,7 +650,7 @@ class ProcessingServer(FastAPI):
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
 
         consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
-            workspace_key=workspace_key, mets_server_url=mets_server_url
+            workspace_key=workspace_key, mets_server_url=mets_server_url, path_to_mets=path_to_mets
         )
         await self.push_cached_jobs_to_agents(processing_jobs=consumed_cached_jobs)
 
