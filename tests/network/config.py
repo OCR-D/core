@@ -89,11 +89,19 @@ test_config.add(
 
 test_config.add(
     name="OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
-    description="""
-    Number of attempts for a RabbitMQ client to connect before failing
-    """,
+    description="Number of attempts for a RabbitMQ client to connect before failing",
     parser=int,
     default=(True, 3)
+)
+
+test_config.add(
+    name="OCRD_NETWORK_RABBITMQ_HEARTBEAT",
+    description="""
+    Controls AMQP heartbeat timeout (in seconds) negotiation during connection tuning. An integer value always overrides the value 
+    proposed by broker. Use 0 to deactivate heartbeat.
+    """,
+    parser=int,
+    default=(True, 0)
 )
 
 test_config.add(
