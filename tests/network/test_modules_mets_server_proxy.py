@@ -119,7 +119,7 @@ def test_find_files(start_uds_mets_server):
         {"file_grp": test_file_group}
     )
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
-    assert len(response_dict["files"]) == 3, "Expected to find exatly 3 matching files"
+    assert len(response_dict["files"]) == 3, "Expected to find exactly 3 matching files"
     request_body = MpxReq.find_files(
         TEST_WORKSPACE_DIR,
         {"file_grp": test_non_existing_file_group}
