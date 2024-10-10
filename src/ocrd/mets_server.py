@@ -1,8 +1,10 @@
 """
 # METS server functionality
 """
+import os
 import re
 from os import _exit, chmod
+import signal
 from typing import Dict, Optional, Union, List, Tuple
 from time import sleep
 from pathlib import Path
@@ -428,13 +430,17 @@ class OcrdMetsServer:
 
     @staticmethod
     def kill_process(mets_server_pid: int):
-        subprocess_run(args=["kill", "-s", "SIGINT", f"{mets_server_pid}"], shell=False, universal_newlines=True)
-        return
+        os.kill(mets_server_pid, signal.SIGINT)
+        sleep(3)
+        try:
+            os.kill(mets_server_pid, signal.SIGKILL)
+        except ProcessLookupError as e:
+            pass
 
     def shutdown(self):
         if self.is_uds:
             if Path(self.url).exists():
-                self.log.debug(f'UDS socket {self.url} still exists, removing it')
+                self.log.warning(f"Due to a server shutdown, removing the existing UDS socket file: {self.url}")
                 Path(self.url).unlink()
         # os._exit because uvicorn catches SystemExit raised by sys.exit
         _exit(0)

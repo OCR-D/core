@@ -160,7 +160,7 @@ config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
 config.add("OCRD_NETWORK_CLIENT_POLLING_SLEEP",
            description="How many seconds to sleep before trying again.",
            parser=int,
-           default=(True, 30))
+           default=(True, 10))
 
 config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
            description="Timeout for a blocking ocrd network client (in seconds).",

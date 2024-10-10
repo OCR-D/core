@@ -146,6 +146,11 @@ class Deployer:
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
             self.log.debug(f"The UDS mets server for {ws_dir_path} is already started: {mets_server_url}")
             return mets_server_url
+        elif Path(mets_server_url).is_socket():
+            self.log.warning(
+                f"The UDS mets server for {ws_dir_path} is not running but the socket file exists: {mets_server_url}."
+                "Removing to avoid any weird behavior before starting the server.")
+            Path(mets_server_url).unlink()
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
         pid = OcrdMetsServer.create_process(mets_server_url=mets_server_url, ws_dir_path=ws_dir_path, log_file=log_file)
         self.mets_servers[mets_server_url] = pid
@@ -160,6 +165,9 @@ class Deployer:
                 raise Exception(message)
             mets_server_pid = self.mets_servers[Path(mets_server_url)]
             OcrdMetsServer.kill_process(mets_server_pid=mets_server_pid)
+            if Path(mets_server_url).exists():
+                self.log.warning(f"Deployer is removing the existing UDS socket file: {mets_server_url}")
+                Path(mets_server_url).unlink()
             return
         # TODO: Reconsider this again
         #  Not having this sleep here causes connection errors
