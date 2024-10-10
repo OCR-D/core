@@ -9,10 +9,17 @@ Added:
 
   - `ocrd network client workflow run`: Add `--print-status` flag to periodically print the job status, #1277
   - Processing Server: `DELETE /mets_server_zombies` to kill any renegade METS servers, #1277
+  - No more zombie METS Server by properly shutting them down, #1284
+  - `OCRD_NETWORK_RABBITMQ_HEARBEAT` to allow overriding the [heartbeat](https://pika.readthedocs.io/en/stable/examples/heartbeat_and_blocked_timeouts.html) behavior of RabbitMQ, #1285
+
+Changed:
+
+  - significantly more detailed logging for the METS Server and Processing Server, #1284
 
 Fixed:
 
   - `ocrd/core-cuda-torch`: Install torchvision as well, #1286
+  - Processing Server: remove shut down METS servers from deployer's cache, #1287
 
 ## [2.69.0] - 2024-09-30
 
