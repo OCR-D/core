@@ -159,33 +159,13 @@ class Deployer:
         self.mets_servers_paths[str(ws_dir_path)] = str(mets_server_url)
         return mets_server_url
 
-    def stop_uds_mets_server(self, mets_server_url: str, path_to_mets: str, stop_with_pid: bool = False) -> None:
+    def stop_uds_mets_server(self, mets_server_url: str, path_to_mets: str) -> None:
         self.log.info(f"Stopping UDS mets server: {mets_server_url}")
         self.log.info(f"Path to the mets file: {path_to_mets}")
         self.log.debug(f"mets_server: {self.mets_servers}")
         self.log.debug(f"mets_server_paths: {self.mets_servers_paths}")
         workspace_path = str(Path(path_to_mets).parent)
         mets_server_url_uds = self.mets_servers_paths[workspace_path]
-        if stop_with_pid:
-            if Path(mets_server_url_uds) not in self.mets_servers:
-                message = f"UDS Mets server not found at URL: {mets_server_url_uds}, mets path: {path_to_mets}"
-                self.log.warning(message)
-            mets_server_pid = self.mets_servers[str(mets_server_url_uds)]
-            self.log.info(f"Killing mets server pid: {mets_server_pid} of {mets_server_url_uds}")
-            OcrdMetsServer.kill_process(mets_server_pid=mets_server_pid)
-            self.log.info(f"Returning after the kill process")
-            if Path(mets_server_url_uds).exists():
-                self.log.warning(f"Deployer is removing the existing UDS socket file: {mets_server_url_uds}")
-                Path(mets_server_url_uds).unlink()
-            del self.mets_servers_paths[workspace_path]
-            del self.mets_servers[mets_server_url_uds]
-            self.log.info(f"Returning from the stop_uds_mets_server")
-            return
-        # TODO: Reconsider this again
-        #  Not having this sleep here causes connection errors
-        #  on the last request processed by the processing worker.
-        #  Sometimes 3 seconds is enough, sometimes not.
-        sleep(5)
         mets_server_pid = self.mets_servers[mets_server_url_uds]
         self.log.info(f"Terminating mets server with pid: {mets_server_pid}")
         p = psutil.Process(mets_server_pid)
