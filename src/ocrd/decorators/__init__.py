@@ -13,7 +13,6 @@ from ocrd_utils import (
     redirect_stderr_and_stdout_to_file,
 )
 from ocrd_validators import WorkspaceValidator
-from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
 
 from ..resolver import Resolver
 from ..processor.base import ResourceNotFoundError, run_processor
@@ -22,8 +21,6 @@ from .loglevel_option import ocrd_loglevel
 from .parameter_option import parameter_option, parameter_override_option
 from .ocrd_cli_options import ocrd_cli_options
 from .mets_find_options import mets_find_options
-
-SUBCOMMANDS = [AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER]
 
 
 def ocrd_cli_wrap_processor(
@@ -88,11 +85,9 @@ def ocrd_cli_wrap_processor(
     if list_resources:
         processor.list_resources()
         sys.exit()
-    if subcommand:
+    if subcommand or address or queue or database:
         # Used for checking/starting network agents for the WebAPI architecture
         check_and_run_network_agent(processorClass, subcommand, address, database, queue)
-    elif address or queue or database:
-        raise ValueError(f"Subcommand options --address --queue and --database are only valid for subcommands: {SUBCOMMANDS}")
 
     # from here: single-run processing context
     initLogging()
@@ -162,6 +157,11 @@ def ocrd_cli_wrap_processor(
 def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, database: str, queue: str):
     """
     """
+    from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
+    SUBCOMMANDS = [AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER]
+
+    if not subcommand:
+        raise ValueError(f"Subcommand options --address --queue and --database are only valid for subcommands: {SUBCOMMANDS}")
     if subcommand not in SUBCOMMANDS:
         raise ValueError(f"SUBCOMMAND can only be one of {SUBCOMMANDS}")
 
