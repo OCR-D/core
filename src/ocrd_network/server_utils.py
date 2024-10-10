@@ -4,7 +4,7 @@ import signal
 from pathlib import Path
 from json import dumps, loads
 from urllib.parse import urljoin
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 from time import time
 
 from fastapi import HTTPException, status, UploadFile
@@ -249,7 +249,12 @@ def validate_first_task_input_file_groups_existence(logger: Logger, mets_path: s
             raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
 
-def kill_mets_server_zombies(minutes_ago=60) -> List[int]:
+def kill_mets_server_zombies(minutes_ago : Optional[int], dry_run : Optional[bool]) -> List[int]:
+    if minutes_ago == None:
+        minutes_ago = 90
+    if dry_run == None:
+        dry_run = False
+
     now = time()
     cmdline_pat = r'.*ocrd workspace -U.*server start $'
     ret = []
@@ -267,5 +272,8 @@ def kill_mets_server_zombies(minutes_ago=60) -> List[int]:
             pid = int(procdir.name)
             ret.append(pid)
             print(f'METS Server with PID {pid} was created {ctime_ago} minutes ago, more than {minutes_ago}, so killing (cmdline="{cmdline})', file=sys.stderr)
-            os.kill(pid, signal.SIGTERM)
+            if dry_run:
+                print(f'[dry_run is active] kill {pid}')
+            else:
+                os.kill(pid, signal.SIGTERM)
     return ret

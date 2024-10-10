@@ -1,7 +1,7 @@
 from datetime import datetime
 from os import getpid
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 from uvicorn import run as uvicorn_run
 
 from fastapi import APIRouter, FastAPI, File, HTTPException, Request, status, UploadFile
@@ -826,8 +826,8 @@ class ProcessingServer(FastAPI):
         response = self._produce_workflow_status_response(processing_jobs=jobs)
         return response
 
-    async def kill_mets_server_zombies(self) -> List[int]:
-        pids_killed = kill_mets_server_zombies(minutes_ago=60)
+    async def kill_mets_server_zombies(self, minutes_ago : Optional[int] = None, dry_run : Optional[bool] = None) -> List[int]:
+        pids_killed = kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)
         return pids_killed
 
     async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, JobState]:
