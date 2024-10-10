@@ -183,10 +183,8 @@ config.add("OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
 config.add(
     name="OCRD_NETWORK_RABBITMQ_HEARTBEAT",
     description="""
-    Controls AMQP heartbeat timeout negotiation during connection tuning. An integer value always overrides the value 
-    proposed by broker. Use 0 to deactivate heartbeats and None to always accept the broker's proposal. If a callable 
-    is given, it will be called with the connection instance and the heartbeat timeout proposed by broker as its 
-    arguments. The callback should return a non-negative integer that will be used to override the broker's proposal.
+    Controls AMQP heartbeat timeout (in seconds) negotiation during connection tuning. An integer value always overrides the value 
+    proposed by broker. Use 0 to deactivate heartbeat.
     """,
     parser=int,
     default=(True, 0)
