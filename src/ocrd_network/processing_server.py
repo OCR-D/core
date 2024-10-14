@@ -79,7 +79,6 @@ class ProcessingServer(FastAPI):
     """
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
-        initLogging()
         self.title = "OCR-D Processing Server"
         super().__init__(
             title=self.title,
@@ -87,6 +86,7 @@ class ProcessingServer(FastAPI):
             on_shutdown=[self.on_shutdown],
             description="OCR-D Processing Server"
         )
+        initLogging()
         self.log = getLogger("ocrd_network.processing_server")
         log_file = get_processing_server_logging_file_path(pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
@@ -156,7 +156,7 @@ class ProcessingServer(FastAPI):
             queue_names = self.deployer.find_matching_network_agents(
                 worker_only=True, str_names_only=True, unique_only=True
             )
-            self.log.debug(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
+            self.log.info(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
             create_message_queues(logger=self.log, rmq_publisher=self.rmq_publisher, queue_names=queue_names)
 
             self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
@@ -168,6 +168,7 @@ class ProcessingServer(FastAPI):
         uvicorn_run(self, host=self.hostname, port=int(self.port))
 
     async def on_startup(self):
+        self.log.info(f"Initializing the Database on: {self.mongodb_url}")
         await initiate_database(db_url=self.mongodb_url)
 
     async def on_shutdown(self) -> None:

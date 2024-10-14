@@ -9,12 +9,12 @@ is a single OCR-D Processor instance.
 """
 
 from datetime import datetime
-from os import getpid
+from os import getpid, getppid
 from pika import BasicProperties
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic
 
-from ocrd_utils import getLogger
+from ocrd_utils import getLogger, initLogging
 from .constants import JobState
 from .database import sync_initiate_database, sync_db_get_workspace, sync_db_update_processing_job, verify_database_uri
 from .logging_utils import (
@@ -35,14 +35,16 @@ from .utils import calculate_execution_time, post_to_callback_url
 
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
+        initLogging()
         self.log = getLogger(f'ocrd_network.processing_worker')
         log_file = get_processing_worker_logging_file_path(processor_name=processor_name, pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
         try:
             verify_database_uri(mongodb_addr)
-            self.log.debug(f'Verified MongoDB URL: {mongodb_addr}')
+            self.log.info(f'Verified MongoDB URL: {mongodb_addr}')
             self.rmq_data = verify_and_parse_mq_uri(rabbitmq_addr)
+            self.log.info(f'Verified RabbitMQ URL: {rabbitmq_addr}')
         except ValueError as error:
             msg = f"Failed to parse data, error: {error}"
             self.log.exception(msg)
@@ -61,6 +63,7 @@ class ProcessingWorker:
         # Gets assigned when the `connect_publisher` is called on the worker object
         # Used to publish OcrdResultMessage type message to the queue with name {processor_name}-result
         self.rmq_publisher = None
+        self.log.info(f"Initialized processing worker: {processor_name}")
 
     def connect_consumer(self):
         self.rmq_consumer = connect_rabbitmq_consumer(self.log, self.rmq_data)
