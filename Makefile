@@ -97,7 +97,7 @@ deps-cuda:
 # works, too:
 	shopt -s nullglob; \
 	$(PIP) install nvidia-pyindex \
-	 && $(PIP) install nvidia-cudnn-cu11==8.7.* \
+	 && $(PIP) install nvidia-cudnn-cu11~=8.7 \
 	                   nvidia-cublas-cu11~=11.11 \
 	                   nvidia-cusparse-cu11~=11.7 \
 	                   nvidia-cusolver-cu11~=11.4 \
@@ -158,7 +158,7 @@ deps-tf2:
 	fi
 
 deps-torch:
-	$(PIP) install -i https://download.pytorch.org/whl/cu118 torch torchvision
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torchvision==0.16.2+cu118 torch==2.1.2+cu118
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
