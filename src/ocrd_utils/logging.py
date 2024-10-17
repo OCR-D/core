@@ -50,6 +50,7 @@ __all__ = [
 
 # These are the loggers we add handlers to
 ROOT_OCRD_LOGGERS = [
+    '',
     'ocrd',
     'ocrd_network'
 ]
@@ -193,7 +194,10 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
         ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
         ocrd_handler.setLevel(logging.DEBUG)
         for logger_name in ROOT_OCRD_LOGGERS:
-            logging.getLogger(logger_name).addHandler(ocrd_handler)
+            logger = logging.getLogger(logger_name)
+            logger.addHandler(ocrd_handler)
+            if logger_name:
+                logger.propagate = False # avoid duplication (from root handler)
         for logger_name, logger_level in LOGGING_DEFAULTS.items():
             logging.getLogger(logger_name).setLevel(logger_level)
     _initialized_flag = True
@@ -211,8 +215,8 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     _initialized_flag = False
     # logging.basicConfig(level=logging.CRITICAL)
     # logging.disable(logging.ERROR)
-    # remove all handlers for the 'ocrd.' and root logger
-    for logger_name in ROOT_OCRD_LOGGERS + ['']:
+    # remove all handlers for the ocrd logger
+    for logger_name in ROOT_OCRD_LOGGERS:
         for handler in logging.getLogger(logger_name).handlers[:]:
             logging.getLogger(logger_name).removeHandler(handler)
     for logger_name in LOGGING_DEFAULTS:
