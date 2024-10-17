@@ -23,7 +23,9 @@ import tarfile
 import io
 import weakref
 from frozendict import frozendict
-from concurrent.futures import ProcessPoolExecutor, TimeoutError
+# concurrent.futures is buggy in py38,
+# this is where the fixes came from:
+from loky import ProcessPoolExecutor
 import multiprocessing as mp
 from threading import Timer
 from _thread import interrupt_main
@@ -481,16 +483,19 @@ class Processor():
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
 
-                with ProcessPoolExecutor(
-                        max_workers=max_workers or 1,
-                        # only forking method avoids pickling
-                        mp_context=mp.get_context('fork'),
-                        # share processor instance as global to avoid pickling
-                        initializer=_page_worker_set_ctxt,
-                        initargs=(self,),
-                ) as executor:
+                executor = ProcessPoolExecutor(
+                    max_workers=max_workers or 1,
+                    # only forking method avoids pickling
+                    context=mp.get_context('fork'),
+                    # share processor instance as global to avoid pickling
+                    initializer=_page_worker_set_ctxt,
+                    initargs=(self,),
+                )
+                try:
                     self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
                     self._process_workspace_run(executor, max_workers, max_seconds)
+                finally:
+                    executor.shutdown(kill_workers=True)
 
             except NotImplementedError:
                 # fall back to deprecated method
