@@ -23,6 +23,8 @@ yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:timestamp'
 
 # pylint: enable=wrong-import-position
 
+# pylint: enable=wrong-import-position
+
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json

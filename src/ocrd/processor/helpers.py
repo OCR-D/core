@@ -4,7 +4,6 @@ Helper methods for running and documenting processors
 from time import perf_counter, process_time
 from functools import lru_cache
 import json
-import inspect
 from subprocess import run
 from typing import List, Optional
 
@@ -98,7 +97,7 @@ def run_processor(
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
         from memory_profiler import memory_usage # pylint: disable=import-outside-toplevel
         try:
-            mem_usage = memory_usage(proc=(processor.process_workspace, [workspace], {}),
+            mem_usage = memory_usage(proc=(processor.process_workspace, [workspace], {}),  # type: ignore
                                      # only run process once
                                      max_iterations=1,
                                      interval=.1, timeout=None, timestamps=True,

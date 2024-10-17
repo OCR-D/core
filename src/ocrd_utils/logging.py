@@ -209,7 +209,7 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     _initialized_flag = False
     # logging.basicConfig(level=logging.CRITICAL)
     # logging.disable(logging.ERROR)
-    # remove all handlers for the ocrd logger
+    # remove all handlers for the 'ocrd.' and root logger
     for logger_name in ROOT_OCRD_LOGGERS + ['']:
         for handler in logging.getLogger(logger_name).handlers[:]:
             logging.getLogger(logger_name).removeHandler(handler)

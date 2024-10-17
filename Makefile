@@ -63,7 +63,7 @@ deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
 deps-cuda: export CONDA_PREFIX ?= /conda
 deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
 deps-cuda:
-	curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+	curl --retry 6 -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
@@ -158,7 +158,7 @@ deps-tf2:
 	fi
 
 deps-torch:
-	$(PIP) install -i https://download.pytorch.org/whl/cu118 torch
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torch torchvision
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
@@ -178,7 +178,7 @@ build:
 
 # (Re)install the tool
 install: #build
-	# not stricttly necessary but a precaution against outdated python build tools, https://github.com/OCR-D/core/pull/1166
+	# not strictly necessary but a precaution against outdated python build tools, https://github.com/OCR-D/core/pull/1166
 	$(PIP) install -U pip wheel
 	$(PIP_INSTALL) . $(PIP_INSTALL_CONFIG_OPTION)
 	@# workaround for shapely#1598

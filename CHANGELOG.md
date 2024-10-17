@@ -128,6 +128,58 @@ Added:
   - `Processor.verify`: handle fileGrp cardinality verification, with default implementation
   - `Processor.setup`: to set up processor before processing, optional
 
+## [2.70.0] - 2024-10-10
+
+Added:
+
+  - `ocrd network client workflow run`: Add `--print-status` flag to periodically print the job status, #1277
+  - Processing Server: `DELETE /mets_server_zombies` to kill any renegade METS servers, #1277
+  - No more zombie METS Server by properly shutting them down, #1284
+  - `OCRD_NETWORK_RABBITMQ_HEARBEAT` to allow overriding the [heartbeat](https://pika.readthedocs.io/en/stable/examples/heartbeat_and_blocked_timeouts.html) behavior of RabbitMQ, #1285
+
+Changed:
+
+  - significantly more detailed logging for the METS Server and Processing Server, #1284
+  - Only import `ocrd_network` in src/ocrd/decorators/__init__.py once needed, #1289
+  - Automate release via GitHub Actions, #1290
+
+Fixed:
+
+  - `ocrd/core-cuda-torch`: Install torchvision as well, #1286
+  - Processing Server: remove shut down METS servers from deployer's cache, #1287
+  - typos, #1274
+
+## [2.69.0] - 2024-09-30
+
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.workspace`: make `list-page` work w/ METS Server
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `lib.bash`: fix `errexit` handling
+  - actually apply CLI `--log-filename`, and show in `--help`
+  - adapt to Pillow changes
+  - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+  - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
+  - `disableLogging`: also re-instate root logger to Python defaults
+  - `OcrdExif`: handle multi-frame TIFFs gracefully in `identify` callout, #1276
+
+Changed:
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+  - `ClientSideOcrdMets`: use same logger name prefix as METS Server
+  - `Processor.zip_input_files`: when `--page-id` yields empty list, just log instead of raise
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - METS Server: export and delegate `physical_pages`
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - processor CLI: delegate `--resolve-resource`, too
+  - `OcrdConfig.reset_defaults` to reset config variables to their defaults
+  - `ocrd_utils.scale_coordinates` for resizing images
+
 ## [2.68.0] - 2024-08-23
 
 Changed:
@@ -2294,6 +2346,8 @@ Initial Release
 [3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
 [3.0.0a2]: ../../compare/v3.0.0a2..v3.0.0a1
 [3.0.0a1]: ../../compare/v3.0.0a1..v2.67.2
+[2.70.0]: ../../compare/v2.70.0..v2.69.0
+[2.69.0]: ../../compare/v2.69.0..v2.68.0
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0
