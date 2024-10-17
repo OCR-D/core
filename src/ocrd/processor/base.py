@@ -25,6 +25,8 @@ import weakref
 from frozendict import frozendict
 from concurrent.futures import ProcessPoolExecutor, TimeoutError
 import multiprocessing as mp
+from threading import Timer
+from _thread import interrupt_main
 
 from click import wrap_text
 from deprecated import deprecated
@@ -524,7 +526,7 @@ class Processor():
                     self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
             # process page
             #tasks[executor.submit(self.process_page_file, *input_files)] = (page_id, input_files)
-            tasks[executor.submit(_page_worker, *input_files)] = (page_id, input_files)
+            tasks[executor.submit(_page_worker, max_seconds, *input_files)] = (page_id, input_files)
         self._base_logger.debug("submitted %d processing tasks", len(tasks))
 
         for task in tasks:
@@ -536,7 +538,12 @@ class Processor():
             # - persistent (data) error → skip / dummy / raise
             try:
                 self._base_logger.debug("waiting for output of task %s (page %s) max_seconds=%d", task, page_id, max_seconds)
-                task.result(timeout=max_seconds or None)
+                # timeout kwarg on future is useless: it only raises TimeoutError here,
+                # but does not stop the running process/thread, and executor offers nothing
+                # to that effect:
+                # task.result(timeout=max_seconds or None)
+                # so we instead apply the timeout within the worker function
+                task.result()
                 nr_succeeded += 1
             # exclude NotImplementedError, so we can try process() below
             except NotImplementedError:
@@ -551,7 +558,7 @@ class Processor():
                     # too late here, must not happen
                     raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
             # broad coverage of output failures (including TimeoutError)
-            except (Exception, TimeoutError) as err:
+            except Exception as err:
                 # FIXME: add re-usable/actionable logging
                 if config.OCRD_MISSING_OUTPUT == 'ABORT':
                     self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
@@ -953,8 +960,21 @@ def _page_worker_set_ctxt(processor):
     global _page_worker_processor
     _page_worker_processor = processor
 
-def _page_worker(*input_files):
-    _page_worker_processor.process_page_file(*input_files)
+def _page_worker(timeout, *input_files):
+    page_id = next((file.pageId for file in input_files
+                    if hasattr(file, 'pageId')), "")
+    if timeout > 0:
+        timer = Timer(timeout, interrupt_main)
+        timer.start()
+    try:
+        _page_worker_processor.process_page_file(*input_files)
+        _page_worker_processor.logger.debug("page worker completed for page %s", page_id)
+    except KeyboardInterrupt:
+        _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
+        raise TimeoutError()
+    finally:
+        if timeout > 0:
+            timer.cancel()
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.
