@@ -2,6 +2,7 @@
 Helper methods for running and documenting processors
 """
 from time import perf_counter, process_time
+from os import times
 from functools import lru_cache
 import json
 import inspect
@@ -94,6 +95,7 @@ def run_processor(
     log.debug("Processor instance %s (%s doing %s)", processor, name, otherrole)
     t0_wall = perf_counter()
     t0_cpu = process_time()
+    t0_os = times()
     if any(x in config.OCRD_PROFILE for x in ['RSS', 'PSS']):
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
         from memory_profiler import memory_usage # pylint: disable=import-outside-toplevel
@@ -123,7 +125,13 @@ def run_processor(
 
     t1_wall = perf_counter() - t0_wall
     t1_cpu = process_time() - t0_cpu
-    logProfile.info("Executing processor '%s' took %fs (wall) %fs (CPU)( [--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']" % (
+    t1_os = times()
+    # add CPU time from child processes (page worker etc)
+    t1_cpu += t1_os.children_user - t0_os.children_user
+    t1_cpu += t1_os.children_system - t0_os.children_system
+    logProfile.info(
+        "Executing processor '%s' took %fs (wall) %fs (CPU)( "
+        "[--input-file-grp='%s' --output-file-grp='%s' --parameter='%s' --page-id='%s']",
         ocrd_tool['executable'],
         t1_wall,
         t1_cpu,
@@ -131,7 +139,7 @@ def run_processor(
         processor.output_file_grp or '',
         json.dumps(processor.parameter) or '',
         processor.page_id or ''
-    ))
+    )
     workspace.mets.add_agent(
         name=name,
         _type='OTHER',
