@@ -483,7 +483,29 @@ class Processor():
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
 
-                executor = ProcessPoolExecutor(
+                class DummyExecutor:
+                    """
+                    Mimics some of ProcessPoolExecutor but runs everything
+                    immediately in this process.
+                    """
+                    class DummyFuture:
+                        def __init__(self, fn, *args, **kwargs):
+                            self.fn = fn
+                            self.args = args
+                            self.kwargs = kwargs
+                        def result(self):
+                            return self.fn(*self.args, **self.kwargs)
+                    def __init__(self, initializer=None, initargs=(), **kwargs):
+                        initializer(*initargs)
+                    def shutdown(self, **kwargs):
+                        pass
+                    def submit(self, fn, *args, **kwargs):
+                        return DummyExecutor.DummyFuture(fn, *args, **kwargs)
+                if max_workers > 1:
+                    executor_cls = ProcessPoolExecutor
+                else:
+                    executor_cls = DummyExecutor
+                executor = executor_cls(
                     max_workers=max_workers or 1,
                     # only forking method avoids pickling
                     context=mp.get_context('fork'),
@@ -493,7 +515,7 @@ class Processor():
                 )
                 try:
                     self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
-                    self._process_workspace_run(executor, max_workers, max_seconds)
+                    self._process_workspace_run(executor, max_seconds)
                 finally:
                     executor.shutdown(kill_workers=True)
 
@@ -505,7 +527,7 @@ class Processor():
                     # suppress the NotImplementedError context
                     raise err from None
 
-    def _process_workspace_run(self, executor, max_workers, max_seconds):
+    def _process_workspace_run(self, executor, max_seconds):
         nr_succeeded = 0
         nr_skipped = 0
         nr_copied = 0
@@ -961,11 +983,27 @@ class Processor():
         return ifts
 
 _page_worker_processor = None
+"""
+This global binding for the processor is required to avoid
+squeezing the processor through a mp.Queue (which is impossible
+due to unpicklable attributes like .workspace.mets._tree anyway)
+when calling Processor.process_page_file as page worker processes
+in Processor.process_workspace. Forking allows inheriting global
+objects, and with the METS Server we do not mutate the local
+processor instance anyway.
+"""
 def _page_worker_set_ctxt(processor):
+    """
+    Overwrites `ocrd.processor.base._page_worker_processor` instance
+    for sharing with subprocesses in ProcessPoolExecutor initializer.
+    """
     global _page_worker_processor
     _page_worker_processor = processor
-
 def _page_worker(timeout, *input_files):
+    """
+    Wraps a `Processor.process_page_file` call as payload (call target)
+    of the ProcessPoolExecutor workers, but also enforces the given timeout.
+    """
     page_id = next((file.pageId for file in input_files
                     if hasattr(file, 'pageId')), "")
     if timeout > 0:
