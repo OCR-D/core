@@ -22,6 +22,7 @@ import inspect
 import tarfile
 import io
 import weakref
+from collections import defaultdict
 from frozendict import frozendict
 # concurrent.futures is buggy in py38,
 # this is where the fixes came from:
@@ -528,9 +529,10 @@ class Processor():
                     raise err from None
 
     def _process_workspace_run(self, executor, max_seconds):
+        # aggregate info for logging:
         nr_succeeded = 0
-        nr_skipped = 0
-        nr_copied = 0
+        nr_failed = 0
+        nr_errors = defaultdict(int) # count causes
 
         tasks = {}
         for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
@@ -572,8 +574,8 @@ class Processor():
                 # so we instead apply the timeout within the worker function
                 task.result()
                 nr_succeeded += 1
-            # exclude NotImplementedError, so we can try process() below
             except NotImplementedError:
+                # exclude NotImplementedError, so we can try process() below
                 raise
             # handle input failures separately
             except FileExistsError as err:
@@ -587,24 +589,35 @@ class Processor():
             # broad coverage of output failures (including TimeoutError)
             except Exception as err:
                 # FIXME: add re-usable/actionable logging
+                nr_errors[err.__class__.__name__] += 1
+                nr_failed += 1
                 if config.OCRD_MISSING_OUTPUT == 'ABORT':
                     self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
                     raise err
                 self._base_logger.exception(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
                 if config.OCRD_MISSING_OUTPUT == 'SKIP':
-                    nr_skipped += 1
+                    if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / len(tasks) > config.OCRD_MAX_MISSING_OUTPUTS:
+                        # already irredeemably many failures, stop short
+                        raise Exception(f"too many failures with skipped output ({nr_failed} of {nr_failed+nr_succeeded})")
                     continue
                 if config.OCRD_MISSING_OUTPUT == 'COPY':
+                    if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / len(tasks) > config.OCRD_MAX_MISSING_OUTPUTS:
+                        # already irredeemably many failures, stop short
+                        raise Exception(f"too many failures with fallback-copied output ({nr_failed} of {nr_failed+nr_succeeded})")
                     self._copy_page_file(input_files[0])
-                    nr_copied += 1
                 else:
                     desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
                     raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
 
-        if nr_skipped > 0 and nr_succeeded / nr_skipped < config.OCRD_MAX_MISSING_OUTPUTS:
-            raise Exception(f"too many failures with skipped output ({nr_skipped})")
-        if nr_copied > 0 and nr_succeeded / nr_copied < config.OCRD_MAX_MISSING_OUTPUTS:
-            raise Exception(f"too many failures with fallback output ({nr_skipped})")
+        if nr_failed > 0:
+            nr_all = nr_succeeded + nr_failed
+            if config.OCRD_MISSING_OUTPUT == 'SKIP':
+                reason = "skipped"
+            if config.OCRD_MISSING_OUTPUT == 'COPY':
+                reason = "fallback-copied"
+            if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / nr_all > config.OCRD_MAX_MISSING_OUTPUTS:
+                raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_all})")
+            self._base_logger.info("%s %d of %d pages due to %s", reason, nr_failed, nr_all, str(dict(nr_errors)))
 
     def _copy_page_file(self, input_file : OcrdFileType) -> None:
         """
