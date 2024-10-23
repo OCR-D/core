@@ -16,7 +16,7 @@ import json
 import os
 from os import getcwd
 from pathlib import Path
-from typing import Any, List, Optional, Union, get_args
+from typing import Any, Dict, List, Optional, Tuple, Union, get_args
 import sys
 import inspect
 import tarfile
@@ -26,7 +26,7 @@ from collections import defaultdict
 from frozendict import frozendict
 # concurrent.futures is buggy in py38,
 # this is where the fixes came from:
-from loky import ProcessPoolExecutor
+from loky import Future, ProcessPoolExecutor
 import multiprocessing as mp
 from threading import Timer
 from _thread import interrupt_main
@@ -110,6 +110,31 @@ class MissingInputFile(ValueError):
         self.message = (f"Could not find input file for fileGrp {fileGrp} "
                         f"and pageId {pageId} under mimetype {mimetype or 'PAGE+image(s)'}")
         super().__init__(self.message)
+
+class DummyFuture:
+    """
+    Mimics some of `concurrent.futures.Future` but runs immediately.
+    """
+    def __init__(self, fn, *args, **kwargs):
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+    def result(self):
+        return self.fn(*self.args, **self.kwargs)
+class DummyExecutor:
+    """
+    Mimics some of `concurrent.futures.ProcessPoolExecutor` but runs
+    everything immediately in this process.
+    """
+    def __init__(self, initializer=None, initargs=(), **kwargs):
+        initializer(*initargs)
+    def shutdown(self, **kwargs):
+        pass
+    def submit(self, fn, *args, **kwargs) -> DummyFuture:
+        return DummyFuture(fn, *args, **kwargs)
+
+TFuture = Union[DummyFuture, Future]
+TExecutor = Union[DummyExecutor, ProcessPoolExecutor]
 
 class Processor():
     """
@@ -462,6 +487,9 @@ class Processor():
         for the given :py:data:`page_id` (or all pages)
         under the given :py:data:`parameter`.
 
+        Delegates to :py:meth:`.process_workspace_submit_tasks`
+        and :py:meth:`.process_workspace_handle_tasks`.
+
         (This will iterate over pages and files, calling
         :py:meth:`.process_page_file` and handling exceptions.
         It should be overridden by subclasses to handle cases
@@ -484,24 +512,6 @@ class Processor():
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
 
-                class DummyExecutor:
-                    """
-                    Mimics some of ProcessPoolExecutor but runs everything
-                    immediately in this process.
-                    """
-                    class DummyFuture:
-                        def __init__(self, fn, *args, **kwargs):
-                            self.fn = fn
-                            self.args = args
-                            self.kwargs = kwargs
-                        def result(self):
-                            return self.fn(*self.args, **self.kwargs)
-                    def __init__(self, initializer=None, initargs=(), **kwargs):
-                        initializer(*initargs)
-                    def shutdown(self, **kwargs):
-                        pass
-                    def submit(self, fn, *args, **kwargs):
-                        return DummyExecutor.DummyFuture(fn, *args, **kwargs)
                 if max_workers > 1:
                     executor_cls = ProcessPoolExecutor
                 else:
@@ -516,7 +526,8 @@ class Processor():
                 )
                 try:
                     self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
-                    self._process_workspace_run(executor, max_seconds)
+                    tasks = self.process_workspace_submit_tasks(executor, max_seconds)
+                    stats = self.process_workspace_handle_tasks(tasks)
                 finally:
                     executor.shutdown(kill_workers=True)
 
@@ -528,96 +539,186 @@ class Processor():
                     # suppress the NotImplementedError context
                     raise err from None
 
-    def _process_workspace_run(self, executor, max_seconds):
+    def process_workspace_submit_tasks(self, executor : TExecutor, max_seconds : int) -> Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]:
+        """
+        Look up all input files of the given ``workspace``
+        from the given :py:data:`input_file_grp`
+        for the given :py:data:`page_id` (or all pages),
+        and schedules calling :py:meth:`.process_page_file`
+        on them for each page via `executor` (enforcing
+        a per-page time limit of `max_seconds`).
+
+        When running with `OCRD_MAX_PARALLEL_PAGES>1` and
+        the workspace via METS Server, the executor will fork
+        this many worker parallel subprocesses each processing
+        one page at a time. (Interprocess communication is
+        done via task and result queues.)
+
+        Otherwise, tasks are run sequentially in the
+        current process.
+
+        Delegates to :py:meth:`.zip_input_files` to get 
+        the input files for each page, and then calls
+        :py:meth:`.process_workspace_submit_page_task`.
+
+        Returns a dict mapping the per-page tasks
+        (i.e. futures submitted to the executor)
+        to their corresponding pageId and input files.
+        """
+        tasks = {}
+        for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
+            task, page_id, input_files = self.process_workspace_submit_page_task(executor, max_seconds, input_file_tuple)
+            tasks[task] = (page_id, input_files)
+        self._base_logger.debug("submitted %d processing tasks", len(tasks))
+        return tasks
+
+    def process_workspace_submit_page_task(self, executor : TExecutor, max_seconds : int, input_file_tuple : List[Optional[OcrdFileType]]) -> Tuple[TFuture, str, List[Optional[OcrdFileType]]]:
+        """
+        Ensure all input files for a single page are
+        downloaded to the workspace, then schedule
+        :py:meth:`.process_process_file` to be run on
+        them via `executor` (enforcing a per-page time
+        limit of `max_seconds`).
+
+        Delegates to :py:meth:`.process_page_file`
+        (wrapped in :py:func:`_page_worker` to share
+        the processor instance across forked processes).
+
+        \b
+        Returns a tuple of:
+        - the scheduled future object,
+        - the corresponding pageId,
+        - the corresponding input files.
+        """
+        input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
+        page_id = next(input_file.pageId
+                       for input_file in input_file_tuple
+                       if input_file)
+        self._base_logger.info(f"preparing page {page_id}")
+        for i, input_file in enumerate(input_file_tuple):
+            if input_file is None:
+                # file/page not found in this file grp
+                continue
+            input_files[i] = input_file
+            if not self.download:
+                continue
+            try:
+                input_files[i] = self.workspace.download_file(input_file)
+            except (ValueError, FileNotFoundError, HTTPError) as e:
+                self._base_logger.error(repr(e))
+                self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
+        # process page
+        #executor.submit(self.process_page_file, *input_files)
+        return executor.submit(_page_worker, max_seconds, *input_files), page_id, input_files
+
+    def process_workspace_handle_tasks(self, tasks : Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]) -> Tuple[int, int, Dict[str, int], int]:
+        """
+        Look up scheduled per-page futures one by one,
+        handle errors (exceptions) and gather results.
+
+        \b
+        Enforces policies configured by the following
+        environment variables:
+        - `OCRD_EXISTING_OUTPUT` (abort/skip/overwrite)
+        - `OCRD_MISSING_OUTPUT` (abort/skip/fallback-copy)
+        - `OCRD_MAX_MISSING_OUTPUTS` (abort after all).
+
+        \b
+        Returns a tuple of:
+        - the number of successfully processed pages
+        - the number of failed (i.e. skipped or copied) pages
+        - a dict of the type and corresponding number of exceptions seen
+        - the number of total requested pages (i.e. success+fail+existing).
+
+        Delegates to :py:meth:`.process_workspace_handle_page_task`
+        for each page.
+        """
         # aggregate info for logging:
         nr_succeeded = 0
         nr_failed = 0
         nr_errors = defaultdict(int) # count causes
-
-        tasks = {}
-        for input_file_tuple in self.zip_input_files(on_error='abort', require_first=False):
-            input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
-            page_id = next(input_file.pageId
-                           for input_file in input_file_tuple
-                           if input_file)
-            self._base_logger.info(f"preparing page {page_id}")
-            for i, input_file in enumerate(input_file_tuple):
-                if input_file is None:
-                    # file/page not found in this file grp
-                    continue
-                input_files[i] = input_file
-                if not self.download:
-                    continue
-                try:
-                    input_files[i] = self.workspace.download_file(input_file)
-                except (ValueError, FileNotFoundError, HTTPError) as e:
-                    self._base_logger.error(repr(e))
-                    self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
-            # process page
-            #tasks[executor.submit(self.process_page_file, *input_files)] = (page_id, input_files)
-            tasks[executor.submit(_page_worker, max_seconds, *input_files)] = (page_id, input_files)
-        self._base_logger.debug("submitted %d processing tasks", len(tasks))
-
+        if config.OCRD_MISSING_OUTPUT == 'SKIP':
+            reason = "skipped"
+        elif config.OCRD_MISSING_OUTPUT == 'COPY':
+            reason = "fallback-copied"
         for task in tasks:
             # wait for results, handle errors
             page_id, input_files = tasks[task]
-            # FIXME: differentiate error cases in various ways:
-            # - ResourceNotFoundError → use ResourceManager to download (once), then retry
-            # - transient (I/O or OOM) error → maybe sleep, retry
-            # - persistent (data) error → skip / dummy / raise
-            try:
-                self._base_logger.debug("waiting for output of task %s (page %s) max_seconds=%d", task, page_id, max_seconds)
-                # timeout kwarg on future is useless: it only raises TimeoutError here,
-                # but does not stop the running process/thread, and executor offers nothing
-                # to that effect:
-                # task.result(timeout=max_seconds or None)
-                # so we instead apply the timeout within the worker function
-                task.result()
-                nr_succeeded += 1
-            except NotImplementedError:
-                # exclude NotImplementedError, so we can try process() below
-                raise
-            # handle input failures separately
-            except FileExistsError as err:
-                if config.OCRD_EXISTING_OUTPUT == 'ABORT':
-                    raise err
-                if config.OCRD_EXISTING_OUTPUT == 'SKIP':
-                    continue
-                if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
-                    # too late here, must not happen
-                    raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
-            # broad coverage of output failures (including TimeoutError)
-            except Exception as err:
-                # FIXME: add re-usable/actionable logging
-                nr_errors[err.__class__.__name__] += 1
+            result = self.process_workspace_handle_page_task(page_id, input_files, task)
+            if isinstance(result, Exception):
+                nr_errors[result.__class__.__name__] += 1
                 nr_failed += 1
-                if config.OCRD_MISSING_OUTPUT == 'ABORT':
-                    self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
-                    raise err
-                self._base_logger.exception(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
-                if config.OCRD_MISSING_OUTPUT == 'SKIP':
-                    if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / len(tasks) > config.OCRD_MAX_MISSING_OUTPUTS:
-                        # already irredeemably many failures, stop short
-                        raise Exception(f"too many failures with skipped output ({nr_failed} of {nr_failed+nr_succeeded})")
-                    continue
-                if config.OCRD_MISSING_OUTPUT == 'COPY':
-                    if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / len(tasks) > config.OCRD_MAX_MISSING_OUTPUTS:
-                        # already irredeemably many failures, stop short
-                        raise Exception(f"too many failures with fallback-copied output ({nr_failed} of {nr_failed+nr_succeeded})")
-                    self._copy_page_file(input_files[0])
-                else:
-                    desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
-                    raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
-
+                # FIXME: this is just prospective, because len(tasks)==nr_failed+nr_succeeded is not guaranteed
+                if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / len(tasks) > config.OCRD_MAX_MISSING_OUTPUTS:
+                    # already irredeemably many failures, stop short
+                    raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_failed+nr_succeeded})")
+            elif result:
+                nr_succeeded += 1
+            # else skipped - already exists
+        nr_errors = dict(nr_errors)
         if nr_failed > 0:
             nr_all = nr_succeeded + nr_failed
-            if config.OCRD_MISSING_OUTPUT == 'SKIP':
-                reason = "skipped"
-            if config.OCRD_MISSING_OUTPUT == 'COPY':
-                reason = "fallback-copied"
             if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / nr_all > config.OCRD_MAX_MISSING_OUTPUTS:
                 raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_all})")
-            self._base_logger.info("%s %d of %d pages due to %s", reason, nr_failed, nr_all, str(dict(nr_errors)))
+            self._base_logger.info("%s %d of %d pages due to %s", reason, nr_failed, nr_all, str(nr_errors))
+        return nr_succeeded, nr_failed, nr_errors, len(tasks)
+
+    def process_workspace_handle_page_task(self, page_id : str, input_files : List[Optional[OcrdFileType]], task : TFuture) -> Union[bool, Exception]:
+        """
+        \b
+        Await a single page result and handle errors (exceptions), 
+        enforcing policies configured by the following
+        environment variables:
+        - `OCRD_EXISTING_OUTPUT` (abort/skip/overwrite)
+        - `OCRD_MISSING_OUTPUT` (abort/skip/fallback-copy)
+        - `OCRD_MAX_MISSING_OUTPUTS` (abort after all).
+
+        \b
+        Returns
+        - true in case of success
+        - false in case the output already exists
+        - the exception in case of failure
+        """
+        # FIXME: differentiate error cases in various ways:
+        # - ResourceNotFoundError → use ResourceManager to download (once), then retry
+        # - transient (I/O or OOM) error → maybe sleep, retry
+        # - persistent (data) error → skip / dummy / raise
+        try:
+            self._base_logger.debug("waiting for output of task %s (page %s)", task, page_id)
+            # timeout kwarg on future is useless: it only raises TimeoutError here,
+            # but does not stop the running process/thread, and executor itself
+            # offers nothing to that effect:
+            # task.result(timeout=max_seconds or None)
+            # so we instead applied the timeout within the worker function
+            task.result()
+            return True
+        except NotImplementedError:
+            # exclude NotImplementedError, so we can try process() below
+            raise
+        # handle input failures separately
+        except FileExistsError as err:
+            if config.OCRD_EXISTING_OUTPUT == 'ABORT':
+                raise err
+            if config.OCRD_EXISTING_OUTPUT == 'SKIP':
+                return False
+            if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
+                # too late here, must not happen
+                raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
+        # broad coverage of output failures (including TimeoutError)
+        except Exception as err:
+            # FIXME: add re-usable/actionable logging
+            if config.OCRD_MISSING_OUTPUT == 'ABORT':
+                self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
+                raise err
+            self._base_logger.exception(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
+            if config.OCRD_MISSING_OUTPUT == 'SKIP':
+                pass
+            elif config.OCRD_MISSING_OUTPUT == 'COPY':
+                self._copy_page_file(input_files[0])
+            else:
+                desc = config.describe('OCRD_MISSING_OUTPUT', wrap_text=False, indent_text=False)
+                raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
+            return err
 
     def _copy_page_file(self, input_file : OcrdFileType) -> None:
         """
