@@ -240,7 +240,7 @@ class ProcessingWorker:
             # post the result message (callback to a user defined endpoint)
             post_to_callback_url(self.log, callback_url, result_message)
         if internal_callback_url:
-            self.log.info(f"Publishing result to internal callback url (Processing Server): {callback_url}")
+            self.log.info(f"Publishing result to internal callback url (Processing Server): {internal_callback_url}")
             # If the internal callback_url field is set,
             # post the result message (callback to Processing Server endpoint)
             post_to_callback_url(self.log, internal_callback_url, result_message)
