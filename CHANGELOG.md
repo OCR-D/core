@@ -5,6 +5,28 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0b6] - 2024-10-30
+
+Fixed:
+ - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
+
+Changed:
+ - :fire: `ocrd_utils.initLogging`: also add handler to root logger (as in file config),
+   but disable message propagation to avoid duplication
+ - only import `ocrd_network` in `src/ocrd/decorators/__init__.py` once needed
+ - `Processor.process_page_file`: skip computing `process_page_pcgts` if output already exists,  
+   but `OCRD_EXISTING_OUTPUT!=OVERWRITE`
+ - :fire: `OCRD_MAX_PARALLEL_PAGES>1`: switch from multithreading to multiprocessing, depend on
+   `loky` instead of stdlib `concurrent.futures`
+ - `OCRD_PROCESSING_PAGE_TIMEOUT>0`: actually enforce timeout within worker
+ - `OCRD_MAX_MISSING_OUTPUTS>0`: abort early if too many failures already, prospectively
+ - `Processor.process_workspace`: split up into overridable sub-methods:
+   - `process_workspace_submit_tasks` (iterate input file group and schedule page tasks)
+     - `process_workspace_submit_page_task` (download input files and submit single page task)
+   - `process_workspace_handle_tasks` (monitor page tasks and aggregate results)
+     - `process_workspace_handle_page_task` (await single page task and handle errors)
+
+
 ## [3.0.0b5] - 2024-09-16
 
 Fixed:
@@ -2287,6 +2309,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.0b6]: ../../compare/v3.0.0b6..v3.0.0b5
 [3.0.0b5]: ../../compare/v3.0.0b5..v3.0.0b4
 [3.0.0b4]: ../../compare/v3.0.0b4..v3.0.0b3
 [3.0.0b3]: ../../compare/v3.0.0b3..v3.0.0b2
