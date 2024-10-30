@@ -704,6 +704,8 @@ class Processor():
             if config.OCRD_EXISTING_OUTPUT == 'OVERWRITE':
                 # too late here, must not happen
                 raise Exception(f"got {err} despite OCRD_EXISTING_OUTPUT==OVERWRITE")
+        except KeyboardInterrupt:
+            raise
         # broad coverage of output failures (including TimeoutError)
         except Exception as err:
             # FIXME: add re-usable/actionable logging
@@ -1113,6 +1115,7 @@ def _page_worker_set_ctxt(processor):
     """
     global _page_worker_processor
     _page_worker_processor = processor
+
 def _page_worker(timeout, *input_files):
     """
     Wraps a `Processor.process_page_file` call as payload (call target)
