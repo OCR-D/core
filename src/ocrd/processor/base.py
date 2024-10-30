@@ -529,7 +529,7 @@ class Processor():
                     tasks = self.process_workspace_submit_tasks(executor, max_seconds)
                     stats = self.process_workspace_handle_tasks(tasks)
                 finally:
-                    executor.shutdown(kill_workers=True)
+                    executor.shutdown(kill_workers=True, wait=False)
 
             except NotImplementedError:
                 # fall back to deprecated method
@@ -651,7 +651,8 @@ class Processor():
                 # FIXME: this is just prospective, because len(tasks)==nr_failed+nr_succeeded is not guaranteed
                 if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / len(tasks) > config.OCRD_MAX_MISSING_OUTPUTS:
                     # already irredeemably many failures, stop short
-                    raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_failed+nr_succeeded})")
+                    nr_errors = dict(nr_errors)
+                    raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_failed+nr_succeeded}, {str(nr_errors)})")
             elif result:
                 nr_succeeded += 1
             # else skipped - already exists
@@ -659,8 +660,8 @@ class Processor():
         if nr_failed > 0:
             nr_all = nr_succeeded + nr_failed
             if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / nr_all > config.OCRD_MAX_MISSING_OUTPUTS:
-                raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_all})")
-            self._base_logger.info("%s %d of %d pages due to %s", reason, nr_failed, nr_all, str(nr_errors))
+                raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_all}, {str(nr_errors)})")
+            self._base_logger.warning("%s %d of %d pages due to %s", reason, nr_failed, nr_all, str(nr_errors))
         return nr_succeeded, nr_failed, nr_errors, len(tasks)
 
     def process_workspace_handle_page_task(self, page_id : str, input_files : List[Optional[OcrdFileType]], task : TFuture) -> Union[bool, Exception]:
