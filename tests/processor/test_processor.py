@@ -277,7 +277,6 @@ class TestProcessor(TestCase):
         assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
-        from concurrent.futures import TimeoutError
         with pytest.raises(TimeoutError) as exc:
             run_processor(DummyProcessorWithOutputSleep, workspace=ws,
                           input_file_grp="OCR-D-IMG",
