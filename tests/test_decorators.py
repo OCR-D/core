@@ -41,22 +41,20 @@ DEFAULT_IN_OUT = ('-I', 'OCR-D-IMG', '-O', 'OUTPUT')
 
 class TestDecorators(TestCase):
 
-    def setUp(self):
-        super().setUp()
-        disableLogging()
-
     def tearDown(self):
         super().tearDown()
         config.reset_defaults()
+        disableLogging()
 
     def test_minimal(self):
-        exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
-        print(out, err)
-        assert not exit_code
+        initLogging()
+        code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
+        assert not code, (out, err)
 
     def test_loglevel_invalid(self):
-        code, _, err = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
-        assert code
+        initLogging()
+        code, out, err = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
+        assert code, (out, err)
         import click
         if int(click.__version__[0]) < 8:
             assert 'invalid choice: foo' in err
@@ -67,7 +65,6 @@ class TestDecorators(TestCase):
         if get_logging_config_files():
             pytest.skip(f"ocrd_logging.conf found at {get_logging_config_files()}, skipping logging test")
         import logging
-        disableLogging()
         assert logging.getLogger('').getEffectiveLevel() == logging.WARNING
         assert logging.getLogger('ocrd').getEffectiveLevel() == logging.WARNING
         initLogging()

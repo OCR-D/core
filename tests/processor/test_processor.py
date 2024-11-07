@@ -17,21 +17,21 @@ import pytest
 
 class TestProcessor(TestCase):
 
+    def run(self, result=None):
+        with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as workdir:
+            with pushd_popd(workdir):
+                self.resolver = Resolver()
+                self.workspace = self.resolver.workspace_from_url('mets.xml')
+                super().run(result=result)
+
     def setUp(self):
         super().setUp()
-        # make sure we get an isolated temporary copy of the testdata each time
-        # as long as we are not using pytest but unittest, we need to manage contexts
-        # (enterContext is only supported starting with py311)
-        with ExitStack() as stack:
-            self.resolver = Resolver()
-            self.workdir = stack.enter_context(copy_of_directory(assets.path_to('SBB0000F29300010000/data')))
-            stack.enter_context(pushd_popd(self.workdir))
-            self.workspace = self.resolver.workspace_from_url('mets.xml')
-            self.addCleanup(stack.pop_all().close)
+        initLogging()
 
     def tearDown(self):
         super().tearDown()
         config.reset_defaults()
+        disableLogging()
 
     def test_incomplete_processor(self):
         proc = IncompleteProcessor(None)
@@ -251,6 +251,7 @@ class TestProcessor(TestCase):
 
 def test_run_output_metsserver(start_mets_server):
     mets_server_url, ws = start_mets_server
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 0
     run_processor(DummyProcessorWithOutput, workspace=ws,
                   input_file_grp="OCR-D-IMG",
                   output_file_grp="OCR-D-OUT",
@@ -269,7 +270,7 @@ def test_run_output_metsserver(start_mets_server):
                       output_file_grp="OCR-D-OUT",
                       mets_server_url=mets_server_url)
     assert "already exists" in str(exc.value)
-
+    config.reset_defaults()
 
 if __name__ == "__main__":
     main(__file__)

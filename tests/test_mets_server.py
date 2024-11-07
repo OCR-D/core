@@ -22,20 +22,17 @@ from uuid import uuid4
 from requests.exceptions import ConnectionError
 
 from ocrd import Resolver, OcrdMetsServer, Workspace
-from ocrd_utils import pushd_popd, MIMETYPE_PAGE, initLogging, setOverrideLogLevel
+from ocrd_utils import pushd_popd, MIMETYPE_PAGE, initLogging, setOverrideLogLevel, disableLogging, getLogger
 
 TRANSPORTS = ['/tmp/ocrd-mets-server.sock', 'http://127.0.0.1:12345']
 
-initLogging()
-setOverrideLogLevel(10)
-
 @fixture(scope='function', name='start_mets_server', params=TRANSPORTS)
 def fixture_start_mets_server(request, tmpdir) -> Iterable[Tuple[str, Workspace]]:
-    tmpdir = str(tmpdir)
-    def _start_mets_server(*args, **kwargs):
-        mets_server = OcrdMetsServer(*args, **kwargs)
-        mets_server.startup()
+    initLogging()
+    #setOverrideLogLevel(10)
+    logger = getLogger('ocrd')
 
+    tmpdir = str(tmpdir)
     mets_server_url = request.param
 
     if mets_server_url == TRANSPORTS[0]:
@@ -47,13 +44,26 @@ def fixture_start_mets_server(request, tmpdir) -> Iterable[Tuple[str, Workspace]
 
     copytree(assets.path_to('SBB0000F29300010000/data'), tmpdir)
     workspace = Workspace(Resolver(), tmpdir)
-    p = Process(target=_start_mets_server, kwargs={'workspace': workspace, 'url': request.param})
+    class MetsServerProcess(Process):
+        def __init__(self, *args, **kwargs):
+            self.server = OcrdMetsServer(*args, **kwargs)
+            super().__init__()
+        def run(self):
+            self.server.startup()
+        def terminate(self):
+            self.server.workspace.save_mets()
+            super().terminate()
+    p = MetsServerProcess(workspace=workspace, url=request.param)
     p.start()
+    logger.info("started METS Server")
     sleep(1)  # sleep to start up server
     workspace_server = Workspace(Resolver(), tmpdir, mets_server_url=mets_server_url)
     yield mets_server_url, workspace_server
     p.terminate()
+    p.join()
+    logger.info("terminated METS Server")
     rmtree(tmpdir, ignore_errors=True)
+    disableLogging()
 
 def add_file_server(x, force=False):
     mets_server_url, directory, i = x
