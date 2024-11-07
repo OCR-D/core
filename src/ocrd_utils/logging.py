@@ -49,6 +49,7 @@ __all__ = [
 ]
 
 LOGGING_DEFAULTS = {
+    '': logging.WARNING,
     'ocrd': logging.INFO,
     'ocrd_network': logging.INFO,
     # 'ocrd.resolver': logging.INFO,
