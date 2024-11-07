@@ -181,11 +181,8 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
         ocrd_handler = logging.StreamHandler(stream=sys.stderr)
         ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
         ocrd_handler.setLevel(logging.DEBUG)
-        for logger_name in ROOT_OCRD_LOGGERS:
-            logger = logging.getLogger(logger_name)
-            logger.addHandler(ocrd_handler)
-            if logger_name:
-                logger.propagate = False # avoid duplication (from root handler)
+        root_logger = logging.getLogger('')
+        root_logger.addHandler(ocrd_handler)
         for logger_name, logger_level in LOGGING_DEFAULTS.items():
             logging.getLogger(logger_name).setLevel(logger_level)
     _initialized_flag = True
