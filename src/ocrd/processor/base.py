@@ -158,12 +158,12 @@ class Processor():
 
     max_workers : int = -1
     """
-    maximum number of processor threads for page-parallel processing (ignored if negative),
+    maximum number of processor forks for page-parallel processing (ignored if negative),
     to be applied on top of :py:data:`~ocrd_utils.config.OCRD_MAX_PARALLEL_PAGES` (i.e.
     whatever is smaller).
 
     (Override this if you know how many pages fit into processing units - GPU shaders / CPU cores
-    - at once, or if your class is not thread-safe.)
+    - at once, or if your class already creates threads prior to forking, e.g. during ``setup``.)
     """
 
     max_page_seconds : int = -1
