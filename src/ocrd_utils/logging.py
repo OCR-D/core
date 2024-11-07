@@ -163,18 +163,6 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
     global _initialized_flag
     if _initialized_flag and not force_reinit:
         return
-    # disableLogging()
-
-    # https://docs.python.org/3/library/logging.html#logging.disable
-    # If logging.disable(logging.NOTSET) is called, it effectively removes this
-    # overriding level, so that logging output again depends on the effective
-    # levels of individual loggers.
-    logging.disable(logging.NOTSET)
-
-    # remove all handlers for the ocrd root loggers
-    for logger_name in ROOT_OCRD_LOGGERS:
-        for handler in logging.getLogger(logger_name).handlers[:]:
-            logging.getLogger(logger_name).removeHandler(handler)
 
     config_file = None
     if not builtin_only:
