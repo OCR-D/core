@@ -48,13 +48,6 @@ __all__ = [
     'setOverrideLogLevel',
 ]
 
-# These are the loggers we add handlers to
-ROOT_OCRD_LOGGERS = [
-    '',
-    'ocrd',
-    'ocrd_network'
-]
-
 LOGGING_DEFAULTS = {
     'ocrd': logging.INFO,
     'ocrd_network': logging.INFO,
@@ -198,24 +191,16 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     if _initialized_flag and not silent:
         print("[LOGGING] Disabling logging", file=sys.stderr)
     _initialized_flag = False
-    # logging.basicConfig(level=logging.CRITICAL)
-    # logging.disable(logging.ERROR)
-    # remove all handlers for the ocrd logger
-    for logger_name in ROOT_OCRD_LOGGERS:
-        for handler in logging.getLogger(logger_name).handlers[:]:
-            logging.getLogger(logger_name).removeHandler(handler)
-    for logger_name in LOGGING_DEFAULTS:
-        logging.getLogger(logger_name).setLevel(logging.NOTSET)
+    # remove all handlers we might have added (via initLogging on builtin or file config)
+    for logger_name in logging.root.manager.loggerDict:
+        if not silent:
+            print(f'[LOGGING] Resetting {logger_name} log level and handlers')
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.NOTSET)
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
     # Python default log level is WARNING
     logging.root.setLevel(logging.WARNING)
 
-# Initializing stream handlers at module level
-# would cause message output in all runtime contexts,
-# including those which are already run for std output
-# (--dump-json, --version, ocrd-tool, bashlib etc).
-# So this needs to be an opt-in from the CLIs/decorators:
-#initLogging()
-# Also, we even have to block log output for libraries
-# (like matplotlib/tensorflow) which set up logging
-# themselves already:
-disableLogging()
