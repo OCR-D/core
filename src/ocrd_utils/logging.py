@@ -107,18 +107,15 @@ def setOverrideLogLevel(lvl, silent=not config.OCRD_LOGGING_DEBUG):
         lvl (string): Log level name.
         silent (boolean): Whether to log the override call
     """
-    if not _initialized_flag:
-        initLogging(silent=silent)
-    ocrd_logger = logging.getLogger('ocrd')
-
-    if lvl is None:
-        if not silent:
-            print('[LOGGING] Reset log level override', file=sys.stderr)
-        ocrd_logger.setLevel(logging.NOTSET)
-    else:
-        if not silent:
-            print(f'[LOGGING] Overriding ocrd log level to {lvl}', file=sys.stderr)
-        ocrd_logger.setLevel(lvl)
+    if lvl is not None:
+        lvl = getLevelName(lvl)
+        if not _initialized_flag:
+            initLogging(silent=silent)
+        # affect all configured loggers
+        for logger_name in logging.root.manager.loggerDict:
+            if not silent:
+                print(f'[LOGGING] Overriding {logger_name} log level to {lvl}', file=sys.stderr)
+            logging.getLogger(logger_name).setLevel(lvl)
 
 def get_logging_config_files():
     """
