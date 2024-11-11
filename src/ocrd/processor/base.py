@@ -21,7 +21,6 @@ import sys
 import inspect
 import tarfile
 import io
-import weakref
 from collections import defaultdict
 from frozendict import frozendict
 # concurrent.futures is buggy in py38,
@@ -366,11 +365,13 @@ class Processor():
         self._base_logger = getLogger('ocrd.processor.base')
         if parameter is not None:
             self.parameter = parameter
-        # ensure that shutdown gets called at destruction
-        self._finalizer = weakref.finalize(self, self.shutdown)
         # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
         setattr(self, 'process',
                 deprecated(version='3.0', reason='process() should be replaced with process_page_pcgts() or process_page_file() or process_workspace()')(getattr(self, 'process')))
+
+    def __del__(self):
+        self._base_logger.debug("shutting down")
+        self.shutdown()
 
     def show_help(self, subcommand=None):
         """
