@@ -152,8 +152,11 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
         - silent (bool, True): Whether to log logging behavior by printing to stderr
     """
     global _initialized_flag
-    if _initialized_flag and not force_reinit:
-        return
+    if _initialized_flag:
+        if force_reinit:
+            disableLogging(silent=silent)
+        else:
+            return
 
     config_file = None
     if not builtin_only:
