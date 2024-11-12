@@ -5,6 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0b7] - 2024-11-12
+
+Fixed:
+ - `initLogging`: only add root handler instead of multiple redundant handlers with `propagate=false`
+ - `setOverrideLogLevel`: override all currently active loggers' level
+
+Changed:
+ - :fire: logging: increase default root (not `ocrd`) level from `INFO` to `WARNING`
+ - :fire: `initLogging`: do not remove any previous handlers/levels, unless `force_reinit`
+ - :fire: `disableLogging`: remove all handlers, reset all levels - instead of being selective
+ - :fire: Processor: replace `weakref` with `__del__` to trigger `shutdown`
+ - :fire: `OCRD_MAX_PARALLEL_PAGES>1`: log via `QueueHandler` in subprocess, `QueueListener` in main
+
 ## [3.0.0b6] - 2024-10-30
 
 Fixed:
