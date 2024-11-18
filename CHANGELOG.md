@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Rewrite `ocrd_utils.logging`, #1288
+    * Handle only `''` as the root logger
+    * `disableLogging`: Remove handlers from root and all configured loggers
+    * Do not do any module-level modification of the log config
+
 Fixed:
 
   * Typo in processing_worker log message, #1293
