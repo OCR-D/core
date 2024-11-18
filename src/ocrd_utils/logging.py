@@ -48,13 +48,8 @@ __all__ = [
     'setOverrideLogLevel',
 ]
 
-# These are the loggers we add handlers to
-ROOT_OCRD_LOGGERS = [
-    'ocrd',
-    'ocrd_network'
-]
-
 LOGGING_DEFAULTS = {
+    '': logging.WARNING,
     'ocrd': logging.INFO,
     'ocrd_network': logging.INFO,
     # 'ocrd.resolver': logging.INFO,
@@ -115,18 +110,15 @@ def setOverrideLogLevel(lvl, silent=not config.OCRD_LOGGING_DEBUG):
         lvl (string): Log level name.
         silent (boolean): Whether to log the override call
     """
-    if not _initialized_flag:
-        initLogging(silent=silent)
-    ocrd_logger = logging.getLogger('ocrd')
-
-    if lvl is None:
-        if not silent:
-            print('[LOGGING] Reset log level override', file=sys.stderr)
-        ocrd_logger.setLevel(logging.NOTSET)
-    else:
-        if not silent:
-            print(f'[LOGGING] Overriding ocrd log level to {lvl}', file=sys.stderr)
-        ocrd_logger.setLevel(lvl)
+    if lvl is not None:
+        lvl = getLevelName(lvl)
+        if not _initialized_flag:
+            initLogging(silent=silent)
+        # affect all configured loggers
+        for logger_name in logging.root.manager.loggerDict:
+            if not silent:
+                print(f'[LOGGING] Overriding {logger_name} log level to {lvl}', file=sys.stderr)
+            logging.getLogger(logger_name).setLevel(lvl)
 
 def get_logging_config_files():
     """
@@ -160,20 +152,11 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
         - silent (bool, True): Whether to log logging behavior by printing to stderr
     """
     global _initialized_flag
-    if _initialized_flag and not force_reinit:
-        return
-    # disableLogging()
-
-    # https://docs.python.org/3/library/logging.html#logging.disable
-    # If logging.disable(logging.NOTSET) is called, it effectively removes this
-    # overriding level, so that logging output again depends on the effective
-    # levels of individual loggers.
-    logging.disable(logging.NOTSET)
-
-    # remove all handlers for the ocrd root loggers
-    for logger_name in ROOT_OCRD_LOGGERS:
-        for handler in logging.getLogger(logger_name).handlers[:]:
-            logging.getLogger(logger_name).removeHandler(handler)
+    if _initialized_flag:
+        if force_reinit:
+            disableLogging(silent=silent)
+        else:
+            return
 
     config_file = None
     if not builtin_only:
@@ -192,8 +175,8 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
         ocrd_handler = logging.StreamHandler(stream=sys.stderr)
         ocrd_handler.setFormatter(logging.Formatter(fmt=LOG_FORMAT, datefmt=LOG_TIMEFMT))
         ocrd_handler.setLevel(logging.DEBUG)
-        for logger_name in ROOT_OCRD_LOGGERS:
-            logging.getLogger(logger_name).addHandler(ocrd_handler)
+        root_logger = logging.getLogger('')
+        root_logger.addHandler(ocrd_handler)
         for logger_name, logger_level in LOGGING_DEFAULTS.items():
             logging.getLogger(logger_name).setLevel(logger_level)
     _initialized_flag = True
@@ -209,24 +192,16 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     if _initialized_flag and not silent:
         print("[LOGGING] Disabling logging", file=sys.stderr)
     _initialized_flag = False
-    # logging.basicConfig(level=logging.CRITICAL)
-    # logging.disable(logging.ERROR)
-    # remove all handlers for the 'ocrd.' and root logger
-    for logger_name in ROOT_OCRD_LOGGERS + ['']:
-        for handler in logging.getLogger(logger_name).handlers[:]:
-            logging.getLogger(logger_name).removeHandler(handler)
-    for logger_name in LOGGING_DEFAULTS:
-        logging.getLogger(logger_name).setLevel(logging.NOTSET)
+    # remove all handlers we might have added (via initLogging on builtin or file config)
+    for logger_name in logging.root.manager.loggerDict:
+        if not silent:
+            print(f'[LOGGING] Resetting {logger_name} log level and handlers')
+        logger = logging.getLogger(logger_name)
+        logger.setLevel(logging.NOTSET)
+        for handler in logger.handlers[:]:
+            logger.removeHandler(handler)
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
     # Python default log level is WARNING
     logging.root.setLevel(logging.WARNING)
 
-# Initializing stream handlers at module level
-# would cause message output in all runtime contexts,
-# including those which are already run for std output
-# (--dump-json, --version, ocrd-tool, bashlib etc).
-# So this needs to be an opt-in from the CLIs/decorators:
-#initLogging()
-# Also, we even have to block log output for libraries
-# (like matplotlib/tensorflow) which set up logging
-# themselves already:
-disableLogging()
