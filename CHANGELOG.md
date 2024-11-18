@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Typo in processing_worker log message, #1293
+  * Call `initLogging` at the right time in `ocrd_network`, #1292
+
 ## [2.70.0] - 2024-10-10
 
 Added:
