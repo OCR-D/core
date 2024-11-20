@@ -47,6 +47,9 @@ def ocrd_cli_wrap_processor(
     # ocrd_network params end #
     **kwargs
 ):
+    # init logging handlers so no imported libs can preempt ours
+    initLogging()
+
     if not sys.argv[1:]:
         processorClass(None, show_help=True)
         sys.exit(1)
@@ -66,8 +69,6 @@ def ocrd_cli_wrap_processor(
     if subcommand or address or queue or database:
         # Used for checking/starting network agents for the WebAPI architecture
         check_and_run_network_agent(processorClass, subcommand, address, database, queue)
-
-    initLogging()
 
     LOG = getLogger('ocrd.cli_wrap_processor')
     assert kwargs['input_file_grp'] is not None
