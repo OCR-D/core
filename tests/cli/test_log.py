@@ -24,6 +24,7 @@ class TestLogCli(TestCase):
 
     def setUp(self):
         super().setUp()
+        disableLogging()
         initLogging()
 
     def tearDown(self):

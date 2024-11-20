@@ -205,3 +205,8 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     # Python default log level is WARNING
     logging.root.setLevel(logging.WARNING)
 
+# Initialize logging now to prevent any other libraries (tensorflow,
+# matplotlib ...) from adding their own root handler, which might mangle the
+# STDOUT (our logging will log to STDERR so as not to interfere with
+# --dump-json etc.)
+initLogging()
