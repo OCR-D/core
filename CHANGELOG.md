@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.71.0] - 2024-11-20
+
 Changed:
 
   * Rewrite `ocrd_utils.logging`, #1288
@@ -2229,6 +2231,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.71.0]: ../../compare/v2.71.0..v2.70.0
 [2.70.0]: ../../compare/v2.70.0..v2.69.0
 [2.69.0]: ../../compare/v2.69.0..v2.68.0
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
