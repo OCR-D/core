@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [2.71.1] - 2025-01-06
+
 Changed:
 
   * Do `initLogging` before calling processors in `ocrd_cli_wrap_processor`, #1232, #1296
@@ -2235,6 +2237,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[2.71.1]: ../../compare/v2.71.1..v2.71.0
 [2.71.0]: ../../compare/v2.71.0..v2.70.0
 [2.70.0]: ../../compare/v2.70.0..v2.69.0
 [2.69.0]: ../../compare/v2.69.0..v2.68.0
