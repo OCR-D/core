@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Do `initLogging` before calling processors in `ocrd_cli_wrap_processor`, #1232, #1296
+
 ## [2.71.0] - 2024-11-20
 
 Changed:
