@@ -12,11 +12,11 @@ from ocrd_utils import config
 
 # pylint: disable=wrong-import-position
 
-def command_with_replaced_help(*replacements):
+def command_with_replaced_help(*replacements: tuple[str, str]):
 
     class CommandWithReplacedHelp(click.Command):
         def get_help(self, ctx):
-            newhelp = super().get_help(ctx)
+            newhelp : str = super().get_help(ctx)
             for replacement in replacements:
                 newhelp = re.sub(*replacement, newhelp)
             # print(newhelp)
