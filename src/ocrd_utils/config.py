@@ -231,7 +231,7 @@ config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
 config.add("OCRD_NETWORK_CLIENT_POLLING_SLEEP",
            description="How many seconds to sleep before trying again.",
            parser=int,
-           default=(True, 30))
+           default=(True, 10))
 
 config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
            description="Timeout for a blocking ocrd network client (in seconds).",
@@ -247,9 +247,19 @@ config.add("OCRD_NETWORK_SERVER_ADDR_WORKSPACE",
         default=(True, ''))
 
 config.add("OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
-    description="Number of attempts for a RabbitMQ client to connect before failing.",
+           description="Number of attempts for a RabbitMQ client to connect before failing.",
+           parser=int,
+           default=(True, 3))
+
+config.add(
+    name="OCRD_NETWORK_RABBITMQ_HEARTBEAT",
+    description="""
+    Controls AMQP heartbeat timeout (in seconds) negotiation during connection tuning. An integer value always overrides the value 
+    proposed by broker. Use 0 to deactivate heartbeat.
+    """,
     parser=int,
-    default=(True, 3))
+    default=(True, 0)
+)
 
 config.add(name="OCRD_NETWORK_SOCKETS_ROOT_DIR",
            description="The root directory where all mets server related socket files are created",

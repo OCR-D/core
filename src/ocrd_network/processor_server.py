@@ -42,13 +42,13 @@ class ProcessorServer(FastAPI):
     def __init__(self, mongodb_addr: str, processor_name: str = "", processor_class=None):
         if not (processor_name or processor_class):
             raise ValueError("Either 'processor_name' or 'processor_class' must be provided")
-        initLogging()
         super().__init__(
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
             title=f"Network agent - Processor Server",
             description="Network agent - Processor Server"
         )
+        initLogging()
         self.log = getLogger("ocrd_network.processor_server")
         log_file = get_processor_server_logging_file_path(processor_name=processor_name, pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
@@ -69,6 +69,7 @@ class ProcessorServer(FastAPI):
             self.processor_name = self.ocrd_tool["executable"]
 
         self.add_api_routes_processing()
+        self.log.info(f"Initialized processor server: {processor_name}")
 
     async def on_startup(self):
         await initiate_database(db_url=self.db_url)

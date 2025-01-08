@@ -83,6 +83,8 @@ Variables:
 \b
 {config.describe('OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS')}
 \b
+{config.describe('OCRD_NETWORK_RABBITMQ_HEARTBEAT')}
+\b
 {config.describe('OCRD_PROFILE_FILE')}
 \b
 {config.describe('OCRD_PROFILE', wrap_text=False)}

@@ -15,7 +15,8 @@
 # import os
 # import sys
 # # sys.path.insert(0, os.path.abspath('..'))
-with open('../VERSION', encoding='utf-8') as f:
+from pathlib import Path
+with open(Path(__file__).parent.parent / 'VERSION', encoding='utf-8') as f:
     VERSION = f.read()
 
 

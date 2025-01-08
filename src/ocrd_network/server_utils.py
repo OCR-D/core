@@ -1,12 +1,18 @@
+import os
+import re
+import signal
+from pathlib import Path
+from json import dumps, loads
+from urllib.parse import urljoin
+from typing import Dict, List, Optional, Union
+from time import time
+
 from fastapi import HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from httpx import AsyncClient, Timeout
-from json import dumps, loads
 from logging import Logger
-from pathlib import Path
 from requests import get as requests_get
-from typing import Dict, List, Union
-from urllib.parse import urljoin
+from requests_unixsocket import sys
 
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask
@@ -241,3 +247,33 @@ def validate_first_task_input_file_groups_existence(logger: Logger, mets_path: s
         if group not in available_groups:
             message = f"Input file group '{group}' of the first processor not found: {input_file_grps}"
             raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
+
+
+def kill_mets_server_zombies(minutes_ago : Optional[int], dry_run : Optional[bool]) -> List[int]:
+    if minutes_ago == None:
+        minutes_ago = 90
+    if dry_run == None:
+        dry_run = False
+
+    now = time()
+    cmdline_pat = r'.*ocrd workspace -U.*server start $'
+    ret = []
+    for procdir in sorted(Path('/proc').glob('*'), key=os.path.getctime):
+        if not procdir.is_dir():
+            continue
+        cmdline_file = procdir.joinpath('cmdline')
+        if not cmdline_file.is_file():
+            continue
+        ctime_ago = int((now - procdir.stat().st_ctime) / 60)
+        if ctime_ago < minutes_ago:
+            continue
+        cmdline = cmdline_file.read_text().replace('\x00', ' ')
+        if re.match(cmdline_pat, cmdline):
+            pid = int(procdir.name)
+            ret.append(pid)
+            print(f'METS Server with PID {pid} was created {ctime_ago} minutes ago, more than {minutes_ago}, so killing (cmdline="{cmdline})', file=sys.stderr)
+            if dry_run:
+                print(f'[dry_run is active] kill {pid}')
+            else:
+                os.kill(pid, signal.SIGTERM)
+    return ret

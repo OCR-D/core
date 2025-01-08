@@ -9,7 +9,5 @@ RUN make deps-torch
 
 WORKDIR /data
 
-RUN rm -fr /build
-
 CMD ["/usr/local/bin/ocrd", "--help"]
 

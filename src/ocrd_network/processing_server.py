@@ -1,7 +1,7 @@
 from datetime import datetime
 from os import getpid
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 from uvicorn import run as uvicorn_run
 
 from fastapi import APIRouter, FastAPI, File, HTTPException, Request, status, UploadFile
@@ -48,6 +48,7 @@ from .server_utils import (
     get_workflow_content,
     get_from_database_workspace,
     get_from_database_workflow_job,
+    kill_mets_server_zombies,
     parse_workflow_tasks,
     raise_http_exception,
     request_processor_server_tool_json,
@@ -78,7 +79,6 @@ class ProcessingServer(FastAPI):
     """
 
     def __init__(self, config_path: str, host: str, port: int) -> None:
-        initLogging()
         self.title = "OCR-D Processing Server"
         super().__init__(
             title=self.title,
@@ -86,6 +86,7 @@ class ProcessingServer(FastAPI):
             on_shutdown=[self.on_shutdown],
             description="OCR-D Processing Server"
         )
+        initLogging()
         self.log = getLogger("ocrd_network.processing_server")
         log_file = get_processing_server_logging_file_path(pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
@@ -155,7 +156,7 @@ class ProcessingServer(FastAPI):
             queue_names = self.deployer.find_matching_network_agents(
                 worker_only=True, str_names_only=True, unique_only=True
             )
-            self.log.debug(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
+            self.log.info(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
             create_message_queues(logger=self.log, rmq_publisher=self.rmq_publisher, queue_names=queue_names)
 
             self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
@@ -167,6 +168,7 @@ class ProcessingServer(FastAPI):
         uvicorn_run(self, host=self.hostname, port=int(self.port))
 
     async def on_startup(self):
+        self.log.info(f"Initializing the Database on: {self.mongodb_url}")
         await initiate_database(db_url=self.mongodb_url)
 
     async def on_shutdown(self) -> None:
@@ -199,6 +201,14 @@ class ProcessingServer(FastAPI):
             endpoint=self.forward_tcp_request_to_uds_mets_server,
             tags=[ServerApiTags.WORKSPACE],
             summary="Forward a TCP request to UDS mets server"
+        )
+        others_router.add_api_route(
+            path="/kill_mets_server_zombies",
+            endpoint=self.kill_mets_server_zombies,
+            methods=["DELETE"],
+            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
+            status_code=status.HTTP_200_OK,
+            summary="!! Workaround Do Not Use Unless You Have A Reason !! Kill all METS servers on this machine that have been created more than 60 minutes ago."
         )
         self.include_router(others_router)
 
@@ -320,7 +330,7 @@ class ProcessingServer(FastAPI):
         """Forward mets-server-request
 
         A processor calls a mets related method like add_file with ClientSideOcrdMets. This sends
-        a request to this endpoint. This request contains all infomation neccessary to make a call
+        a request to this endpoint. This request contains all information necessary to make a call
         to the uds-mets-server. This information is used by `MetsServerProxy` to make a the call
         to the local (local for the processing-server) reachable the uds-mets-server.
         """
@@ -574,26 +584,20 @@ class ProcessingServer(FastAPI):
         )
 
     async def _consume_cached_jobs_of_workspace(
-        self, workspace_key: str, mets_server_url: str
+        self, workspace_key: str, mets_server_url: str, path_to_mets: str
     ) -> List[PYJobInput]:
-
-        # Check whether the internal queue for the workspace key still exists
-        if workspace_key not in self.cache_processing_requests.processing_requests:
-            self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
-            return []
-
         # decrease the internal cache counter by 1
         request_counter = self.cache_processing_requests.update_request_counter(
             workspace_key=workspace_key, by_value=-1
         )
         self.log.debug(f"Internal processing job cache counter value: {request_counter}")
-        if not len(self.cache_processing_requests.processing_requests[workspace_key]):
+        if (workspace_key not in self.cache_processing_requests.processing_requests or
+            not len(self.cache_processing_requests.processing_requests[workspace_key])):
             if request_counter <= 0:
                 # Shut down the Mets Server for the workspace_key since no
                 # more internal callbacks are expected for that workspace
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
-
-                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url)
+                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
 
                 try:
                     # The queue is empty - delete it
@@ -608,6 +612,10 @@ class ProcessingServer(FastAPI):
                     self.log.debug(f"{output_file_grp}: {locked_pages[output_file_grp]}")
             else:
                 self.log.debug(f"Internal request cache is empty but waiting for {request_counter} result callbacks.")
+            return []
+        # Check whether the internal queue for the workspace key still exists
+        if workspace_key not in self.cache_processing_requests.processing_requests:
+            self.log.debug(f"No internal queue available for workspace with key: {workspace_key}")
             return []
         consumed_requests = await self.cache_processing_requests.consume_cached_requests(workspace_key=workspace_key)
         return consumed_requests
@@ -643,7 +651,7 @@ class ProcessingServer(FastAPI):
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
 
         consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
-            workspace_key=workspace_key, mets_server_url=mets_server_url
+            workspace_key=workspace_key, mets_server_url=mets_server_url, path_to_mets=path_to_mets
         )
         await self.push_cached_jobs_to_agents(processing_jobs=consumed_cached_jobs)
 
@@ -816,6 +824,10 @@ class ProcessingServer(FastAPI):
         jobs = await db_get_processing_jobs(job_ids)
         response = self._produce_workflow_status_response(processing_jobs=jobs)
         return response
+
+    async def kill_mets_server_zombies(self, minutes_ago : Optional[int] = None, dry_run : Optional[bool] = None) -> List[int]:
+        pids_killed = kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)
+        return pids_killed
 
     async def get_workflow_info_simple(self, workflow_job_id) -> Dict[str, JobState]:
         """
