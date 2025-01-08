@@ -9,6 +9,9 @@ Changed:
 
   - Merge v2 master into new-procesor-api
 
+Fixed:
+
+  - `ocrd --help` output was broken for multiline config options, bertsky/core#25
 
 ## [3.0.0b7] - 2024-11-12
 
