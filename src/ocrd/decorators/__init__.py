@@ -48,6 +48,9 @@ def ocrd_cli_wrap_processor(
     # ocrd_network params end #
     **kwargs
 ):
+    # init logging handlers so no imported libs can preempt ours
+    initLogging()
+
     # FIXME: remove workspace arg entirely
     processor = processorClass(None)
     if not sys.argv[1:]:
@@ -89,8 +92,6 @@ def ocrd_cli_wrap_processor(
         # Used for checking/starting network agents for the WebAPI architecture
         check_and_run_network_agent(processorClass, subcommand, address, database, queue)
 
-    # from here: single-run processing context
-    initLogging()
     if 'parameter' in kwargs:
         # Disambiguate parameter file/literal, and resolve file
         def resolve(name):
