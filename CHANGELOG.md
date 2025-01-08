@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  - Merge v2 master into new-procesor-api
+
+
 ## [3.0.0b7] - 2024-11-12
 
 Fixed:
