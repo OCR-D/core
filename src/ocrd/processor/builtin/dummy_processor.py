@@ -13,9 +13,6 @@ from ocrd_utils import (
     make_file_id,
     MIME_TO_EXT,
     MIMETYPE_PAGE,
-    parse_json_string_with_comments,
-    resource_string,
-    config
 )
 from ocrd_modelfactory import page_from_file
 

@@ -2,8 +2,9 @@
 API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
-from typing import Dict, Union
+from typing import Dict, Union, Any
 from lxml import etree as ET
+from elementpath import XPath2Parser, XPathContext
 
 __all__ = [
     'parse',
@@ -132,6 +133,7 @@ from .ocrd_page_generateds import (
 )
 
 from .constants import NAMESPACES
+from .xpath_functions import pc_functions
 
 # add docstrings
 parse.__doc__ = (
@@ -189,12 +191,25 @@ class OcrdPage():
         pcgts : PcGtsType,
         etree : ET._Element,
         mapping : Dict[str, ET._Element],
-        revmap : Dict[ET._Element, str],
+        revmap : Dict[ET._Element, Any],
     ):
         self._pcgts = pcgts
         self.etree = etree
         self.mapping = mapping
         self.revmap = revmap
+        self.xpath_parser = XPath2Parser(namespaces={
+            'page': NAMESPACES['page'],
+            'pc': NAMESPACES['page']})
+        for func in pc_functions:
+            name = func.__name__.replace('_', '-')
+            if name.startswith('pc-'):
+                name = name[3:]
+            elif name.startswith('pc'):
+                name = name[2:]
+            # register
+            self.xpath_parser.external_function(func, name=name, prefix='pc')
+        self.xpath_context = XPathContext(self.etree)
+        self.xpath = lambda expression: self.xpath_parser.parse(expression).get_results(self.xpath_context)
 
     def __getattr__(self, name):
         return getattr(self._pcgts, name)
@@ -208,11 +223,15 @@ def to_xml(el, skip_declaration=False) -> str:
     # XXX remove potential empty ReadingOrder
     if hasattr(el, 'prune_ReadingOrder'):
         el.prune_ReadingOrder()
+    if hasattr(el, 'original_tagname_'):
+        name = el.original_tagname_ or 'PcGts'
+    else:
+        name = 'PcGts'
     sio = StringIO()
     el.export(
             outfile=sio,
             level=0,
-            name_='PcGts',
+            name_=name,
             namespaceprefix_='pc:',
             namespacedef_='xmlns:pc="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
                 NAMESPACES['page'],
