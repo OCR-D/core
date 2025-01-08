@@ -163,6 +163,12 @@ Added:
   - `Processor.verify`: handle fileGrp cardinality verification, with default implementation
   - `Processor.setup`: to set up processor before processing, optional
 
+## [2.71.1] - 2025-01-06
+
+Changed:
+
+  * Do `initLogging` before calling processors in `ocrd_cli_wrap_processor`, #1232, #1296
+
 ## [2.71.0] - 2024-11-20
 
 Changed:
@@ -2389,7 +2395,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
-<<<<<<< HEAD
+[3.0.0b7]: ../../compare/v3.0.0b7..v3.0.0b6
 [3.0.0b6]: ../../compare/v3.0.0b6..v3.0.0b5
 [3.0.0b5]: ../../compare/v3.0.0b5..v3.0.0b4
 [3.0.0b4]: ../../compare/v3.0.0b4..v3.0.0b3
@@ -2398,11 +2404,10 @@ Initial Release
 [3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
 [3.0.0a2]: ../../compare/v3.0.0a2..v3.0.0a1
 [3.0.0a1]: ../../compare/v3.0.0a1..v2.67.2
-=======
+[2.71.1]: ../../compare/v2.71.1..v2.71.0
 [2.71.0]: ../../compare/v2.71.0..v2.70.0
 [2.70.0]: ../../compare/v2.70.0..v2.69.0
 [2.69.0]: ../../compare/v2.69.0..v2.68.0
->>>>>>> master
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0
