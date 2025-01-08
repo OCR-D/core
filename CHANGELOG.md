@@ -8,11 +8,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Changed:
 
   - Merge v2 master into new-procesor-api
+  - PAGE API: Update to latest generateDS 2.44.1, bertsky/core#21
 
 Fixed:
 
   - `ocrd --help` output was broken for multiline config options, bertsky/core#25
   - Call `initLogging` before instantiating processors in `ocrd_cli_wrap_processor`, bertsky/core#24, #1296
+  - PAGE API: Fully reversable mapping from/to XML element/generateDS instances, bertsky/core#21
+
+Added:
+
+  - `ocrd-filter` processor to remove segments based on XPath expressions, bertsky/core#21
+  - XPath function `pc:pixelarea` for the number of pixels of the bounding box (or sum area on node sets), bertsky/core#21
+  - XPath function `pc:textequiv` for the first TextEquiv unicode string (or concatenated string on node sets), bertsky/core#21
 
 ## [3.0.0b7] - 2024-11-12
 
