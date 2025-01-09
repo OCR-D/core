@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0] - 2025-01-09
+
 Changed:
 
   - Merge v2 master into new-procesor-api
@@ -2412,6 +2414,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.0]: ../../compare/v3.0.0..v3.0.0b7
 [3.0.0b7]: ../../compare/v3.0.0b7..v3.0.0b6
 [3.0.0b6]: ../../compare/v3.0.0b6..v3.0.0b5
 [3.0.0b5]: ../../compare/v3.0.0b5..v3.0.0b4
