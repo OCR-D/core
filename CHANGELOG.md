@@ -5,6 +5,88 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.0] - 2025-01-09
+
+Changed:
+
+  - Merge v2 master into new-procesor-api
+  - PAGE API: Update to latest generateDS 2.44.1, bertsky/core#21
+
+Fixed:
+
+  - `ocrd --help` output was broken for multiline config options, bertsky/core#25
+  - Call `initLogging` before instantiating processors in `ocrd_cli_wrap_processor`, bertsky/core#24, #1296
+  - PAGE API: Fully reversable mapping from/to XML element/generateDS instances, bertsky/core#21
+
+Added:
+
+  - `ocrd-filter` processor to remove segments based on XPath expressions, bertsky/core#21
+  - XPath function `pc:pixelarea` for the number of pixels of the bounding box (or sum area on node sets), bertsky/core#21
+  - XPath function `pc:textequiv` for the first TextEquiv unicode string (or concatenated string on node sets), bertsky/core#21
+
+## [3.0.0b7] - 2024-11-12
+
+Fixed:
+ - `initLogging`: only add root handler instead of multiple redundant handlers with `propagate=false`
+ - `setOverrideLogLevel`: override all currently active loggers' level
+
+Changed:
+ - :fire: logging: increase default root (not `ocrd`) level from `INFO` to `WARNING`
+ - :fire: `initLogging`: do not remove any previous handlers/levels, unless `force_reinit`
+ - :fire: `disableLogging`: remove all handlers, reset all levels - instead of being selective
+ - :fire: Processor: replace `weakref` with `__del__` to trigger `shutdown`
+ - :fire: `OCRD_MAX_PARALLEL_PAGES>1`: log via `QueueHandler` in subprocess, `QueueListener` in main
+
+## [3.0.0b6] - 2024-10-30
+
+Fixed:
+ - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
+
+Changed:
+ - :fire: `ocrd_utils.initLogging`: also add handler to root logger (as in file config),
+   but disable message propagation to avoid duplication
+ - only import `ocrd_network` in `src/ocrd/decorators/__init__.py` once needed
+ - `Processor.process_page_file`: skip computing `process_page_pcgts` if output already exists,  
+   but `OCRD_EXISTING_OUTPUT!=OVERWRITE`
+ - :fire: `OCRD_MAX_PARALLEL_PAGES>1`: switch from multithreading to multiprocessing, depend on
+   `loky` instead of stdlib `concurrent.futures`
+ - `OCRD_PROCESSING_PAGE_TIMEOUT>0`: actually enforce timeout within worker
+ - `OCRD_MAX_MISSING_OUTPUTS>0`: abort early if too many failures already, prospectively
+ - `Processor.process_workspace`: split up into overridable sub-methods:
+   - `process_workspace_submit_tasks` (iterate input file group and schedule page tasks)
+     - `process_workspace_submit_page_task` (download input files and submit single page task)
+   - `process_workspace_handle_tasks` (monitor page tasks and aggregate results)
+     - `process_workspace_handle_page_task` (await single page task and handle errors)
+
+
+## [3.0.0b5] - 2024-09-16
+
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `ocrd.cli.bashlib "input-files"`: pass on `--mets-server-url`
+  - `lib.bash input-files`: pass on `--mets-server-url`, `--overwrite`, and parameters
+  - `lib.bash`: fix `errexit` handling
+  - `ocrd.cli.ocrd-tool "resolve-resource"`: forgot to actually print result
+
+Changed:
+  - :fire: `Processor` / `Workspace.add_file`: always `force` if `OCRD_EXISTING_OUTPUT==OVERWRITE`
+  - :fire: `Processor.verify`: revert 3.0.0b1 enforcing cardinality checks (stay backwards compatible)
+  - :fire: `Processor.verify`: check output fileGrps, too
+     (must not exist unless `OCRD_EXISTING_OUTPUT=OVERWRITE|SKIP` or disjoint `--page-id` range)
+  - lib.bash `input-files`: do not try to validate tasks here (now covered by `Processor.verify()`)
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - METS Server: export and delegate `physical_pages`
+  - processor CLI: delegate `--resolve-resource`, too
+  - `Processor.process_page_file` / `OcrdPageResultImage`: allow `None` besides `AlternativeImageType`
+
 ## [3.0.0b4] - 2024-09-02
 
 Fixed:
@@ -99,6 +181,79 @@ Added:
   - `Processor.process_page_pcgts`: process a single OcrdPage, produce a single OcrdPage, required to implement
   - `Processor.verify`: handle fileGrp cardinality verification, with default implementation
   - `Processor.setup`: to set up processor before processing, optional
+
+## [2.71.1] - 2025-01-06
+
+Changed:
+
+  * Do `initLogging` before calling processors in `ocrd_cli_wrap_processor`, #1232, #1296
+
+## [2.71.0] - 2024-11-20
+
+Changed:
+
+  * Rewrite `ocrd_utils.logging`, #1288
+    * Handle only `''` as the root logger
+    * `disableLogging`: Remove handlers from root and all configured loggers
+    * Do not do any module-level modification of the log config
+
+Fixed:
+
+  * Typo in processing_worker log message, #1293
+  * Call `initLogging` at the right time in `ocrd_network`, #1292
+  * `make docs` fixed with absolute path to location, #1273
+
+## [2.70.0] - 2024-10-10
+
+Added:
+
+  - `ocrd network client workflow run`: Add `--print-status` flag to periodically print the job status, #1277
+  - Processing Server: `DELETE /mets_server_zombies` to kill any renegade METS servers, #1277
+  - No more zombie METS Server by properly shutting them down, #1284
+  - `OCRD_NETWORK_RABBITMQ_HEARBEAT` to allow overriding the [heartbeat](https://pika.readthedocs.io/en/stable/examples/heartbeat_and_blocked_timeouts.html) behavior of RabbitMQ, #1285
+
+Changed:
+
+  - significantly more detailed logging for the METS Server and Processing Server, #1284
+  - Only import `ocrd_network` in src/ocrd/decorators/__init__.py once needed, #1289
+  - Automate release via GitHub Actions, #1290
+
+Fixed:
+
+  - `ocrd/core-cuda-torch`: Install torchvision as well, #1286
+  - Processing Server: remove shut down METS servers from deployer's cache, #1287
+  - typos, #1274
+
+## [2.69.0] - 2024-09-30
+
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.workspace`: make `list-page` work w/ METS Server
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `lib.bash`: fix `errexit` handling
+  - actually apply CLI `--log-filename`, and show in `--help`
+  - adapt to Pillow changes
+  - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+  - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
+  - `disableLogging`: also re-instate root logger to Python defaults
+  - `OcrdExif`: handle multi-frame TIFFs gracefully in `identify` callout, #1276
+
+Changed:
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+  - `ClientSideOcrdMets`: use same logger name prefix as METS Server
+  - `Processor.zip_input_files`: when `--page-id` yields empty list, just log instead of raise
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - METS Server: export and delegate `physical_pages`
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - processor CLI: delegate `--resolve-resource`, too
+  - `OcrdConfig.reset_defaults` to reset config variables to their defaults
+  - `ocrd_utils.scale_coordinates` for resizing images
 
 ## [2.68.0] - 2024-08-23
 
@@ -2259,11 +2414,20 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.0]: ../../compare/v3.0.0..v3.0.0b7
+[3.0.0b7]: ../../compare/v3.0.0b7..v3.0.0b6
+[3.0.0b6]: ../../compare/v3.0.0b6..v3.0.0b5
+[3.0.0b5]: ../../compare/v3.0.0b5..v3.0.0b4
+[3.0.0b4]: ../../compare/v3.0.0b4..v3.0.0b3
 [3.0.0b3]: ../../compare/v3.0.0b3..v3.0.0b2
 [3.0.0b2]: ../../compare/v3.0.0b2..v3.0.0b1
 [3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
 [3.0.0a2]: ../../compare/v3.0.0a2..v3.0.0a1
 [3.0.0a1]: ../../compare/v3.0.0a1..v2.67.2
+[2.71.1]: ../../compare/v2.71.1..v2.71.0
+[2.71.0]: ../../compare/v2.71.0..v2.70.0
+[2.70.0]: ../../compare/v2.70.0..v2.69.0
+[2.69.0]: ../../compare/v2.69.0..v2.68.0
 [2.68.0]: ../../compare/v2.68.0..v2.67.2
 [2.67.2]: ../../compare/v2.67.2..v2.67.1
 [2.67.1]: ../../compare/v2.67.1..v2.67.0

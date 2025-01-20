@@ -118,7 +118,7 @@ def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
 @patch.object(Session, "get")
 def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp_path):
     """
-    Fail with clobber_mets=False, succeeed with clobber_mets=True
+    Fail with clobber_mets=False, succeed with clobber_mets=True
     """
 
     # arrange

@@ -21,7 +21,7 @@ def _parser_boolean(val):
 
 class OcrdEnvVariable():
 
-    def __init__(self, name, description, parser=str, validator=lambda val: True, default=[False, None]):
+    def __init__(self, name, description, parser=str, validator=lambda _: True, default=[False, None]):
         """
         An environment variable for use in OCR-D.
 
@@ -47,10 +47,19 @@ class OcrdEnvVariable():
         return f'{self.name}: {self.description}'
 
     def describe(self, wrap_text=True, indent_text=True):
+        """
+        Output help information on a config option.
+
+        If ``option.description`` is a multiline string with complex formatting
+        (e.g. markdown lists), replace empty lines with ``\b`` and set
+        ``wrap_text`` to ``False``.
+        """
         desc = self.description
         if self.has_default:
             default = self.default() if callable(self.default) else self.default
-            desc += f' (Default: "{default}")'
+            if not desc.endswith('\n'):
+                desc += ' '
+            desc += f'(Default: "{default}")'
         ret = ''
         ret  = f'{self.name}\n'
         if wrap_text:
@@ -146,11 +155,11 @@ config.add("OCRD_PROFILE",
     description="""\
 Whether to enable gathering runtime statistics
 on the `ocrd.profile` logger (comma-separated):
-
+\b
 - `CPU`: yields CPU and wall-time,
 - `RSS`: also yields peak memory (resident set size)
 - `PSS`: also yields peak memory (proportional set size)
-
+\b
 """,
   validator=lambda val : all(t in ('', 'CPU', 'RSS', 'PSS') for t in val.split(',')),
   default=(True, ''))
@@ -183,11 +192,12 @@ config.add("OCRD_DOWNLOAD_INPUT",
 
 config.add("OCRD_MISSING_INPUT",
     description="""\
-How to deal with missing input files (for some fileGrp/pageId) during processing:
-
+How to deal with missing input files
+(for some fileGrp/pageId) during processing:
+\b
  - `SKIP`: ignore and proceed with next page's input
  - `ABORT`: throw :py:class:`.MissingInputFile`
-
+\b
 """,
     default=(True, 'SKIP'),
     validator=lambda val: val in ['SKIP', 'ABORT'],
@@ -195,12 +205,13 @@ How to deal with missing input files (for some fileGrp/pageId) during processing
 
 config.add("OCRD_MISSING_OUTPUT",
     description="""\
-How to deal with missing output files (for some fileGrp/pageId) during processing:
-
+How to deal with missing output files
+(for some fileGrp/pageId) during processing:
+\b
  - `SKIP`: ignore and proceed processing next page
  - `COPY`: fall back to copying input PAGE to output fileGrp for page
  - `ABORT`: re-throw whatever caused processing to fail
-
+\b
 """,
     default=(True, 'SKIP'),
     validator=lambda val: val in ['SKIP', 'COPY', 'ABORT'],
@@ -213,12 +224,13 @@ config.add("OCRD_MAX_MISSING_OUTPUTS",
 
 config.add("OCRD_EXISTING_OUTPUT",
     description="""\
-How to deal with already existing output files (for some fileGrp/pageId) during processing:
-
+How to deal with already existing output files
+(for some fileGrp/pageId) during processing:
+\b
  - `SKIP`: ignore and proceed processing next page
  - `OVERWRITE`: force writing result to output fileGrp for page
  - `ABORT`: re-throw :py:class:`FileExistsError`
-
+\b
 """,
     default=(True, 'SKIP'),
     validator=lambda val: val in ['SKIP', 'OVERWRITE', 'ABORT'],
@@ -231,7 +243,7 @@ config.add("OCRD_NETWORK_SERVER_ADDR_PROCESSING",
 config.add("OCRD_NETWORK_CLIENT_POLLING_SLEEP",
            description="How many seconds to sleep before trying again.",
            parser=int,
-           default=(True, 30))
+           default=(True, 10))
 
 config.add("OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
            description="Timeout for a blocking ocrd network client (in seconds).",
@@ -247,9 +259,19 @@ config.add("OCRD_NETWORK_SERVER_ADDR_WORKSPACE",
         default=(True, ''))
 
 config.add("OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
-    description="Number of attempts for a RabbitMQ client to connect before failing.",
+           description="Number of attempts for a RabbitMQ client to connect before failing.",
+           parser=int,
+           default=(True, 3))
+
+config.add(
+    name="OCRD_NETWORK_RABBITMQ_HEARTBEAT",
+    description="""
+    Controls AMQP heartbeat timeout (in seconds) negotiation during connection tuning. An integer value always overrides the value 
+    proposed by broker. Use 0 to deactivate heartbeat.
+    """,
     parser=int,
-    default=(True, 3))
+    default=(True, 0)
+)
 
 config.add(name="OCRD_NETWORK_SOCKETS_ROOT_DIR",
            description="The root directory where all mets server related socket files are created",

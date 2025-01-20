@@ -16,7 +16,7 @@ def command_with_replaced_help(*replacements):
 
     class CommandWithReplacedHelp(click.Command):
         def get_help(self, ctx):
-            newhelp = super().get_help(ctx)
+            newhelp : str = super().get_help(ctx)
             for replacement in replacements:
                 newhelp = re.sub(*replacement, newhelp)
             # print(newhelp)
@@ -82,6 +82,8 @@ Variables:
 {config.describe('OCRD_NETWORK_SERVER_ADDR_WORKSPACE')}
 \b
 {config.describe('OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS')}
+\b
+{config.describe('OCRD_NETWORK_RABBITMQ_HEARTBEAT')}
 \b
 {config.describe('OCRD_PROFILE_FILE')}
 \b

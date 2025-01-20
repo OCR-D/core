@@ -6,8 +6,8 @@ from os import environ as ENV
 from tests.base import CapturingTestCase as TestCase, main, assets, copy_of_directory
 
 from ocrd.decorators import ocrd_loglevel
-from ocrd_utils import setOverrideLogLevel, logging, disableLogging
-import logging as python_logging
+from ocrd_utils import disableLogging, initLogging
+import logging
 
 @click.group()
 @ocrd_loglevel
@@ -18,14 +18,19 @@ mock_ocrd_cli.add_command(log_cli)
 class TestLogCli(TestCase):
 
     def _get_log_output(self, *args):
-        disableLogging()
         code, out, err = self.invoke_cli(mock_ocrd_cli, args)
         print({'code': code, 'out': out, 'err': err})
         return err
 
+    def setUp(self):
+        super().setUp()
+        initLogging()
+
     def tearDown(self):
         if 'OCRD_TOOL_NAME' in ENV:
             del(ENV['OCRD_TOOL_NAME'])
+        super().tearDown()
+        disableLogging()
 
     def test_loglevel(self):
         assert 'DEBUG ocrd.log_cli - foo' not in self._get_log_output('log', 'debug', 'foo')

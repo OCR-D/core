@@ -24,7 +24,13 @@ from ocrd_models import OcrdExif
     ('leptonica_samples/data/OCR-D-IMG/OCR-D-IMG_1555_007.jpg',
      944, 1472, 1, 1, 1, 'inches', 'RGB', None),
     ('kant_aufklaerung_1784-jp2/data/OCR-D-IMG/INPUT_0020.jp2',
-     1457, 2084, 1, 1, 1, 'inches', 'RGB', None)
+     1457, 2084, 1, 1, 1, 'inches', 'RGB', None),
+    # tolerate multi-frame TIFF:
+    ('gutachten/data/IMG/IMG_1.tif',
+     2088, 2634, 300, 300, 300, 'inches', 'RGB', 'raw'),
+    # multi-frame TIFF with metric pixel density (is actually YCBCR not RGB but Pillow thinks otherwise...)
+    ('indian-ferns/data/OCR-D-IMG/0004.tif',
+     2626, 3620, 28, 28, 28, 'cm', 'RGB', 'jpeg'),
 ])
 def test_ocrd_exif(path, width, height, xResolution, yResolution, resolution, resolutionUnit, photometricInterpretation, compression):
     """Check EXIF attributes for different input formats

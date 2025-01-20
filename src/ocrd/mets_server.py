@@ -1,8 +1,10 @@
 """
 # METS server functionality
 """
+import os
 import re
 from os import _exit, chmod
+import signal
 from typing import Dict, Optional, Union, List, Tuple
 from time import sleep
 from pathlib import Path
@@ -155,13 +157,13 @@ class ClientSideOcrdMets:
         Request writing the changes to the file system
         """
         if not self.multiplexing_mode:
-            self.session.request("PUT", url=self.url)
+            return self.session.request("PUT", url=self.url).text
         else:
-            self.session.request(
+            return self.session.request(
                 "POST",
                 self.url,
                 json=MpxReq.save(self.ws_dir_path)
-            )
+            ).json()["text"]
 
     def stop(self):
         """
@@ -169,14 +171,13 @@ class ClientSideOcrdMets:
         """
         try:
             if not self.multiplexing_mode:
-                self.session.request("DELETE", self.url)
-                return
+                return self.session.request("DELETE", self.url).text
             else:
-                self.session.request(
+                return self.session.request(
                     "POST",
                     self.url,
                     json=MpxReq.stop(self.ws_dir_path)
-                )
+                ).json()["text"]
         except ConnectionError:
             # Expected because we exit the process without returning
             pass
@@ -323,7 +324,7 @@ class ClientSideOcrdMets:
 
 
 class MpxReq:
-    """This class wrapps the request bodies needed for the tcp forwarding
+    """This class wraps the request bodies needed for the tcp forwarding
 
     For every mets-server-call like find_files or workspace_path a special request_body is
     needed to call `MetsServerProxy.forward_tcp_request`. These are created by this functions.
@@ -346,12 +347,12 @@ class MpxReq:
     @staticmethod
     def save(ws_dir_path: str) -> Dict:
         return MpxReq.__args_wrapper(
-            ws_dir_path, method_type="PUT", response_type="empty", request_url="", request_data={})
+            ws_dir_path, method_type="PUT", response_type="text", request_url="", request_data={})
 
     @staticmethod
     def stop(ws_dir_path: str) -> Dict:
         return MpxReq.__args_wrapper(
-            ws_dir_path, method_type="DELETE", response_type="empty", request_url="", request_data={})
+            ws_dir_path, method_type="DELETE", response_type="text", request_url="", request_data={})
 
     @staticmethod
     def reload(ws_dir_path: str) -> Dict:
@@ -428,18 +429,24 @@ class OcrdMetsServer:
 
     @staticmethod
     def kill_process(mets_server_pid: int):
-        subprocess_run(args=["kill", "-s", "SIGINT", f"{mets_server_pid}"], shell=False, universal_newlines=True)
+        os.kill(mets_server_pid, signal.SIGINT)
+        sleep(3)
+        try:
+            os.kill(mets_server_pid, signal.SIGKILL)
+        except ProcessLookupError as e:
+            pass
 
     def shutdown(self):
+        pid = os.getpid()
+        self.log.info(f"Shutdown method of mets server[{pid}] invoked, sending SIGTERM signal.")
+        os.kill(pid, signal.SIGTERM)
         if self.is_uds:
             if Path(self.url).exists():
-                self.log.debug(f'UDS socket {self.url} still exists, removing it')
+                self.log.warning(f"Due to a server shutdown, removing the existing UDS socket file: {self.url}")
                 Path(self.url).unlink()
-        # os._exit because uvicorn catches SystemExit raised by sys.exit
-        _exit(0)
 
     def startup(self):
-        self.log.info("Starting up METS server")
+        self.log.info(f"Configuring the Mets Server")
 
         workspace = self.workspace
 
@@ -465,32 +472,49 @@ class OcrdMetsServer:
             """
             Write current changes to the file system
             """
-            return workspace.save_mets()
+            workspace.save_mets()
+            response = Response(content="The Mets Server is writing changes to disk.", media_type='text/plain')
+            self.log.info(f"PUT / -> {response.__dict__}")
+            return response
 
         @app.delete(path='/')
-        async def stop():
+        def stop():
             """
             Stop the mets server
             """
-            getLogger('ocrd.models.ocrd_mets').info(f'Shutting down METS Server {self.url}')
             workspace.save_mets()
+            response = Response(content="The Mets Server will shut down soon...", media_type='text/plain')
             self.shutdown()
+            self.log.info(f"DELETE / -> {response.__dict__}")
+            return response
 
         @app.post(path='/reload')
-        async def workspace_reload_mets():
+        def workspace_reload_mets():
             """
             Reload mets file from the file system
             """
             workspace.reload_mets()
-            return Response(content=f'Reloaded from {workspace.directory}', media_type="text/plain")
+            response = Response(content=f"Reloaded from {workspace.directory}", media_type='text/plain')
+            self.log.info(f"POST /reload -> {response.__dict__}")
+            return response
 
         @app.get(path='/unique_identifier', response_model=str)
         async def unique_identifier():
-            return Response(content=workspace.mets.unique_identifier, media_type='text/plain')
+            response = Response(content=workspace.mets.unique_identifier, media_type='text/plain')
+            self.log.info(f"GET /unique_identifier -> {response.__dict__}")
+            return response
 
         @app.get(path='/workspace_path', response_model=str)
         async def workspace_path():
-            return Response(content=workspace.directory, media_type="text/plain")
+            response = Response(content=workspace.directory, media_type="text/plain")
+            self.log.info(f"GET /workspace_path -> {response.__dict__}")
+            return response
+
+        @app.get(path='/physical_pages', response_model=OcrdPageListModel)
+        async def physical_pages():
+            response = {'physical_pages': workspace.mets.physical_pages}
+            self.log.info(f"GET /physical_pages -> {response}")
+            return response
 
         @app.get(path='/physical_pages', response_model=OcrdPageListModel)
         async def physical_pages():
@@ -498,18 +522,24 @@ class OcrdMetsServer:
 
         @app.get(path='/file_groups', response_model=OcrdFileGroupListModel)
         async def file_groups():
-            return {'file_groups': workspace.mets.file_groups}
+            response = {'file_groups': workspace.mets.file_groups}
+            self.log.info(f"GET /file_groups -> {response}")
+            return response
 
         @app.get(path='/agent', response_model=OcrdAgentListModel)
         async def agents():
-            return OcrdAgentListModel.create(workspace.mets.agents)
+            response = OcrdAgentListModel.create(workspace.mets.agents)
+            self.log.info(f"GET /agent -> {response.__dict__}")
+            return response
 
         @app.post(path='/agent', response_model=OcrdAgentModel)
         async def add_agent(agent: OcrdAgentModel):
             kwargs = agent.dict()
             kwargs['_type'] = kwargs.pop('type')
             workspace.mets.add_agent(**kwargs)
-            return agent
+            response = agent
+            self.log.info(f"POST /agent -> {response.__dict__}")
+            return response
 
         @app.get(path="/file", response_model=OcrdFileListModel)
         async def find_files(
@@ -526,7 +556,9 @@ class OcrdMetsServer:
             found = workspace.mets.find_all_files(
                 fileGrp=file_grp, ID=file_id, pageId=page_id, mimetype=mimetype, local_filename=local_filename, url=url
             )
-            return OcrdFileListModel.create(found)
+            response = OcrdFileListModel.create(found)
+            self.log.info(f"GET /file -> {response.__dict__}")
+            return response
 
         @app.post(path='/file', response_model=OcrdFileModel)
         async def add_file(
@@ -549,7 +581,9 @@ class OcrdMetsServer:
             # Add to workspace
             kwargs = file_resource.dict()
             workspace.add_file(**kwargs, force=force)
-            return file_resource
+            response = file_resource
+            self.log.info(f"POST /file -> {response.__dict__}")
+            return response
 
         # ------------- #
 
@@ -557,9 +591,6 @@ class OcrdMetsServer:
             # Create socket and change to world-readable and -writable to avoid permission errors
             self.log.debug(f"chmod 0o677 {self.url}")
             server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            if Path(self.url).exists() and not is_socket_in_use(self.url):
-                # remove leftover unused socket which blocks startup
-                Path(self.url).unlink()
             server.bind(self.url)  # creates the socket file
             atexit.register(self.shutdown)
             server.close()
@@ -571,16 +602,5 @@ class OcrdMetsServer:
         uvicorn_kwargs['log_config'] = None
         uvicorn_kwargs['access_log'] = False
 
-        self.log.debug("Starting uvicorn")
+        self.log.info("Starting the uvicorn Mets Server")
         uvicorn.run(app, **uvicorn_kwargs)
-
-
-def is_socket_in_use(socket_path):
-    if Path(socket_path).exists():
-        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            client.connect(socket_path)
-        except OSError:
-            return False
-        client.close()
-        return True

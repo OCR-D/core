@@ -26,16 +26,22 @@ class TestLogging(TestCase):
     def setUp(self):
         pass # do not chdir
 
+    def tearDown(self):
+        super().tearDown()
+        disableLogging()
+
     def test_loglevel_inheritance(self):
         initLogging(builtin_only=True)
         ocrd_logger = logging.getLogger('ocrd')
         assert ocrd_logger.getEffectiveLevel() == logging.INFO
         some_logger = getLogger('ocrd.foo')
+        assert some_logger.level == logging.NOTSET
         assert some_logger.getEffectiveLevel() == logging.INFO
         setOverrideLogLevel('ERROR')
         assert ocrd_logger.getEffectiveLevel() == logging.ERROR
         assert some_logger.getEffectiveLevel() == logging.ERROR
         another_logger = getLogger('ocrd.bar')
+        assert another_logger.level == logging.NOTSET
         assert another_logger.getEffectiveLevel() == logging.ERROR
 
     def test_getLevelName(self):

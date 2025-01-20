@@ -4,6 +4,7 @@ from fastapi import UploadFile
 from functools import wraps
 from hashlib import md5
 from json import loads
+from logging import Logger
 from pathlib import Path
 from re import compile as re_compile, split as re_split
 from requests import get as requests_get, Session as Session_TCP
@@ -151,22 +152,25 @@ def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> boo
         return False
 
 
-def stop_mets_server(mets_server_url: str, ws_dir_path: str = None) -> bool:
+def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
-    session = Session_TCP() if protocol == "tcp" else Session_UDS()
-    if protocol == "uds":
-        mets_server_url = convert_url_to_uds_format(mets_server_url)
-    try:
-        if 'tcp_mets' in mets_server_url:
-            if not ws_dir_path:
-                return False
-            response = session.post(url=f"{mets_server_url}", json=MpxReq.stop(ws_dir_path))
-        else:
-            response = session.delete(url=f"{mets_server_url}/")
-    except Exception:
-        return False
-    return response.status_code == 200
-
+    # If the mets server URL is the proxy endpoint
+    if protocol == "tcp" and "tcp_mets" in mets_server_url:
+        # Convert the mets server url to UDS format
+        ws_socket_file = str(get_uds_path(ws_dir_path))
+        mets_server_url = convert_url_to_uds_format(ws_socket_file)
+        protocol = "uds"
+    if protocol == "tcp":
+        request_json = MpxReq.stop(ws_dir_path)
+        logger.info(f"Sending POST request to: {mets_server_url}, request_json: {request_json}")
+        response = Session_TCP().post(url=f"{mets_server_url}", json=request_json)
+        return response.status_code == 200
+    elif protocol == "uds":
+        logger.info(f"Sending DELETE request to: {mets_server_url}/")
+        response = Session_UDS().delete(url=f"{mets_server_url}/")
+        return response.status_code == 200
+    else:
+        ValueError(f"Unexpected protocol type: {protocol}")
 
 def get_uds_path(ws_dir_path: str) -> Path:
     return Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(ws_dir_path)}.sock")

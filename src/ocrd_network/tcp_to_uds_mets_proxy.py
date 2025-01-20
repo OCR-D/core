@@ -1,5 +1,5 @@
 from requests_unixsocket import Session as requests_unixsocket_session
-from .utils import get_uds_path
+from .utils import get_uds_path, convert_url_to_uds_format
 from typing import Dict
 from ocrd_utils import getLogger
 
@@ -31,8 +31,12 @@ class MetsServerProxy:
         if method_type not in SUPPORTED_METHOD_TYPES:
             raise NotImplementedError(f"Method type: {method_type} not recognized")
         ws_socket_file = str(get_uds_path(ws_dir_path=ws_dir_path))
-        ws_unix_socket_url = f'http+unix://{ws_socket_file.replace("/", "%2F")}'
+        ws_unix_socket_url = convert_url_to_uds_format(ws_socket_file)
         uds_request_url = f"{ws_unix_socket_url}/{request_url}"
+
+        self.log.info(f"Forwarding TCP mets server request to UDS url: {uds_request_url}")
+        self.log.info(f"Forwarding method type {method_type}, request data: {request_data}, "
+                      f"expected response type: {response_type}")
 
         if not request_data:
             response = self.session.request(method_type, uds_request_url)
@@ -45,12 +49,11 @@ class MetsServerProxy:
         else:
             raise ValueError("Expecting request_data to be empty or containing single key: params,"
                              f"form, or class but not {request_data.keys}")
-
+        if response_type == "empty":
+            return {}
         if not response:
             self.log.error(f"Uds-Mets-Server gives unexpected error. Response: {response.__dict__}")
             return {"error": response.text}
-        elif response_type == "empty":
-            return {}
         elif response_type == "text":
             return {"text": response.text}
         elif response_type == "class" or response_type == "dict":

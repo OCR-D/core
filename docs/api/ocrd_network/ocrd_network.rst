@@ -24,6 +24,7 @@ Submodules
    :maxdepth: 4
 
    ocrd_network.client
+   ocrd_network.client_utils
    ocrd_network.constants
    ocrd_network.database
    ocrd_network.logging_utils
