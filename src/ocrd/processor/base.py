@@ -506,7 +506,7 @@ class Processor():
                 # set up multitasking
                 max_workers = max(0, config.OCRD_MAX_PARALLEL_PAGES)
                 if self.max_workers > 0 and self.max_workers < config.OCRD_MAX_PARALLEL_PAGES:
-                    self._base_logger.info("limiting number of threads from %d to %d", max_workers, self.max_workers)
+                    self._base_logger.info("limiting number of workers from %d to %d", max_workers, self.max_workers)
                     max_workers = self.max_workers
                 if max_workers > 1:
                     assert isinstance(workspace.mets, ClientSideOcrdMets), \
@@ -519,12 +519,9 @@ class Processor():
                 if max_workers > 1:
                     executor_cls = ProcessPoolExecutor
                     log_queue = mp.Queue()
-                    # forward messages from log queue (in subprocesses) to all root handlers
-                    log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers, respect_handler_level=True)
                 else:
                     executor_cls = DummyExecutor
                     log_queue = None
-                    log_listener = None
                 executor = executor_cls(
                     max_workers=max_workers or 1,
                     # only forking method avoids pickling
@@ -534,6 +531,8 @@ class Processor():
                     initargs=(self, log_queue),
                 )
                 if max_workers > 1:
+                    # forward messages from log queue (in subprocesses) to all root handlers
+                    log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers, respect_handler_level=True)
                     log_listener.start()
                 try:
                     self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
@@ -543,6 +542,7 @@ class Processor():
                     executor.shutdown(kill_workers=True, wait=False)
                     if max_workers > 1:
                         log_listener.stop()
+                        del log_listener
 
             except NotImplementedError:
                 # fall back to deprecated method
