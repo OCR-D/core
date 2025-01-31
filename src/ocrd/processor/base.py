@@ -130,7 +130,8 @@ class DummyExecutor:
     def __init__(self, initializer=None, initargs=(), **kwargs):
         initializer(*initargs)
     def shutdown(self, **kwargs):
-        pass
+        # allow gc to catch processor instance (unless cached)
+        _page_worker_set_ctxt(None, None)
     def submit(self, fn, *args, **kwargs) -> DummyFuture:
         return DummyFuture(fn, *args, **kwargs)
 
@@ -372,7 +373,7 @@ class Processor():
                 deprecated(version='3.0', reason='process() should be replaced with process_page_pcgts() or process_page_file() or process_workspace()')(getattr(self, 'process')))
 
     def __del__(self):
-        self._base_logger.debug("shutting down")
+        self._base_logger.debug("shutting down %s in %s", repr(self), mp.current_process().name)
         self.shutdown()
 
     def show_help(self, subcommand=None):
