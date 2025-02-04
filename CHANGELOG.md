@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  - Fix processor executor shutdown (which led to hanging tests), #1302
+
 ## [3.0.0] - 2025-01-09
 
 Changed:
