@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.1] - 2025-02-04
+
 Fixed:
 
   - Fix processor executor shutdown (which led to hanging tests), #1302
@@ -2418,6 +2420,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.1]: ../../compare/v3.0.1..v3.0.0
 [3.0.0]: ../../compare/v3.0.0..v3.0.0b7
 [3.0.0b7]: ../../compare/v3.0.0b7..v3.0.0b6
 [3.0.0b6]: ../../compare/v3.0.0b6..v3.0.0b5
