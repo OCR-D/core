@@ -110,8 +110,8 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 @click.option('-p', '--print-state', default=False, is_flag=True,
               help='If set, the client will print job states by each iteration.')
 def send_processing_job_request(
-    address: Optional[str],
     processor_name: str,
+    address: Optional[str],
     mets: str,
     input_file_grp: str,
     output_file_grp: Optional[str],
