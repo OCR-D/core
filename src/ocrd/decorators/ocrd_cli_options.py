@@ -13,16 +13,16 @@ from ocrd_network import (
 
 def ocrd_cli_options(f):
     """
-    Implement MP CLI.
+    Implement Processor CLI.
 
     Usage::
 
-        import ocrd_click_cli from ocrd.utils
+        from ocrd.decorators import ocrd_cli_options
 
         @click.command()
-        @ocrd_click_cli
-        def cli(mets_url):
-            print(mets_url)
+        @ocrd_cli_options
+        def cli(**kwargs):
+            print(kwargs['mets_url'])
     """
     # XXX Note that the `--help` output is statically generate_processor_help
     params = [
