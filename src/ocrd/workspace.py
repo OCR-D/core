@@ -798,7 +798,6 @@ class Workspace():
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filter="%s" in page "%s"' % (
                                 feature_filter, page_id))
-        page_image.format = 'PNG' # workaround for tesserocr#194
         # ensure DPI will be set in image meta-data again
         if 'DPI' in page_coords:
             dpi = page_coords['DPI']
@@ -1060,7 +1059,6 @@ class Workspace():
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filter="%s" in segment "%s"' % (
                                 feature_filter, segment.id))
-        segment_image.format = 'PNG' # workaround for tesserocr#194
         # ensure DPI will be set in image meta-data again
         if 'DPI' in segment_coords:
             dpi = segment_coords['DPI']
