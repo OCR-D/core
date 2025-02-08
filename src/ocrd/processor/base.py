@@ -29,6 +29,7 @@ from frozendict import frozendict
 # this is where the fixes came from:
 from loky import Future, ProcessPoolExecutor
 import multiprocessing as mp
+from queue import Queue # mp.queues.Queue does not behave with logging.handlers.QueueListener
 from threading import Timer
 from _thread import interrupt_main
 
@@ -518,7 +519,7 @@ class Processor():
 
                 if max_workers > 1:
                     executor_cls = ProcessPoolExecutor
-                    log_queue = mp.Queue()
+                    log_queue = Queue()
                 else:
                     executor_cls = DummyExecutor
                     log_queue = None
