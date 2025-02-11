@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  - `send_processing_job`: Match method signature to order of click parameters, #1303
+  - `Workspace.image_from_*`: remove obsolete workaround for tesserocr#194, #1303
+  - Use `fork`-context `Queue` instead of `mp.Queue` to avoid shutdown deadlock, #1303
+  - Update docstrings for `ocrd_cli_options` and the `OCRD_MAX_PARALLEL_PAGES`, #1303
+
 ## [3.0.1] - 2025-02-04
 
 Fixed:
