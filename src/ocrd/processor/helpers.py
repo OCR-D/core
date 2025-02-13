@@ -56,12 +56,18 @@ def run_processor(
     - :py:attr:`output_file_grp`
     - :py:attr:`parameter` (after applying any :py:attr:`parameter_override` settings)
 
-    Warning: Avoid setting the `instance_caching` flag to True. It may have unexpected side effects.
-    This flag is used for an experimental feature we would like to adopt in future.
-
     Run the processor on the workspace (creating output files in the filesystem).
 
     Finally, write back the workspace (updating the METS in the filesystem).
+
+    If :py:attr:`instance_caching` is True, then processor instances (for the same set
+    of :py:attr:`parameter` values) will be cached internally. Thus, these objects (and
+    all their memory resources, like loaded models) get re-used instead of re-instantiated
+    when a match occurs - as long as the program is being run. They only get deleted (and
+    their resources freed) when as many as :py:data:`~ocrd_utils.config.OCRD_MAX_PROCESSOR_CACHE`
+    instances have already been cached while this particular parameter set was re-used
+    least frequently. (See :py:class:`~ocrd_network.ProcessingWorker` and
+    :py:class:`~ocrd_network.ProcessorServer` for use-cases.)
 
     Args:
         processorClass (object): Python class of the module processor.
