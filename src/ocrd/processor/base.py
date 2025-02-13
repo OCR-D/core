@@ -534,15 +534,20 @@ class Processor():
                     # forward messages from log queue (in subprocesses) to all root handlers
                     log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers, respect_handler_level=True)
                     log_listener.start()
+                tasks = None
                 try:
                     self._base_logger.debug("started executor %s with %d workers", str(executor), max_workers or 1)
                     tasks = self.process_workspace_submit_tasks(executor, max_seconds)
                     stats = self.process_workspace_handle_tasks(tasks)
                 finally:
                     executor.shutdown(kill_workers=True, wait=False)
+                    self._base_logger.debug("stopped executor %s after %d tasks", str(executor), len(tasks) if tasks else -1)
                     if max_workers > 1:
-                        log_listener.stop()
-                        del log_listener
+                        # can cause deadlock:
+                        #log_listener.stop()
+                        # not much better:
+                        #log_listener.enqueue_sentinel()
+                        pass
 
             except NotImplementedError:
                 # fall back to deprecated method
@@ -670,11 +675,12 @@ class Processor():
                 nr_succeeded += 1
             # else skipped - already exists
         nr_errors = dict(nr_errors)
+        nr_all = nr_succeeded + nr_failed
         if nr_failed > 0:
-            nr_all = nr_succeeded + nr_failed
             if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / nr_all > config.OCRD_MAX_MISSING_OUTPUTS:
                 raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_all}, {str(nr_errors)})")
             self._base_logger.warning("%s %d of %d pages due to %s", reason, nr_failed, nr_all, str(nr_errors))
+        self._base_logger.debug("succeeded %d, missed %d of %d pages due to %s", nr_succeeded, nr_failed, nr_all, str(nr_errors))
         return nr_succeeded, nr_failed, nr_errors, len(tasks)
 
     def process_workspace_handle_page_task(self, page_id : str, input_files : List[Optional[OcrdFileType]], task : TFuture) -> Union[bool, Exception]:
