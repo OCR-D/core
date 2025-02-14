@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.3] - 2025-02-14
+
 Fixed:
 
   - do not `stop` log listener in multiprocessing to avoid deadlock in testing, #1304
@@ -2437,6 +2439,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.3]: ../../compare/v3.0.3..v3.0.2
 [3.0.2]: ../../compare/v3.0.2..v3.0.1
 [3.0.1]: ../../compare/v3.0.1..v3.0.0
 [3.0.0]: ../../compare/v3.0.0..v3.0.0b7
