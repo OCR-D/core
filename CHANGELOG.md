@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  - do not `stop` log listener in multiprocessing to avoid deadlock in testing, #1304
+
+Changed:
+  - Added docstring on how instance caching works,  #1304
+  - Test processors with instance caching and page-parallel conditions, #1304
+
 ## [3.0.2] - 2025-02-11
 
 Fixed:
