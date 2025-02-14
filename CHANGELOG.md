@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.2] - 2025-02-11
+
 Fixed:
 
   - `send_processing_job`: Match method signature to order of click parameters, #1303
@@ -2427,6 +2429,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.2]: ../../compare/v3.0.2..v3.0.1
 [3.0.1]: ../../compare/v3.0.1..v3.0.0
 [3.0.0]: ../../compare/v3.0.0..v3.0.0b7
 [3.0.0b7]: ../../compare/v3.0.0b7..v3.0.0b6
