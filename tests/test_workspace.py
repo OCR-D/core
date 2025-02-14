@@ -224,7 +224,7 @@ def test_superfluous_copies_in_ws_dir(tmp_path):
     https://github.com/OCR-D/core/issues/227
     """
     # arrange
-    src_path = assets.path_to('SBB0000F29300010000/data/mets_one_file.xml')
+    src_path = assets.path_to('sample_bagit-with-fetch/data/PPN595930174.xml')
     dst_path = join(tmp_path, 'mets.xml')
     copyfile(src_path, dst_path)
     ws1 = Workspace(Resolver(), tmp_path)
@@ -233,12 +233,12 @@ def test_superfluous_copies_in_ws_dir(tmp_path):
     assert count_files(tmp_path) == 1
 
     # act
-    for file in ws1.mets.find_all_files():
-        ws1.download_file(file)
+    file1 = next(ws1.mets.find_files(fileGrp='DEFAULT'))
+    ws1.download_file(file1)
 
     # assert
     assert count_files(tmp_path) == 2
-    assert exists(join(tmp_path, 'OCR-D-IMG/FILE_0005_IMAGE.tif'))
+    assert exists(join(tmp_path, 'DEFAULT/FILE_0000_DEFAULT.jpg'))
 
 
 @pytest.fixture(name='sbb_data_tmp')
