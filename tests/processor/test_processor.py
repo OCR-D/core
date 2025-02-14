@@ -475,5 +475,33 @@ def test_run_output_parallel(start_mets_server):
     assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
     config.reset_defaults()
 
+def test_run_output_parallel_caching(start_mets_server):
+    import time
+    mets_server_url, ws = start_mets_server
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 0
+    # do not raise for single-page timeout
+    config.OCRD_PROCESSING_PAGE_TIMEOUT = -1
+    # do not raise for number of failures:
+    config.OCRD_MAX_MISSING_OUTPUTS = -1
+    config.OCRD_MAX_PARALLEL_PAGES = 3
+    kwargs = dict(workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  parameter={"sleep": 2},
+                  mets_server_url=mets_server_url,
+                  instance_caching=True)
+    start_time = time.time()
+    proc1 = run_processor(DummyProcessorWithOutputSleep, **kwargs)
+    run_time = time.time() - start_time
+    assert run_time < 3, f"run_processor took {run_time}s"
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+    start_time = time.time()
+    proc2 = run_processor(DummyProcessorWithOutputSleep, **kwargs)
+    assert proc1 is proc2, "instance_caching must yield identical processor objects for equal parameters"
+    run_time = time.time() - start_time
+    # should be faster with default config.OCRD_EXISTING_OUTPUT==SKIP
+    assert run_time < 1, f"run_processor took {run_time}s"
+    config.reset_defaults()
+
 if __name__ == "__main__":
     main(__file__)
