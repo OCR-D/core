@@ -564,7 +564,7 @@ class OcrdMetsServer:
         async def add_file(
             file_grp: str = Form(),
             file_id: str = Form(),
-            page_id: Optional[str] = Form(),
+            page_id: Optional[str] = Form(None),
             mimetype: str = Form(),
             url: Optional[str] = Form(None),
             local_filename: Optional[str] = Form(None),
