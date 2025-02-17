@@ -143,7 +143,7 @@ def run_processor(
         t1_cpu,
         processor.input_file_grp or '',
         processor.output_file_grp or '',
-        json.dumps(processor.parameter) or '',
+        json.dumps(dict(processor.parameter or {})),
         processor.page_id or ''
     )
     workspace.mets.add_agent(
@@ -154,7 +154,7 @@ def run_processor(
         otherrole=otherrole,
         notes=[({'option': 'input-file-grp'}, processor.input_file_grp or ''),
                ({'option': 'output-file-grp'}, processor.output_file_grp or ''),
-               ({'option': 'parameter'}, json.dumps(processor.parameter or '')),
+               ({'option': 'parameter'}, json.dumps(dict(processor.parameter or {}))),
                ({'option': 'page-id'}, processor.page_id or '')]
     )
     workspace.save_mets()
