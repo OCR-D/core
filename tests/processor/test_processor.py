@@ -459,6 +459,14 @@ def test_run_output_metsserver(start_mets_server):
                       parameter={"sleep": 0},
                       mets_server_url=mets_server_url)
     assert "already exists" in str(exc.value)
+    run_processor(DummyProcessorWithOutputDocfile, workspace=ws,
+                  input_file_grp="OCR-D-GT-PAGE",
+                  output_file_grp="OCR-D-OUT2",
+                  parameter={"file_id": "FULLDOWNLOAD"})
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT2")) == 3
+    docfile = next(ws.mets.find_files(fileGrp="OCR-D-OUT2", mimetype="text/plain"), None)
+    assert docfile is not None
+    assert docfile.pageId is None
     config.reset_defaults()
 
 # 2s (+ 2s tolerance) instead of 3*3s (+ 2s tolerance)

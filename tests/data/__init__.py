@@ -103,6 +103,42 @@ class DummyProcessorWithOutput(Processor):
                 content='CONTENT',
             )
 
+class DummyProcessorWithOutputDocfile(Processor):
+    @property
+    def ocrd_tool(self):
+        # make deep copy
+        dummy_tool = json.loads(json.dumps(DUMMY_TOOL))
+        dummy_tool['parameters']['file_id'] = {'type': 'string'}
+        return dummy_tool
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
+
+    def __init__(self, *args, **kwargs):
+        kwargs['download_files'] = False
+        super().__init__(*args, **kwargs)
+
+    def process_page_pcgts(self, pcgts, page_id=None):
+        # copycat
+        return OcrdPageResult(pcgts)
+
+    def process_workspace(self, workspace):
+        super().process_workspace(workspace)
+        if self.parameter['file_id']:
+            workspace.add_file(
+                file_id=self.parameter['file_id'],
+                file_grp=self.output_file_grp,
+                local_filename=os.path.join(self.output_file_grp, self.parameter['file_id'] + '.txt'),
+                mimetype="text/plain",
+                page_id=None,
+                content="CONTENT",
+            )
+
 class DummyProcessorWithOutputSleep(Processor):
     @property
     def ocrd_tool(self):
