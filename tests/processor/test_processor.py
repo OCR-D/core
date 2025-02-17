@@ -10,6 +10,7 @@ from tests.data import (
     DummyProcessor,
     DummyProcessorWithRequiredParameters,
     DummyProcessorWithOutput,
+    DummyProcessorWithOutputDocfile,
     DummyProcessorWithOutputLegacy,
     DummyProcessorWithOutputSleep,
     DummyProcessorWithOutputFailures,
@@ -223,6 +224,17 @@ class TestProcessor(TestCase):
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
+
+    def test_run_output_docfile(self):
+        ws = self.workspace
+        run_processor(DummyProcessorWithOutputDocfile, workspace=ws,
+                      input_file_grp="OCR-D-GT-PAGE",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={"file_id": "FULLDOWNLOAD"})
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 3
+        docfile = next(ws.mets.find_files(fileGrp="OCR-D-OUT", mimetype="text/plain"), None)
+        assert docfile is not None
+        assert docfile.pageId is None
 
     def test_run_output_legacy(self):
         ws = self.workspace
