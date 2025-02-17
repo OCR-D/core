@@ -168,6 +168,15 @@ class TestProcessor(TestCase):
             run_processor(DummyProcessorWithRequiredParameters,
                           workspace=self.workspace, input_file_grp="OCR-D-IMG")
         proc.parameter = {'i-am-required': 'foo'}
+        proc.input_file_grp = "OCR-D-IMG"
+        proc.output_file_grp = "OCR-D-OUT"
+        proc.page_id = []
+        proc.process_workspace(self.workspace)
+        run_processor(DummyProcessorWithRequiredParameters,
+                      workspace=self.workspace,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={'i-am-required': 'foo'})
 
     def test_params_preset_resolve(self):
         with pushd_popd(tempdir=True) as tempdir:
@@ -432,6 +441,31 @@ class TestProcessor(TestCase):
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
         r = self.capture_out_err()
         assert 'ERROR ocrd.processor.base - Found no file for page phys_0001 in file group GRP1' in r.err
+
+@pytest.fixture
+def workspace_sbb():
+    initLogging()
+    with copy_of_directory(assets.path_to('SBB0000F29300010000/data')) as workdir:
+        with pushd_popd(workdir):
+            resolver = Resolver()
+            workspace = resolver.workspace_from_url('mets.xml')
+            yield workspace
+    disableLogging()
+
+def test_run_output_logging(workspace_sbb, caplog):
+    caplog.set_level(10)
+    def only_profile(logrec):
+        return logrec.name == 'ocrd.process.profile'
+    with caplog.filtering(only_profile):
+        proc = run_processor(DummyProcessorWithRequiredParameters,
+                      workspace=workspace_sbb,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={'i-am-required': 'foo'})
+    assert len(caplog.records) == 1
+    #assert isinstance(proc.parameter, dict)
+    msg = caplog.records[0].message
+    assert msg.startswith("Executing processor 'ocrd-test' took")
 
 def test_run_output_metsserver(start_mets_server):
     mets_server_url, ws = start_mets_server
