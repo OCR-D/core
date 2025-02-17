@@ -435,13 +435,14 @@ def test_serialize_no_empty_readingorder():
     assert not pcgts.get_Page().get_ReadingOrder()
 
 def test_page_roundtrip(capsys):
-    pcgts = page_from_file(assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0017_PAGE.xml'))
+    page_file = assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')
+    pcgts = page_from_file(page_file)
     text = to_xml(pcgts)
-    #assert "NoneRegionRefIndexed" not in text
+    assert "NoneRegionRefIndexed" not in text
     pcgts2 = parseString(text.encode('utf8'))
     stderr = capsys.readouterr().err
     assert pcgts2 is not None, stderr
-    #assert (pcgts.Page.ReadingOrder is not None) == (pcgts2.Page.ReadingOrder is not None)
+    assert (pcgts.Page.ReadingOrder is not None) == (pcgts2.Page.ReadingOrder is not None)
     text2 = to_xml(pcgts2)
     assert text == text2
     assert len(pcgts.Page.ReadingOrder.OrderedGroup.RegionRefIndexed) == len(pcgts2.Page.ReadingOrder.OrderedGroup.RegionRefIndexed)
