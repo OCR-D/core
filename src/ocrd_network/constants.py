@@ -49,6 +49,7 @@ class NetworkLoggingDirs(str, Enum):
     PROCESSING_SERVERS = "processing_servers"
     PROCESSING_WORKERS = "processing_workers"
     PROCESSOR_SERVERS = "processor_servers"
+    RESOURCE_MANAGER_SERVER = "resource_manager_server"
 
 
 class ServerApiTags(str, Enum):
