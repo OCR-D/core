@@ -299,7 +299,7 @@ class TestCli(TestCase):
             self.assertEqual(len(ws1.mets.find_all_files(local_only=True)), 29)
             wsdir = Path(ws1.directory)
             (wsdir/'foo').touch()
-            assert len([f for f in wsdir.rglob('*') if f.is_file()]) == 10 # 8 non-repeating files + mets_one_file.xml + foo
+            assert len([f for f in wsdir.rglob('*') if f.is_file()]) == 16 # 6 dummy files + 8 non-repeating files + mets_one_file.xml + foo
 
             result = self.runner.invoke(workspace_cli, ['-d', join(tempdir, 'ws'), 'clean'])
             self.assertEqual(result.exit_code, 0)
