@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.0.4] - 2025-02-18
+
 Changed:
 
 - METS Server: downgrade log messages (`INFO`→`DEBUG`), #1305
@@ -2455,6 +2457,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.0.4]: ../../compare/v3.0.4..v3.0.3
 [3.0.3]: ../../compare/v3.0.3..v3.0.2
 [3.0.2]: ../../compare/v3.0.2..v3.0.1
 [3.0.1]: ../../compare/v3.0.1..v3.0.0
