@@ -119,8 +119,14 @@ class DataHost:
             agent_data.deploy_network_agent(logger, connection_client, mongodb_url, rabbitmq_url)
         if agent_type == AgentType.PROCESSOR_SERVER:
             agent_data.deploy_network_agent(logger, connection_client, mongodb_url)
+        if agent_type == AgentType.RESOURCE_MANAGER:
+            agent_data.deploy_network_agent(logger, connection_client, mongodb_url)
 
         sleep(self.wait_between_agent_deploys)
+
+    def __deploy_network_agent_resource_manager_server(self, logger: Logger):
+        logger.info(f"Deploying resource manager server on host: {self.host}")
+        self.__deploy_network_agent_resource_manager_server(logger)
 
     def __deploy_network_agents_workers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str):
         logger.info(f"Deploying processing workers on host: {self.host}")

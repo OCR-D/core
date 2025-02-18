@@ -14,6 +14,7 @@ SERVER_ALL_PAGES_PLACEHOLDER = "all_pages"
 class AgentType(str, Enum):
     PROCESSING_WORKER = "worker"
     PROCESSOR_SERVER = "server"
+    RESOURCE_MANAGER = "resource_manager"
 
 
 class DeployType(str, Enum):
@@ -49,7 +50,7 @@ class NetworkLoggingDirs(str, Enum):
     PROCESSING_SERVERS = "processing_servers"
     PROCESSING_WORKERS = "processing_workers"
     PROCESSOR_SERVERS = "processor_servers"
-    RESOURCE_MANAGER_SERVER = "resource_manager_server"
+    RESOURCE_MANAGER_SERVERS = "resource_manager_servers"
 
 
 class ServerApiTags(str, Enum):

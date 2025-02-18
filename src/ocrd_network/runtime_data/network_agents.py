@@ -80,7 +80,9 @@ class DataProcessingWorker(DataNetworkAgent):
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processing worker in docker here
-            start_cmd = f""
+            start_cmd = ""
+            if not start_cmd:
+                raise RuntimeError("Missing start command for the Processing Worker in docker mode")
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
@@ -104,7 +106,38 @@ class DataProcessorServer(DataNetworkAgent):
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processor server in docker here
-            start_cmd = f""
+            start_cmd = ""
+            if not start_cmd:
+                raise RuntimeError("Missing start command for the Processor Server in docker mode")
+            self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
+            return self.pid
+        raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
+
+
+class DataResourceManagerServer(DataNetworkAgent):
+    def __init__(
+        self, processor_name: str, deploy_type: DeployType, host: str, port: int, init_by_config: bool, pid: Any = None
+    ) -> None:
+        super().__init__(
+            processor_name=processor_name, host=host, deploy_type=deploy_type, agent_type=AgentType.RESOURCE_MANAGER,
+            init_by_config=init_by_config, pid=pid
+        )
+        self.port = port
+
+    def deploy_network_agent(self, logger: Logger, connector_client, database_url: str):
+        agent_address = f"{self.host}:{self.port}"
+        if self.deploy_type == DeployType.NATIVE:
+            # TODO: Put an actual start command
+            start_cmd = ""
+            if not start_cmd:
+                raise RuntimeError("Missing start command for the Resource Manager Server in native mode")
+            self.pid = self._start_native_instance(logger, connector_client, start_cmd)
+            return self.pid
+        if self.deploy_type == DeployType.DOCKER:
+            # TODO: add real command to start resource manager server in docker here
+            start_cmd = ""
+            if not start_cmd:
+                raise RuntimeError("Missing start command for the Resource Manager Server in docker mode")
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
