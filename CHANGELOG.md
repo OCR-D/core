@@ -5,6 +5,22 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+- METS Server: downgrade log messages (`INFO`→`DEBUG`), #1305
+
+Fixed:
+
+- METS Server: make `add_file` (POST `/file`) work with `pageId=None`, #1305
+- PAGE API: serialization of `OrderedGroup/*` namespace prefixes, #1305
+- run_processor: handle frozendict and empty `parameter` when logging, #1305
+
+Added:
+
+- tests for processors with `add_file(... page_id=None ...)`, #1305
+- tests for ocrd_page roundtrip, #1305
+- tests for processor logging, #1305
+
 ## [3.0.3] - 2025-02-14
 
 Fixed:
