@@ -14,7 +14,6 @@ SERVER_ALL_PAGES_PLACEHOLDER = "all_pages"
 class AgentType(str, Enum):
     PROCESSING_WORKER = "worker"
     PROCESSOR_SERVER = "server"
-    RESOURCE_MANAGER = "resource_manager"
 
 
 class DeployType(str, Enum):

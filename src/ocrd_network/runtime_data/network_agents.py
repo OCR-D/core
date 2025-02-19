@@ -1,4 +1,5 @@
 from logging import Logger
+from time import sleep
 from typing import Any
 
 from re import search as re_search
@@ -51,6 +52,9 @@ class DataNetworkAgent:
         # The id is assigned when the agent is deployed
         self.pid = pid
 
+        # Time to wait between deploying agents
+        self.wait_between_agent_deploys: float = 0.3
+
     def _start_native_instance(self, logger: Logger, ssh_client, start_cmd: str):
         if self.deploy_type != DeployType.NATIVE:
             raise RuntimeError(f"Mismatch of deploy type when starting network agent: {self.processor_name}")
@@ -76,14 +80,18 @@ class DataProcessingWorker(DataNetworkAgent):
     def deploy_network_agent(self, logger: Logger, connector_client, database_url: str, queue_url: str):
         if self.deploy_type == DeployType.NATIVE:
             start_cmd = f"{self.processor_name} {self.agent_type} --database {database_url} --queue {queue_url} &"
+            assert connector_client, f"SSH client connection missing."
             self.pid = self._start_native_instance(logger, connector_client, start_cmd)
+            sleep(self.wait_between_agent_deploys)
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processing worker in docker here
             start_cmd = ""
+            assert connector_client, f"Docker client connection missing."
             if not start_cmd:
                 raise RuntimeError("Missing start command for the Processing Worker in docker mode")
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
+            sleep(self.wait_between_agent_deploys)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
 
@@ -102,42 +110,17 @@ class DataProcessorServer(DataNetworkAgent):
         agent_address = f"{self.host}:{self.port}"
         if self.deploy_type == DeployType.NATIVE:
             start_cmd = f"{self.processor_name} {self.agent_type} --address {agent_address} --database {database_url} &"
+            assert connector_client, f"SSH client connection missing."
             self.pid = self._start_native_instance(logger, connector_client, start_cmd)
+            sleep(self.wait_between_agent_deploys)
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processor server in docker here
             start_cmd = ""
+            assert connector_client, f"Docker client connection missing."
             if not start_cmd:
                 raise RuntimeError("Missing start command for the Processor Server in docker mode")
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
-            return self.pid
-        raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
-
-
-class DataResourceManagerServer(DataNetworkAgent):
-    def __init__(
-        self, processor_name: str, deploy_type: DeployType, host: str, port: int, init_by_config: bool, pid: Any = None
-    ) -> None:
-        super().__init__(
-            processor_name=processor_name, host=host, deploy_type=deploy_type, agent_type=AgentType.RESOURCE_MANAGER,
-            init_by_config=init_by_config, pid=pid
-        )
-        self.port = port
-
-    def deploy_network_agent(self, logger: Logger, connector_client, database_url: str):
-        agent_address = f"{self.host}:{self.port}"
-        if self.deploy_type == DeployType.NATIVE:
-            # TODO: Put an actual start command
-            start_cmd = ""
-            if not start_cmd:
-                raise RuntimeError("Missing start command for the Resource Manager Server in native mode")
-            self.pid = self._start_native_instance(logger, connector_client, start_cmd)
-            return self.pid
-        if self.deploy_type == DeployType.DOCKER:
-            # TODO: add real command to start resource manager server in docker here
-            start_cmd = ""
-            if not start_cmd:
-                raise RuntimeError("Missing start command for the Resource Manager Server in docker mode")
-            self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
+            sleep(self.wait_between_agent_deploys)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")

@@ -1,9 +1,8 @@
 from logging import Logger
-from time import sleep
 from typing import Dict, List, Union
 
 from .connection_clients import create_docker_client, create_ssh_client
-from .network_agents import AgentType, DataNetworkAgent, DataProcessingWorker, DataProcessorServer, DeployType
+from .network_agents import AgentType, DataProcessingWorker, DataProcessorServer, DeployType
 
 
 class DataHost:
@@ -24,22 +23,18 @@ class DataHost:
         self.ssh_client = None
         self.docker_client = None
 
-        # Time to wait between deploying agents
-        self.wait_between_agent_deploys: float = 0.3
-
         # Lists of network agents based on their agent and deployment type
-        self.network_agents_worker_native = []
-        self.network_agents_worker_docker = []
-        self.network_agents_server_native = []
-        self.network_agents_server_docker = []
+        self.network_agents_worker_native: List[DataProcessingWorker] = []
+        self.network_agents_worker_docker: List[DataProcessingWorker] = []
+        self.network_agents_server_native: List[DataProcessorServer] = []
+        self.network_agents_server_docker: List[DataProcessorServer] = []
 
         if not workers:
             workers = []
         if not servers:
             servers = []
 
-        self.__parse_network_agents_workers(processing_workers=workers)
-        self.__parse_network_agents_servers(processor_servers=servers)
+        self.__parse_network_agents(processing_workers=workers, processor_servers=servers)
 
         # Used for caching deployed Processor Servers' ports on the current host
         # Key: processor_name, Value: list of ports
@@ -51,7 +46,7 @@ class DataHost:
             return
         self.processor_servers_ports[processor_name] = self.processor_servers_ports[processor_name].append(port)
 
-    def __append_network_agent_to_lists(self, agent_data: DataNetworkAgent) -> None:
+    def __append_network_agent_to_lists(self, agent_data: Union[DataProcessingWorker, DataProcessorServer]) -> None:
         if agent_data.deploy_type != DeployType.DOCKER and agent_data.deploy_type != DeployType.NATIVE:
             raise ValueError(f"Network agent deploy type is unknown: {agent_data.deploy_type}")
         if agent_data.agent_type != AgentType.PROCESSING_WORKER and agent_data.agent_type != AgentType.PROCESSOR_SERVER:
@@ -61,24 +56,16 @@ class DataHost:
             self.needs_ssh_connector = True
             if agent_data.agent_type == AgentType.PROCESSING_WORKER:
                 self.network_agents_worker_native.append(agent_data)
-            if agent_data.agent_type == AgentType.PROCESSOR_SERVER:
+            elif agent_data.agent_type == AgentType.PROCESSOR_SERVER:
                 self.network_agents_server_native.append(agent_data)
-        if agent_data.deploy_type == DeployType.DOCKER:
+        elif agent_data.deploy_type == DeployType.DOCKER:
             self.needs_docker_connector = True
             if agent_data.agent_type == AgentType.PROCESSING_WORKER:
                 self.network_agents_worker_docker.append(agent_data)
-            if agent_data.agent_type == AgentType.PROCESSOR_SERVER:
+            elif agent_data.agent_type == AgentType.PROCESSOR_SERVER:
                 self.network_agents_server_docker.append(agent_data)
 
-    def __parse_network_agents_servers(self, processor_servers: List[Dict]):
-        for server in processor_servers:
-            server_data = DataProcessorServer(
-                processor_name=server["name"], deploy_type=server["deploy_type"], host=self.host,
-                port=int(server["port"]), init_by_config=True, pid=None
-            )
-            self.__append_network_agent_to_lists(agent_data=server_data)
-
-    def __parse_network_agents_workers(self, processing_workers: List[Dict]):
+    def __parse_network_agents(self, processing_workers: List[Dict], processor_servers: List[Dict]):
         for worker in processing_workers:
             worker_data = DataProcessingWorker(
                 processor_name=worker["name"], deploy_type=worker["deploy_type"], host=self.host,
@@ -86,6 +73,12 @@ class DataHost:
             )
             for _ in range(int(worker["number_of_instance"])):
                 self.__append_network_agent_to_lists(agent_data=worker_data)
+        for server in processor_servers:
+            server_data = DataProcessorServer(
+                processor_name=server["name"], deploy_type=server["deploy_type"], host=self.host,
+                port=int(server["port"]), init_by_config=True, pid=None
+            )
+            self.__append_network_agent_to_lists(agent_data=server_data)
 
     def create_connection_client(self, client_type: str):
         if client_type not in ["docker", "ssh"]:
@@ -97,57 +90,29 @@ class DataHost:
             self.docker_client = create_docker_client(self.host, self.username, self.password, self.keypath)
             return self.docker_client
 
-    def __deploy_network_agent(
-        self, logger: Logger, agent_data: Union[DataProcessorServer, DataProcessingWorker],
-        mongodb_url: str, rabbitmq_url: str
-    ) -> None:
-        deploy_type = agent_data.deploy_type
-        agent_type = agent_data.agent_type
-        name = agent_data.processor_name
-        agent_info = f"network agent: {agent_type}, deploy: {deploy_type}, name: {name}, host: {self.host}"
-        logger.info(f"Deploying {agent_info}")
-
-        connection_client = None
-        if deploy_type == DeployType.NATIVE:
-            assert self.ssh_client, f"SSH client connection missing."
-            connection_client = self.ssh_client
-        if deploy_type == DeployType.DOCKER:
-            assert self.docker_client, f"Docker client connection missing."
-            connection_client = self.docker_client
-
-        if agent_type == AgentType.PROCESSING_WORKER:
-            agent_data.deploy_network_agent(logger, connection_client, mongodb_url, rabbitmq_url)
-        if agent_type == AgentType.PROCESSOR_SERVER:
-            agent_data.deploy_network_agent(logger, connection_client, mongodb_url)
-        if agent_type == AgentType.RESOURCE_MANAGER:
-            agent_data.deploy_network_agent(logger, connection_client, mongodb_url)
-
-        sleep(self.wait_between_agent_deploys)
-
-    def __deploy_network_agent_resource_manager_server(self, logger: Logger):
+    def __deploy_network_agent_resource_manager_server(self, logger: Logger, mongodb_url: str):
         logger.info(f"Deploying resource manager server on host: {self.host}")
-        self.__deploy_network_agent_resource_manager_server(logger)
 
-    def __deploy_network_agents_workers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str):
+    def __deploy_network_agents_processing_workers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str):
         logger.info(f"Deploying processing workers on host: {self.host}")
         amount_workers = len(self.network_agents_worker_native) + len(self.network_agents_worker_docker)
         if not amount_workers:
             logger.info(f"No processing workers found to be deployed")
         for data_worker in self.network_agents_worker_native:
-            self.__deploy_network_agent(logger, data_worker, mongodb_url, rabbitmq_url)
+            data_worker.deploy_network_agent(logger, self.ssh_client, mongodb_url, rabbitmq_url)
         for data_worker in self.network_agents_worker_docker:
-            self.__deploy_network_agent(logger, data_worker, mongodb_url, rabbitmq_url)
+            data_worker.deploy_network_agent(logger, self.docker_client, mongodb_url, rabbitmq_url)
 
-    def __deploy_network_agents_servers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str):
+    def __deploy_network_agents_processor_servers(self, logger: Logger, mongodb_url: str):
         logger.info(f"Deploying processor servers on host: {self.host}")
         amount_servers = len(self.network_agents_server_native) + len(self.network_agents_server_docker)
         if not amount_servers:
             logger.info(f"No processor servers found to be deployed")
         for data_server in self.network_agents_server_native:
-            self.__deploy_network_agent(logger, data_server, mongodb_url, rabbitmq_url)
+            data_server.deploy_network_agent(logger, self.ssh_client, mongodb_url)
             self.__add_deployed_agent_server_port_to_cache(data_server.processor_name, data_server.port)
         for data_server in self.network_agents_server_docker:
-            self.__deploy_network_agent(logger, data_server, mongodb_url, rabbitmq_url)
+            data_server.deploy_network_agent(logger, self.docker_client, mongodb_url)
             self.__add_deployed_agent_server_port_to_cache(data_server.processor_name, data_server.port)
 
     def deploy_network_agents(self, logger: Logger, mongodb_url: str, rabbitmq_url: str) -> None:
@@ -157,8 +122,9 @@ class DataHost:
         if self.needs_docker_connector:
             logger.debug("Creating missing docker connector before deploying")
             self.docker_client = self.create_connection_client(client_type="docker")
-        self.__deploy_network_agents_workers(logger=logger, mongodb_url=mongodb_url, rabbitmq_url=rabbitmq_url)
-        self.__deploy_network_agents_servers(logger=logger, mongodb_url=mongodb_url, rabbitmq_url=rabbitmq_url)
+        self.__deploy_network_agent_resource_manager_server(logger, mongodb_url)
+        self.__deploy_network_agents_processing_workers(logger, mongodb_url, rabbitmq_url)
+        self.__deploy_network_agents_processor_servers(logger, mongodb_url)
         if self.ssh_client:
             self.ssh_client.close()
             self.ssh_client = None
