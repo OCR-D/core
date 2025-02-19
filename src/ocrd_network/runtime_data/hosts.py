@@ -13,6 +13,7 @@ class DataHost:
     ) -> None:
         self.host = host
         self.resource_manager_port = RESOURCE_MANAGER_SERVER_PORT
+        self.resource_manager_pid = None
         self.username = username
         self.password = password
         self.keypath = keypath
@@ -95,9 +96,10 @@ class DataHost:
 
     def __deploy_network_agent_resource_manager_server(self, logger: Logger):
         logger.info(f"Deploying resource manager server on host: {self.host}:{self.resource_manager_port}")
-        start_cmd = f"ocrd resmgr-server --address {self.host}:{self.resource_manager_port} &"
-        deploy_agent_native_get_pid_hack(logger, self.ssh_client, start_cmd)
-        logger.info(f"Deployed: OCR-D Resource Manager Server on host: {self.host}:{self.resource_manager_port}")
+        start_cmd = f"ocrd network resmgr-server --address {self.host}:{self.resource_manager_port} &"
+        pid = deploy_agent_native_get_pid_hack(logger, self.ssh_client, start_cmd)
+        logger.info(f"Deployed: OCR-D Resource Manager Server [{pid}]: {self.host}:{self.resource_manager_port}")
+        self.resource_manager_pid = pid
 
     def __deploy_network_agents_processing_workers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str):
         logger.info(f"Deploying processing workers on host: {self.host}")
@@ -141,6 +143,12 @@ class DataHost:
         if self.docker_client:
             self.docker_client.close()
             self.docker_client = None
+
+    def __stop_network_agent_resource_manager_server(self, logger: Logger):
+        logger.info(f"Stopping OCR-D Resource Manager Server [{self.resource_manager_pid}]: "
+                    f"{self.host}:{self.resource_manager_port}")
+        assert self.ssh_client, f"SSH client connection missing"
+        self.ssh_client.exec_command(f"kill {self.resource_manager_pid}")
 
     def __stop_network_agent(self, logger: Logger, name: str, deploy_type: DeployType, agent_type: AgentType, pid: str):
         agent_info = f"network agent: {agent_type}, deploy: {deploy_type}, name: {name}"
@@ -187,6 +195,7 @@ class DataHost:
         if self.needs_docker_connector and not self.docker_client:
             logger.debug("Creating missing docker connector before stopping")
             self.docker_client = self.create_connection_client(client_type="docker")
+        self.__stop_network_agent_resource_manager_server(logger=logger)
         self.__stop_network_agents_workers(logger=logger)
         self.__stop_network_agents_servers(logger=logger)
         if self.ssh_client:
