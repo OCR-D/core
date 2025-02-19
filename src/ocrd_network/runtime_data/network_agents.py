@@ -25,7 +25,8 @@ def deploy_agent_native_get_pid_hack(logger: Logger, ssh_client, start_cmd: str)
     output = stdout.read().decode("utf-8")
     stdout.close()
     stdin.close()
-    return re_search(r"xyz([0-9]+)xyz", output).group(1)  # type: ignore
+    pid = re_search(r"xyz([0-9]+)xyz", output).group(1)  # type: ignore
+    return pid
 
 
 # TODO: Implement the actual method that is missing
@@ -82,6 +83,7 @@ class DataProcessingWorker(DataNetworkAgent):
             start_cmd = f"{self.processor_name} {self.agent_type} --database {database_url} --queue {queue_url} &"
             assert connector_client, f"SSH client connection missing."
             self.pid = self._start_native_instance(logger, connector_client, start_cmd)
+            logger.debug(f"Started native processing worker pid: {self.pid}")
             sleep(self.wait_between_agent_deploys)
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
@@ -91,6 +93,7 @@ class DataProcessingWorker(DataNetworkAgent):
             if not start_cmd:
                 raise RuntimeError("Missing start command for the Processing Worker in docker mode")
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
+            logger.debug(f"Started docker processing worker pid: {self.pid}")
             sleep(self.wait_between_agent_deploys)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
@@ -112,6 +115,7 @@ class DataProcessorServer(DataNetworkAgent):
             start_cmd = f"{self.processor_name} {self.agent_type} --address {agent_address} --database {database_url} &"
             assert connector_client, f"SSH client connection missing."
             self.pid = self._start_native_instance(logger, connector_client, start_cmd)
+            logger.debug(f"Started native processor server pid: {self.pid}")
             sleep(self.wait_between_agent_deploys)
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
@@ -121,6 +125,7 @@ class DataProcessorServer(DataNetworkAgent):
             if not start_cmd:
                 raise RuntimeError("Missing start command for the Processor Server in docker mode")
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
+            logger.debug(f"Started docker processor worker pid: {self.pid}")
             sleep(self.wait_between_agent_deploys)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
