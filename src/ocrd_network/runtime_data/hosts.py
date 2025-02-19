@@ -100,8 +100,10 @@ class DataHost:
             logger.info(f"No processing workers found to be deployed")
         for data_worker in self.network_agents_worker_native:
             data_worker.deploy_network_agent(logger, self.ssh_client, mongodb_url, rabbitmq_url)
+            logger.info(f"Deployed: {data_worker}")
         for data_worker in self.network_agents_worker_docker:
             data_worker.deploy_network_agent(logger, self.docker_client, mongodb_url, rabbitmq_url)
+            logger.info(f"Deployed: {data_worker}")
 
     def __deploy_network_agents_processor_servers(self, logger: Logger, mongodb_url: str):
         logger.info(f"Deploying processor servers on host: {self.host}")
@@ -111,9 +113,11 @@ class DataHost:
         for data_server in self.network_agents_server_native:
             data_server.deploy_network_agent(logger, self.ssh_client, mongodb_url)
             self.__add_deployed_agent_server_port_to_cache(data_server.processor_name, data_server.port)
+            logger.info(f"Deployed: {data_server}")
         for data_server in self.network_agents_server_docker:
             data_server.deploy_network_agent(logger, self.docker_client, mongodb_url)
             self.__add_deployed_agent_server_port_to_cache(data_server.processor_name, data_server.port)
+            logger.info(f"Deployed: {data_server}")
 
     def deploy_network_agents(self, logger: Logger, mongodb_url: str, rabbitmq_url: str) -> None:
         if self.needs_ssh_connector and not self.ssh_client:
