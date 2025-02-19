@@ -1,5 +1,4 @@
 from logging import Logger
-from platform import processor
 from time import sleep
 from typing import Any
 

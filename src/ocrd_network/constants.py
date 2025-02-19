@@ -10,6 +10,8 @@ OCRD_ALL_TOOL_JSON = "ocrd-all-tool.json"
 # Used as a placeholder to lock all pages when no page_id is specified
 SERVER_ALL_PAGES_PLACEHOLDER = "all_pages"
 
+# TODO: Make this more configurable
+RESOURCE_MANAGER_SERVER_PORT = 45555
 
 class AgentType(str, Enum):
     PROCESSING_WORKER = "worker"

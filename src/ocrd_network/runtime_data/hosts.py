@@ -1,8 +1,10 @@
 from logging import Logger
 from typing import Dict, List, Union
 
+from ..constants import RESOURCE_MANAGER_SERVER_PORT
 from .connection_clients import create_docker_client, create_ssh_client
-from .network_agents import AgentType, DataProcessingWorker, DataProcessorServer, DeployType
+from .network_agents import (
+    AgentType, DataProcessingWorker, DataProcessorServer, DeployType, deploy_agent_native_get_pid_hack)
 
 
 class DataHost:
@@ -10,6 +12,7 @@ class DataHost:
         self, host: str, username: str, password: str, keypath: str, workers: List[Dict], servers: List[Dict]
     ) -> None:
         self.host = host
+        self.resource_manager_port = RESOURCE_MANAGER_SERVER_PORT
         self.username = username
         self.password = password
         self.keypath = keypath
@@ -90,8 +93,11 @@ class DataHost:
             self.docker_client = create_docker_client(self.host, self.username, self.password, self.keypath)
             return self.docker_client
 
-    def __deploy_network_agent_resource_manager_server(self, logger: Logger, mongodb_url: str):
-        logger.info(f"Deploying resource manager server on host: {self.host}")
+    def __deploy_network_agent_resource_manager_server(self, logger: Logger):
+        logger.info(f"Deploying resource manager server on host: {self.host}:{self.resource_manager_port}")
+        start_cmd = f"ocrd resmgr-server --address {self.host}:{self.resource_manager_port} &"
+        deploy_agent_native_get_pid_hack(logger, self.ssh_client, start_cmd)
+        logger.info(f"Deployed: OCR-D Resource Manager Server on host: {self.host}:{self.resource_manager_port}")
 
     def __deploy_network_agents_processing_workers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str):
         logger.info(f"Deploying processing workers on host: {self.host}")
@@ -126,7 +132,7 @@ class DataHost:
         if self.needs_docker_connector:
             logger.debug("Creating missing docker connector before deploying")
             self.docker_client = self.create_connection_client(client_type="docker")
-        self.__deploy_network_agent_resource_manager_server(logger, mongodb_url)
+        self.__deploy_network_agent_resource_manager_server(logger)
         self.__deploy_network_agents_processing_workers(logger, mongodb_url, rabbitmq_url)
         self.__deploy_network_agents_processor_servers(logger, mongodb_url)
         if self.ssh_client:
