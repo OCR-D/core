@@ -37,8 +37,8 @@ class DummyProcessor(Processor):
         return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
+        self.download = False
 
     def process(self):
         print(json.dumps(self.parameter))
@@ -67,8 +67,8 @@ class DummyProcessorWithRequiredParameters(Processor):
         return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
+        self.download = False
 
     def process(self): pass
 
@@ -86,8 +86,8 @@ class DummyProcessorWithOutput(Processor):
         return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
+        self.download = False
 
     def process(self):
         # print([str(x) for x in self.input_files]
@@ -156,8 +156,8 @@ class DummyProcessorWithOutputSleep(Processor):
         return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
+        self.download = False
 
     def process_page_pcgts(self, pcgts, page_id=None):
         sleep(self.parameter['sleep'])
@@ -177,8 +177,8 @@ class DummyProcessorWithOutputFailures(Processor):
         return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
+        self.download = False
 
     # no error handling with old process(), so override new API
     def process_page_file(self, input_file):
@@ -196,10 +196,10 @@ class DummyProcessorWithOutputFailures(Processor):
 
 class DummyProcessorWithOutputLegacy(Processor):
     def __init__(self, *args, **kwargs):
-        kwargs['download_files'] = False
         kwargs['ocrd_tool'] = DUMMY_TOOL
         kwargs['version'] = '0.0.1'
         super().__init__(*args, **kwargs)
+        self.download = False
         if hasattr(self, 'output_file_grp'):
             self.setup()
 
