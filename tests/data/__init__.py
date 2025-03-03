@@ -120,8 +120,8 @@ class DummyProcessorWithOutputDocfile(Processor):
         return 'ocrd-test'
 
     def __init__(self, *args, **kwargs):
-        kwargs['download_files'] = False
         super().__init__(*args, **kwargs)
+        self.download = False
 
     def process_page_pcgts(self, pcgts, page_id=None):
         # copycat
