@@ -175,6 +175,7 @@ properties:
             items:
               type: string
               enum:
+                - preprocessing/format-conversion
                 - preprocessing/characterization
                 - preprocessing/optimization
                 - preprocessing/optimization/cropping
@@ -193,6 +194,10 @@ properties:
                 - layout/segmentation/word
                 - layout/segmentation/classification
                 - layout/analysis
+                - postprocessing/format-conversion
+                - postprocessing/archival
+                - evaluation/layout
+                - evaluation/text
           resource_locations:
             type: array
             description: The locations in the filesystem this processor supports for resource lookup
