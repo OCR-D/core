@@ -5,6 +5,7 @@ from uvicorn import run as uvicorn_run
 from fastapi import APIRouter, FastAPI, status
 
 from ocrd import OcrdResourceManager
+from ocrd.cli.resmgr import resmgr_cli
 from ocrd_utils import initLogging, getLogger
 from .logging_utils import configure_file_handler_with_formatter, get_resource_manager_server_logging_file_path
 
@@ -65,7 +66,7 @@ class ResourceManagerServer(FastAPI):
         )
         base_router.add_api_route(
             path="/download",
-            endpoint=self.download_model,
+            endpoint=self.download_resource,
             methods=["GET"],
             status_code=status.HTTP_200_OK,
             summary=""
@@ -80,8 +81,15 @@ class ResourceManagerServer(FastAPI):
         }
         return json_message
 
-    async def list_available_resources(self, executable: Any = None, dynamic: bool = True, name: Any = None):
-        result = self.resmgr_instance.list_available(executable, dynamic, name)
+    async def list_available_resources(
+        self,
+        executable: Any = None,
+        dynamic: bool = True,
+        name: Any = None,
+        database: Any = None,
+        url: Any = None
+    ):
+        result = self.resmgr_instance.list_available(executable, dynamic, name, database, url)
         json_message = {
             "result": result
         }
@@ -94,5 +102,30 @@ class ResourceManagerServer(FastAPI):
         }
         return json_message
 
-    async def download_model(self):
-        pass
+    @staticmethod
+    async def download_resource(
+        any_url,
+        no_dynamic,
+        resource_type,
+        path_in_archive,
+        allow_uninstalled,
+        overwrite,
+        location,
+        executable,
+        name
+    ):
+        resmgr_cli.download(
+            any_url=any_url,
+            no_dynamic=no_dynamic,
+            resource_type=resource_type,
+            path_in_archive=path_in_archive,
+            allow_uninstalled=allow_uninstalled,
+            overwrite=overwrite,
+            location=location,
+            executable=executable,
+            name=name
+        )
+        json_message = {
+            "result": "Success"
+        }
+        return json_message
