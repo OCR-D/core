@@ -30,15 +30,6 @@ class ResourceManagerServer(FastAPI):
 
         self.add_api_routes()
 
-        base_router = APIRouter()
-        base_router.add_api_route(
-            path="/",
-            endpoint=self.home_page,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
-            summary="Get information about the processing server"
-        )
-
     def start(self):
         uvicorn_run(self, host=self.hostname, port=int(self.port))
 
@@ -60,14 +51,14 @@ class ResourceManagerServer(FastAPI):
         )
         base_router.add_api_route(
             path="/list_available",
-            endpoint=self.list_available_models,
+            endpoint=self.list_available_resources,
             methods=["GET"],
             status_code=status.HTTP_200_OK,
             summary=""
         )
         base_router.add_api_route(
             path="/list_installed",
-            endpoint=self.list_installed_models,
+            endpoint=self.list_installed_resources,
             methods=["GET"],
             status_code=status.HTTP_200_OK,
             summary=""
@@ -89,14 +80,14 @@ class ResourceManagerServer(FastAPI):
         }
         return json_message
 
-    async def list_available_models(self, executable: Any = None, dynamic: bool = True, name: Any = None):
+    async def list_available_resources(self, executable: Any = None, dynamic: bool = True, name: Any = None):
         result = self.resmgr_instance.list_available(executable, dynamic, name)
         json_message = {
             "result": result
         }
         return json_message
 
-    async def list_installed_models(self, executable: Any = None):
+    async def list_installed_resources(self, executable: Any = None):
         result = self.resmgr_instance.list_available(executable)
         json_message = {
             "result": result
