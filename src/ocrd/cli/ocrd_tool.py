@@ -96,6 +96,15 @@ def ocrd_tool_list(ctx):
         print(tool)
 
 # ----------------------------------------------------------------------
+# ocrd ocrd-tool dump-tools
+# ----------------------------------------------------------------------
+
+@ocrd_tool_cli.command('dump-tools', help="Dump tools")
+@pass_ocrd_tool
+def ocrd_tool_dump(ctx):
+    print(dumps(ctx.json['tools'], indent=True))
+
+# ----------------------------------------------------------------------
 # ocrd ocrd-tool tool
 # ----------------------------------------------------------------------
 
