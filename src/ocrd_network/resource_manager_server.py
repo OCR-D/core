@@ -114,11 +114,6 @@ class ResourceManagerServer(FastAPI):
         allow_uninstalled: bool = True,
         overwrite: bool = True
     ):
-        if location not in RESOURCE_LOCATIONS:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Resource location is not one of: {RESOURCE_LOCATIONS}"
-            )
         resmgr_cli.download(
             any_url=any_url,
             no_dynamic=no_dynamic,
