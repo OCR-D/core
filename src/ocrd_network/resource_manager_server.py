@@ -2,11 +2,11 @@ from datetime import datetime
 from os import getpid
 from typing import Any
 from uvicorn import run as uvicorn_run
-from fastapi import APIRouter, FastAPI, status
+from fastapi import APIRouter, FastAPI, HTTPException, status
 
 from ocrd import OcrdResourceManager
 from ocrd.cli.resmgr import resmgr_cli
-from ocrd_utils import initLogging, getLogger
+from ocrd_utils import initLogging, getLogger, RESOURCE_LOCATIONS
 from .logging_utils import configure_file_handler_with_formatter, get_resource_manager_server_logging_file_path
 
 
@@ -104,16 +104,21 @@ class ResourceManagerServer(FastAPI):
 
     @staticmethod
     async def download_resource(
-        any_url,
-        no_dynamic,
-        resource_type,
-        path_in_archive,
-        allow_uninstalled,
-        overwrite,
-        location,
-        executable,
-        name
+        executable: str,
+        resource_name: Any = None,
+        location: Any = None,
+        any_url: str = '',
+        no_dynamic: bool = False,
+        resource_type: str = 'file',
+        path_in_archive: str = '.',
+        allow_uninstalled: bool = True,
+        overwrite: bool = True
     ):
+        if location not in RESOURCE_LOCATIONS:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Resource location is not one of: {RESOURCE_LOCATIONS}"
+            )
         resmgr_cli.download(
             any_url=any_url,
             no_dynamic=no_dynamic,
@@ -123,7 +128,7 @@ class ResourceManagerServer(FastAPI):
             overwrite=overwrite,
             location=location,
             executable=executable,
-            name=name
+            name=resource_name
         )
         json_message = {
             "result": "Success"
