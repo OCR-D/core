@@ -104,8 +104,8 @@ class ResourceManagerServer(FastAPI):
         }
         return json_message
 
-    @staticmethod
     async def download_resource(
+        self,
         executable: str,
         name: Any = None,
         location: Any = None,
@@ -116,14 +116,12 @@ class ResourceManagerServer(FastAPI):
         allow_uninstalled: bool = True,
         overwrite: bool = True
     ):
-        log = getLogger('ocrd.cli.resmgr')
         resmgr = OcrdResourceManager()
         response = []
         if executable != '*' and not name:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Unless EXECUTABLE ('{executable}') is the '*' wildcard, NAME is required"
-            )
+            message = f"Unless EXECUTABLE ('{executable}') is the '*' wildcard, NAME is required"
+            self.log.error(message)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
         elif executable == '*':
             executable = None
         if name == '*':
@@ -132,16 +130,19 @@ class ResourceManagerServer(FastAPI):
         is_filename = Path(any_url).exists() if any_url else False
         if executable and not which(executable):
             if not allow_uninstalled:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Executable '{executable}' is not installed. "
-                           f"To download resources anyway, use the -a/--allow-uninstalled flag"
-                )
+                message = (f"Executable '{executable}' is not installed. To download resources anyway, "
+                           f"use the -a/--allow-uninstalled flag")
+                self.log.error(message)
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
             else:
-                response.append(f"Executable '{executable}' is not installed, but downloading resources anyway.")
+                message = f"Executable '{executable}' is not installed, but downloading resources anyway."
+                self.log.info(message)
+                response.append(message)
         reslist = resmgr.list_available(executable=executable, dynamic=not no_dynamic, name=name)
         if not any(r[1] for r in reslist):
-            response.append(f"No resources {name} found in registry for executable {executable}")
+            message = f"No resources {name} found in registry for executable {executable}"
+            self.log.info(message)
+            response.append(message)
             if executable and name:
                 reslist = [(executable, [{
                     'url': any_url or '???',
@@ -158,15 +159,21 @@ class ResourceManagerServer(FastAPI):
                 if any_url:
                     resdict['url'] = any_url
                 if resdict['url'] == '???':
-                    response.append(f"Cannot download user resource {resdict['name']}")
+                    message = f"Cannot download user resource {resdict['name']}"
+                    self.log.info(message)
+                    response.append(message)
                     continue
                 if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
-                    response.append(f"Downloading {registered} resource '{resdict['name']}' ({resdict['url']})")
+                    message = f"Downloading {registered} resource '{resdict['name']}' ({resdict['url']})"
+                    self.log.info(message)
+                    response.append(message)
                     if 'size' not in resdict:
                         with requests.head(resdict['url']) as r:
                             resdict['size'] = int(r.headers.get('content-length', 0))
                 else:
-                    response.append(f"Copying {registered} resource '{resdict['name']}' ({resdict['url']})")
+                    message = f"Copying {registered} resource '{resdict['name']}' ({resdict['url']})"
+                    self.log.info(message)
+                    response.append(message)
                     urlpath = Path(resdict['url'])
                     resdict['url'] = str(urlpath.resolve())
                     if Path(urlpath).is_dir():
@@ -176,11 +183,10 @@ class ResourceManagerServer(FastAPI):
                 if not location:
                     location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
                 elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail=f"The selected --location {location} is not in the {this_executable}'s resource search "
-                               f"path, refusing to install to invalid location"
-                    )
+                    message = (f"The selected --location {location} is not in the {this_executable}'s resource search "
+                               f"path, refusing to install to invalid location")
+                    self.log.error(message)
+                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
                 if location != 'module':
                     basedir = resmgr.location_to_resource_dir(location)
                 else:
@@ -200,16 +206,22 @@ class ResourceManagerServer(FastAPI):
                         progress_cb=None
                     )
                     if registered == 'unregistered':
-                        response.append(f"{this_executable} resource '{name}' ({any_url}) not a known resource, "
-                                        f"creating stub in {resmgr.user_list}'")
+                        message = (f"{this_executable} resource '{name}' ({any_url}) not a known resource, "
+                                   f"creating stub in {resmgr.user_list}'")
+                        self.log.info(message)
+                        response.append(message)
                         resmgr.add_to_user_database(this_executable, fpath, url=any_url)
                     resmgr.save_user_list()
-                    response.append(f"Installed resource {resdict['url']} under {fpath}")
+                    message = f"Installed resource {resdict['url']} under {fpath}"
+                    self.log.info(message)
+                    response.append(message)
                 except FileExistsError as exc:
                     response.append(str(exc))
                 parameter_usage = resmgr.parameter_usage(
                     resdict['name'], usage=resdict.get('parameter_usage', 'as-is'))
-                response.append(f"Use in parameters as '{parameter_usage}'")
+                message = f"Use in parameters as '{parameter_usage}'"
+                self.log.info(message)
+                response.append(message)
         json_message = {
             "result": response
         }
