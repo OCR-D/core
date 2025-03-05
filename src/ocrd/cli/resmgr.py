@@ -13,7 +13,8 @@ from yaml import safe_load, safe_dump
 import requests
 import click
 
-from ocrd_utils import directory_size, getLogger, get_moduledir, get_ocrd_tool_json, initLogging, RESOURCE_LOCATIONS
+from ocrd_utils import (
+    directory_size, getLogger, get_moduledir, get_ocrd_tool_json, initLogging, RESOURCE_LOCATIONS, RESOURCE_TYPES)
 from ocrd.constants import RESOURCE_USER_LIST_COMMENT
 
 from ..resource_manager import OcrdResourceManager
@@ -64,7 +65,7 @@ def list_installed(executable=None):
 @click.option('-n', '--any-url', default='', help='URL of unregistered resource to download/copy from')
 @click.option('-D', '--no-dynamic', default=False, is_flag=True,
               help="Whether to skip looking into each processor's --dump-{json,module-dir} for module-level resources")
-@click.option('-t', '--resource-type', type=click.Choice(['file', 'directory', 'archive']), default='file',
+@click.option('-t', '--resource-type', type=click.Choice(RESOURCE_TYPES), default='file',
               help='Type of resource',)
 @click.option('-P', '--path-in-archive', default='.', help='Path to extract in case of archive type')
 @click.option('-a', '--allow-uninstalled', is_flag=True,
@@ -99,8 +100,6 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
         executable = None
     if name == '*':
         name = None
-    is_url = (any_url.startswith('https://') or any_url.startswith('http://')) if any_url else False
-    is_filename = Path(any_url).exists() if any_url else False
     if executable and not which(executable):
         if not allow_uninstalled:
             log.error(f"Executable '{executable}' is not installed. "
@@ -119,16 +118,33 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 'path_in_archive': path_in_archive}]
             )]
     for this_executable, this_reslist in reslist:
+        if not location:
+            # TODO @mehmedGIT: What if there is no 'resource_locations' in this executable ocrd tool json?
+            #  Then the location will always default to None
+            location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
+        elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
+            log.error(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
+                      f"refusing to install to invalid location")
+            sys.exit(1)
+        if location == 'module':
+            basedir = get_moduledir(this_executable)
+            if not basedir:
+                basedir = resmgr.location_to_resource_dir('data')
+        else:
+            # TODO @mehmedGIT: The basedir always defaults to CWD when location is not passed from the CLI,
+            #  this may be an undesired default behaviour. Consider setting that up with a default path somewhere.
+            #  For example, RESOURCES_DIR_SYSTEM or config.XDG_DATA_HOME, for consistency and predictability.
+            basedir = resmgr.location_to_resource_dir(location)
+
         for resdict in this_reslist:
-            if 'size' in resdict:
-                registered = "registered"
-            else:
-                registered = "unregistered"
+            registered = "registered" if "size" in resdict else "unregistered"
             if any_url:
                 resdict['url'] = any_url
             if resdict['url'] == '???':
                 log.warning(f"Cannot download user resource {resdict['name']}")
                 continue
+            # TODO @mehmedGIT: Consider properly handling cases for invalid URLs.
+            #  Also consider properly separating the downloading from copying in the resmgr.download_resource().
             if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
                 log.info(f"Downloading {registered} resource '{resdict['name']}' ({resdict['url']})")
                 if 'size' not in resdict:
@@ -138,26 +154,11 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 log.info(f"Copying {registered} resource '{resdict['name']}' ({resdict['url']})")
                 urlpath = Path(resdict['url'])
                 resdict['url'] = str(urlpath.resolve())
-                if Path(urlpath).is_dir():
-                    resdict['size'] = directory_size(urlpath)
-                else:
-                    resdict['size'] = urlpath.stat().st_size
-            if not location:
-                location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
-            elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
-                log.error(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
-                          f"refusing to install to invalid location")
-                sys.exit(1)
-            if location != 'module':
-                basedir = resmgr.location_to_resource_dir(location)
-            else:
-                basedir = get_moduledir(this_executable)
-                if not basedir:
-                    basedir = resmgr.location_to_resource_dir('data')
+                resdict['size'] = directory_size(urlpath) if Path(urlpath).is_dir() else urlpath.stat().st_size
 
             try:
                 with click.progressbar(length=resdict['size']) as bar:
-                    fpath = resmgr.download(
+                    fpath = resmgr.download_resource(
                         this_executable,
                         resdict['url'],
                         basedir,

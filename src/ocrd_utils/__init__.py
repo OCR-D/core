@@ -118,6 +118,7 @@ from .constants import (
     REGEX_PREFIX,
     REGEX_FILE_ID,
     RESOURCE_LOCATIONS,
+    RESOURCE_TYPES,
     LOG_FORMAT,
     LOG_TIMEFMT,
     VERSION,
