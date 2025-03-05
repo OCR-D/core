@@ -1,3 +1,4 @@
+from logging import Logger
 from pathlib import Path
 from os.path import join
 from os import environ, listdir, getcwd, unlink
@@ -223,16 +224,21 @@ class OcrdResourceManager:
         return self.location_to_resource_dir('data')
 
     def location_to_resource_dir(self, location):
-        return '/usr/local/share/ocrd-resources' if location == 'system' else \
-                join(self.xdg_data_home, 'ocrd-resources') if location == 'data' else \
-                getcwd()
+        if location == 'data':
+            return join(self.xdg_data_home, 'ocrd-resources')
+        if location == 'system':
+            return '/usr/local/share/ocrd-resources'
+        return getcwd()
 
     def resource_dir_to_location(self, resource_path):
         resource_path = str(resource_path)
-        return 'system' if resource_path.startswith('/usr/local/share/ocrd-resources') else \
-               'data' if resource_path.startswith(join(self.xdg_data_home, 'ocrd-resources')) else \
-               'cwd' if resource_path.startswith(getcwd()) else \
-               resource_path
+        if resource_path.startswith('/usr/local/share/ocrd-resources'):
+            return 'system'
+        if resource_path.startswith(join(self.xdg_data_home, 'ocrd-resources')):
+            return 'data'
+        if resource_path.startswith(getcwd()):
+            return 'cwd'
+        return resource_path
 
     @staticmethod
     def parameter_usage(name, usage='as-is'):
@@ -243,8 +249,7 @@ class OcrdResourceManager:
         raise ValueError(f"No such usage '{usage}'")
 
     @staticmethod
-    def _download_impl(url, filename, progress_cb=None, size=None):
-        log = getLogger('ocrd.resource_manager._download_impl')
+    def _download_impl(log: Logger, url, filename, progress_cb=None, size=None):
         log.info(f"Downloading {url} to {filename}")
         try:
             gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
@@ -256,7 +261,7 @@ class OcrdResourceManager:
                         if "Content-Disposition" not in r.headers:
                             url = get_url_from_gdrive_confirmation(r.text)
                 except RuntimeError as e:
-                    log.warning("Cannot unwrap Google Drive URL: %s", e)
+                    log.warning(f"Cannot unwrap Google Drive URL: {e}")
             with open(filename, 'wb') as f:
                 with requests.get(url, stream=True) as r:
                     r.raise_for_status()
@@ -270,8 +275,7 @@ class OcrdResourceManager:
             raise e
 
     @staticmethod
-    def _copy_file(src, dst, progress_cb=None):
-        log = getLogger('ocrd.resource_manager._copy_file')
+    def _copy_file(log: Logger, src, dst, progress_cb=None):
         log.info(f"Copying file {src} to {dst}")
         with open(dst, 'wb') as f_out, open(src, 'rb') as f_in:
             while True:
@@ -284,8 +288,7 @@ class OcrdResourceManager:
                     break
 
     @staticmethod
-    def _copy_dir(src, dst, progress_cb=None):
-        log = getLogger('ocrd.resource_manager._copy_dir')
+    def _copy_dir(log: Logger, src, dst, progress_cb=None):
         log.info(f"Copying dir recursively from {src} to {dst}")
         if not Path(src).is_dir():
             raise ValueError(f"The source is not a directory: {src}")
@@ -298,16 +301,40 @@ class OcrdResourceManager:
                 OcrdResourceManager._copy_file(child, child_dst, progress_cb)
 
     @staticmethod
-    def _copy_impl(src_filename, filename, progress_cb=None):
-        log = getLogger('ocrd.resource_manager._copy_impl')
+    def _copy_impl(log: Logger, src_filename, filename, progress_cb=None):
         log.info(f"Copying {src_filename} to {filename}")
         if Path(src_filename).is_dir():
-            OcrdResourceManager._copy_dir(src_filename, filename, progress_cb)
+            OcrdResourceManager._copy_dir(log, src_filename, filename, progress_cb)
         else:
-            OcrdResourceManager._copy_file(src_filename, filename, progress_cb)
+            OcrdResourceManager._copy_file(log, src_filename, filename, progress_cb)
+
+    def _download_archive(self, log: Logger, url: str, path_in_archive: str, fpath: Path, progress_cb=None):
+        archive_fname = 'download.tar.xx'
+        with pushd_popd(tempdir=True) as tempdir:
+            if url.startswith('https://') or url.startswith('http://'):
+                self._download_impl(log, url, archive_fname, progress_cb)
+            else:
+                self._copy_impl(log, url, archive_fname, progress_cb)
+            Path('out').mkdir()
+            with pushd_popd('out'):
+                mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
+                log.info(f"Extracting {mimetype} archive to {tempdir}/out")
+                if mimetype == 'application/zip':
+                    with ZipFile(f'../{archive_fname}', 'r') as zipf:
+                        zipf.extractall()
+                elif mimetype in ('application/gzip', 'application/x-xz'):
+                    with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
+                        tar.extractall()
+                else:
+                    raise RuntimeError(f"Unable to handle extraction of {mimetype} archive {url}")
+                log.info(f"Copying '{path_in_archive}' from archive to {fpath}")
+                if Path(path_in_archive).is_dir():
+                    copytree(path_in_archive, str(fpath))
+                else:
+                    copy(path_in_archive, str(fpath))
 
     # TODO Proper caching (make head request for size, If-Modified etc)
-    def download(
+    def download_resource(
         self, executable, url, basedir, overwrite=False, no_subdir=False, name=None, resource_type='file',
         path_in_archive='.', progress_cb=None,
     ):
@@ -320,7 +347,6 @@ class OcrdResourceManager:
             url_parsed = urlparse(url)
             name = Path(unquote(url_parsed.path)).name
         fpath = Path(destdir, name)
-        is_url = url.startswith('https://') or url.startswith('http://')
         if fpath.exists():
             if not overwrite:
                 fpath_type = 'Directory' if fpath.is_dir() else 'File'
@@ -335,34 +361,12 @@ class OcrdResourceManager:
                 unlink(str(fpath))
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type in ('file', 'directory'):
-            if is_url:
-                self._download_impl(url, fpath, progress_cb)
+            if url.startswith('https://') or url.startswith('http://'):
+                self._download_impl(log, url, fpath, progress_cb)
             else:
-                self._copy_impl(url, fpath, progress_cb)
+                self._copy_impl(log, url, fpath, progress_cb)
         elif resource_type == 'archive':
-            archive_fname = 'download.tar.xx'
-            with pushd_popd(tempdir=True) as tempdir:
-                if is_url:
-                    self._download_impl(url, archive_fname, progress_cb)
-                else:
-                    self._copy_impl(url, archive_fname, progress_cb)
-                Path('out').mkdir()
-                with pushd_popd('out'):
-                    mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
-                    log.info(f"Extracting {mimetype} archive to {tempdir}/out")
-                    if mimetype == 'application/zip':
-                        with ZipFile(f'../{archive_fname}', 'r') as zipf:
-                            zipf.extractall()
-                    elif mimetype in ('application/gzip', 'application/x-xz'):
-                        with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
-                            tar.extractall()
-                    else:
-                        raise RuntimeError(f"Unable to handle extraction of {mimetype} archive {url}")
-                    log.info(f"Copying '{path_in_archive}' from archive to {fpath}")
-                    if Path(path_in_archive).is_dir():
-                        copytree(path_in_archive, str(fpath))
-                    else:
-                        copy(path_in_archive, str(fpath))
+            self._download_archive(log, url, path_in_archive, fpath, progress_cb)
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):

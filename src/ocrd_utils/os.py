@@ -31,7 +31,7 @@ from filetype import guess as filetype_guess
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
-from .constants import EXT_TO_MIME
+from .constants import EXT_TO_MIME, RESOURCE_LOCATIONS, RESOURCES_DIR_SYSTEM
 from .config import config
 from .logging import getLogger
 from .introspect import resource_string
@@ -90,7 +90,7 @@ def get_ocrd_tool_json(executable):
         except (JSONDecodeError, OSError) as e:
             getLogger('ocrd.utils.get_ocrd_tool_json').error(f'{executable} --dump-json produced invalid JSON: {e}')
     if 'resource_locations' not in ocrd_tool:
-        ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
+        ocrd_tool['resource_locations'] = RESOURCE_LOCATIONS
     return ocrd_tool
 
 @lru_cache()
@@ -118,7 +118,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
     candidates.append(join(xdg_data_home, 'ocrd-resources', executable, fname))
-    candidates.append(join('/usr/local/share/ocrd-resources', executable, fname))
+    candidates.append(join(RESOURCES_DIR_SYSTEM, executable, fname))
     if moduled:
         candidates.append(join(moduled, fname))
     return candidates
@@ -134,7 +134,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
     except FileNotFoundError:
         # processor we're looking for resource_locations of is not installed.
         # Assume the default
-        resource_locations = ['data', 'cwd', 'system', 'module']
+        resource_locations = RESOURCE_LOCATIONS
     xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
     # XXX cwd would list too many false positives
     # if 'cwd' in resource_locations:
@@ -151,7 +151,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
         if datadir.is_dir():
             candidates += datadir.iterdir()
     if 'system' in resource_locations:
-        systemdir = Path('/usr/local/share/ocrd-resources', executable)
+        systemdir = Path(RESOURCES_DIR_SYSTEM, executable)
         if systemdir.is_dir():
             candidates += systemdir.iterdir()
     if 'module' in resource_locations and moduled:
