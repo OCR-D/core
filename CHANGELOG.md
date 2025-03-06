@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Use `config.OCRD_DOWNLOAD_INPUT` consistently instead of ambiguous kwargs, #1310
+
+Added:
+
+  * `ocrd ocrd-tool dump-tools` command to output the `tools` section, #1310
+
 ## [3.0.4] - 2025-02-18
 
 Changed:
