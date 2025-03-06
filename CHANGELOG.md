@@ -2469,6 +2469,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.1.0]: ../../compare/v3.1.0..v3.0.4
 [3.0.4]: ../../compare/v3.0.4..v3.0.3
 [3.0.3]: ../../compare/v3.0.3..v3.0.2
 [3.0.2]: ../../compare/v3.0.2..v3.0.1
