@@ -13,6 +13,10 @@ Added:
 
   * `ocrd ocrd-tool dump-tools` command to output the `tools` section, #1310
 
+Changed:
+
+  * Update spec-derived data files from OCR-D/spec v3.26.0, #1311
+
 ## [3.0.4] - 2025-02-18
 
 Changed:
