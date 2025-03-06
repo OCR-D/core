@@ -30,6 +30,7 @@ yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:timestamp'
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
+from ocrd_utils.constants import RESOURCES_DIR_SYSTEM
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -47,6 +48,10 @@ class OcrdResourceManager:
         self._xdg_config_home = xdg_config_home
         self._userdir = userdir
         self.user_list = Path(self.xdg_config_home, 'ocrd', 'resources.yml')
+
+        self.log.info(f"OcrdResourceManager data home path: {self.xdg_data_home}")
+        self.log.info(f"OcrdResourceManager config home path: {self.xdg_config_home}")
+        self.log.info(f"OcrdResourceManager user list path: {self.user_list}")
 
         if not skip_init:
             self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
@@ -70,19 +75,21 @@ class OcrdResourceManager:
 
     @property
     def xdg_config_home(self):
-        if self._xdg_config_home:
-            return self._xdg_config_home
-        return config.XDG_CONFIG_HOME
+        if not self._xdg_config_home:
+            self._xdg_config_home = config.XDG_CONFIG_HOME
+        return self._xdg_config_home
 
     def save_user_list(self, database=None):
         if not database:
             database = self.database
+        self.log.info(f"Saving resources to path: {self.user_list}")
         with open(self.user_list, 'w', encoding='utf-8') as f:
             f.write(RESOURCE_USER_LIST_COMMENT)
             f.write('\n')
             f.write(safe_dump(database))
 
     def load_resource_list(self, list_filename, database=None):
+        self.log.info(f"Loading resources from path: {list_filename}")
         if not database:
             database = self.database
         if list_filename.is_file():
@@ -110,6 +117,7 @@ class OcrdResourceManager:
         if dynamic:
             skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
             for exec_dir in environ['PATH'].split(':'):
+                self.log.debug(f"Searching for executables inside path: {exec_dir}")
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
                     if not exec_path.name.startswith('ocrd-'):
                         self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
@@ -138,6 +146,7 @@ class OcrdResourceManager:
                     restuple[1].append(resdict)
         if not found:
             ret = [(executable, [])]
+        self.save_user_list()
         return ret
 
     def list_installed(self, executable=None):
@@ -151,7 +160,7 @@ class OcrdResourceManager:
             # resources we know about
             all_executables = list(self.database.keys())
             # resources in the file system
-            parent_dirs = [join(x, 'ocrd-resources') for x in [self.xdg_data_home, '/usr/local/share']]
+            parent_dirs = [f"{self.xdg_data_home}/ocrd-resources", RESOURCES_DIR_SYSTEM]
             for parent_dir in parent_dirs:
                 if Path(parent_dir).exists():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
@@ -185,6 +194,7 @@ class OcrdResourceManager:
                 resdict['path'] = str(res_filename)
                 reslist.append(resdict)
             ret.append((this_executable, reslist))
+        self.save_user_list()
         return ret
 
     def add_to_user_database(self, executable, res_filename, url=None, resource_type='file'):
