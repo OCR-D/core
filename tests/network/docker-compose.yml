@@ -84,6 +84,7 @@ services:
 
   ocrd_dummy_processing_worker:
     image: "ocrd_core_test"
+    pull_policy: never
     depends_on:
       ocrd_network_processing_server:
         condition: service_healthy
@@ -100,6 +101,7 @@ services:
 
   ocrd_network_core_test:
     image: "ocrd_core_test"
+    pull_policy: never
     container_name: core_test
     depends_on:
       ocrd_network_processing_server:
