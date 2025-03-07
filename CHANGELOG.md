@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.1.1] - 2025-03-07
+
 Fixed:
 
   * Fix CUDA Docker deployment, #1312
@@ -2477,6 +2479,7 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.1.1]: ../../compare/v3.1.1..v3.1.0
 [3.1.0]: ../../compare/v3.1.0..v3.0.4
 [3.0.4]: ../../compare/v3.0.4..v3.0.3
 [3.0.3]: ../../compare/v3.0.3..v3.0.2
