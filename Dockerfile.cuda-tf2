@@ -6,6 +6,8 @@ WORKDIR /build/core
 COPY Makefile .
 
 RUN make deps-tf2
+# Smoke Test
+RUN ocrd --version
 
 WORKDIR /data
 

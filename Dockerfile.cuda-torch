@@ -6,6 +6,8 @@ WORKDIR /build
 COPY Makefile .
 
 RUN make deps-torch
+# Smoke Test
+RUN ocrd --version
 
 WORKDIR /data
 
