@@ -145,20 +145,24 @@ deps-tf1:
 	  pushd $$name && for path in $$name*; do mv $$path $${path/$$name/$$newname}; done && popd && \
 	  $(PYTHON) -m wheel pack $$name && \
 	  $(PIP) install $$newname*.whl && popd && rm -fr $$OLDPWD; \
-	  $(PIP) install "numpy<1.24"; \
+	  $(PIP) install "numpy<1.24" -r requirements.txt; \
 	else \
-	$(PIP) install "tensorflow-gpu<2.0"; \
+	  $(PIP) install "tensorflow-gpu<2.0" -r requirements.txt; \
 	fi
 
 deps-tf2:
 	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8; then \
-	$(PIP) install tensorflow; \
+	$(PIP) install tensorflow -r requirements.txt; \
 	else \
-	$(PIP) install "tensorflow[and-cuda]"; \
+	$(PIP) install "tensorflow[and-cuda]"  -r requirements.txt; \
 	fi
 
 deps-torch:
-	$(PIP) install -i https://download.pytorch.org/whl/cu118 torchvision==0.16.2+cu118 torch==2.1.2+cu118
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torchvision==0.16.2+cu118 torch==2.1.2+cu118 -r requirements.txt
+
+# deps-*: always mix core's requirements.txt with additional deps,
+# so pip does not ignore the older version reqs,
+# but instead tries to find a mutually compatible set.
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
