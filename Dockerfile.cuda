@@ -1,4 +1,4 @@
-ARG BASE_IMAGE
+ARG BASE_IMAGE=docker.io/ocrd/core
 FROM $BASE_IMAGE AS ocrd_core_base
 
 ENV MAMBA_EXE=/usr/local/bin/conda
