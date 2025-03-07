@@ -399,8 +399,16 @@ docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 
 docker-cuda-torch: docker-cuda
 
+# if the current ref is a release, then use it as tag instead of :latest
+docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch: GIT_TAG := $(strip $(shell git describe --tags | grep -x "v[0-9]\.[0-9][[0-9]\.[0-9]"))
 docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
-	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) --target ocrd_core_base --build-arg BASE_IMAGE=$(lastword $(DOCKER_BASE_IMAGE)) $(DOCKER_ARGS) .
+	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) \
+	$(if $(GIT_TAG),$(DOCKER_TAG:%=-t %:$(GIT_TAG))) \
+	--target ocrd_core_base \
+	--build-arg BASE_IMAGE=$(lastword $(DOCKER_BASE_IMAGE)) \
+	--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
+	--build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+	$(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build
