@@ -181,6 +181,10 @@ deps-torch:
 deps-ubuntu:
 	apt-get install -y python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev
 
+# Dependencies for deployment via Conda
+deps-conda: get-conda
+	conda install -c conda-forge python==3.8.* imagemagick geos pkgconfig
+
 # Install test python deps via pip
 deps-test:
 	$(PIP) install -U pip
