@@ -7,6 +7,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Fixed:
 
+  * Fix CUDA Docker deployment, #1312
+  * Consistent Docker image metadata, #1312
+  * Default `ocrd-all-tool.json` should contain `ocrd-{dummy,filter}`, #1312
+
+## [3.1.0] - 2025-03-06
+
+Fixed:
+
   * Use `config.OCRD_DOWNLOAD_INPUT` consistently instead of ambiguous kwargs, #1310
 
 Added:
