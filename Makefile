@@ -57,13 +57,19 @@ help:
 PIP_INSTALL ?= $(PIP) install
 PIP_INSTALL_CONFIG_OPTION ?=
 
-.PHONY: deps-cuda deps-ubuntu deps-test
+.PHONY: get-conda deps-cuda deps-ubuntu deps-test
 
-deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
-deps-cuda: export CONDA_PREFIX ?= /conda
-deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
-deps-cuda:
-	curl --retry 6 -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+ifeq ($(shell command -v conda),)
+# Conda installation: get Micromamba distribution
+get-conda: CONDA_EXE ?= /usr/local/bin/conda
+get-conda: export CONDA_PREFIX ?= /conda
+# first part of recipe: see micro.mamba.pm/install.sh
+get-conda: OS != uname
+get-conda: PLATFORM = $(subst Darwin,osx,$(subst Linux,linux,$(OS)))
+get-conda: MACHINE = $(or $(filter aarch64 arm64 ppc64le, $(ARCH)), 64)
+get-conda: URL = https://micro.mamba.pm/api/micromamba/$(PLATFORM)-$(MACHINE)/latest
+get-conda:
+	curl --retry 6 -Ls $(URL) | tar -xvj bin/micromamba
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
@@ -71,6 +77,14 @@ deps-cuda:
 	echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$(CONDA_PREFIX)/' >> /etc/profile.d/98-conda.sh
 	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
 	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
+else
+# Conda installation already present: do nothing
+get-conda: ;
+endif
+
+# Dependencies for CUDA installation via Conda
+deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+deps-cuda: get-conda
 # Get CUDA toolkit, including compiler and libraries with dev,
 # however, the Nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
 #MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
@@ -79,7 +93,6 @@ deps-cuda:
 # The conda-forge channel has cudnn and cudatoolkit but no cudatoolkit-dev anymore (and we need both!),
 # so let's combine nvidia and conda-forge (will be same lib versions, no waste of space),
 # but omitting cuda-cudart-dev and cuda-libraries-dev (as these will be pulled by pip for torch anyway):
-	MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
 	conda install -c nvidia/label/cuda-11.8.0 \
 	                 cuda-nvcc \
 	                 cuda-cccl \
