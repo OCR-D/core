@@ -158,7 +158,7 @@ deps-tf1:
 	  pushd $$name && for path in $$name*; do mv $$path $${path/$$name/$$newname}; done && popd && \
 	  $(PYTHON) -m wheel pack $$name && \
 	  $(PIP) install $$newname*.whl && popd && rm -fr $$OLDPWD; \
-	  $(PIP) install "numpy<1.24" -r requirements.txt; \
+	  $(PIP) install "numpy<1.24" -r $DIRSTACK/requirements.txt; \
 	else \
 	  $(PIP) install "tensorflow-gpu<2.0" -r requirements.txt; \
 	fi
