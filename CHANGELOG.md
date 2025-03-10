@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `make deps-tf1`: path to `requirements.txt` now correct, #1313
+
 ## [3.1.1] - 2025-03-07
 
 Fixed:
