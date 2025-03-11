@@ -254,7 +254,7 @@ def guess_media_type(input_file : str, fallback : str = None, application_xml : 
     if mimetype is None:
         mimetype = EXT_TO_MIME.get(''.join(Path(input_file).suffixes), fallback)
     if mimetype is None:
-        raise ValueError("Could not determine MIME type of input_file must")
+        raise ValueError("Could not determine MIME type of input_file '%s'", str(input_file))
     if mimetype == 'application/xml':
         mimetype = application_xml
     return mimetype
