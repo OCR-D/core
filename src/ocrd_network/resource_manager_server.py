@@ -126,8 +126,6 @@ class ResourceManagerServer(FastAPI):
             executable = None
         if name == '*':
             name = None
-        is_url = (any_url.startswith('https://') or any_url.startswith('http://')) if any_url else False
-        is_filename = Path(any_url).exists() if any_url else False
         if executable and not which(executable):
             if not allow_uninstalled:
                 message = (f"Executable '{executable}' is not installed. To download resources anyway, "
@@ -149,80 +147,32 @@ class ResourceManagerServer(FastAPI):
                     'name': name,
                     'type': resource_type,
                     'path_in_archive': path_in_archive}]
-                            )]
+                )]
         for this_executable, this_reslist in reslist:
-            for resdict in this_reslist:
-                if 'size' in resdict:
-                    registered = "registered"
-                else:
-                    registered = "unregistered"
-                if any_url:
-                    resdict['url'] = any_url
-                if resdict['url'] == '???':
-                    message = f"Cannot download user resource {resdict['name']}"
-                    self.log.info(message)
-                    response.append(message)
-                    continue
-                if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
-                    message = f"Downloading {registered} resource '{resdict['name']}' ({resdict['url']})"
-                    self.log.info(message)
-                    response.append(message)
-                    if 'size' not in resdict:
-                        with requests.head(resdict['url']) as r:
-                            resdict['size'] = int(r.headers.get('content-length', 0))
-                else:
-                    message = f"Copying {registered} resource '{resdict['name']}' ({resdict['url']})"
-                    self.log.info(message)
-                    response.append(message)
-                    urlpath = Path(resdict['url'])
-                    resdict['url'] = str(urlpath.resolve())
-                    if Path(urlpath).is_dir():
-                        resdict['size'] = directory_size(urlpath)
-                    else:
-                        resdict['size'] = urlpath.stat().st_size
-                if not location:
-                    location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
-                elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
-                    message = (f"The selected --location {location} is not in the {this_executable}'s resource search "
-                               f"path, refusing to install to invalid location")
-                    self.log.error(message)
-                    raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-                if location != 'module':
-                    basedir = resmgr.location_to_resource_dir(location)
-                else:
-                    basedir = get_moduledir(this_executable)
-                    if not basedir:
-                        basedir = resmgr.location_to_resource_dir('data')
+            resource_locations = get_ocrd_tool_json(this_executable)['resource_locations']
+            if not location:
+                location = resource_locations[0]
+            elif location not in resource_locations:
+                response.append(
+                    f"The selected --location {location} is not in the {this_executable}'s resource search path, "
+                    f"refusing to install to invalid location. Instead installing to: {resource_locations[0]}")
+            res_dest_dir = resmgr.build_resource_dest_dir(location=location, executable=this_executable)
+            for res_dict in this_reslist:
                 try:
-                    fpath = resmgr.download(
-                        this_executable,
-                        resdict['url'],
-                        basedir,
-                        name=resdict['name'],
-                        resource_type=resdict.get('type', resource_type),
-                        path_in_archive=resdict.get('path_in_archive', path_in_archive),
+                    fpath = resmgr.handle_resource(
+                        res_dict=res_dict,
+                        executable=this_executable,
+                        dest_dir=res_dest_dir,
+                        any_url=any_url,
                         overwrite=overwrite,
-                        no_subdir=location in ['cwd', 'module'],
-                        progress_cb=None
+                        resource_type=resource_type,
+                        path_in_archive=path_in_archive
                     )
-                    if registered == 'unregistered':
-                        message = (f"{this_executable} resource '{name}' ({any_url}) not a known resource, "
-                                   f"creating stub in {resmgr.user_list}'")
-                        self.log.info(message)
-                        response.append(message)
-                        resmgr.add_to_user_database(this_executable, fpath, url=any_url)
-                    resmgr.save_user_list()
-                    message = f"Installed resource {resdict['url']} under {fpath}"
-                    self.log.info(message)
-                    response.append(message)
+                    if not fpath:
+                        continue
                 except FileExistsError as exc:
                     response.append(str(exc))
-                parameter_usage = resmgr.parameter_usage(
-                    resdict['name'], usage=resdict.get('parameter_usage', 'as-is'))
-                message = f"Use in parameters as '{parameter_usage}'"
-                self.log.info(message)
-                response.append(message)
-        json_message = {
-            "result": response
-        }
+                usage = res_dict.get('parameter_usage', 'as-is')
+                response.append(f"Use in parameters as '{resmgr.parameter_usage(res_dict['name'], usage)}'")
+        json_message = { "result": response }
         return json_message
