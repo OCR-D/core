@@ -360,8 +360,8 @@ class OcrdResourceManager:
             else:
                 copy(path_in_archive, str(fpath))
 
-    def _copy_resource(
-        self, log: Logger, url: str, fpath: Path, resource_type: str, path_in_archive: str
+    def copy_resource(
+        self, log: Logger, url: str, fpath: Path, resource_type: str = 'file', path_in_archive: str = '.'
     ) -> Path:
         """
         Copy a local resource to another destination
@@ -375,8 +375,8 @@ class OcrdResourceManager:
             self._copy_impl(log, url, fpath)
         return fpath
 
-    def _download_resource(
-        self, log: Logger, url: str, fpath: Path, resource_type: str, path_in_archive: str
+    def download_resource(
+        self, log: Logger, url: str, fpath: Path, resource_type: str = 'file', path_in_archive: str = '.'
     ) -> Path:
         """
         Download a resource by URL to a destination directory
@@ -430,18 +430,18 @@ class OcrdResourceManager:
             if 'size' not in res_dict:
                 with requests.head(res_dict['url']) as r:
                     res_dict['size'] = int(r.headers.get('content-length', 0))
-            fpath = self._download_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
+            fpath = self.download_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
         else:
             log.info(f"Copying {registered} resource '{resource_name}' ({res_dict['url']})")
             urlpath = Path(res_dict['url'])
             res_dict['url'] = str(urlpath.resolve())
             res_dict['size'] = directory_size(urlpath) if Path(urlpath).is_dir() else urlpath.stat().st_size
-            fpath = self._copy_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
+            fpath = self.copy_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
 
         if registered == 'unregistered':
-            log.info(f"{executable} resource '{resource_name}' ({any_url}) not a known resource, creating stub "
+            log.info(f"{executable} resource '{resource_name}' ({res_dict['url']}) not a known resource, creating stub "
                      f"in {self.user_list}'")
-            self.add_to_user_database(executable, fpath, url=any_url)
+            self.add_to_user_database(executable, fpath, url=res_dict['url'])
         log.info(f"Installed resource {res_dict['url']} under {fpath}")
         return fpath
 

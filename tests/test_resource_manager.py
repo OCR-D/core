@@ -51,7 +51,8 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
     mgr.list_installed('ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
     # TODO mock request
-    fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
+    dest_dir = mgr.build_resource_dest_dir(location=mgr.location_to_resource_dir('data'), executable=proc)
+    fpath = mgr.download_resource(log=mgr.log, url=CONST_RESOURCE_URL_LAYOUT, fpath=dest_dir)
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
 
@@ -74,7 +75,8 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed('ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
-    fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
+    dest_dir = mgr.build_resource_dest_dir(location=mgr.location_to_resource_dir('data'), executable=proc)
+    fpath = mgr.download_resource(log=mgr.log, url=CONST_RESOURCE_URL_LAYOUT, fpath=dest_dir)
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
     assert mgr.userdir == tmp_path
@@ -93,7 +95,8 @@ def test_resources_manager_config_explicit(tmp_path):
     assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed(executable='ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
-    fpath = mgr.download(proc, CONST_RESOURCE_URL_LAYOUT, mgr.location_to_resource_dir('data'))
+    dest_dir = mgr.build_resource_dest_dir(location=mgr.location_to_resource_dir('data'), executable=proc)
+    fpath = mgr.download_resource(log=mgr.log, url=CONST_RESOURCE_URL_LAYOUT, fpath=dest_dir)
     assert fpath.exists()
     assert mgr.add_to_user_database(proc, fpath)
 
@@ -174,18 +177,18 @@ def test_date_as_string(tmp_path):
     mgr.list_available(executable='ocrd-eynollah-segment')
 
 
-def test_download_archive(tmp_path):
+def test_copy_archive(tmp_path):
     from ocrd.resource_manager import OcrdResourceManager
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
+    proc = 'ocrd-foo'
+    dest_dir = mgr.build_resource_dest_dir(location=mgr.location_to_resource_dir('data'), executable=proc)
     for archive_type in ('.zip', '.tar.gz', '.tar.xz'):
-        mgr.download(
-            'ocrd-foo',
-            str(Path(__file__).parent / f'data/filename{archive_type}'),
-            mgr.location_to_resource_dir('data'),
+        mgr.copy_resource(
+            log=mgr.log,
+            url=str(Path(__file__).parent / f'data/filename{archive_type}'),
+            fpath=dest_dir,
             resource_type='archive',
-            name='filename.ext',
             path_in_archive='filename.ext',
-            overwrite=True,
         )
         filecontent_path =  Path(tmp_path / 'ocrd-resources/ocrd-foo/filename.ext')
         assert filecontent_path.read_text() == '1\n'
@@ -210,7 +213,7 @@ def test_copy_impl(tmp_path):
     _create_test_folder(test_dir=root_dir, letter="c")
 
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
-    mgr._copy_impl(src_filename=root_dir, filename=root_dir_copied)
+    mgr._copy_impl(mgr.log, src_filename=root_dir, filename=root_dir_copied)
 
     assert Path(f"{root_dir_copied}/a/a.txt").exists()
     assert Path(f"{root_dir_copied}/b/b.txt").exists()
