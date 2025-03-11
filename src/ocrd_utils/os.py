@@ -172,11 +172,8 @@ def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_dat
                     'environment.pickle', 'resource_list.yml', 'lib.bash']):
                 continue
             candidates.append(resource)
-    # recurse once
-    for parent in candidates:
-        if parent.is_dir() and parent.name != '.git':
-            candidates += parent.iterdir()
-    return sorted([str(x) for x in candidates])
+    return sorted([str(x) for x in candidates
+                   if x.name not in ['.git']])
 
 def get_processor_resource_types(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None) -> List[str]:
     """
