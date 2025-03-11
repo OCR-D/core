@@ -187,7 +187,7 @@ class OcrdResourceManager:
                 resdict_list = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
                 if resdict_list:
                     resdict = resdict_list[0]
-                elif str(res_filename.parent) == moduledir:
+                elif str(res_filename.parent).startswith(moduledir):
                     resdict = {
                         'name': res_name, 
                         'url': str(res_filename), 
