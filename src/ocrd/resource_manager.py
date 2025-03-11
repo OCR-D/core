@@ -192,7 +192,7 @@ class OcrdResourceManager:
                     }
                 else:
                     resdict = self.add_to_user_database(this_executable, res_filename, resource_type=res_type)
-                resdict['path_in_archive'] = str(res_filename)
+                # resdict['path'] = str(res_filename)
                 reslist.append(resdict)
             ret.append((this_executable, reslist))
         self.save_user_list()
