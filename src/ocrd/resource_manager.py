@@ -283,7 +283,7 @@ class OcrdResourceManager:
         raise ValueError(f"No such usage '{usage}'")
 
     @staticmethod
-    def _download_impl(log: Logger, url: str, filename, progress_cb=None):
+    def _download_impl(log: Logger, url: str, filename):
         log.info(f"Downloading {url} to {filename}")
         try:
             gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
@@ -300,8 +300,6 @@ class OcrdResourceManager:
                 with requests.get(url, stream=True) as r:
                     r.raise_for_status()
                     for data in r.iter_content(chunk_size=4096):
-                        if progress_cb:
-                            progress_cb(len(data))
                         f.write(data)
         except Exception as e:
             rmtree(filename, ignore_errors=True)
@@ -309,20 +307,18 @@ class OcrdResourceManager:
             raise e
 
     @staticmethod
-    def _copy_file(log: Logger, src, dst, progress_cb=None):
+    def _copy_file(log: Logger, src, dst):
         log.info(f"Copying file {src} to {dst}")
         with open(dst, 'wb') as f_out, open(src, 'rb') as f_in:
             while True:
                 chunk = f_in.read(4096)
                 if chunk:
                     f_out.write(chunk)
-                    if progress_cb:
-                        progress_cb(len(chunk))
                 else:
                     break
 
     @staticmethod
-    def _copy_dir(log: Logger, src, dst, progress_cb=None):
+    def _copy_dir(log: Logger, src, dst):
         log.info(f"Copying dir recursively from {src} to {dst}")
         if not Path(src).is_dir():
             raise ValueError(f"The source is not a directory: {src}")
@@ -330,17 +326,17 @@ class OcrdResourceManager:
         for child in Path(src).rglob('*'):
             child_dst = Path(dst) / child.relative_to(src)
             if Path(child).is_dir():
-                OcrdResourceManager._copy_dir(child, child_dst, progress_cb)
+                OcrdResourceManager._copy_dir(log, child, child_dst)
             else:
-                OcrdResourceManager._copy_file(child, child_dst, progress_cb)
+                OcrdResourceManager._copy_file(log, child, child_dst)
 
     @staticmethod
-    def _copy_impl(log: Logger, src_filename, filename, progress_cb=None):
+    def _copy_impl(log: Logger, src_filename, filename):
         log.info(f"Copying {src_filename} to {filename}")
         if Path(src_filename).is_dir():
-            OcrdResourceManager._copy_dir(log, src_filename, filename, progress_cb)
+            OcrdResourceManager._copy_dir(log, src_filename, filename)
         else:
-            OcrdResourceManager._copy_file(log, src_filename, filename, progress_cb)
+            OcrdResourceManager._copy_file(log, src_filename, filename)
 
     @staticmethod
     def _extract_archive(log: Logger, tempdir: Path, path_in_archive: str, fpath: Path, archive_fname: str):
@@ -363,7 +359,7 @@ class OcrdResourceManager:
                 copy(path_in_archive, str(fpath))
 
     def _copy_resource(
-        self, log: Logger, url: str, fpath: Path, resource_type: str, path_in_archive: str, progress_cb=None
+        self, log: Logger, url: str, fpath: Path, resource_type: str, path_in_archive: str
     ) -> Path:
         """
         Copy a local resource to another destination
@@ -371,14 +367,14 @@ class OcrdResourceManager:
         if resource_type == 'archive':
             archive_fname = 'download.tar.xx'
             with pushd_popd(tempdir=True) as tempdir:
-                self._copy_impl(log, url, archive_fname, progress_cb)
+                self._copy_impl(log, url, archive_fname)
                 self._extract_archive(log, tempdir, path_in_archive, fpath, archive_fname)
         else:
-            self._copy_impl(log, url, fpath, progress_cb)
+            self._copy_impl(log, url, fpath)
         return fpath
 
     def _download_resource(
-        self, log: Logger, url: str, fpath: Path, resource_type: str, path_in_archive: str, progress_cb=None
+        self, log: Logger, url: str, fpath: Path, resource_type: str, path_in_archive: str
     ) -> Path:
         """
         Download a resource by URL to a destination directory
@@ -386,16 +382,16 @@ class OcrdResourceManager:
         if resource_type == 'archive':
             archive_fname = 'download.tar.xx'
             with pushd_popd(tempdir=True) as tempdir:
-                self._download_impl(log, url, archive_fname, progress_cb)
+                self._download_impl(log, url, archive_fname)
                 self._extract_archive(log, tempdir, path_in_archive, fpath, archive_fname)
         else:
-            self._download_impl(log, url, fpath, progress_cb)
+            self._download_impl(log, url, fpath)
         return fpath
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def handle_resource(
         self, url: str, dest_dir: Path, overwrite: bool = False, name: str = None, resource_type: str = 'file',
-        path_in_archive: str = '.', progress_cb=None
+        path_in_archive: str = '.'
     ) -> Path:
         """
         Download or Copy a resource by URL to a destination directory
@@ -416,9 +412,9 @@ class OcrdResourceManager:
             self.remove_resource(log, resource_path=fpath)
         dest_dir.mkdir(parents=True, exist_ok=True)
         if url.startswith('https://') or url.startswith('http://'):
-            fpath = self._download_resource(log, url, fpath, resource_type, path_in_archive, progress_cb)
+            fpath = self._download_resource(log, url, fpath, resource_type, path_in_archive)
         else:
-            fpath = self._copy_resource(log, url, fpath, resource_type, path_in_archive, progress_cb)
+            fpath = self._copy_resource(log, url, fpath, resource_type, path_in_archive)
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):

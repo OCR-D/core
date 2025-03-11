@@ -146,16 +146,14 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 resdict['size'] = directory_size(urlpath) if Path(urlpath).is_dir() else urlpath.stat().st_size
 
             try:
-                with click.progressbar(length=resdict['size']) as bar:
-                    fpath = resmgr.handle_resource(
-                        resdict['url'],
-                        dest_dir=res_dest_dir,
-                        name=resdict['name'],
-                        resource_type=resdict.get('type', resource_type),
-                        path_in_archive=resdict.get('path_in_archive', path_in_archive),
-                        overwrite=overwrite,
-                        progress_cb=lambda delta: bar.update(delta)
-                    )
+                fpath = resmgr.handle_resource(
+                    resdict['url'],
+                    dest_dir=res_dest_dir,
+                    name=resdict['name'],
+                    resource_type=resdict.get('type', resource_type),
+                    path_in_archive=resdict.get('path_in_archive', path_in_archive),
+                    overwrite=overwrite
+                )
                 if registered == 'unregistered':
                     log.info(f"{this_executable} resource '{name}' ({any_url}) not a known resource, creating stub "
                              f"in {resmgr.user_list}'")
