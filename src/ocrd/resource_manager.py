@@ -30,7 +30,7 @@ yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:timestamp'
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
-from ocrd_utils.constants import RESOURCES_DIR_SYSTEM
+from ocrd_utils.constants import RESOURCES_DIR_SYSTEM, RESOURCE_TYPES
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -251,6 +251,26 @@ class OcrdResourceManager:
             return 'cwd'
         return resource_path
 
+    def build_resource_dest_dir(self, location: str, executable: str) -> Path:
+        if location == 'module':
+            base_dir = get_moduledir(executable)
+            if not base_dir:
+                base_dir = self.location_to_resource_dir('data')
+        else:
+            base_dir = self.location_to_resource_dir(location)
+        no_subdir = location in ['cwd', 'module']
+        dest_dir = Path(base_dir) if no_subdir else Path(base_dir, executable)
+        return dest_dir
+
+    @staticmethod
+    def remove_resource(log: Logger, resource_path: Path):
+        if resource_path.is_dir():
+            log.info(f"Removing existing target resource directory {resource_path}")
+            rmtree(str(resource_path))
+        else:
+            log.info(f"Removing existing target resource file {resource_path}")
+            unlink(str(resource_path))
+
     @staticmethod
     def parameter_usage(name, usage='as-is'):
         if usage == 'as-is':
@@ -319,65 +339,79 @@ class OcrdResourceManager:
         else:
             OcrdResourceManager._copy_file(log, src_filename, filename, progress_cb)
 
-    def _download_archive(self, log: Logger, url: str, path_in_archive: str, fpath: Path, progress_cb=None):
-        archive_fname = 'download.tar.xx'
-        with pushd_popd(tempdir=True) as tempdir:
-            if url.startswith('https://') or url.startswith('http://'):
-                self._download_impl(log, url, archive_fname, progress_cb)
+    @staticmethod
+    def _extract_archive(log, tempdir, path_in_archive: str, fpath: Path, archive_fname: str):
+        Path('out').mkdir()
+        with pushd_popd('out'):
+            mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
+            log.info(f"Extracting {mimetype} archive to {tempdir}/out")
+            if mimetype == 'application/zip':
+                with ZipFile(f'../{archive_fname}', 'r') as zipf:
+                    zipf.extractall()
+            elif mimetype in ('application/gzip', 'application/x-xz'):
+                with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
+                    tar.extractall()
             else:
+                raise RuntimeError(f"Unable to handle extraction of {mimetype} archive")
+            log.info(f"Copying '{path_in_archive}' from archive to {fpath}")
+            if Path(path_in_archive).is_dir():
+                copytree(path_in_archive, str(fpath))
+            else:
+                copy(path_in_archive, str(fpath))
+
+    def _copy_resource(self, log, url, fpath, resource_type, path_in_archive, progress_cb=None) -> Path:
+        """
+        Copy a local resource to another destination
+        """
+        if resource_type == 'archive':
+            archive_fname = 'download.tar.xx'
+            with pushd_popd(tempdir=True) as tempdir:
                 self._copy_impl(log, url, archive_fname, progress_cb)
-            Path('out').mkdir()
-            with pushd_popd('out'):
-                mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
-                log.info(f"Extracting {mimetype} archive to {tempdir}/out")
-                if mimetype == 'application/zip':
-                    with ZipFile(f'../{archive_fname}', 'r') as zipf:
-                        zipf.extractall()
-                elif mimetype in ('application/gzip', 'application/x-xz'):
-                    with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
-                        tar.extractall()
-                else:
-                    raise RuntimeError(f"Unable to handle extraction of {mimetype} archive {url}")
-                log.info(f"Copying '{path_in_archive}' from archive to {fpath}")
-                if Path(path_in_archive).is_dir():
-                    copytree(path_in_archive, str(fpath))
-                else:
-                    copy(path_in_archive, str(fpath))
+                self._extract_archive(log, tempdir, path_in_archive, fpath, archive_fname)
+        else:
+            self._copy_impl(log, url, fpath, progress_cb)
+        return fpath
+
+    def _download_resource(self, log, url, fpath, resource_type, path_in_archive, progress_cb=None) -> Path:
+        """
+        Download a resource by URL to a destination directory
+        """
+        if resource_type == 'archive':
+            archive_fname = 'download.tar.xx'
+            with pushd_popd(tempdir=True) as tempdir:
+                self._download_impl(log, url, archive_fname, progress_cb)
+                self._extract_archive(log, tempdir, path_in_archive, fpath, archive_fname)
+        else:
+            self._download_impl(log, url, fpath, progress_cb)
+        return fpath
 
     # TODO Proper caching (make head request for size, If-Modified etc)
-    def download_resource(
-        self, executable, url, basedir, overwrite=False, no_subdir=False, name=None, resource_type='file',
+    def handle_resource(
+        self, url, dest_dir, overwrite=False, name=None, resource_type='file',
         path_in_archive='.', progress_cb=None,
-    ):
+    ) -> Path:
         """
-        Download a resource by URL
+        Download or Copy a resource by URL to a destination directory
         """
-        log = getLogger('ocrd.resource_manager.download')
-        destdir = Path(basedir) if no_subdir else Path(basedir, executable)
+        log = getLogger('ocrd.resource_manager.handle_resource')
+        if resource_type not in RESOURCE_TYPES:
+            raise ValueError(f"Unknown resource type: {resource_type}, must be one of: {RESOURCE_TYPES}")
         if not name:
             url_parsed = urlparse(url)
             name = Path(unquote(url_parsed.path)).name
-        fpath = Path(destdir, name)
+        fpath = Path(dest_dir, name)
         if fpath.exists():
             if not overwrite:
                 fpath_type = 'Directory' if fpath.is_dir() else 'File'
                 log.warning(f"{fpath_type} {fpath} already exists but --overwrite is not set, skipping the download")
                 # raise FileExistsError(f"{fpath_type} {fpath} already exists but --overwrite is not set")
                 return fpath
-            if fpath.is_dir():
-                log.info(f"Removing existing target directory {fpath}")
-                rmtree(str(fpath))
-            else:
-                log.info(f"Removing existing target file {fpath}")
-                unlink(str(fpath))
-        destdir.mkdir(parents=True, exist_ok=True)
-        if resource_type in ('file', 'directory'):
-            if url.startswith('https://') or url.startswith('http://'):
-                self._download_impl(log, url, fpath, progress_cb)
-            else:
-                self._copy_impl(log, url, fpath, progress_cb)
-        elif resource_type == 'archive':
-            self._download_archive(log, url, path_in_archive, fpath, progress_cb)
+            self.remove_resource(log, resource_path=fpath)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        if url.startswith('https://') or url.startswith('http://'):
+            fpath = self._download_resource(log, url, path_in_archive, resource_type, fpath, progress_cb)
+        else:
+            fpath = self._copy_resource(log, url, path_in_archive, resource_type, fpath, progress_cb)
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):

@@ -124,13 +124,7 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
             log.error(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
                       f"refusing to install to invalid location")
             sys.exit(1)
-        if location == 'module':
-            basedir = get_moduledir(this_executable)
-            if not basedir:
-                basedir = resmgr.location_to_resource_dir('data')
-        else:
-            basedir = resmgr.location_to_resource_dir(location)
-
+        res_dest_dir = resmgr.build_resource_dest_dir(location=location, executable=this_executable)
         for resdict in this_reslist:
             registered = "registered" if "size" in resdict else "unregistered"
             if any_url:
@@ -153,15 +147,13 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
 
             try:
                 with click.progressbar(length=resdict['size']) as bar:
-                    fpath = resmgr.download_resource(
-                        this_executable,
+                    fpath = resmgr.handle_resource(
                         resdict['url'],
-                        basedir,
+                        dest_dir=res_dest_dir,
                         name=resdict['name'],
                         resource_type=resdict.get('type', resource_type),
                         path_in_archive=resdict.get('path_in_archive', path_in_archive),
                         overwrite=overwrite,
-                        no_subdir=location in ['cwd', 'module'],
                         progress_cb=lambda delta: bar.update(delta)
                     )
                 if registered == 'unregistered':
@@ -172,8 +164,8 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 log.info(f"Installed resource {resdict['url']} under {fpath}")
             except FileExistsError as exc:
                 log.info(str(exc))
-            log.info(f"Use in parameters as "
-                     f"'{resmgr.parameter_usage(resdict['name'], usage=resdict.get('parameter_usage', 'as-is'))}'")
+            usage = resdict.get('parameter_usage', 'as-is')
+            log.info(f"Use in parameters as '{resmgr.parameter_usage(resdict['name'], usage)}'")
 
 
 @resmgr_cli.command('migrate')
