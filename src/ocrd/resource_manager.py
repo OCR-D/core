@@ -160,7 +160,7 @@ class OcrdResourceManager:
             # resources we know about
             all_executables = list(self.database.keys())
             # resources in the file system
-            parent_dirs = [f"{self.xdg_data_home}/ocrd-resources", RESOURCES_DIR_SYSTEM]
+            parent_dirs = [f"{join(self.xdg_data_home, 'ocrd-resources')}", RESOURCES_DIR_SYSTEM]
             for parent_dir in parent_dirs:
                 if Path(parent_dir).exists():
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
@@ -237,12 +237,12 @@ class OcrdResourceManager:
         if location == 'data':
             return join(self.xdg_data_home, 'ocrd-resources')
         if location == 'system':
-            return '/usr/local/share/ocrd-resources'
+            return RESOURCES_DIR_SYSTEM
         return getcwd()
 
     def resource_dir_to_location(self, resource_path):
         resource_path = str(resource_path)
-        if resource_path.startswith('/usr/local/share/ocrd-resources'):
+        if resource_path.startswith(RESOURCES_DIR_SYSTEM):
             return 'system'
         if resource_path.startswith(join(self.xdg_data_home, 'ocrd-resources')):
             return 'data'
