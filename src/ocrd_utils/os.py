@@ -15,13 +15,14 @@ __all__ = [
     'redirect_stderr_and_stdout_to_file',
 ]
 
+from typing import Any, Dict, Iterator, List, Optional, Union
 from tempfile import TemporaryDirectory, gettempdir
 from functools import lru_cache
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from shutil import which
 from json import loads
 from json.decoder import JSONDecodeError
-from os import getcwd, chdir, stat, chmod, umask, environ
+from os import getcwd, chdir, stat, chmod, umask, environ, PathLike
 from pathlib import Path
 from os.path import abspath as abspath_, join
 from zipfile import ZipFile
@@ -36,7 +37,7 @@ from .config import config
 from .logging import getLogger
 from .introspect import resource_string
 
-def abspath(url):
+def abspath(url : str) -> str:
     """
     Get a full path to a file or file URL
 
@@ -47,7 +48,7 @@ def abspath(url):
     return abspath_(url)
 
 @contextmanager
-def pushd_popd(newcwd=None, tempdir=False):
+def pushd_popd(newcwd : Union[str, PathLike] = None, tempdir : bool = False) -> Iterator[PathLike]:
     if newcwd and tempdir:
         raise Exception("pushd_popd can accept either newcwd or tempdir, not both")
     try:
@@ -67,7 +68,7 @@ def pushd_popd(newcwd=None, tempdir=False):
     finally:
         chdir(oldcwd)
 
-def unzip_file_to_dir(path_to_zip, output_directory):
+def unzip_file_to_dir(path_to_zip : Union[str, PathLike], output_directory : str) -> None:
     """
     Extract a ZIP archive to a directory
     """
@@ -75,7 +76,7 @@ def unzip_file_to_dir(path_to_zip, output_directory):
         z.extractall(output_directory)
 
 @lru_cache()
-def get_ocrd_tool_json(executable):
+def get_ocrd_tool_json(executable : str) -> Dict[str, Any]:
     """
     Get the ``ocrd-tool`` description of ``executable``.
     """
@@ -94,7 +95,7 @@ def get_ocrd_tool_json(executable):
     return ocrd_tool
 
 @lru_cache()
-def get_moduledir(executable):
+def get_moduledir(executable : str) -> str:
     moduledir = None
     try:
         ocrd_all_moduledir = loads(resource_string('ocrd', 'ocrd-all-module-dir.json'))
@@ -106,14 +107,16 @@ def get_moduledir(executable):
             getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
 
-def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):
+def list_resource_candidates(executable : str, fname : str, cwd : Optional[str] = None, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[str]:
     """
     Generate candidates for processor resources according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters
     """
+    if cwd is None:
+        cwd = getcwd()
     candidates = []
     candidates.append(join(cwd, fname))
-    xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
+    xdg_data_home = xdg_data_home or config.XDG_DATA_HOME
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
@@ -123,7 +126,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_
         candidates.append(join(moduled, fname))
     return candidates
 
-def list_all_resources(executable, moduled=None, xdg_data_home=None):
+def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[str]:
     """
     List all processor resources in the filesystem according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters
@@ -135,7 +138,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
         # processor we're looking for resource_locations of is not installed.
         # Assume the default
         resource_locations = RESOURCE_LOCATIONS
-    xdg_data_home = config.XDG_DATA_HOME if not xdg_data_home else xdg_data_home
+    xdg_data_home = xdg_data_home or config.XDG_DATA_HOME
     # XXX cwd would list too many false positives
     # if 'cwd' in resource_locations:
     #     cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
@@ -175,7 +178,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
             candidates += parent.iterdir()
     return sorted([str(x) for x in candidates])
 
-def get_processor_resource_types(executable, ocrd_tool=None):
+def get_processor_resource_types(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None) -> List[str]:
     """
     Determine what type of resource parameters a processor needs.
 
@@ -215,12 +218,12 @@ class AtomicWriterPerms(AtomicWriter):
         return f
 
 @contextmanager
-def atomic_write(fpath):
+def atomic_write(fpath : str) -> Iterator[str]:
     with atomic_write_(fpath, writer_cls=AtomicWriterPerms, overwrite=True) as f:
         yield f
 
 
-def is_file_in_directory(directory, file):
+def is_file_in_directory(directory : Union[str, PathLike], file : Union[str, PathLike]) -> bool:
     """
     Return True if ``file`` is in ``directory`` (by checking that all components of ``directory`` are in ``file.parts``)
     """
@@ -228,7 +231,7 @@ def is_file_in_directory(directory, file):
     file = Path(file)
     return list(file.parts)[:len(directory.parts)] == list(directory.parts)
 
-def itertree(path):
+def itertree(path : Union[str, PathLike]) -> PathLike:
     """
     Generate a list of paths by recursively enumerating ``path``
     """
@@ -239,14 +242,14 @@ def itertree(path):
             yield from itertree(subpath)
     yield path
 
-def directory_size(path):
+def directory_size(path : Union[str, PathLike]) -> int:
     """
     Calculates size of all files in directory ``path``
     """
     path = Path(path)
     return sum(f.stat().st_size for f in path.glob('**/*') if f.is_file())
 
-def guess_media_type(input_file : str, fallback : str = None, application_xml : str = 'application/xml'):
+def guess_media_type(input_file : str, fallback : Optional[str] = None, application_xml : str = 'application/xml') -> str:
     """
     Guess the media type of a file path
     """
