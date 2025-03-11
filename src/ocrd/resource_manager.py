@@ -442,6 +442,7 @@ class OcrdResourceManager:
             log.info(f"{executable} resource '{resource_name}' ({res_dict['url']}) not a known resource, creating stub "
                      f"in {self.user_list}'")
             self.add_to_user_database(executable, fpath, url=res_dict['url'])
+        self.save_user_list()
         log.info(f"Installed resource {res_dict['url']} under {fpath}")
         return fpath
 
