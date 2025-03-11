@@ -71,7 +71,7 @@ def list_installed(executable=None):
 @click.option('-a', '--allow-uninstalled', is_flag=True,
               help="Allow installing resources for uninstalled processors",)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
-@click.option('-l', '--location', type=click.Choice(RESOURCE_LOCATIONS),
+@click.option('-l', '--location', type=click.Choice(RESOURCE_LOCATIONS), default='data',
               help="Where to store resources - defaults to first location in processor's 'resource_locations' "
                    "list or finally 'data'")
 @click.argument('executable', required=True)
@@ -92,6 +92,8 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
     and its ``--path-in-archive`` will subsequently be renamed to NAME.
     """
     log = getLogger('ocrd.cli.resmgr')
+    print(f"Location: {location}")
+    print(f"Resource type: {resource_type}")
     resmgr = OcrdResourceManager()
     if executable != '*' and not name:
         log.error(f"Unless EXECUTABLE ('{executable}') is the '*' wildcard, NAME is required")
