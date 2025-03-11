@@ -83,6 +83,7 @@ class OcrdResourceManager:
         if not database:
             database = self.database
         self.log.info(f"Saving resources to path: {self.user_list}")
+        self._dedup_database()
         with open(self.user_list, 'w', encoding='utf-8') as f:
             f.write(RESOURCE_USER_LIST_COMMENT)
             f.write('\n')

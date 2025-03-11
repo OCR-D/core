@@ -92,8 +92,6 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
     and its ``--path-in-archive`` will subsequently be renamed to NAME.
     """
     log = getLogger('ocrd.cli.resmgr')
-    print(f"Location: {location}")
-    print(f"Resource type: {resource_type}")
     resmgr = OcrdResourceManager()
     if executable != '*' and not name:
         log.error(f"Unless EXECUTABLE ('{executable}') is the '*' wildcard, NAME is required")
@@ -121,8 +119,6 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
             )]
     for this_executable, this_reslist in reslist:
         if not location:
-            # TODO @mehmedGIT: What if there is no 'resource_locations' in this executable ocrd tool json?
-            #  Then the location will always default to None
             location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
         elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
             log.error(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
@@ -133,9 +129,6 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
             if not basedir:
                 basedir = resmgr.location_to_resource_dir('data')
         else:
-            # TODO @mehmedGIT: The basedir always defaults to CWD when location is not passed from the CLI,
-            #  this may be an undesired default behaviour. Consider setting that up with a default path somewhere.
-            #  For example, RESOURCES_DIR_SYSTEM or config.XDG_DATA_HOME, for consistency and predictability.
             basedir = resmgr.location_to_resource_dir(location)
 
         for resdict in this_reslist:
