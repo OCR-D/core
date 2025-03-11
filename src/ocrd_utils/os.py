@@ -187,13 +187,16 @@ def get_processor_resource_types(executable, ocrd_tool=None):
         if not which(executable):
             return ['*/*']
         ocrd_tool = get_ocrd_tool_json(executable)
-    if not next((True for p in ocrd_tool.get('parameters', {}).values() if 'content-type' in p), False):
-        # None of the parameters for this processor are resources (or not
-        # the resource parameters are not properly declared, so output both
-        # directories and files
+    mime_types = [mime
+                  for param in ocrd_tool['parameters'].values()
+                  if param['type'] == 'string' and param.get('format', '') == 'uri' and 'content-type' in param
+                  for mime in param['content-type'].split(',')]
+    if not len(mime_types):
+        # None of the parameters for this processor are resources
+        # (or the parameters' resource types are not properly declared,)
+        # so output both directories and files
         return ['*/*']
-    return [p['content-type'] for p in ocrd_tool['parameters'].values()
-            if 'content-type' in p]
+    return mime_types
 
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42
