@@ -118,12 +118,12 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 'path_in_archive': path_in_archive}]
             )]
     for this_executable, this_reslist in reslist:
+        resource_locations = get_ocrd_tool_json(this_executable)['resource_locations']
         if not location:
-            location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
-        elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
-            log.error(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
-                      f"refusing to install to invalid location")
-            sys.exit(1)
+            location = resource_locations[0]
+        elif location not in resource_locations:
+            log.warning(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
+                        f"refusing to install to invalid location. Instead installing to: {resource_locations[0]}")
         res_dest_dir = resmgr.build_resource_dest_dir(location=location, executable=this_executable)
         for res_dict in this_reslist:
             try:
