@@ -6,7 +6,7 @@ from shutil import copytree, rmtree, copy
 from fnmatch import filter as apply_glob
 from datetime import datetime
 from tarfile import open as open_tarfile
-from typing import Dict
+from typing import Dict, Optional
 from urllib.parse import urlparse, unquote
 from zipfile import ZipFile
 
@@ -108,6 +108,23 @@ class OcrdResourceManager:
                 database[executable] = list_loaded[executable] + database[executable]
         return database
 
+    def _search_executables(self, executable: Optional[str]):
+        skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
+        for exec_dir in environ['PATH'].split(':'):
+            self.log.debug(f"Searching for executables inside path: {exec_dir}")
+            for exec_path in Path(exec_dir).glob(f'{executable}'):
+                if not exec_path.name.startswith('ocrd-'):
+                    self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
+                if exec_path.name in skip_executables:
+                    self.log.debug(f"Not an OCR-D processor CLI, skipping '{exec_path}'")
+                    continue
+                self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
+                ocrd_tool = get_ocrd_tool_json(exec_path)
+                for res_dict in ocrd_tool.get('resources', ()):
+                    if exec_path.name not in self.database:
+                        self.database[exec_path.name] = []
+                    self.database[exec_path.name].insert(0, res_dict)
+
     def list_available(
         self, executable: str = None, dynamic: bool = True, name: str = None, database: Dict = None, url: str = None
     ):
@@ -119,22 +136,8 @@ class OcrdResourceManager:
         if not executable:
             return database.items()
         if dynamic:
-            skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
-            for exec_dir in environ['PATH'].split(':'):
-                self.log.debug(f"Searching for executables inside path: {exec_dir}")
-                for exec_path in Path(exec_dir).glob(f'{executable}'):
-                    if not exec_path.name.startswith('ocrd-'):
-                        self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
-                    if exec_path.name in skip_executables:
-                        self.log.debug(f"Not an OCR-D processor CLI, skipping '{exec_path}'")
-                        continue
-                    self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
-                    ocrd_tool = get_ocrd_tool_json(exec_path)
-                    for resdict in ocrd_tool.get('resources', ()):
-                        if exec_path.name not in database:
-                            database[exec_path.name] = []
-                        database[exec_path.name].insert(0, resdict)
-            database = self._dedup_database(database)
+            self._search_executables(executable)
+            self.save_user_list()
         found = False
         ret = []
         for k in database:
@@ -150,7 +153,6 @@ class OcrdResourceManager:
                     restuple[1].append(resdict)
         if not found:
             ret = [(executable, [])]
-        self.save_user_list()
         return ret
 
     def list_installed(self, executable: str = None):
@@ -195,10 +197,9 @@ class OcrdResourceManager:
                     }
                 else:
                     resdict = self.add_to_user_database(this_executable, res_filename, resource_type=res_type)
-                # resdict['path'] = str(res_filename)
+                resdict['path'] = str(res_filename)
                 reslist.append(resdict)
             ret.append((this_executable, reslist))
-        self.save_user_list()
         return ret
 
     def add_to_user_database(self, executable, res_filename, url=None, resource_type='file'):
@@ -390,19 +391,28 @@ class OcrdResourceManager:
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def handle_resource(
-        self, url: str, dest_dir: Path, overwrite: bool = False, name: str = None, resource_type: str = 'file',
-        path_in_archive: str = '.'
-    ) -> Path:
+        self, res_dict: Dict, executable: str, dest_dir: Path, any_url: str, overwrite: bool = False,
+        resource_type: str = 'file', path_in_archive: str = '.'
+    ) -> Optional[Path]:
         """
         Download or Copy a resource by URL to a destination directory
         """
         log = getLogger('ocrd.resource_manager.handle_resource')
+        registered = "registered" if "size" in res_dict else "unregistered"
+        resource_type = res_dict.get('type', resource_type)
+        resource_name = res_dict.get('name', None)
         if resource_type not in RESOURCE_TYPES:
             raise ValueError(f"Unknown resource type: {resource_type}, must be one of: {RESOURCE_TYPES}")
-        if not name:
-            url_parsed = urlparse(url)
-            name = Path(unquote(url_parsed.path)).name
-        fpath = Path(dest_dir, name)
+        if any_url:
+            res_dict['url'] = any_url
+        if not resource_name:
+            url_parsed = urlparse(res_dict['url'])
+            resource_name = Path(unquote(url_parsed.path)).name
+        if res_dict['url'] == '???':
+            log.warning(f"Skipping user resource {resource_name} since download url is: {res_dict['url']}")
+            return None
+
+        fpath = Path(dest_dir, resource_name)
         if fpath.exists():
             if not overwrite:
                 fpath_type = 'Directory' if fpath.is_dir() else 'File'
@@ -411,10 +421,27 @@ class OcrdResourceManager:
                 return fpath
             self.remove_resource(log, resource_path=fpath)
         dest_dir.mkdir(parents=True, exist_ok=True)
-        if url.startswith('https://') or url.startswith('http://'):
-            fpath = self._download_resource(log, url, fpath, resource_type, path_in_archive)
+        path_in_archive = res_dict.get('path_in_archive', path_in_archive)
+
+        # TODO @mehmedGIT: Consider properly handling cases for invalid URLs.
+        if res_dict['url'].startswith('https://') or res_dict['url'].startswith('http://'):
+            log.info(f"Downloading {registered} resource '{resource_name}' ({res_dict['url']})")
+            if 'size' not in res_dict:
+                with requests.head(res_dict['url']) as r:
+                    res_dict['size'] = int(r.headers.get('content-length', 0))
+            fpath = self._download_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
         else:
-            fpath = self._copy_resource(log, url, fpath, resource_type, path_in_archive)
+            log.info(f"Copying {registered} resource '{resource_name}' ({res_dict['url']})")
+            urlpath = Path(res_dict['url'])
+            res_dict['url'] = str(urlpath.resolve())
+            res_dict['size'] = directory_size(urlpath) if Path(urlpath).is_dir() else urlpath.stat().st_size
+            fpath = self._copy_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
+
+        if registered == 'unregistered':
+            log.info(f"{executable} resource '{resource_name}' ({any_url}) not a known resource, creating stub "
+                     f"in {self.user_list}'")
+            self.add_to_user_database(executable, fpath, url=any_url)
+        log.info(f"Installed resource {res_dict['url']} under {fpath}")
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):
