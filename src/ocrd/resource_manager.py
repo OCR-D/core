@@ -6,6 +6,7 @@ from shutil import copytree, rmtree, copy
 from fnmatch import filter as apply_glob
 from datetime import datetime
 from tarfile import open as open_tarfile
+from typing import Dict, Optional
 from urllib.parse import urlparse, unquote
 from zipfile import ZipFile
 
@@ -89,7 +90,7 @@ class OcrdResourceManager:
             f.write('\n')
             f.write(safe_dump(database))
 
-    def load_resource_list(self, list_filename, database=None):
+    def load_resource_list(self, list_filename: Path, database=None):
         self.log.info(f"Loading resources from path: {list_filename}")
         if not database:
             database = self.database
@@ -107,7 +108,26 @@ class OcrdResourceManager:
                 database[executable] = list_loaded[executable] + database[executable]
         return database
 
-    def list_available(self, executable=None, dynamic=True, name=None, database=None, url=None):
+    def _search_executables(self, executable: Optional[str]):
+        skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
+        for exec_dir in environ['PATH'].split(':'):
+            self.log.debug(f"Searching for executables inside path: {exec_dir}")
+            for exec_path in Path(exec_dir).glob(f'{executable}'):
+                if not exec_path.name.startswith('ocrd-'):
+                    self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
+                if exec_path.name in skip_executables:
+                    self.log.debug(f"Not an OCR-D processor CLI, skipping '{exec_path}'")
+                    continue
+                self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
+                ocrd_tool = get_ocrd_tool_json(exec_path)
+                for res_dict in ocrd_tool.get('resources', ()):
+                    if exec_path.name not in self.database:
+                        self.database[exec_path.name] = []
+                    self.database[exec_path.name].insert(0, res_dict)
+
+    def list_available(
+        self, executable: str = None, dynamic: bool = True, name: str = None, database: Dict = None, url: str = None
+    ):
         """
         List models available for download by processor
         """
@@ -116,22 +136,8 @@ class OcrdResourceManager:
         if not executable:
             return list(database.items())
         if dynamic:
-            skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
-            for exec_dir in environ['PATH'].split(':'):
-                self.log.debug(f"Searching for executables inside path: {exec_dir}")
-                for exec_path in Path(exec_dir).glob(f'{executable}'):
-                    if not exec_path.name.startswith('ocrd-'):
-                        self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
-                    if exec_path.name in skip_executables:
-                        self.log.debug(f"Not an OCR-D processor CLI, skipping '{exec_path}'")
-                        continue
-                    self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
-                    ocrd_tool = get_ocrd_tool_json(exec_path)
-                    for resdict in ocrd_tool.get('resources', ()):
-                        if exec_path.name not in database:
-                            database[exec_path.name] = []
-                        database[exec_path.name].insert(0, resdict)
-            database = self._dedup_database(database)
+            self._search_executables(executable)
+            self.save_user_list()
         found = False
         ret = []
         for k in database:
@@ -147,10 +153,9 @@ class OcrdResourceManager:
                     restuple[1].append(resdict)
         if not found:
             ret = [(executable, [])]
-        self.save_user_list()
         return ret
 
-    def list_installed(self, executable=None):
+    def list_installed(self, executable: str = None):
         """
         List installed resources, matching with registry by ``name``
         """
@@ -227,14 +232,14 @@ class OcrdResourceManager:
     def default_resource_dir(self):
         return self.location_to_resource_dir('data')
 
-    def location_to_resource_dir(self, location):
+    def location_to_resource_dir(self, location: str) -> str:
         if location == 'data':
             return join(self.xdg_data_home, 'ocrd-resources')
         if location == 'system':
             return RESOURCES_DIR_SYSTEM
         return getcwd()
 
-    def resource_dir_to_location(self, resource_path):
+    def resource_dir_to_location(self, resource_path: Path) -> str:
         resource_path = str(resource_path)
         if resource_path.startswith(RESOURCES_DIR_SYSTEM):
             return 'system'
@@ -265,7 +270,7 @@ class OcrdResourceManager:
             unlink(str(resource_path))
 
     @staticmethod
-    def parameter_usage(name, usage='as-is'):
+    def parameter_usage(name: str, usage: str = 'as-is') -> str:
         if usage == 'as-is':
             return name
         elif usage == 'without-extension':
@@ -273,7 +278,7 @@ class OcrdResourceManager:
         raise ValueError(f"No such usage '{usage}'")
 
     @staticmethod
-    def _download_impl(log: Logger, url, filename, progress_cb=None, size=None):
+    def _download_impl(log: Logger, url: str, filename):
         log.info(f"Downloading {url} to {filename}")
         try:
             gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
@@ -290,8 +295,6 @@ class OcrdResourceManager:
                 with requests.get(url, stream=True) as r:
                     r.raise_for_status()
                     for data in r.iter_content(chunk_size=4096):
-                        if progress_cb:
-                            progress_cb(len(data))
                         f.write(data)
         except Exception as e:
             rmtree(filename, ignore_errors=True)
@@ -299,20 +302,18 @@ class OcrdResourceManager:
             raise e
 
     @staticmethod
-    def _copy_file(log: Logger, src, dst, progress_cb=None):
+    def _copy_file(log: Logger, src, dst):
         log.info(f"Copying file {src} to {dst}")
         with open(dst, 'wb') as f_out, open(src, 'rb') as f_in:
             while True:
                 chunk = f_in.read(4096)
                 if chunk:
                     f_out.write(chunk)
-                    if progress_cb:
-                        progress_cb(len(chunk))
                 else:
                     break
 
     @staticmethod
-    def _copy_dir(log: Logger, src, dst, progress_cb=None):
+    def _copy_dir(log: Logger, src, dst):
         log.info(f"Copying dir recursively from {src} to {dst}")
         if not Path(src).is_dir():
             raise ValueError(f"The source is not a directory: {src}")
@@ -320,20 +321,20 @@ class OcrdResourceManager:
         for child in Path(src).rglob('*'):
             child_dst = Path(dst) / child.relative_to(src)
             if Path(child).is_dir():
-                OcrdResourceManager._copy_dir(child, child_dst, progress_cb)
+                OcrdResourceManager._copy_dir(log, child, child_dst)
             else:
-                OcrdResourceManager._copy_file(child, child_dst, progress_cb)
+                OcrdResourceManager._copy_file(log, child, child_dst)
 
     @staticmethod
-    def _copy_impl(log: Logger, src_filename, filename, progress_cb=None):
+    def _copy_impl(log: Logger, src_filename, filename):
         log.info(f"Copying {src_filename} to {filename}")
         if Path(src_filename).is_dir():
-            OcrdResourceManager._copy_dir(log, src_filename, filename, progress_cb)
+            OcrdResourceManager._copy_dir(log, src_filename, filename)
         else:
-            OcrdResourceManager._copy_file(log, src_filename, filename, progress_cb)
+            OcrdResourceManager._copy_file(log, src_filename, filename)
 
     @staticmethod
-    def _extract_archive(log, tempdir, path_in_archive: str, fpath: Path, archive_fname: str):
+    def _extract_archive(log: Logger, tempdir: Path, path_in_archive: str, fpath: Path, archive_fname: str):
         Path('out').mkdir()
         with pushd_popd('out'):
             mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
@@ -352,47 +353,60 @@ class OcrdResourceManager:
             else:
                 copy(path_in_archive, str(fpath))
 
-    def _copy_resource(self, log, url, path_in_archive, resource_type, fpath, progress_cb=None) -> Path:
+    def copy_resource(
+        self, log: Logger, url: str, fpath: Path, resource_type: str = 'file', path_in_archive: str = '.'
+    ) -> Path:
         """
         Copy a local resource to another destination
         """
         if resource_type == 'archive':
             archive_fname = 'download.tar.xx'
             with pushd_popd(tempdir=True) as tempdir:
-                self._copy_impl(log, url, archive_fname, progress_cb)
+                self._copy_impl(log, url, archive_fname)
                 self._extract_archive(log, tempdir, path_in_archive, fpath, archive_fname)
         else:
-            self._copy_impl(log, url, fpath, progress_cb)
+            self._copy_impl(log, url, fpath)
         return fpath
 
-    def _download_resource(self, log, url, path_in_archive, resource_type, fpath, progress_cb=None) -> Path:
+    def download_resource(
+        self, log: Logger, url: str, fpath: Path, resource_type: str = 'file', path_in_archive: str = '.'
+    ) -> Path:
         """
         Download a resource by URL to a destination directory
         """
         if resource_type == 'archive':
             archive_fname = 'download.tar.xx'
             with pushd_popd(tempdir=True) as tempdir:
-                self._download_impl(log, url, archive_fname, progress_cb)
+                self._download_impl(log, url, archive_fname)
                 self._extract_archive(log, tempdir, path_in_archive, fpath, archive_fname)
         else:
-            self._download_impl(log, url, fpath, progress_cb)
+            self._download_impl(log, url, fpath)
         return fpath
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def handle_resource(
-        self, url, dest_dir, overwrite=False, name=None, resource_type='file',
-        path_in_archive='.', progress_cb=None,
-    ) -> Path:
+        self, res_dict: Dict, executable: str, dest_dir: Path, any_url: str, overwrite: bool = False,
+        resource_type: str = 'file', path_in_archive: str = '.'
+    ) -> Optional[Path]:
         """
         Download or Copy a resource by URL to a destination directory
         """
         log = getLogger('ocrd.resource_manager.handle_resource')
+        registered = "registered" if "size" in res_dict else "unregistered"
+        resource_type = res_dict.get('type', resource_type)
+        resource_name = res_dict.get('name', None)
         if resource_type not in RESOURCE_TYPES:
             raise ValueError(f"Unknown resource type: {resource_type}, must be one of: {RESOURCE_TYPES}")
-        if not name:
-            url_parsed = urlparse(url)
-            name = Path(unquote(url_parsed.path)).name
-        fpath = Path(dest_dir, name)
+        if any_url:
+            res_dict['url'] = any_url
+        if not resource_name:
+            url_parsed = urlparse(res_dict['url'])
+            resource_name = Path(unquote(url_parsed.path)).name
+        if res_dict['url'] == '???':
+            log.warning(f"Skipping user resource {resource_name} since download url is: {res_dict['url']}")
+            return None
+
+        fpath = Path(dest_dir, resource_name)
         if fpath.exists():
             if not overwrite:
                 fpath_type = 'Directory' if fpath.is_dir() else 'File'
@@ -401,10 +415,28 @@ class OcrdResourceManager:
                 return fpath
             self.remove_resource(log, resource_path=fpath)
         dest_dir.mkdir(parents=True, exist_ok=True)
-        if url.startswith('https://') or url.startswith('http://'):
-            fpath = self._download_resource(log, url, path_in_archive, resource_type, fpath, progress_cb)
+        path_in_archive = res_dict.get('path_in_archive', path_in_archive)
+
+        # TODO @mehmedGIT: Consider properly handling cases for invalid URLs.
+        if res_dict['url'].startswith('https://') or res_dict['url'].startswith('http://'):
+            log.info(f"Downloading {registered} resource '{resource_name}' ({res_dict['url']})")
+            if 'size' not in res_dict:
+                with requests.head(res_dict['url']) as r:
+                    res_dict['size'] = int(r.headers.get('content-length', 0))
+            fpath = self.download_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
         else:
-            fpath = self._copy_resource(log, url, path_in_archive, resource_type, fpath, progress_cb)
+            log.info(f"Copying {registered} resource '{resource_name}' ({res_dict['url']})")
+            urlpath = Path(res_dict['url'])
+            res_dict['url'] = str(urlpath.resolve())
+            res_dict['size'] = directory_size(urlpath) if Path(urlpath).is_dir() else urlpath.stat().st_size
+            fpath = self.copy_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
+
+        if registered == 'unregistered':
+            log.info(f"{executable} resource '{resource_name}' ({res_dict['url']}) not a known resource, creating stub "
+                     f"in {self.user_list}'")
+            self.add_to_user_database(executable, fpath, url=res_dict['url'])
+        self.save_user_list()
+        log.info(f"Installed resource {res_dict['url']} under {fpath}")
         return fpath
 
     def _dedup_database(self, database=None, dedup_key='name'):

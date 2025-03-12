@@ -118,54 +118,30 @@ def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstal
                 'path_in_archive': path_in_archive}]
             )]
     for this_executable, this_reslist in reslist:
+        resource_locations = get_ocrd_tool_json(this_executable)['resource_locations']
         if not location:
-            location = get_ocrd_tool_json(this_executable)['resource_locations'][0]
-        elif location not in get_ocrd_tool_json(this_executable)['resource_locations']:
-            log.error(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
-                      f"refusing to install to invalid location")
-            sys.exit(1)
+            location = resource_locations[0]
+        elif location not in resource_locations:
+            log.warning(f"The selected --location {location} is not in the {this_executable}'s resource search path, "
+                        f"refusing to install to invalid location. Instead installing to: {resource_locations[0]}")
         res_dest_dir = resmgr.build_resource_dest_dir(location=location, executable=this_executable)
-        for resdict in this_reslist:
-            registered = "registered" if "size" in resdict else "unregistered"
-            if any_url:
-                resdict['url'] = any_url
-            if resdict['url'] == '???':
-                log.warning(f"Cannot download user resource {resdict['name']}")
-                continue
-            # TODO @mehmedGIT: Consider properly handling cases for invalid URLs.
-            #  Also consider properly separating the downloading from copying in the resmgr.download_resource().
-            if resdict['url'].startswith('https://') or resdict['url'].startswith('http://'):
-                log.info(f"Downloading {registered} resource '{resdict['name']}' ({resdict['url']})")
-                if 'size' not in resdict:
-                    with requests.head(resdict['url']) as r:
-                        resdict['size'] = int(r.headers.get('content-length', 0))
-            else:
-                log.info(f"Copying {registered} resource '{resdict['name']}' ({resdict['url']})")
-                urlpath = Path(resdict['url'])
-                resdict['url'] = str(urlpath.resolve())
-                resdict['size'] = directory_size(urlpath) if Path(urlpath).is_dir() else urlpath.stat().st_size
-
+        for res_dict in this_reslist:
             try:
-                with click.progressbar(length=resdict['size']) as bar:
-                    fpath = resmgr.handle_resource(
-                        resdict['url'],
-                        dest_dir=res_dest_dir,
-                        name=resdict['name'],
-                        resource_type=resdict.get('type', resource_type),
-                        path_in_archive=resdict.get('path_in_archive', path_in_archive),
-                        overwrite=overwrite,
-                        progress_cb=lambda delta: bar.update(delta)
-                    )
-                if registered == 'unregistered':
-                    log.info(f"{this_executable} resource '{name}' ({any_url}) not a known resource, creating stub "
-                             f"in {resmgr.user_list}'")
-                    resmgr.add_to_user_database(this_executable, fpath, url=any_url)
-                resmgr.save_user_list()
-                log.info(f"Installed resource {resdict['url']} under {fpath}")
+                fpath = resmgr.handle_resource(
+                    res_dict=res_dict,
+                    executable=this_executable,
+                    dest_dir=res_dest_dir,
+                    any_url=any_url,
+                    overwrite=overwrite,
+                    resource_type=resource_type,
+                    path_in_archive=path_in_archive
+                )
+                if not fpath:
+                    continue
             except FileExistsError as exc:
                 log.info(str(exc))
-            usage = resdict.get('parameter_usage', 'as-is')
-            log.info(f"Use in parameters as '{resmgr.parameter_usage(resdict['name'], usage)}'")
+            usage = res_dict.get('parameter_usage', 'as-is')
+            log.info(f"Use in parameters as '{resmgr.parameter_usage(res_dict['name'], usage)}'")
 
 
 @resmgr_cli.command('migrate')
