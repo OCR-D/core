@@ -1,5 +1,6 @@
 from tempfile import mkdtemp
 from tests.base import TestCase, main, assets
+from tests.data import DUMMY_TOOL
 from shutil import rmtree
 from pathlib import Path
 from os import environ as ENV, getcwd
@@ -8,6 +9,7 @@ import sys
 
 from ocrd_utils.os import (
     list_resource_candidates,
+    list_all_resources,
     redirect_stderr_and_stdout_to_file,
     guess_media_type,
 )
@@ -40,6 +42,34 @@ class TestOsUtils(TestCase):
             dehomify(join(config.XDG_DATA_HOME, 'ocrd-resources', 'ocrd-dummy')),
             '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
+
+    def test_resolve_installed(self):
+        tmpdir = Path(self.tempdir_path)
+        (tmpdir / 'some.json').write_bytes(b'')
+        cands = list(list_all_resources('ocrd-dummy'))
+        # finds the file via env location
+        assert len(cands) == 1
+        cands = list(list_all_resources('ocrd-dummy', moduled=self.tempdir_path))
+        # same file now also appears as moduled
+        assert len(cands) == 2
+        tmpdir = tmpdir / 'ocrd-resources' / 'ocrd-dummy'
+        tmpdir.mkdir(parents=True)
+        (tmpdir / 'another.json').write_bytes(b'')
+        cands = list(list_all_resources('ocrd-dummy', xdg_data_home=self.tempdir_path))
+        # absent an actual ocrd-tool.json, directories are allowed as well as files
+        # so this finds some.json and ocrd-resources/ in the env location,
+        # and another.json in the data location
+        assert len(cands) == 3
+        dummy_tool = dict(DUMMY_TOOL)
+        dummy_tool['parameters']['fileparam'] = {
+            'type': 'string',
+            'format': 'uri',
+            'content-type': 'application/zip'
+        }
+        cands = list(list_all_resources('ocrd-dummy', ocrd_tool=dummy_tool, xdg_data_home=self.tempdir_path))
+        # we now expect only zip files, not directories
+        # but JSON is always allowed (for potential preset files)
+        assert len(cands) == 2
 
     def test_guess_media_type(self):
         testdata = Path(__file__).parent / '../data'
