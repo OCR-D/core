@@ -208,6 +208,8 @@ class OcrdResourceManager:
         else:
             res_size = Path(res_filename).stat().st_size
         user_database = self.load_resource_list(self.user_list)
+        if executable not in user_database:
+            user_database[executable] = []
         resources_found = self.list_available(executable=executable, name=res_name, database=user_database)[0][1]
         if not resources_found:
             self.log.info(f"{executable} resource '{res_name}' ({str(res_filename)}) not a known resource, "
