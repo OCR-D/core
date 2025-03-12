@@ -935,7 +935,7 @@ class Processor():
         """
         for base, res in list_all_resources(self.executable, ocrd_tool=self.ocrd_tool, moduled=self.moduledir):
             res = Path(res)
-            yield res.relative_to(base)
+            yield str(res.relative_to(base))
 
     @property
     def module(self):

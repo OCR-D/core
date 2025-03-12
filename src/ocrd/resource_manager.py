@@ -178,7 +178,7 @@ class OcrdResourceManager:
                                                                 moduled=moduledir,
                                                                 xdg_data_home=self.xdg_data_home):
                 res_filename = Path(res_filename).resolve()
-                res_name = res_filename.relative_to(res_basedir)
+                res_name = str(res_filename.relative_to(res_basedir))
                 res_type = 'file' if res_filename.is_file() else 'directory'
                 res_size = res_filename.stat().st_size if res_filename.is_file() else directory_size(res_filename)
                 if resdict := next((res for res in resdict_list if res['name'] == res_name), False):
