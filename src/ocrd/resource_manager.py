@@ -114,7 +114,7 @@ class OcrdResourceManager:
         if not database:
             database = self.database
         if not executable:
-            return database.items()
+            return list(database.items())
         if dynamic:
             skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
             for exec_dir in environ['PATH'].split(':'):
