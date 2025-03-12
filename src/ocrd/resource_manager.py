@@ -359,7 +359,7 @@ class OcrdResourceManager:
             else:
                 copy(path_in_archive, str(fpath))
 
-    def _copy_resource(self, log, url, fpath, resource_type, path_in_archive, progress_cb=None) -> Path:
+    def _copy_resource(self, log, url, path_in_archive, resource_type, fpath, progress_cb=None) -> Path:
         """
         Copy a local resource to another destination
         """
@@ -372,7 +372,7 @@ class OcrdResourceManager:
             self._copy_impl(log, url, fpath, progress_cb)
         return fpath
 
-    def _download_resource(self, log, url, fpath, resource_type, path_in_archive, progress_cb=None) -> Path:
+    def _download_resource(self, log, url, path_in_archive, resource_type, fpath, progress_cb=None) -> Path:
         """
         Download a resource by URL to a destination directory
         """
