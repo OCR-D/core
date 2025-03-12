@@ -167,8 +167,18 @@ def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_dat
                    # code and data; `is_resource()` only singles out
                    # files over directories; but we want data files only
                    # todo: more code and cache exclusion patterns!
-                   ['*.py', '*.py[cod]', '*~', 'ocrd-tool.json',
-                    '*.egg-info/*', 'copyright.txt', 'LICENSE*', 'README.md',
+                   ['*.py', '*.py[cod]', '*~', '.*.swp', '*.swo',
+                    '__pycache__/*', '*.egg-info/*', '*.egg',
+                    'copyright.txt', 'LICENSE*', 'README.md', 'MANIFEST',
+                    'TAGS', '.DS_Store',
+                    # C extensions
+                    '*.so',
+                    # translations
+                    '*.mo', '*.pot',
+                    '*.log', '*.orig', '*.BAK',
+                    '.git/*',
+                    # our stuff
+                    'ocrd-tool.json',
                     'environment.pickle', 'resource_list.yml', 'lib.bash']):
                 continue
             candidates.append(resource)
