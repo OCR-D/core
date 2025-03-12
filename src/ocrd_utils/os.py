@@ -8,6 +8,7 @@ __all__ = [
     'get_ocrd_tool_json',
     'get_moduledir',
     'get_processor_resource_types',
+    'get_env_locations',
     'guess_media_type',
     'pushd_popd',
     'unzip_file_to_dir',
@@ -108,6 +109,12 @@ def get_moduledir(executable : str) -> str:
             getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
 
+def get_env_locations(executable: str) -> List[str]:
+    processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
+    if processor_path_var in environ:
+        return environ[processor_path_var].split(':')
+    return []
+
 def list_resource_candidates(executable : str, fname : str, cwd : Optional[str] = None, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[str]:
     """
     Generate candidates for processor resources according to
@@ -118,19 +125,18 @@ def list_resource_candidates(executable : str, fname : str, cwd : Optional[str] 
     candidates = []
     candidates.append(join(cwd, fname))
     xdg_data_home = xdg_data_home or config.XDG_DATA_HOME
-    processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
-    if processor_path_var in environ:
-        candidates += [join(x, fname) for x in environ[processor_path_var].split(':')]
+    for processor_path in get_env_locations(executable):
+        candidates.append(join(processor_path, fname))
     candidates.append(join(xdg_data_home, 'ocrd-resources', executable, fname))
     candidates.append(join(RESOURCES_DIR_SYSTEM, executable, fname))
     if moduled:
         candidates.append(join(moduled, fname))
     return candidates
 
-def list_all_resources(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[Tuple[str,str]]:
+def list_all_resources(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[str]:
     """
     List all processor resources in the filesystem according to
-    https://ocr-d.de/en/spec/ocrd_tool#file-parameters
+    https://ocr-d.de/en/spec/ocrd_tool#resource-parameters
     """
     xdg_data_home = xdg_data_home or config.XDG_DATA_HOME
     if ocrd_tool is None:
@@ -154,34 +160,29 @@ def list_all_resources(executable : str, ocrd_tool : Optional[Dict[str, Any]] = 
         resource_suffixes = []
     logger = getLogger('ocrd.utils.list_all_resources')
     candidates = []
-    # we need both the full path and its base location directory
-    # so we can subtract the latter from the former as resource name
-    def iterbase(base):
-        for subpath in base.iterdir():
-            yield (base, subpath)
-    # XXX cwd would list too many false positives
+    # cwd would list too many false positives:
     # if 'cwd' in resource_locations:
-    #     cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
-    #     if Path(cwd_candidate).exists():
-    #         candidates.append(cwd_candidate)
-    processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
-    if processor_path_var in environ:
-        for processor_path in environ[processor_path_var].split(':'):
-            processor_path = Path(processor_path)
-            if processor_path.is_dir():
-                candidates += iterbase(processor_path)
+    #     cwddir = Path.cwd()
+    #     candidates.append(cwddir.itertree())
+    # but we do not use this anyway:
+    # relative paths are tried w.r.t. CWD
+    # prior to list_all_resources resolution.
+    for processor_path in get_env_locations(executable):
+        processor_path = Path(processor_path)
+        if processor_path.is_dir():
+            candidates += processor_path.iterdir()
     if 'data' in resource_locations:
         datadir = Path(xdg_data_home, 'ocrd-resources', executable)
         if datadir.is_dir():
-            candidates += iterbase(datadir)
+            candidates += datadir.iterdir()
     if 'system' in resource_locations:
         systemdir = Path(RESOURCES_DIR_SYSTEM, executable)
         if systemdir.is_dir():
-            candidates += iterbase(systemdir)
+            candidates += systemdir.iterdir()
     if 'module' in resource_locations and moduled:
         # recurse fully
-        base = Path(moduled)
-        for resource in itertree(base):
+        moduled = Path(moduled)
+        for resource in moduled.iterdir():
             if resource.is_dir():
                 continue
             if any(resource.match(pattern) for pattern in
@@ -204,15 +205,17 @@ def list_all_resources(executable : str, ocrd_tool : Optional[Dict[str, Any]] = 
                     'environment.pickle', 'resource_list.yml', 'lib.bash']):
                 logger.debug("ignoring module candidate '%s'", resource)
                 continue
-            candidates.append((base, resource))
+            candidates.append(resource)
     if mimetypes != ['*/*']:
         logger.debug("matching candidates for %s by content-type %s", executable, str(mimetypes))
-    def valid_resource_type(candidate):
-        _, path = candidate
+    def valid_resource_type(path):
         if '*/*' in mimetypes:
             return True
         if path.is_dir():
             if not 'text/directory' in mimetypes:
+                logger.debug("ignoring directory candidate '%s'", path)
+                return False
+            if path.name in ['.git']:
                 logger.debug("ignoring directory candidate '%s'", path)
                 return False
             return True
@@ -244,9 +247,7 @@ def list_all_resources(executable : str, ocrd_tool : Optional[Dict[str, Any]] = 
         logger.debug("ignoring %s candidate '%s'", res_mimetype, path)
         return False
     candidates = sorted(filter(valid_resource_type, candidates))
-    return [(str(base), str(path))
-            for base, path in candidates
-            if path.name not in ['.git']]
+    return map(str, candidates)
 
 def get_processor_resource_types(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None) -> List[str]:
     """
@@ -261,7 +262,7 @@ def get_processor_resource_types(executable : str, ocrd_tool : Optional[Dict[str
             return ['*/*']
         ocrd_tool = get_ocrd_tool_json(executable)
     mime_types = [mime
-                  for param in ocrd_tool['parameters'].values()
+                  for param in ocrd_tool.get('parameters', {}).values()
                   if param['type'] == 'string' and param.get('format', '') == 'uri' and 'content-type' in param
                   for mime in param['content-type'].split(',')]
     if not len(mime_types):

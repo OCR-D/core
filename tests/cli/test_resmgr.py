@@ -8,7 +8,7 @@ from ocrd.cli.resmgr import resmgr_cli
 from ocrd.resource_manager import OcrdResourceManager
 
 runner = CliRunner()
-executable = 'ocrd-dummy'
+executable = 'ocrd-test-dummy'
 
 @fixture
 def mgr_with_tmp_path(tmp_path):

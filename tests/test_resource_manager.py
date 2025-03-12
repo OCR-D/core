@@ -45,7 +45,7 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
     assert Path.home() == tmp_path
     assert f == mgr.user_list
     assert f.exists()
-    assert mgr.add_to_user_database('ocrd-foo', f.name, f)
+    assert mgr.add_to_user_database('ocrd-foo', f)
     # pdb.set_trace()
 
     mgr.list_installed('ocrd-foo')
@@ -59,7 +59,7 @@ def test_resources_manager_config_default(monkeypatch, tmp_path):
         any_url=CONST_RESOURCE_URL_LAYOUT
     )
     assert fpath.exists()
-    assert mgr.add_to_user_database(proc, fpath.name, fpath)
+    assert mgr.add_to_user_database(proc, fpath)
 
 
 def test_resources_manager_from_environment(tmp_path, monkeypatch):
@@ -77,7 +77,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
     f = tmp_path / 'ocrd' / CONST_RESOURCE_YML
     assert f.exists()
     assert f == mgr.user_list
-    assert mgr.add_to_user_database('ocrd-foo', f.name, f)
+    assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed('ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
     dest_dir = mgr.build_resource_dest_dir(location='data', executable=proc)
@@ -88,7 +88,7 @@ def test_resources_manager_from_environment(tmp_path, monkeypatch):
         any_url=CONST_RESOURCE_URL_LAYOUT
     )
     assert fpath.exists()
-    assert mgr.add_to_user_database(proc, fpath.name, fpath)
+    assert mgr.add_to_user_database(proc, fpath)
     assert mgr.userdir == tmp_path
 
 
@@ -102,7 +102,7 @@ def test_resources_manager_config_explicit(tmp_path):
     f = tmp_path / 'config' / 'ocrd' / CONST_RESOURCE_YML
     assert f.exists()
     assert f == mgr.user_list
-    assert mgr.add_to_user_database('ocrd-foo', f.name, f)
+    assert mgr.add_to_user_database('ocrd-foo', f)
     mgr.list_installed(executable='ocrd-foo')
     proc = 'ocrd-tesserocr-recognize'
     dest_dir = mgr.build_resource_dest_dir(location='data', executable=proc)
@@ -113,7 +113,7 @@ def test_resources_manager_config_explicit(tmp_path):
         any_url=CONST_RESOURCE_URL_LAYOUT
     )
     assert fpath.exists()
-    assert mgr.add_to_user_database(proc, fpath.name, fpath)
+    assert mgr.add_to_user_database(proc, fpath)
 
 
 def test_resources_manager_config_explicit_invalid(tmp_path):
@@ -139,7 +139,7 @@ def test_find_resources(tmp_path):
 
     # assert
     assert mgr.list_available(executable='ocrd-foo') == [('ocrd-foo', [])]
-    assert mgr.add_to_user_database('ocrd-foo', f.name, f, url='http://foo/bar')
+    assert mgr.add_to_user_database('ocrd-foo', f, url='http://foo/bar')
     assert 'ocrd-foo' in [x for x, _ in mgr.list_available()]
     assert 'ocrd-foo' in [x for x, _ in mgr.list_available(url='http://foo/bar')]
 

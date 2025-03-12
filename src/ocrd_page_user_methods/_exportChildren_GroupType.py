@@ -26,4 +26,4 @@ def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xm
         else:
             cleaned.append(entry)
     for entry in cleaned:
-        entry.export(outfile, level, entry.ns_prefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+        entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)

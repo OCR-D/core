@@ -305,7 +305,6 @@ class Processor():
             input_file_grp=None,
             output_file_grp=None,
             page_id=None,
-            download_files=config.OCRD_DOWNLOAD_INPUT,
             version=None
     ):
         """
@@ -330,8 +329,6 @@ class Processor():
                  (or empty for all pages). \
                  Deprecated since version 3.0: Should be ``None`` here, but then needs to be set \
                  before processing.
-             download_files (boolean): Whether input files will be downloaded prior to processing, \
-                 defaults to :py:attr:`ocrd_utils.config.OCRD_DOWNLOAD_INPUT` which is ``True`` by default
         """
         if ocrd_tool is not None:
             deprecation_warning("Passing 'ocrd_tool' as keyword argument to Processor is deprecated - "
@@ -360,7 +357,7 @@ class Processor():
             deprecation_warning("Passing a page_id kwarg other than 'None' to Processor "
                                 "is deprecated - pass as argument to process_workspace instead")
             self.page_id = page_id or None
-        self.download = download_files
+        self.download = config.OCRD_DOWNLOAD_INPUT
         #: The logger to be used by processor implementations.
         # `ocrd.processor.base` internals should use :py:attr:`self._base_logger`
         self.logger = getLogger(f'ocrd.processor.{self.__class__.__name__}')
@@ -900,9 +897,8 @@ class Processor():
             cwd = self.old_pwd
         else:
             cwd = getcwd()
-        ret = [cand for cand in list_resource_candidates(executable, val,
-                                                         cwd=cwd, moduled=self.moduledir)
-               if exists(cand)]
+        ret = list(filter(exists, list_resource_candidates(executable, val,
+                                                           cwd=cwd, moduled=self.moduledir)))
         if ret:
             self._base_logger.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
@@ -933,9 +929,9 @@ class Processor():
         """
         List all resources found in the filesystem and matching content-type by filename suffix
         """
-        for base, res in list_all_resources(self.executable, ocrd_tool=self.ocrd_tool, moduled=self.moduledir):
+        for res in list_all_resources(self.executable, ocrd_tool=self.ocrd_tool, moduled=self.moduledir):
             res = Path(res)
-            yield str(res.relative_to(base))
+            yield res.name
 
     @property
     def module(self):

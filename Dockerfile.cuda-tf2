@@ -1,4 +1,4 @@
-ARG BASE_IMAGE
+ARG BASE_IMAGE=docker.io/ocrd/core-cuda
 FROM $BASE_IMAGE AS ocrd_core_base
 
 WORKDIR /build/core
@@ -6,6 +6,8 @@ WORKDIR /build/core
 COPY Makefile .
 
 RUN make deps-tf2
+# Smoke Test
+RUN ocrd --version
 
 WORKDIR /data
 

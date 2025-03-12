@@ -57,13 +57,19 @@ help:
 PIP_INSTALL ?= $(PIP) install
 PIP_INSTALL_CONFIG_OPTION ?=
 
-.PHONY: deps-cuda deps-ubuntu deps-test
+.PHONY: get-conda deps-cuda deps-ubuntu deps-test
 
-deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
-deps-cuda: export CONDA_PREFIX ?= /conda
-deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
-deps-cuda:
-	curl --retry 6 -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+ifeq ($(shell command -v conda),)
+# Conda installation: get Micromamba distribution
+get-conda: CONDA_EXE ?= /usr/local/bin/conda
+get-conda: export CONDA_PREFIX ?= /conda
+# first part of recipe: see micro.mamba.pm/install.sh
+get-conda: OS != uname
+get-conda: PLATFORM = $(subst Darwin,osx,$(subst Linux,linux,$(OS)))
+get-conda: MACHINE = $(or $(filter aarch64 arm64 ppc64le, $(ARCH)), 64)
+get-conda: URL = https://micro.mamba.pm/api/micromamba/$(PLATFORM)-$(MACHINE)/latest
+get-conda:
+	curl --retry 6 -Ls $(URL) | tar -xvj bin/micromamba
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
@@ -71,6 +77,14 @@ deps-cuda:
 	echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$(CONDA_PREFIX)/' >> /etc/profile.d/98-conda.sh
 	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
 	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
+else
+# Conda installation already present: do nothing
+get-conda: ;
+endif
+
+# Dependencies for CUDA installation via Conda
+deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+deps-cuda: get-conda
 # Get CUDA toolkit, including compiler and libraries with dev,
 # however, the Nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
 #MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
@@ -79,7 +93,6 @@ deps-cuda:
 # The conda-forge channel has cudnn and cudatoolkit but no cudatoolkit-dev anymore (and we need both!),
 # so let's combine nvidia and conda-forge (will be same lib versions, no waste of space),
 # but omitting cuda-cudart-dev and cuda-libraries-dev (as these will be pulled by pip for torch anyway):
-	MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
 	conda install -c nvidia/label/cuda-11.8.0 \
 	                 cuda-nvcc \
 	                 cuda-cccl \
@@ -145,24 +158,32 @@ deps-tf1:
 	  pushd $$name && for path in $$name*; do mv $$path $${path/$$name/$$newname}; done && popd && \
 	  $(PYTHON) -m wheel pack $$name && \
 	  $(PIP) install $$newname*.whl && popd && rm -fr $$OLDPWD; \
-	  $(PIP) install "numpy<1.24"; \
+	  $(PIP) install "numpy<1.24" -r $DIRSTACK/requirements.txt; \
 	else \
-	$(PIP) install "tensorflow-gpu<2.0"; \
+	  $(PIP) install "tensorflow-gpu<2.0" -r requirements.txt; \
 	fi
 
 deps-tf2:
 	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8; then \
-	$(PIP) install tensorflow; \
+	$(PIP) install tensorflow -r requirements.txt; \
 	else \
-	$(PIP) install "tensorflow[and-cuda]"; \
+	$(PIP) install "tensorflow[and-cuda]"  -r requirements.txt; \
 	fi
 
 deps-torch:
-	$(PIP) install -i https://download.pytorch.org/whl/cu118 torchvision==0.16.2+cu118 torch==2.1.2+cu118
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torchvision==0.16.2+cu118 torch==2.1.2+cu118 -r requirements.txt
+
+# deps-*: always mix core's requirements.txt with additional deps,
+# so pip does not ignore the older version reqs,
+# but instead tries to find a mutually compatible set.
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	apt-get install -y python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev
+
+# Dependencies for deployment via Conda
+deps-conda: get-conda
+	conda install -c conda-forge python==3.8.* imagemagick geos pkgconfig
 
 # Install test python deps via pip
 deps-test:
@@ -395,8 +416,16 @@ docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 
 docker-cuda-torch: docker-cuda
 
+# if the current ref is a release, then use it as tag instead of :latest
+docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch: GIT_TAG := $(strip $(shell git describe --tags | grep -x "v[0-9]\.[0-9][[0-9]\.[0-9]"))
 docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
-	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) --target ocrd_core_base --build-arg BASE_IMAGE=$(lastword $(DOCKER_BASE_IMAGE)) $(DOCKER_ARGS) .
+	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) \
+	$(if $(GIT_TAG),$(DOCKER_TAG:%=-t %:$(GIT_TAG))) \
+	--target ocrd_core_base \
+	--build-arg BASE_IMAGE=$(lastword $(DOCKER_BASE_IMAGE)) \
+	--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
+	--build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+	$(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build

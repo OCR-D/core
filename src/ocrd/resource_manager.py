@@ -180,11 +180,11 @@ class OcrdResourceManager:
             reslist = []
             moduledir = get_moduledir(this_executable)
             resdict_list = self.list_available(executable=this_executable)[0][1]
-            for res_basedir, res_filename in list_all_resources(this_executable,
-                                                                moduled=moduledir,
-                                                                xdg_data_home=self.xdg_data_home):
+            for res_filename in list_all_resources(this_executable,
+                                                   moduled=moduledir,
+                                                   xdg_data_home=self.xdg_data_home):
                 res_filename = Path(res_filename).resolve()
-                res_name = str(res_filename.relative_to(res_basedir))
+                res_name = res_filename.name
                 res_type = 'file' if res_filename.is_file() else 'directory'
                 res_size = res_filename.stat().st_size if res_filename.is_file() else directory_size(res_filename)
                 if resdict := next((res for res in resdict_list if res['name'] == res_name), False):
@@ -198,17 +198,18 @@ class OcrdResourceManager:
                         'size': res_size
                     }
                 else:
-                    resdict = self.add_to_user_database(this_executable, res_name, res_filename, resource_type=res_type)
+                    resdict = self.add_to_user_database(this_executable, res_filename, resource_type=res_type)
                 # resdict['path'] = str(res_filename)
                 reslist.append(resdict)
             ret.append((this_executable, reslist))
         self.save_user_list()
         return ret
 
-    def add_to_user_database(self, executable, res_name, res_filename, url=None, resource_type='file'):
+    def add_to_user_database(self, executable, res_filename, url=None, resource_type='file'):
         """
         Add a stub entry to the user resource.yml
         """
+        res_name = res_filename.name
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
@@ -441,9 +442,7 @@ class OcrdResourceManager:
             fpath = self.copy_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
 
         if registered == 'unregistered':
-            log.info(f"{executable} resource '{resource_name}' ({res_dict['url']}) not a known resource, creating stub "
-                     f"in {self.user_list}'")
-            self.add_to_user_database(executable, resource_name, fpath, url=res_dict['url'])
+            self.add_to_user_database(executable, fpath, url=res_dict['url'])
         self.save_user_list()
         log.info(f"Installed resource {res_dict['url']} under {fpath}")
         return fpath

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Sun Sep 15 21:49:27 2024 by generateDS.py version 2.44.1.
+# Generated Mon Feb 17 10:32:54 2025 by generateDS.py version 2.44.1.
 # Python 3.8.17+ (heads/3.8-dirty:1663f8ba84, Aug 15 2023, 18:13:01)  [GCC 8.3.0]
 #
 # Command line options:
@@ -7112,7 +7112,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             else:
                 cleaned.append(entry)
         for entry in cleaned:
-            entry.export(outfile, level, entry.ns_prefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
 # end class OrderedGroupIndexedType
 
 
@@ -8075,7 +8075,7 @@ class OrderedGroupType(GeneratedsSuper):
             else:
                 cleaned.append(entry)
         for entry in cleaned:
-            entry.export(outfile, level, entry.ns_prefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
 # end class OrderedGroupType
 
 
