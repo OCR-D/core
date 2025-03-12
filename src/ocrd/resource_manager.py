@@ -30,7 +30,7 @@ yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:timestamp'
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
-from ocrd_utils.constants import RESOURCES_DIR_SYSTEM, RESOURCE_TYPES
+from ocrd_utils.constants import RESOURCES_DIR_SYSTEM, RESOURCE_TYPES, MIME_TO_EXT
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -173,10 +173,36 @@ class OcrdResourceManager:
             resdict_list = self.list_available(executable=this_executable)[0][1]
             for res_basedir, res_filename in list_all_resources(this_executable, moduled=moduledir, xdg_data_home=self.xdg_data_home):
                 res_filename = Path(res_filename).resolve()
-                if res_filename.is_dir() and not 'text/directory' in mimetypes:
-                    continue
-                if res_filename.is_file() and ['text/directory'] == mimetypes:
-                    continue
+                if not '*/*' in mimetypes:
+                    if res_filename.is_dir():
+                        if not 'text/directory' in mimetypes:
+                            self.log.debug("ignoring directory candidate '%s'", res_filename)
+                            continue
+                    elif res_filename.is_file():
+                        res_mimetype = guess_media_type(res_filename, fallback='')
+                        if res_mimetype == 'application/json':
+                            # always accept, regardless of configured mimetypes:
+                            # needed for distributing or sharing parameter preset files
+                            pass
+                        elif ['text/directory'] == mimetypes:
+                            self.log.debug("ignoring non-directory candidate '%s'", res_filename)
+                            continue
+                        elif 'application/octet-stream' in mimetypes:
+                            # catch-all type - do not enforce anything
+                            pass
+                        else:
+                            # fixme: if resdict_list contains directories, their "suffix" will interfere
+                            # (e.g. dirname without dot means we falsely match files without suffix)
+                            if not (res_filename.suffix in [Path(res['name']).suffix
+                                                            for res in resdict_list]
+                                    or any(res_filename.suffix == MIME_TO_EXT.get(mime, None)
+                                           for mime in mimetypes)
+                                    or any(apply_glob([res_mimetype], mime)
+                                           for mime in mimetypes)):
+                                self.log.debug("ignoring %s candidate '%s'", res_mimetype, res_filename)
+                                continue
+                    else:
+                        self.log.warning("ignoring non-file, non-directory candidate '%s'", res_filename)
                 res_name = res_filename.relative_to(res_basedir)
                 res_type = 'file' if res_filename.is_file() else 'directory'
                 res_size = res_filename.stat().st_size if res_filename.is_file() else directory_size(res_filename)
