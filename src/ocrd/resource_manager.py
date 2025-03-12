@@ -203,18 +203,15 @@ class OcrdResourceManager:
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
-        self.log.info(f"{executable} resource '{res_name}' ({str(res_filename)}) not a known resource, "
-                      f"creating stub in {self.user_list}'")
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
             res_size = Path(res_filename).stat().st_size
-        with open(self.user_list, 'r', encoding='utf-8') as f:
-            user_database = safe_load(f) or {}
-        if executable not in user_database:
-            user_database[executable] = []
+        user_database = self.load_resource_list(self.user_list)
         resources_found = self.list_available(executable=executable, name=res_name, database=user_database)[0][1]
         if not resources_found:
+            self.log.info(f"{executable} resource '{res_name}' ({str(res_filename)}) not a known resource, "
+                          f"creating stub in {self.user_list}'")
             resdict = {
                 'name': res_name,
                 'url': url if url else '???',
