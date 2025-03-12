@@ -192,18 +192,17 @@ class OcrdResourceManager:
                         'size': res_size
                     }
                 else:
-                    resdict = self.add_to_user_database(this_executable, res_filename, resource_type=res_type)
+                    resdict = self.add_to_user_database(this_executable, res_name, res_filename, resource_type=res_type)
                 # resdict['path'] = str(res_filename)
                 reslist.append(resdict)
             ret.append((this_executable, reslist))
         self.save_user_list()
         return ret
 
-    def add_to_user_database(self, executable, res_filename, url=None, resource_type='file'):
+    def add_to_user_database(self, executable, res_name, res_filename, url=None, resource_type='file'):
         """
         Add a stub entry to the user resource.yml
         """
-        res_name = Path(res_filename).name
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
@@ -434,7 +433,7 @@ class OcrdResourceManager:
         if registered == 'unregistered':
             log.info(f"{executable} resource '{resource_name}' ({res_dict['url']}) not a known resource, creating stub "
                      f"in {self.user_list}'")
-            self.add_to_user_database(executable, fpath, url=res_dict['url'])
+            self.add_to_user_database(executable, resource_name, fpath, url=res_dict['url'])
         self.save_user_list()
         log.info(f"Installed resource {res_dict['url']} under {fpath}")
         return fpath
