@@ -142,18 +142,21 @@ properties:
                     description: List the allowed values if a fixed list.
                   content-type:
                     type: string
-                    default: 'application/octet-stream'
                     description: >
+                      If parameter is reference to file (type=string format=uri):
                       The media type of resources this processor expects for
                       this parameter. Most processors use files for resources
                       (e.g.  `*.traineddata` for `ocrd-tesserocr-recognize`)
                       while others use directories of files (e.g. `default` for
-                      `ocrd-eynollah-segment`).  If a parameter requires
-                      directories, it must set `content-type` to
+                      `ocrd-eynollah-segment`).
+                      If a parameter requires directories, it must set this to
                       `text/directory`.
                   cacheable:
                     type: boolean
-                    description: "If parameter is reference to file: Whether the file should be cached, e.g. because it is large and won't change."
+                    description: >
+                      If parameter is reference to file (type=string format=uri):
+                      Whether the file should be cached, e.g. because it is large
+                      and won't change.
                     default: false
           description:
             description: Concise description of what the tool does
@@ -175,6 +178,7 @@ properties:
             items:
               type: string
               enum:
+                - preprocessing/format-conversion
                 - preprocessing/characterization
                 - preprocessing/optimization
                 - preprocessing/optimization/cropping
@@ -193,6 +197,10 @@ properties:
                 - layout/segmentation/word
                 - layout/segmentation/classification
                 - layout/analysis
+                - postprocessing/format-conversion
+                - postprocessing/archival
+                - evaluation/layout
+                - evaluation/text
           resource_locations:
             type: array
             description: The locations in the filesystem this processor supports for resource lookup
