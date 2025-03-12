@@ -935,7 +935,7 @@ class Processor():
         List all resources found in the filesystem and matching content-type by filename suffix
         """
         mimetypes = get_processor_resource_types(None, self.ocrd_tool)
-        for res in list_all_resources(self.ocrd_tool['executable'], moduled=self.moduledir):
+        for base, res in list_all_resources(self.executable, moduled=self.moduledir):
             res = Path(res)
             if not '*/*' in mimetypes:
                 if res.is_dir() and not 'text/directory' in mimetypes:
@@ -944,7 +944,7 @@ class Processor():
                 if res.is_file() and not any(res.suffix == MIME_TO_EXT.get(mime, res.suffix)
                                              for mime in mimetypes):
                     continue
-            yield res
+            yield res.relative_to(base)
 
     @property
     def module(self):

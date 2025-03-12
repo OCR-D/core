@@ -168,21 +168,21 @@ class OcrdResourceManager:
         for this_executable in set(all_executables):
             reslist = []
             mimetypes = get_processor_resource_types(this_executable)
+            self.log.debug("matching candidates for %s by content-type %s", this_executable, str(mimetypes))
             moduledir = get_moduledir(this_executable)
-            for res_filename in list_all_resources(this_executable, moduled=moduledir, xdg_data_home=self.xdg_data_home):
-                res_filename = Path(res_filename)
-                if not '*/*' in mimetypes:
-                    if res_filename.is_dir() and not 'text/directory' in mimetypes:
-                        continue
-                    if res_filename.is_file() and ['text/directory'] == mimetypes:
-                        continue
-                res_name = res_filename.name
+            resdict_list = self.list_available(executable=this_executable)[0][1]
+            for res_basedir, res_filename in list_all_resources(this_executable, moduled=moduledir, xdg_data_home=self.xdg_data_home):
+                res_filename = Path(res_filename).resolve()
+                if res_filename.is_dir() and not 'text/directory' in mimetypes:
+                    continue
+                if res_filename.is_file() and ['text/directory'] == mimetypes:
+                    continue
+                res_name = res_filename.relative_to(res_basedir)
                 res_type = 'file' if res_filename.is_file() else 'directory'
                 res_size = res_filename.stat().st_size if res_filename.is_file() else directory_size(res_filename)
-                resdict_list = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
-                if resdict_list:
-                    resdict = resdict_list[0]
-                elif str(res_filename.parent) == moduledir:
+                if resdict := next((res for res in resdict_list if res['name'] == res_name), False):
+                    pass
+                elif str(res_filename.parent).startswith(moduledir):
                     resdict = {
                         'name': res_name, 
                         'url': str(res_filename), 

@@ -15,7 +15,7 @@ __all__ = [
     'redirect_stderr_and_stdout_to_file',
 ]
 
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 from tempfile import TemporaryDirectory, gettempdir
 from functools import lru_cache
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
@@ -126,7 +126,7 @@ def list_resource_candidates(executable : str, fname : str, cwd : Optional[str] 
         candidates.append(join(moduled, fname))
     return candidates
 
-def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[str]:
+def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[Tuple[str,str]]:
     """
     List all processor resources in the filesystem according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters
@@ -139,6 +139,11 @@ def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_dat
         # Assume the default
         resource_locations = RESOURCE_LOCATIONS
     xdg_data_home = xdg_data_home or config.XDG_DATA_HOME
+    # we need both the full path and its base location directory
+    # so we can subtract the latter from the former as resource name
+    def iterbase(base):
+        for subpath in base.iterdir():
+            yield (base, subpath)
     # XXX cwd would list too many false positives
     # if 'cwd' in resource_locations:
     #     cwd_candidate = join(getcwd(), 'ocrd-resources', executable)
@@ -147,19 +152,21 @@ def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_dat
     processor_path_var = '%s_PATH' % executable.replace('-', '_').upper()
     if processor_path_var in environ:
         for processor_path in environ[processor_path_var].split(':'):
-            if Path(processor_path).is_dir():
-                candidates += Path(processor_path).iterdir()
+            processor_path = Path(processor_path)
+            if processor_path.is_dir():
+                candidates += iterbase(processor_path)
     if 'data' in resource_locations:
         datadir = Path(xdg_data_home, 'ocrd-resources', executable)
         if datadir.is_dir():
-            candidates += datadir.iterdir()
+            candidates += iterbase(datadir)
     if 'system' in resource_locations:
         systemdir = Path(RESOURCES_DIR_SYSTEM, executable)
         if systemdir.is_dir():
-            candidates += systemdir.iterdir()
+            candidates += iterbase(systemdir)
     if 'module' in resource_locations and moduled:
         # recurse fully
-        for resource in itertree(Path(moduled)):
+        base = Path(moduled)
+        for resource in itertree(base):
             if resource.is_dir():
                 continue
             if any(resource.match(pattern) for pattern in
@@ -181,9 +188,10 @@ def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_dat
                     'ocrd-tool.json',
                     'environment.pickle', 'resource_list.yml', 'lib.bash']):
                 continue
-            candidates.append(resource)
-    return sorted([str(x) for x in candidates
-                   if x.name not in ['.git']])
+            candidates.append((base, resource))
+    return sorted([(str(base), str(path))
+                   for base, path in candidates
+                   if path.name not in ['.git']])
 
 def get_processor_resource_types(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None) -> List[str]:
     """
