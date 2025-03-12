@@ -396,6 +396,7 @@ class OcrdResourceManager:
         registered = "registered" if "size" in res_dict else "unregistered"
         resource_type = res_dict.get('type', resource_type)
         resource_name = res_dict.get('name', None)
+        path_in_archive = res_dict.get('path_in_archive', path_in_archive)
         if resource_type not in RESOURCE_TYPES:
             raise ValueError(f"Unknown resource type: {resource_type}, must be one of: {RESOURCE_TYPES}")
         if any_url:
@@ -403,6 +404,8 @@ class OcrdResourceManager:
         if not resource_name:
             url_parsed = urlparse(res_dict['url'])
             resource_name = Path(unquote(url_parsed.path)).name
+            if resource_type == 'archive' and path_in_archive != '.':
+                resource_name = Path(path_in_archive).name
         if res_dict['url'] == '???':
             log.warning(f"Skipping user resource {resource_name} since download url is: {res_dict['url']}")
             return None
@@ -416,7 +419,6 @@ class OcrdResourceManager:
                 return fpath
             self.remove_resource(log, resource_path=fpath)
         dest_dir.mkdir(parents=True, exist_ok=True)
-        path_in_archive = res_dict.get('path_in_archive', path_in_archive)
 
         # TODO @mehmedGIT: Consider properly handling cases for invalid URLs.
         if res_dict['url'].startswith('https://') or res_dict['url'].startswith('http://'):
