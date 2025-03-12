@@ -29,10 +29,11 @@ from zipfile import ZipFile
 from subprocess import run, PIPE
 from mimetypes import guess_type as mimetypes_guess
 from filetype import guess as filetype_guess
+from fnmatch import filter as apply_glob
 
 from atomicwrites import atomic_write as atomic_write_, AtomicWriter
 
-from .constants import EXT_TO_MIME, RESOURCE_LOCATIONS, RESOURCES_DIR_SYSTEM
+from .constants import EXT_TO_MIME, MIME_TO_EXT, RESOURCE_LOCATIONS, RESOURCES_DIR_SYSTEM
 from .config import config
 from .logging import getLogger
 from .introspect import resource_string
@@ -126,19 +127,33 @@ def list_resource_candidates(executable : str, fname : str, cwd : Optional[str] 
         candidates.append(join(moduled, fname))
     return candidates
 
-def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[Tuple[str,str]]:
+def list_all_resources(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None, moduled : Optional[str] = None, xdg_data_home : Optional[str] = None) -> List[Tuple[str,str]]:
     """
     List all processor resources in the filesystem according to
     https://ocr-d.de/en/spec/ocrd_tool#file-parameters
     """
-    candidates = []
+    xdg_data_home = xdg_data_home or config.XDG_DATA_HOME
+    if ocrd_tool is None:
+        ocrd_tool = get_ocrd_tool_json(executable)
+    # processor we're looking for might not be installed, hence the fallbacks
     try:
-        resource_locations = get_ocrd_tool_json(executable)['resource_locations']
-    except FileNotFoundError:
-        # processor we're looking for resource_locations of is not installed.
+        mimetypes = get_processor_resource_types(executable, ocrd_tool=ocrd_tool)
+    except KeyError:
+        mimetypes = ['*/*']
+    try:
+        resource_locations = ocrd_tool['resource_locations']
+    except KeyError:
         # Assume the default
         resource_locations = RESOURCE_LOCATIONS
-    xdg_data_home = xdg_data_home or config.XDG_DATA_HOME
+    try:
+        # fixme: if resources_list contains directories, their "suffix" will interfere
+        # (e.g. dirname without dot means we falsely match files without suffix)
+        resource_suffixes = [Path(res['name']).suffix
+                             for res in ocrd_tool['resources']]
+    except KeyError:
+        resource_suffixes = []
+    logger = getLogger('ocrd.utils.list_all_resources')
+    candidates = []
     # we need both the full path and its base location directory
     # so we can subtract the latter from the former as resource name
     def iterbase(base):
@@ -187,11 +202,51 @@ def list_all_resources(executable : str, moduled : Optional[str] = None, xdg_dat
                     # our stuff
                     'ocrd-tool.json',
                     'environment.pickle', 'resource_list.yml', 'lib.bash']):
+                logger.debug("ignoring module candidate '%s'", resource)
                 continue
             candidates.append((base, resource))
-    return sorted([(str(base), str(path))
-                   for base, path in candidates
-                   if path.name not in ['.git']])
+    if mimetypes != ['*/*']:
+        logger.debug("matching candidates for %s by content-type %s", executable, str(mimetypes))
+    def valid_resource_type(candidate):
+        _, path = candidate
+        if '*/*' in mimetypes:
+            return True
+        if path.is_dir():
+            if not 'text/directory' in mimetypes:
+                logger.debug("ignoring directory candidate '%s'", path)
+                return False
+            return True
+        if not path.is_file():
+            logger.warning("ignoring non-file, non-directory candidate '%s'", path)
+            return False
+        res_mimetype = guess_media_type(path, fallback='')
+        if res_mimetype == 'application/json':
+            # always accept, regardless of configured mimetypes:
+            # needed for distributing or sharing parameter preset files
+            return True
+        if ['text/directory'] == mimetypes:
+            logger.debug("ignoring non-directory candidate '%s'", path)
+            return False
+        if 'application/octet-stream' in mimetypes:
+            # catch-all type - do not enforce anything
+            return True
+        if path.suffix in resource_suffixes:
+            return True
+        if any(path.suffix == MIME_TO_EXT.get(mime, None)
+               for mime in mimetypes):
+            return True
+        if not res_mimetype:
+            logger.warning("cannot determine content type of candidate '%s'", path)
+            return True
+        if any(apply_glob([res_mimetype], mime)
+               for mime in mimetypes):
+            return True
+        logger.debug("ignoring %s candidate '%s'", res_mimetype, path)
+        return False
+    candidates = sorted(filter(valid_resource_type, candidates))
+    return [(str(base), str(path))
+            for base, path in candidates
+            if path.name not in ['.git']]
 
 def get_processor_resource_types(executable : str, ocrd_tool : Optional[Dict[str, Any]] = None) -> List[str]:
     """
