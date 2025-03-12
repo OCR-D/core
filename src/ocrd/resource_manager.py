@@ -62,6 +62,12 @@ class OcrdResourceManager:
                 self.save_user_list()
             self.load_resource_list(self.user_list)
 
+    def __repr__(self):
+        return f"user_list={str(self.user_list)} " + \
+               f"exists={self.user_list.exists()} " + \
+               f"database: {len(self.database)} executables " + \
+               f"{sum(map(len, self.database.values()))} resources"
+
     @property
     def userdir(self):
         if not self._userdir:
