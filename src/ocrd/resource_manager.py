@@ -404,6 +404,7 @@ class OcrdResourceManager:
         resource_type = res_dict.get('type', resource_type)
         resource_name = res_dict.get('name', None)
         path_in_archive = res_dict.get('path_in_archive', path_in_archive)
+
         if resource_type not in RESOURCE_TYPES:
             raise ValueError(f"Unknown resource type: {resource_type}, must be one of: {RESOURCE_TYPES}")
         if any_url:

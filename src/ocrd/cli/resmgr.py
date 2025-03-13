@@ -20,7 +20,7 @@ from ocrd_utils import (
     get_ocrd_tool_json,
     initLogging,
     RESOURCE_LOCATIONS,
-    RESOURCE_TYPES,
+    RESOURCE_TYPES
 )
 from ocrd.constants import RESOURCE_USER_LIST_COMMENT
 
