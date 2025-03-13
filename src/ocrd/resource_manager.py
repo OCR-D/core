@@ -31,7 +31,7 @@ yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:timestamp'
 
 from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
-from ocrd_utils.constants import RESOURCES_DIR_SYSTEM, RESOURCE_TYPES
+from ocrd_utils.constants import RESOURCES_DIR_SYSTEM, RESOURCE_TYPES, MIME_TO_EXT
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
@@ -61,6 +61,12 @@ class OcrdResourceManager:
                     self.user_list.parent.mkdir(parents=True)
                 self.save_user_list()
             self.load_resource_list(self.user_list)
+
+    def __repr__(self):
+        return f"user_list={str(self.user_list)} " + \
+               f"exists={self.user_list.exists()} " + \
+               f"database: {len(self.database)} executables " + \
+               f"{sum(map(len, self.database.values()))} resources"
 
     @property
     def userdir(self):
@@ -134,7 +140,7 @@ class OcrdResourceManager:
         if not database:
             database = self.database
         if not executable:
-            return database.items()
+            return list(database.items())
         if dynamic:
             self._search_executables(executable)
             self.save_user_list()
@@ -172,21 +178,17 @@ class OcrdResourceManager:
                     all_executables += [x for x in listdir(parent_dir) if x.startswith('ocrd-')]
         for this_executable in set(all_executables):
             reslist = []
-            mimetypes = get_processor_resource_types(this_executable)
             moduledir = get_moduledir(this_executable)
-            for res_filename in list_all_resources(this_executable, moduled=moduledir, xdg_data_home=self.xdg_data_home):
-                res_filename = Path(res_filename)
-                if not '*/*' in mimetypes:
-                    if res_filename.is_dir() and not 'text/directory' in mimetypes:
-                        continue
-                    if res_filename.is_file() and ['text/directory'] == mimetypes:
-                        continue
+            resdict_list = self.list_available(executable=this_executable)[0][1]
+            for res_filename in list_all_resources(this_executable,
+                                                   moduled=moduledir,
+                                                   xdg_data_home=self.xdg_data_home):
+                res_filename = Path(res_filename).resolve()
                 res_name = res_filename.name
                 res_type = 'file' if res_filename.is_file() else 'directory'
                 res_size = res_filename.stat().st_size if res_filename.is_file() else directory_size(res_filename)
-                resdict_list = [x for x in self.database.get(this_executable, []) if x['name'] == res_name]
-                if resdict_list:
-                    resdict = resdict_list[0]
+                if resdict := next((res for res in resdict_list if res['name'] == res_name), False):
+                    pass
                 elif str(res_filename.parent).startswith(moduledir):
                     resdict = {
                         'name': res_name, 
@@ -207,19 +209,18 @@ class OcrdResourceManager:
         """
         Add a stub entry to the user resource.yml
         """
-        res_name = Path(res_filename).name
-        self.log.info(f"{executable} resource '{res_name}' ({str(res_filename)}) not a known resource, "
-                      f"creating stub in {self.user_list}'")
+        res_name = res_filename.name
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
             res_size = Path(res_filename).stat().st_size
-        with open(self.user_list, 'r', encoding='utf-8') as f:
-            user_database = safe_load(f) or {}
+        user_database = self.load_resource_list(self.user_list)
         if executable not in user_database:
             user_database[executable] = []
         resources_found = self.list_available(executable=executable, name=res_name, database=user_database)[0][1]
         if not resources_found:
+            self.log.info(f"{executable} resource '{res_name}' ({str(res_filename)}) not a known resource, "
+                          f"creating stub in {self.user_list}'")
             resdict = {
                 'name': res_name,
                 'url': url if url else '???',
@@ -402,6 +403,8 @@ class OcrdResourceManager:
         registered = "registered" if "size" in res_dict else "unregistered"
         resource_type = res_dict.get('type', resource_type)
         resource_name = res_dict.get('name', None)
+        path_in_archive = res_dict.get('path_in_archive', path_in_archive)
+
         if resource_type not in RESOURCE_TYPES:
             raise ValueError(f"Unknown resource type: {resource_type}, must be one of: {RESOURCE_TYPES}")
         if any_url:
@@ -409,6 +412,8 @@ class OcrdResourceManager:
         if not resource_name:
             url_parsed = urlparse(res_dict['url'])
             resource_name = Path(unquote(url_parsed.path)).name
+            if resource_type == 'archive' and path_in_archive != '.':
+                resource_name = Path(path_in_archive).name
         if res_dict['url'] == '???':
             log.warning(f"Skipping user resource {resource_name} since download url is: {res_dict['url']}")
             return None
@@ -422,7 +427,6 @@ class OcrdResourceManager:
                 return fpath
             self.remove_resource(log, resource_path=fpath)
         dest_dir.mkdir(parents=True, exist_ok=True)
-        path_in_archive = res_dict.get('path_in_archive', path_in_archive)
 
         # TODO @mehmedGIT: Consider properly handling cases for invalid URLs.
         if res_dict['url'].startswith('https://') or res_dict['url'].startswith('http://'):
@@ -439,8 +443,6 @@ class OcrdResourceManager:
             fpath = self.copy_resource(log, res_dict['url'], fpath, resource_type, path_in_archive)
 
         if registered == 'unregistered':
-            log.info(f"{executable} resource '{resource_name}' ({res_dict['url']}) not a known resource, creating stub "
-                     f"in {self.user_list}'")
             self.add_to_user_database(executable, fpath, url=res_dict['url'])
         self.save_user_list()
         log.info(f"Installed resource {res_dict['url']} under {fpath}")
