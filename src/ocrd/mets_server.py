@@ -474,7 +474,7 @@ class OcrdMetsServer:
             """
             workspace.save_mets()
             response = Response(content="The Mets Server is writing changes to disk.", media_type='text/plain')
-            self.log.info(f"PUT / -> {response.__dict__}")
+            self.log.debug(f"PUT / -> {response.__dict__}")
             return response
 
         @app.delete(path='/')
@@ -485,7 +485,7 @@ class OcrdMetsServer:
             workspace.save_mets()
             response = Response(content="The Mets Server will shut down soon...", media_type='text/plain')
             self.shutdown()
-            self.log.info(f"DELETE / -> {response.__dict__}")
+            self.log.debug(f"DELETE / -> {response.__dict__}")
             return response
 
         @app.post(path='/reload')
@@ -495,25 +495,25 @@ class OcrdMetsServer:
             """
             workspace.reload_mets()
             response = Response(content=f"Reloaded from {workspace.directory}", media_type='text/plain')
-            self.log.info(f"POST /reload -> {response.__dict__}")
+            self.log.debug(f"POST /reload -> {response.__dict__}")
             return response
 
         @app.get(path='/unique_identifier', response_model=str)
         async def unique_identifier():
             response = Response(content=workspace.mets.unique_identifier, media_type='text/plain')
-            self.log.info(f"GET /unique_identifier -> {response.__dict__}")
+            self.log.debug(f"GET /unique_identifier -> {response.__dict__}")
             return response
 
         @app.get(path='/workspace_path', response_model=str)
         async def workspace_path():
             response = Response(content=workspace.directory, media_type="text/plain")
-            self.log.info(f"GET /workspace_path -> {response.__dict__}")
+            self.log.debug(f"GET /workspace_path -> {response.__dict__}")
             return response
 
         @app.get(path='/physical_pages', response_model=OcrdPageListModel)
         async def physical_pages():
             response = {'physical_pages': workspace.mets.physical_pages}
-            self.log.info(f"GET /physical_pages -> {response}")
+            self.log.debug(f"GET /physical_pages -> {response}")
             return response
 
         @app.get(path='/physical_pages', response_model=OcrdPageListModel)
@@ -523,13 +523,13 @@ class OcrdMetsServer:
         @app.get(path='/file_groups', response_model=OcrdFileGroupListModel)
         async def file_groups():
             response = {'file_groups': workspace.mets.file_groups}
-            self.log.info(f"GET /file_groups -> {response}")
+            self.log.debug(f"GET /file_groups -> {response}")
             return response
 
         @app.get(path='/agent', response_model=OcrdAgentListModel)
         async def agents():
             response = OcrdAgentListModel.create(workspace.mets.agents)
-            self.log.info(f"GET /agent -> {response.__dict__}")
+            self.log.debug(f"GET /agent -> {response.__dict__}")
             return response
 
         @app.post(path='/agent', response_model=OcrdAgentModel)
@@ -538,7 +538,7 @@ class OcrdMetsServer:
             kwargs['_type'] = kwargs.pop('type')
             workspace.mets.add_agent(**kwargs)
             response = agent
-            self.log.info(f"POST /agent -> {response.__dict__}")
+            self.log.debug(f"POST /agent -> {response.__dict__}")
             return response
 
         @app.get(path="/file", response_model=OcrdFileListModel)
@@ -557,14 +557,14 @@ class OcrdMetsServer:
                 fileGrp=file_grp, ID=file_id, pageId=page_id, mimetype=mimetype, local_filename=local_filename, url=url
             )
             response = OcrdFileListModel.create(found)
-            self.log.info(f"GET /file -> {response.__dict__}")
+            self.log.debug(f"GET /file -> {response.__dict__}")
             return response
 
         @app.post(path='/file', response_model=OcrdFileModel)
         async def add_file(
             file_grp: str = Form(),
             file_id: str = Form(),
-            page_id: Optional[str] = Form(),
+            page_id: Optional[str] = Form(None),
             mimetype: str = Form(),
             url: Optional[str] = Form(None),
             local_filename: Optional[str] = Form(None),
@@ -582,7 +582,7 @@ class OcrdMetsServer:
             kwargs = file_resource.dict()
             workspace.add_file(**kwargs, force=force)
             response = file_resource
-            self.log.info(f"POST /file -> {response.__dict__}")
+            self.log.debug(f"POST /file -> {response.__dict__}")
             return response
 
         # ------------- #

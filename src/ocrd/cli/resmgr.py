@@ -14,7 +14,15 @@ import requests
 import click
 
 from ocrd_utils import (
-    directory_size, getLogger, get_moduledir, get_ocrd_tool_json, initLogging, RESOURCE_LOCATIONS, RESOURCE_TYPES)
+    directory_size,
+    getLogger,
+    get_moduledir,
+    get_ocrd_tool_json,
+    resource_filename,
+    initLogging,
+    RESOURCE_LOCATIONS,
+    RESOURCE_TYPES
+)
 from ocrd.constants import RESOURCE_USER_LIST_COMMENT
 
 from ..resource_manager import OcrdResourceManager

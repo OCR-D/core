@@ -5,6 +5,52 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.1.2] - 2025-03-10
+
+Fixed:
+
+  * `make deps-tf1`: path to `requirements.txt` now correct, #1313
+
+## [3.1.1] - 2025-03-07
+
+Fixed:
+
+  * Fix CUDA Docker deployment, #1312
+  * Consistent Docker image metadata, #1312
+  * Default `ocrd-all-tool.json` should contain `ocrd-{dummy,filter}`, #1312
+
+## [3.1.0] - 2025-03-06
+
+Fixed:
+
+  * Use `config.OCRD_DOWNLOAD_INPUT` consistently instead of ambiguous kwargs, #1310
+
+Added:
+
+  * `ocrd ocrd-tool dump-tools` command to output the `tools` section, #1310
+
+Changed:
+
+  * Update spec-derived data files from OCR-D/spec v3.26.0, #1311
+
+## [3.0.4] - 2025-02-18
+
+Changed:
+
+- METS Server: downgrade log messages (`INFO`→`DEBUG`), #1305
+
+Fixed:
+
+- METS Server: make `add_file` (POST `/file`) work with `pageId=None`, #1305
+- PAGE API: serialization of `OrderedGroup/*` namespace prefixes, #1305
+- run_processor: handle frozendict and empty `parameter` when logging, #1305
+
+Added:
+
+- tests for processors with `add_file(... page_id=None ...)`, #1305
+- tests for ocrd_page roundtrip, #1305
+- tests for processor logging, #1305
+
 ## [3.0.3] - 2025-02-14
 
 Fixed:
@@ -2439,6 +2485,10 @@ Fixed
 Initial Release
 
 <!-- link-labels -->
+[3.1.2]: ../../compare/v3.1.2..v3.1.1
+[3.1.1]: ../../compare/v3.1.1..v3.1.0
+[3.1.0]: ../../compare/v3.1.0..v3.0.4
+[3.0.4]: ../../compare/v3.0.4..v3.0.3
 [3.0.3]: ../../compare/v3.0.3..v3.0.2
 [3.0.2]: ../../compare/v3.0.2..v3.0.1
 [3.0.1]: ../../compare/v3.0.1..v3.0.0
