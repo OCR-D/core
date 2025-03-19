@@ -793,6 +793,9 @@ class Processor():
                 # not PAGE and not an image to generate PAGE for
                 self._base_logger.error(f"non-PAGE input for page {page_id}: {err}")
         output_file_id = make_file_id(input_files[0], self.output_file_grp)
+        if input_files[0].fileGrp == self.output_file_grp:
+            # input=output fileGrp: re-use ID exactly
+            output_file_id = input_files[0].ID
         output_file = next(self.workspace.mets.find_files(ID=output_file_id), None)
         if output_file and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
             # short-cut avoiding useless computation:
