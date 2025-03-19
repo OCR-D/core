@@ -192,7 +192,11 @@ class WorkspaceValidator():
             self.workspace.download_file(f)
             page = page_from_file(f).get_Page()
             imageFilename = page.imageFilename
-            if not self.mets.find_files(url=imageFilename, **self.find_kwargs):
+            if is_local_filename(imageFilename):
+                kwargs = dict(local_filename=imageFilename, **self.find_kwargs)
+            else:
+                kwargs = dict(url=imageFilename, **self.find_kwargs)
+            if not self.mets.find_files(**kwargs):
                 self.report.add_error(f"PAGE '{f.ID}': imageFilename '{imageFilename}' not found in METS")
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
                 self.report.add_warning(f"PAGE '{f.ID}': imageFilename '{imageFilename}' points to non-existent local file")
@@ -331,7 +335,11 @@ class WorkspaceValidator():
                     self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width ({page.imageWidth} != {exif.width})")
             if 'imagefilename' in self.page_checks:
                 imageFilename = page.imageFilename
-                if not self.mets.find_files(url=imageFilename):
+                if is_local_filename(imageFilename):
+                    kwargs = dict(local_filename=imageFilename, **self.find_kwargs)
+                else:
+                    kwargs = dict(url=imageFilename, **self.find_kwargs)
+                if not self.mets.find_files(**kwargs):
                     self.report.add_error(f"PAGE '{f.ID}': imageFilename '{imageFilename}' not found in METS")
                 if is_local_filename(imageFilename) and not Path(imageFilename).exists():
                     self.report.add_warning(f"PAGE '{f.ID}': imageFilename '{imageFilename}' points to non-existent local file")
