@@ -295,6 +295,9 @@ class WorkspaceValidator():
             if f.url and 'url' not in self.skip:
                 if re.match(r'^file:/[^/]', f.url):
                     self.report.add_error(f"File '{f.ID}' has an invalid (Java-specific) file URL '{f.url}'")
+                elif ':' not in f.url:
+                    self.report.add_error(f"File '{f.ID}' has an invalid (non-URI) file URL '{f.url}'")
+                    continue
                 scheme = f.url[0:f.url.index(':')]
                 if scheme not in ('http', 'https', 'file'):
                     self.report.add_warning(f"File '{f.ID}' has non-HTTP, non-file URL '{f.url}'")
