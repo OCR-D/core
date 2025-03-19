@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename, DEFAULT_METS_BASENAME
 from ocrd_models import ValidationReport
+from ocrd_models.constants import PAGE_ALTIMG_FEATURES
 from ocrd_modelfactory import page_from_file
 
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
@@ -100,6 +101,7 @@ class WorkspaceValidator():
         self.page_checks = [check for check in ['mets_fileid_page_pcgtsid',
                                                 'imagefilename',
                                                 'alternativeimage_filename',
+                                                'alternativeimage_comments',
                                                 'dimension',
                                                 'page',
                                                 'page_xsd']
@@ -350,11 +352,21 @@ class WorkspaceValidator():
                     else:
                         kwargs = dict(url=altimg.filename, **self.find_kwargs)
                     if not self.mets.find_files(**kwargs):
-                        self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage"
+                        self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
                                               f"'{altimg.filename}' not found in METS")
                     if is_local_filename(altimg.filename) and not Path(altimg.filename).exists():
-                        self.report.add_warning(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage"
+                        self.report.add_warning(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
                                                 f"'{altimg.filename}' points to non-existent local file")
+            if 'alternativeimage_comments' in self.page_checks:
+                for altimg in page.get_AllAlternativeImages():
+                    if altimg.comments is None:
+                        self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
+                                              f"'{altimg.filename}' features not specified in PAGE")
+                    else:
+                        for feature in altimg.comments.split(','):
+                            if feature not in PAGE_ALTIMG_FEATURES:
+                                self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
+                                                      f"'{altimg.filename}' feature '{feature}' not standardized for PAGE")
             if 'mets_fileid_page_pcgtsid' in self.page_checks and pcgts.pcGtsId != f.ID:
                 self.report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pcgts.pcGtsId or '', f.ID or ''))
 
