@@ -99,6 +99,7 @@ class WorkspaceValidator():
         # there will be more options to come
         self.page_checks = [check for check in ['mets_fileid_page_pcgtsid',
                                                 'imagefilename',
+                                                'alternativeimage_filename',
                                                 'dimension',
                                                 'page',
                                                 'page_xsd']
@@ -344,6 +345,18 @@ class WorkspaceValidator():
                     self.report.add_error(f"PAGE '{f.ID}': imageFilename '{imageFilename}' not found in METS")
                 if is_local_filename(imageFilename) and not Path(imageFilename).exists():
                     self.report.add_warning(f"PAGE '{f.ID}': imageFilename '{imageFilename}' points to non-existent local file")
+            if 'alternativeimage_filename' in self.page_checks:
+                for altimg in page.get_AllAlternativeImages():
+                    if is_local_filename(altimg.filename):
+                        kwargs = dict(local_filename=altimg.filename, **self.find_kwargs)
+                    else:
+                        kwargs = dict(url=altimg.filename, **self.find_kwargs)
+                    if not self.mets.find_files(**kwargs):
+                        self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage"
+                                              f"'{altimg.filename}' not found in METS")
+                    if is_local_filename(altimg.filename) and not Path(altimg.filename).exists():
+                        self.report.add_warning(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage"
+                                                f"'{altimg.filename}' points to non-existent local file")
             if 'mets_fileid_page_pcgtsid' in self.page_checks and pcgts.pcGtsId != f.ID:
                 self.report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pcgts.pcGtsId or '', f.ID or ''))
 
