@@ -98,6 +98,7 @@ class WorkspaceValidator():
         self.page_coordinate_consistency = page_coordinate_consistency
         # there will be more options to come
         self.page_checks = [check for check in ['mets_fileid_page_pcgtsid',
+                                                'imagefilename',
                                                 'dimension',
                                                 'page',
                                                 'page_xsd']
