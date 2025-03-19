@@ -330,11 +330,11 @@ class WorkspaceValidator():
             pcgts = page_from_file(f)
             page = pcgts.get_Page()
             if 'dimension' in self.page_checks:
-                _, _, exif = self.workspace.image_from_page(page, f.pageId)
-                if page.imageHeight != exif.height:
-                    self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height ({page.imageHeight} != {exif.height})")
-                if page.imageWidth != exif.width:
-                    self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width ({page.imageWidth} != {exif.width})")
+                img = self.workspace._resolve_image_as_pil(page.imageFilename)
+                if page.imageHeight != img.height:
+                    self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height ({page.imageHeight} != {img.height})")
+                if page.imageWidth != img.width:
+                    self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width ({page.imageWidth} != {img.width})")
             if 'imagefilename' in self.page_checks:
                 imageFilename = page.imageFilename
                 if is_local_filename(imageFilename):
