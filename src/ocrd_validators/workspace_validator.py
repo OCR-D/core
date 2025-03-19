@@ -120,7 +120,7 @@ class WorkspaceValidator():
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
             skip (list): Validation checks to omit. One or more of 
-                'mets_unique_identifier', 'mets_file_group_names', 
+                'mets_unique_identifier',
                 'mets_files', 'pixel_density', 'dimension', 'url',
                 'multipage', 'page', 'page_xsd', 'mets_xsd', 
                 'mets_fileid_page_pcgtsid'
@@ -147,8 +147,6 @@ class WorkspaceValidator():
             try:
                 if 'mets_unique_identifier' not in self.skip:
                     self._validate_mets_unique_identifier()
-                if 'mets_file_group_names' not in self.skip:
-                    self._validate_mets_file_group_names()
                 if 'mets_files' not in self.skip:
                     self._validate_mets_files()
                 if 'pixel_density' not in self.skip:
