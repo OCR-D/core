@@ -779,10 +779,14 @@ class Processor():
         to handle cases like multiple output fileGrps, non-PAGE input etc.)
         """
         input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
-        assert isinstance(input_files[0], get_args(OcrdFileType))
-        page_id = input_files[0].pageId
+        input_pos = next(i for i, input_file in enumerate(input_files) if input_file is not None)
+        page_id = input_files[input_pos].pageId
         self._base_logger.info("processing page %s", page_id)
         for i, input_file in enumerate(input_files):
+            if input_file is None:
+                grp = self.input_file_grp.split(',')[i]
+                self._base_logger.debug(f"ignoring missing file for input fileGrp {grp} for page {page_id}")
+                continue
             assert isinstance(input_file, get_args(OcrdFileType))
             self._base_logger.debug(f"parsing file {input_file.ID} for page {page_id}")
             try:
@@ -792,7 +796,10 @@ class Processor():
             except ValueError as err:
                 # not PAGE and not an image to generate PAGE for
                 self._base_logger.error(f"non-PAGE input for page {page_id}: {err}")
-        output_file_id = make_file_id(input_files[0], self.output_file_grp)
+        output_file_id = make_file_id(input_files[input_pos], self.output_file_grp)
+        if input_files[input_pos].fileGrp == self.output_file_grp:
+            # input=output fileGrp: re-use ID exactly
+            output_file_id = input_files[input_pos].ID
         output_file = next(self.workspace.mets.find_files(ID=output_file_id), None)
         if output_file and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
             # short-cut avoiding useless computation:

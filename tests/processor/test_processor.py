@@ -1,5 +1,7 @@
 from functools import cached_property
 import json
+from PIL import Image
+from io import BytesIO
 from contextlib import ExitStack
 
 from tempfile import TemporaryDirectory
@@ -14,11 +16,14 @@ from tests.data import (
     DummyProcessorWithOutputLegacy,
     DummyProcessorWithOutputSleep,
     DummyProcessorWithOutputFailures,
+    DummyProcessorWithOutputMultiInput,
     IncompleteProcessor
 )
 from tests.test_mets_server import fixture_start_mets_server
 
 from ocrd_utils import MIMETYPE_PAGE, pushd_popd, initLogging, disableLogging, config
+from ocrd_modelfactory import page_from_file
+from ocrd_models.ocrd_page import to_xml
 from ocrd.resolver import Resolver
 from ocrd.processor import Processor, run_processor, run_cli, NonUniqueInputFile
 from ocrd.processor.helpers import get_processor
@@ -386,39 +391,42 @@ class TestProcessor(TestCase):
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
             ws.add_file('GRP2', mimetype='image/tiff', file_id='foobar4', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
-                with self.subTest(page_id=page_id):
-                    proc = ZipTestProcessor(None)
-                    proc.workspace = ws
-                    proc.input_file_grp = 'GRP1,GRP2'
-                    proc.page_id = page_id
-                    print("unfiltered")
+                proc = ZipTestProcessor(None)
+                proc.workspace = ws
+                proc.input_file_grp = 'GRP1,GRP2'
+                proc.page_id = page_id
+                with self.subTest(msg='mixed MIME unfiltered', page_id=page_id):
                     tuples = [(one.ID, two.ID) for one, two in proc.zip_input_files()]
                     assert ('foobar1', 'foobar2') in tuples
                     assert ('foobar3', 'foobar4') in tuples
-                    print("PAGE-filtered")
+                with self.subTest(msg='mixed MIME PAGE-filtered', page_id=page_id):
                     tuples = [(one.ID, two) for one, two in proc.zip_input_files(mimetype=MIMETYPE_PAGE)]
                     assert ('foobar3', None) in tuples
+            # add clashing image that is not mitigated by the presence of a PAGE file
             ws.add_file('GRP2', mimetype='image/tiff', file_id='foobar4dup', page_id='phys_0002')
             for page_id in [None, 'phys_0001,phys_0002']:
-                with self.subTest(page_id=page_id):
-                    proc = ZipTestProcessor(None)
-                    proc.workspace = ws
-                    proc.input_file_grp = 'GRP1,GRP2'
-                    proc.page_id = page_id
+                proc = ZipTestProcessor(None)
+                proc.workspace = ws
+                proc.input_file_grp = 'GRP1,GRP2'
+                proc.page_id = page_id
+                with self.subTest(msg='image file clash', page_id=page_id):
                     tuples = [(one.ID, two.ID) for one, two in proc.zip_input_files(on_error='first')]
                     assert ('foobar1', 'foobar2') in tuples
                     assert ('foobar3', 'foobar4') in tuples
                     tuples = [(one.ID, two) for one, two in proc.zip_input_files(on_error='skip')]
                     assert ('foobar3', None) in tuples
+                    tuples = [(one.ID, two) for one, two in proc.zip_input_files(on_error='skip', mimetype=MIMETYPE_PAGE)]
+                    assert ('foobar3', None) in tuples
                     with self.assertRaisesRegex(NonUniqueInputFile, "Could not determine unique input file"):
                         tuples = proc.zip_input_files(on_error='abort')
+            # add clashing PAGE
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2dup', page_id='phys_0001')
             for page_id in [None, 'phys_0001,phys_0002']:
-                with self.subTest(page_id=page_id):
-                    proc = ZipTestProcessor(None)
-                    proc.workspace = ws
-                    proc.input_file_grp = 'GRP1,GRP2'
-                    proc.page_id = page_id
+                proc = ZipTestProcessor(None)
+                proc.workspace = ws
+                proc.input_file_grp = 'GRP1,GRP2'
+                proc.page_id = page_id
+                with self.subTest(msg='PAGE file clash', page_id=page_id):
                     with self.assertRaisesRegex(NonUniqueInputFile, "Could not determine unique input file"):
                         tuples = proc.zip_input_files()
 
@@ -441,6 +449,117 @@ class TestProcessor(TestCase):
                     assert [(one, two.ID) for one, two in proc.zip_input_files(require_first=False)] == [(None, 'foobar2')]
         r = self.capture_out_err()
         assert 'ERROR ocrd.processor.base - Found no file for page phys_0001 in file group GRP1' in r.err
+
+    def test_run_output_multi_input(self):
+        with pushd_popd(tempdir=True) as tempdir:
+            ws = self.resolver.workspace_from_nothing(directory=tempdir)
+            pil_image = Image.new('RGB', (100, 100))
+            png_bytes = BytesIO()
+            pil_image.save(png_bytes, format='PNG')
+            tif_bytes = BytesIO()
+            pil_image.save(tif_bytes, format='TIFF')
+            file1 = ws.add_file('GRP1', mimetype='image/png', file_id='GRP1_foobar1img2', page_id='phys_0001',
+                                local_filename='GRP1/foobar1img2.png', content=png_bytes.getvalue())
+            file1 = ws.add_file('GRP1', mimetype='image/png', file_id='GRP1_foobar1img1', page_id='phys_0001',
+                                local_filename='GRP1/foobar1img1.png', content=png_bytes.getvalue())
+            file1 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='GRP1_foobar1', page_id='phys_0001',
+                                local_filename='GRP1/foobar1.xml', content=to_xml(page_from_file(file1)))
+            file1 = ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='GRP2_foobar2', page_id='phys_0001',
+                                local_filename='GRP1/foobar1.xml')
+            file2 = ws.add_file('GRP2', mimetype='image/tiff', file_id='GRP2_foobar4', page_id='phys_0002',
+                                local_filename='GRP2/foobar4.tif', content=tif_bytes.getvalue())
+            file2 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='GRP1_foobar3', page_id='phys_0002',
+                                local_filename='GRP1/foobar3.xml', content=to_xml(page_from_file(file2)))
+            for page_id in [None, 'phys_0001,phys_0002']:
+                with self.subTest(msg='mixed MIME unfiltered', page_id=page_id):
+                    proc = run_processor(DummyProcessorWithOutputMultiInput, workspace=ws,
+                                         input_file_grp="GRP1,GRP2",
+                                         output_file_grp="OCR-D-OUT",
+                                         parameter=dict())
+                    input_files = proc.tuples
+                    assert len(input_files) == 2
+                    assert [tuple(input_file.ID.split('_')[1] if input_file else None
+                                  for input_file in ift)
+                            for ift in input_files] == [('foobar1', 'foobar2'), ('foobar3', 'foobar4')]
+                    output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT")
+                    assert len(output_files) == 2
+                    assert page_from_file(output_files[0]).pcGtsId == output_files[0].ID
+                    assert output_files[0].ID == 'OCR-D-OUT_foobar1'
+                    assert output_files[1].ID == 'OCR-D-OUT_foobar3'
+                    for output_file in output_files:
+                        assert ws.remove_file(output_file.ID).ID == output_file.ID
+                with self.subTest(msg='mixed MIME PAGE-filtered', page_id=page_id):
+                    proc = run_processor(DummyProcessorWithOutputMultiInput, workspace=ws,
+                                         input_file_grp="GRP1,GRP2",
+                                         output_file_grp="OCR-D-OUT",
+                                         parameter=dict(mimetype=MIMETYPE_PAGE))
+                    input_files = proc.tuples
+                    assert len(input_files) == 2
+                    assert [tuple(input_file.ID.split('_')[1] if input_file else None
+                                  for input_file in ift)
+                            for ift in input_files] == [('foobar1', 'foobar2'), ('foobar3', None)]
+                    output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT")
+                    assert len(output_files) == 2
+                    assert page_from_file(output_files[0]).pcGtsId == output_files[0].ID
+                    assert output_files[0].ID == 'OCR-D-OUT_foobar1'
+                    assert output_files[1].ID == 'OCR-D-OUT_foobar3'
+                    for output_file in output_files:
+                        assert ws.remove_file(output_file.ID).ID == output_file.ID
+                with self.subTest(msg='mixed MIME PAGE-filtered non-first', page_id=page_id):
+                    proc = run_processor(DummyProcessorWithOutputMultiInput, workspace=ws,
+                                         input_file_grp="GRP2,GRP1",
+                                         output_file_grp="OCR-D-OUT",
+                                         parameter=dict(mimetype=MIMETYPE_PAGE, require_first=False))
+                    input_files = proc.tuples
+                    assert len(input_files) == 2
+                    assert [tuple(input_file.ID.split('_')[1] if input_file else None
+                                  for input_file in ift)
+                            for ift in input_files] == [('foobar2', 'foobar1'), (None, 'foobar3')]
+                    output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT")
+                    assert len(output_files) == 2
+                    assert page_from_file(output_files[0]).pcGtsId == output_files[0].ID
+                    assert output_files[0].ID == 'OCR-D-OUT_foobar2'
+                    assert output_files[1].ID == 'OCR-D-OUT_foobar3'
+                    for output_file in output_files:
+                        assert ws.remove_file(output_file.ID).ID == output_file.ID
+            # add clashing image that is not mitigated by the presence of a PAGE file
+            file2 = ws.add_file('GRP2', mimetype='image/tiff', file_id='GRP2_foobar4dup', page_id='phys_0002',
+                                local_filename='GRP2/foobar4.tif')
+            for page_id in [None, 'phys_0001,phys_0002']:
+                with self.subTest(msg='image file clash', page_id=page_id):
+                    proc = run_processor(DummyProcessorWithOutputMultiInput, workspace=ws,
+                                         input_file_grp="GRP1,GRP2",
+                                         output_file_grp="OCR-D-OUT",
+                                         parameter=dict(on_error='last'))
+                    input_files = proc.tuples
+                    assert len(input_files) == 2
+                    assert [tuple(input_file.ID.split('_')[1] if input_file else None
+                                  for input_file in ift)
+                            for ift in input_files] == [('foobar1', 'foobar2'), ('foobar3', 'foobar4dup')]
+                    output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT")
+                    assert len(output_files) == 2
+                    assert page_from_file(output_files[0]).pcGtsId == output_files[0].ID
+                    assert output_files[0].ID == 'OCR-D-OUT_foobar1'
+                    assert output_files[1].ID == 'OCR-D-OUT_foobar3'
+                    for output_file in output_files:
+                        assert ws.remove_file(output_file.ID).ID == output_file.ID
+                    with pytest.raises(NonUniqueInputFile) as exc:
+                        run_processor(DummyProcessorWithOutputMultiInput, workspace=ws,
+                                      input_file_grp="GRP1,GRP2",
+                                      output_file_grp="OCR-D-OUT",
+                                      parameter=dict(on_error='abort'))
+                    assert "Could not determine unique input file" in str(exc.value)
+            # add clashing PAGE
+            file1 = ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='GRP2_foobar2dup', page_id='phys_0001',
+                                local_filename='GRP1/foobar1.xml')
+            for page_id in [None, 'phys_0001,phys_0002']:
+                with self.subTest(msg='PAGE file clash', page_id=page_id):
+                    with pytest.raises(NonUniqueInputFile) as exc:
+                        run_processor(DummyProcessorWithOutputMultiInput, workspace=ws,
+                                      input_file_grp="GRP1,GRP2",
+                                      output_file_grp="OCR-D-OUT",
+                                      parameter=dict())
+                    assert "Could not determine unique input file" in str(exc.value)
 
 @pytest.fixture
 def workspace_sbb():

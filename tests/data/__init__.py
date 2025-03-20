@@ -217,6 +217,51 @@ class DummyProcessorWithOutputLegacy(Processor):
                 content='CONTENT',
             )
 
+class DummyProcessorWithOutputMultiInput(Processor):
+    @property
+    def ocrd_tool(self):
+        # make deep copy
+        dummy_tool = json.loads(json.dumps(DUMMY_TOOL))
+        dummy_tool['input_file_grp_cardinality'] = [2, -1]
+        # delegate zip_input_files kwargs
+        dummy_tool['parameters'] = {
+            'require_first': {
+                'type': 'boolean',
+                'default': True,
+            },
+            'on_error': {
+                'type': 'string',
+                'enum': ['skip', 'first', 'last', 'abort'],
+                'default': 'skip',
+            },
+            'mimetype': {
+                'type': 'string'
+            }
+        }
+        return dummy_tool
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.download = False
+
+    def zip_input_files(self, **kwargs):
+        for name, value in self.parameter.items():
+            kwargs[name] = value
+        self.tuples = super().zip_input_files(**kwargs)
+        return self.tuples
+
+    def process_page_pcgts(self, *input_pcgts, page_id=None):
+        pcgts = next(filter(None, input_pcgts))
+        return OcrdPageResult(pcgts)
+
 class IncompleteProcessor(Processor):
     @property
     def executable(self):
