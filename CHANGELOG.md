@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `make deps-tf1`: typo escaping dollar sign, #1314
+
 ## [3.1.2] - 2025-03-10
 
 Fixed:
