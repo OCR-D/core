@@ -17,6 +17,10 @@ Fixed:
     - the validator crashed during `dimension` check, because `image_from_page` depends on all other checks succeeding – I switched to `_resolve_image_pil` instead
     - we did not have a check for the `URL` vs. `OTHER` `FLocat`s
 
+Changed:
+
+  * Update OCR-D/spec to v3.27.0, including OCR-D/spec#263
+
 ## [3.1.2] - 2025-03-10
 
 Fixed:
