@@ -8,6 +8,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * `make deps-tf1`: typo escaping dollar sign, #1314
+  * Fix and update `WorkspaceValidator`, #1316:
+    - we did not update to the `.url` vs `.local_filename` change yet
+    - the METS `fileGrp` names check is obsolete
+    - the `@imageFilename` check was disabled accidentally
+    - it did not cover `AlternativeImage/@filename`
+    - we did not check for `AlternativeImage/@comments` either
+    - the validator crashed during `dimension` check, because `image_from_page` depends on all other checks succeeding – I switched to `_resolve_image_pil` instead
+    - we did not have a check for the `URL` vs. `OTHER` `FLocat`s
 
 ## [3.1.2] - 2025-03-10
 
