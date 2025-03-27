@@ -78,9 +78,9 @@ def list_installed(executable=None):
 @click.option('-a', '--allow-uninstalled', is_flag=True,
               help="Allow installing resources for uninstalled processors",)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
-@click.option('-l', '--location', type=click.Choice(RESOURCE_LOCATIONS), default='data',
+@click.option('-l', '--location', type=click.Choice(RESOURCE_LOCATIONS), 
               help="Where to store resources - defaults to first location in processor's 'resource_locations' "
-                   "list or finally 'data'")
+                   "list, i.e. usually 'data'")
 @click.argument('executable', required=True)
 @click.argument('name', required=False)
 def download(any_url, no_dynamic, resource_type, path_in_archive, allow_uninstalled, overwrite, location, executable,
