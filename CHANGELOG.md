@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Revert accidental early merge of #1309 from merging #1315, #1317
+
 ## [3.2.0] - 2025-03-25
 
 Fixed:
@@ -18,8 +22,8 @@ Fixed:
     - we did not check for `AlternativeImage/@comments` either
     - the validator crashed during `dimension` check, because `image_from_page` depends on all other checks succeeding – I switched to `_resolve_image_pil` instead
     - we did not have a check for the `URL` vs. `OTHER` `FLocat`s
-  * `ocrd resmgr`: do not recurse into subdirectories when looking for resources in their resp. locations, OCR-D/spec#263, #1315
-  * `ocrd resmgr`: correctly handle filtering of resources via media type, #1315
+  * <del>`ocrd resmgr`: do not recurse into subdirectories when looking for resources in their resp. locations, OCR-D/spec#263, #1315</del>
+  * <del>`ocrd resmgr`: correctly handle filtering of resources via media type, #1315</del>
 
 Changed:
 
