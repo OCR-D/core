@@ -5,6 +5,25 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Resource Manager Server as `ocrd_network` analogon of `ocrd.cli.resmgr`, #1309
+    * `ocrd network resmgr-server` for triggering Resource Manager Server (RMS) in the background
+    * Processing Server also deploys RMS on each processing host
+    * ...
+
+Fixed:
+
+  * `ocrd.resource_manager`: ensure necessary + reduce unnecessary updates of user database
+  * `ocrd.resource_manager`: deduplicate entries (newer wins) before updating user database
+  * `ocrd resmgr download`: extract archives independent of whether they are URLs or local paths
+  * `ocrd resmgr download`: if `--overwrite`, ensure the old res gets removed
+  * `ocrd resmgr download`: default to `data` location instead of first in list of allowed
+  * `ocrd_utils.list_all_resources`: filter module non-resource files w/ more anti-patterns
+  * `ocrd_utils.list_all_resources`: no subpaths except for `cwd` location, OCR-D/spec#263, #1315
+  * `ocrd_utils.list_all_resources`: filter resources via media (MIME) type, if specified, #1315
+
+
 ## [3.1.2] - 2025-03-10
 
 Fixed:
