@@ -71,12 +71,12 @@ def list_installed(executable=None):
 @resmgr_cli.command('download')
 @click.option('-n', '--any-url', default='', help='URL of unregistered resource to download/copy from')
 @click.option('-D', '--no-dynamic', default=False, is_flag=True,
-              help="Whether to skip looking into each processor's --dump-{json,module-dir} for module-level resources")
+              help="Skip looking into each processor's --dump-{json,module-dir} module-registered resources")
 @click.option('-t', '--resource-type', type=click.Choice(RESOURCE_TYPES), default='file',
-              help='Type of resource',)
-@click.option('-P', '--path-in-archive', default='.', help='Path to extract in case of archive type')
+              help='Type of resource (when unregistered or incomplete)',)
+@click.option('-P', '--path-in-archive', default='.', help='Path to extract in case of archive type (when unregistered or incomplete)')
 @click.option('-a', '--allow-uninstalled', is_flag=True,
-              help="Allow installing resources for uninstalled processors",)
+              help="Allow installing resources for not installed processors",)
 @click.option('-o', '--overwrite', help='Overwrite existing resources', is_flag=True)
 @click.option('-l', '--location', type=click.Choice(RESOURCE_LOCATIONS), 
               help="Where to store resources - defaults to first location in processor's 'resource_locations' "
