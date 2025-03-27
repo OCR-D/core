@@ -22,7 +22,6 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     We should add a test for the -n URL TOOL NAME use-case as well (both as an unregistered resource and as URL-override).
     """
     _, mgr, env = mgr_with_tmp_path
-    print(mgr, env)
     print(mgr.list_installed(executable)[0][1])
     rsrcs_before = len(mgr.list_installed(executable)[0][1])
 
@@ -31,7 +30,6 @@ def test_url_tool_name_unregistered(mgr_with_tmp_path):
     name = 'dzo.traineddata'
     r = runner.invoke(resmgr_cli, ['download', '--allow-uninstalled', '--any-url', url, executable, name], env=env)
     mgr.load_resource_list(mgr.user_list)
-    print(mgr)
 
     rsrcs = mgr.list_installed(executable)[0][1]
     assert len(rsrcs) == rsrcs_before + 1
