@@ -5,6 +5,7 @@ from .introspect import dist_version
 from re import compile as regex_compile
 
 __all__ = [
+    'DEFAULT_METS_BASENAME',
     'EXT_TO_MIME',
     'LOG_FORMAT',
     'LOG_TIMEFMT',
@@ -14,7 +15,9 @@ __all__ = [
     'PIL_TO_MIME',
     'REGEX_PREFIX',
     'REGEX_FILE_ID',
+    'RESOURCES_DIR_SYSTEM',
     'RESOURCE_LOCATIONS',
+    'RESOURCE_TYPES',
     'VERSION',
 ]
 
@@ -108,6 +111,8 @@ LOG_FORMAT = r'%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s'
 LOG_TIMEFMT = r'%H:%M:%S'
 
 RESOURCE_LOCATIONS = ['data', 'cwd', 'system', 'module']
+RESOURCE_TYPES = ['file', 'directory', 'archive']
+RESOURCES_DIR_SYSTEM = '/usr/local/share/ocrd-resources'
 
 DEFAULT_METS_BASENAME = 'mets.xml'
 

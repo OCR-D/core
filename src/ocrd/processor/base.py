@@ -43,15 +43,14 @@ from .ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
-    MIME_TO_EXT,
     config,
     getLogger,
     list_resource_candidates,
-    pushd_popd,
     list_all_resources,
     get_processor_resource_types,
     resource_filename,
     parse_json_file_with_comments,
+    pushd_popd,
     make_file_id,
     deprecation_warning
 )
@@ -905,9 +904,8 @@ class Processor():
             cwd = self.old_pwd
         else:
             cwd = getcwd()
-        ret = [cand for cand in list_resource_candidates(executable, val,
-                                                         cwd=cwd, moduled=self.moduledir)
-               if exists(cand)]
+        ret = list(filter(exists, list_resource_candidates(executable, val,
+                                                           cwd=cwd, moduled=self.moduledir)))
         if ret:
             self._base_logger.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
@@ -938,17 +936,9 @@ class Processor():
         """
         List all resources found in the filesystem and matching content-type by filename suffix
         """
-        mimetypes = get_processor_resource_types(None, self.ocrd_tool)
-        for res in list_all_resources(self.ocrd_tool['executable'], moduled=self.moduledir):
+        for res in list_all_resources(self.executable, ocrd_tool=self.ocrd_tool, moduled=self.moduledir):
             res = Path(res)
-            if not '*/*' in mimetypes:
-                if res.is_dir() and not 'text/directory' in mimetypes:
-                    continue
-                # if we do not know all MIME types, then keep the file, otherwise require suffix match
-                if res.is_file() and not any(res.suffix == MIME_TO_EXT.get(mime, res.suffix)
-                                             for mime in mimetypes):
-                    continue
-            yield res
+            yield res.name
 
     @property
     def module(self):
