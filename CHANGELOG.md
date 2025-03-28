@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.3.0] - 2025-03-28
+
 Fixed:
 
   * Revert accidental early merge of #1309 from merging #1315, #1317
@@ -2507,8 +2509,10 @@ Fixed
 ## [0.0.1] - 2018-04-17
 
 Initial Release
+## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.3.0]: ../../compare/v3.3.0..v3.2.0
 [3.2.0]: ../../compare/v3.2.0..v3.1.0
 [3.1.2]: ../../compare/v3.1.2..v3.1.1
 [3.1.1]: ../../compare/v3.1.1..v3.1.0
