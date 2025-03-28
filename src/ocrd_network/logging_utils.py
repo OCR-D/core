@@ -50,8 +50,3 @@ def get_processing_worker_logging_file_path(processor_name: str, pid: int) -> Pa
 def get_processor_server_logging_file_path(processor_name: str, pid: int) -> Path:
     log_file: str = f"{AgentType.PROCESSOR_SERVER}.{pid}.{processor_name}.log"
     return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSOR_SERVERS), log_file)
-
-
-def get_resource_manager_server_logging_file_path(pid: int) -> Path:
-    log_file: str = f"resource_manager_server.{pid}.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.RESOURCE_MANAGER_SERVERS), log_file)

@@ -3,7 +3,7 @@ beanie~=1.7
 click >=7
 cryptography < 43.0.0
 Deprecated == 1.2.0
-docker>=7.1.0
+docker
 elementpath
 fastapi>=0.78.0
 filetype

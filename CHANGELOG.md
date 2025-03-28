@@ -23,6 +23,31 @@ Fixed:
   * `ocrd_utils.list_all_resources`: no subpaths except for `cwd` location, OCR-D/spec#263, #1315
   * `ocrd_utils.list_all_resources`: filter resources via media (MIME) type, if specified, #1315
 
+## [3.3.0] - 2025-03-28
+
+Fixed:
+
+  * Revert accidental early merge of #1309 from merging #1315, #1317
+
+## [3.2.0] - 2025-03-25
+
+Fixed:
+
+  * `make deps-tf1`: typo escaping dollar sign, #1314
+  * Fix and update `WorkspaceValidator`, #1316:
+    - we did not update to the `.url` vs `.local_filename` change yet
+    - the METS `fileGrp` names check is obsolete
+    - the `@imageFilename` check was disabled accidentally
+    - it did not cover `AlternativeImage/@filename`
+    - we did not check for `AlternativeImage/@comments` either
+    - the validator crashed during `dimension` check, because `image_from_page` depends on all other checks succeeding – I switched to `_resolve_image_pil` instead
+    - we did not have a check for the `URL` vs. `OTHER` `FLocat`s
+  * <del>`ocrd resmgr`: do not recurse into subdirectories when looking for resources in their resp. locations, OCR-D/spec#263, #1315</del>
+  * <del>`ocrd resmgr`: correctly handle filtering of resources via media type, #1315</del>
+
+Changed:
+
+  * Update OCR-D/spec to v3.27.0, including OCR-D/spec#263
 
 ## [3.1.2] - 2025-03-10
 
@@ -2502,8 +2527,11 @@ Fixed
 ## [0.0.1] - 2018-04-17
 
 Initial Release
+## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.3.0]: ../../compare/v3.3.0..v3.2.0
+[3.2.0]: ../../compare/v3.2.0..v3.1.0
 [3.1.2]: ../../compare/v3.1.2..v3.1.1
 [3.1.1]: ../../compare/v3.1.1..v3.1.0
 [3.1.0]: ../../compare/v3.1.0..v3.0.4

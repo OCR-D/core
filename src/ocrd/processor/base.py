@@ -43,14 +43,15 @@ from .ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
+    MIME_TO_EXT,
     config,
     getLogger,
     list_resource_candidates,
+    pushd_popd,
     list_all_resources,
     get_processor_resource_types,
     resource_filename,
     parse_json_file_with_comments,
-    pushd_popd,
     make_file_id,
     deprecation_warning
 )
@@ -778,10 +779,14 @@ class Processor():
         to handle cases like multiple output fileGrps, non-PAGE input etc.)
         """
         input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
-        assert isinstance(input_files[0], get_args(OcrdFileType))
-        page_id = input_files[0].pageId
+        input_pos = next(i for i, input_file in enumerate(input_files) if input_file is not None)
+        page_id = input_files[input_pos].pageId
         self._base_logger.info("processing page %s", page_id)
         for i, input_file in enumerate(input_files):
+            if input_file is None:
+                grp = self.input_file_grp.split(',')[i]
+                self._base_logger.debug(f"ignoring missing file for input fileGrp {grp} for page {page_id}")
+                continue
             assert isinstance(input_file, get_args(OcrdFileType))
             self._base_logger.debug(f"parsing file {input_file.ID} for page {page_id}")
             try:
@@ -791,7 +796,10 @@ class Processor():
             except ValueError as err:
                 # not PAGE and not an image to generate PAGE for
                 self._base_logger.error(f"non-PAGE input for page {page_id}: {err}")
-        output_file_id = make_file_id(input_files[0], self.output_file_grp)
+        output_file_id = make_file_id(input_files[input_pos], self.output_file_grp)
+        if input_files[input_pos].fileGrp == self.output_file_grp:
+            # input=output fileGrp: re-use ID exactly
+            output_file_id = input_files[input_pos].ID
         output_file = next(self.workspace.mets.find_files(ID=output_file_id), None)
         if output_file and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
             # short-cut avoiding useless computation:
@@ -897,8 +905,9 @@ class Processor():
             cwd = self.old_pwd
         else:
             cwd = getcwd()
-        ret = list(filter(exists, list_resource_candidates(executable, val,
-                                                           cwd=cwd, moduled=self.moduledir)))
+        ret = [cand for cand in list_resource_candidates(executable, val,
+                                                         cwd=cwd, moduled=self.moduledir)
+               if exists(cand)]
         if ret:
             self._base_logger.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
@@ -929,9 +938,17 @@ class Processor():
         """
         List all resources found in the filesystem and matching content-type by filename suffix
         """
-        for res in list_all_resources(self.executable, ocrd_tool=self.ocrd_tool, moduled=self.moduledir):
+        mimetypes = get_processor_resource_types(None, self.ocrd_tool)
+        for res in list_all_resources(self.ocrd_tool['executable'], moduled=self.moduledir):
             res = Path(res)
-            yield res.name
+            if not '*/*' in mimetypes:
+                if res.is_dir() and not 'text/directory' in mimetypes:
+                    continue
+                # if we do not know all MIME types, then keep the file, otherwise require suffix match
+                if res.is_file() and not any(res.suffix == MIME_TO_EXT.get(mime, res.suffix)
+                                             for mime in mimetypes):
+                    continue
+            yield res
 
     @property
     def module(self):

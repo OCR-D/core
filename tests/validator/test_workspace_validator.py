@@ -80,43 +80,6 @@ class TestWorkspaceValidator(TestCase):
             report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
             self.assertEqual(len(report.errors), 2)
 
-    def test_validate_file_groups_non_ocrd(self):
-        with TemporaryDirectory() as tempdir:
-            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
-            workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file_group('FOO')
-            workspace.save_mets()
-            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 1)
-            self.assertIn('No files', report.errors[0])
-            self.assertEqual(len(report.notices), 1)
-            self.assertIn("fileGrp USE 'FOO' does not begin with 'OCR-D-'", report.notices[0])
-
-    def test_validate_file_groups_unspecified(self):
-        with TemporaryDirectory() as tempdir:
-            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
-            workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file_group('OCR-D-INVALID-FILEGRP')
-            workspace.save_mets()
-            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            print(report.notices)
-            self.assertEqual(len(report.errors), 1)
-            self.assertEqual(len(report.notices), 1)
-            self.assertEqual(report.notices[0], "Unspecified USE category 'INVALID' in fileGrp 'OCR-D-INVALID-FILEGRP'")
-            self.assertIn('No files', report.errors[0])
-
-    def test_validate_file_groups_bad_name(self):
-        with TemporaryDirectory() as tempdir:
-            workspace = self.resolver.workspace_from_nothing(directory=tempdir)
-            workspace.mets.unique_identifier = 'foobar'
-            workspace.mets.add_file_group('OCR-D-GT-X')
-            workspace.save_mets()
-            report = WorkspaceValidator.validate(self.resolver, join(tempdir, 'mets.xml'))
-            self.assertEqual(len(report.errors), 1)
-            self.assertEqual(len(report.notices), 1)
-            self.assertIn("Invalid USE name 'X' in fileGrp", report.notices[0])
-            self.assertIn('No files', report.errors[0])
-
     @pytest.mark.skip(reason="missing pageId means document-global now")
     def test_validate_files_nopageid(self):
         with TemporaryDirectory() as tempdir:
