@@ -1,6 +1,5 @@
 from datetime import datetime
 from os import getpid
-from pathlib import Path
 import requests
 from shutil import which
 from typing import Any
