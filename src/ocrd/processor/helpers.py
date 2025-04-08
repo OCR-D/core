@@ -276,7 +276,7 @@ def get_processor(
         # set current processing parameters
         processor.workspace = workspace
         processor.page_id = page_id
-        processor.input_file_grp = input_file_grp
-        processor.output_file_grp = output_file_grp
+        processor.input_file_grp = input_file_grp or ''
+        processor.output_file_grp = output_file_grp or ''
         return processor
     raise ValueError("Processor class is not known")
