@@ -107,10 +107,10 @@ def ocrd_cli_wrap_processor(
     if 'parameter_override' in kwargs:
         set_json_key_value_overrides(kwargs['parameter'], *kwargs.pop('parameter_override'))
     # Assert -I / -O
-    if not kwargs['input_file_grp']:
+    if 'input_file_grp' not in kwargs:
         raise ValueError('-I/--input-file-grp is required')
-    if not kwargs['output_file_grp']:
-        raise ValueError('-O/--output-file-grp is required')
+    if 'output_file_grp' not in kwargs:
+        raise ValueError('-O/--output-file-grp is required') # actually, it may be None
     resolver = Resolver()
     working_dir, mets, _, mets_server_url = \
             resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_url)
