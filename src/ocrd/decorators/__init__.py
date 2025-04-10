@@ -107,7 +107,7 @@ def ocrd_cli_wrap_processor(
     if 'parameter_override' in kwargs:
         set_json_key_value_overrides(kwargs['parameter'], *kwargs.pop('parameter_override'))
     # Assert -I / -O
-    if 'input_file_grp' not in kwargs:
+    if not kwargs.get('input_file_grp', None):
         raise ValueError('-I/--input-file-grp is required')
     if 'output_file_grp' not in kwargs:
         raise ValueError('-O/--output-file-grp is required') # actually, it may be None
