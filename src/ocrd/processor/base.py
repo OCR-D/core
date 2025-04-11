@@ -1112,7 +1112,7 @@ class Processor():
                 if not ifiles[i]:
                     # could be from non-unique with on_error=skip or from true gap
                     self._base_logger.error(f'Found no file for page {page} in file group {ifg}')
-                    if config.OCRD_MISSING_INPUT == 'abort':
+                    if config.OCRD_MISSING_INPUT == 'ABORT':
                         raise MissingInputFile(ifg, page, mimetype)
             if not any(ifiles):
                 # must be from non-unique with on_error=skip
