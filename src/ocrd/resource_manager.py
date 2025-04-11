@@ -33,7 +33,7 @@ from ocrd_validators import OcrdResourceListValidator
 from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
 from ocrd_utils.constants import RESOURCES_DIR_SYSTEM, RESOURCE_TYPES, MIME_TO_EXT
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
-from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
+from .constants import RESOURCE_USER_LIST_COMMENT
 
 
 class OcrdResourceManager:
@@ -55,7 +55,6 @@ class OcrdResourceManager:
         self.log.info(f"OcrdResourceManager user list path: {self.user_list}")
 
         if not skip_init:
-            self.load_resource_list(Path(RESOURCE_LIST_FILENAME))
             if not self.user_list.exists():
                 if not self.user_list.parent.exists():
                     self.user_list.parent.mkdir(parents=True)

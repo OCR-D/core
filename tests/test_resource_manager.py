@@ -164,14 +164,14 @@ def test_list_available0(tmp_path):
     from ocrd.resource_manager import OcrdResourceManager
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     res = mgr.list_available()
-    assert len(res) > 0
+    assert len(res) == 0, res
 
 
 def test_list_available_with_unknown_executable(tmp_path):
     from ocrd.resource_manager import OcrdResourceManager
     mgr = OcrdResourceManager(xdg_data_home=tmp_path)
     res = mgr.list_available(executable="ocrd-non-existing-processor")
-    assert len(res[0][1]) == 0
+    assert len(res[0][1]) == 0, res
 
 
 def test_date_as_string(tmp_path):
@@ -189,7 +189,9 @@ def test_date_as_string(tmp_path):
         size: 1889719626
         """)
     mgr.load_resource_list(test_list)
-    mgr.list_available(executable='ocrd-eynollah-segment')
+    res = mgr.list_available(executable='ocrd-eynollah-segment')
+    assert len(res) > 0, mgr
+    assert len(res[0][1]) > 0, res
 
 
 def test_copy_archive(tmp_path):
