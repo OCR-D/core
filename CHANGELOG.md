@@ -5,6 +5,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  - Allow not setting a `-O` output `fileGrp` for processors that work only on METS or don't produce output, #1321
+
+Fixed:
+
+  - Typo in `config.OCRD_MISSING_OUTPUT` behavior: `abort` -> `ABORT`, #1321
+
 ## [3.3.0] - 2025-03-28
 
 Fixed:
