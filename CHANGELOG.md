@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.3.1] - 2025-04-16
+
 Changed:
 
   - Allow not setting a `-O` output `fileGrp` for processors that work only on METS or don't produce output, #1321
@@ -2520,6 +2522,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.3.1]: ../../compare/v3.3.1..v3.3.0
 [3.3.0]: ../../compare/v3.3.0..v3.2.0
 [3.2.0]: ../../compare/v3.2.0..v3.1.0
 [3.1.2]: ../../compare/v3.1.2..v3.1.1
