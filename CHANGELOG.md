@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * METS Server: properly escape `.` for UDS variant, #1323
+  * METS Server: resolve workspace path to absolute, #1323
+
 ## [3.3.1] - 2025-04-16
 
 Changed:
