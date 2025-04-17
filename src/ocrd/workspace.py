@@ -5,7 +5,7 @@ from shutil import copyfileobj
 from re import sub
 from tempfile import NamedTemporaryFile
 from contextlib import contextmanager
-from typing import Optional, Union
+from typing import Optional, Union, Callable
 
 from cv2 import COLOR_GRAY2BGR, COLOR_RGB2BGR, cvtColor
 from PIL import Image
@@ -457,6 +457,20 @@ class Workspace():
             with atomic_write(self.mets_target) as f:
                 f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
 
+    def _apply_mets_file(self, filename_or_url: str, fun: Callable):
+        if not filename_or_url:
+            # avoid "finding" just any file
+            raise ValueError("requires non-empty filename or URL")
+        with pushd_popd(self.directory):
+            if Path(filename_or_url).exists():
+                return fun(filename_or_url)
+            if image_file := next(self.mets.find_files(local_filename=str(filename_or_url)), None):
+                return fun(image_file.local_filename)
+            if image_file := next(self.mets.find_files(url=str(filename_or_url)), None):
+                return fun(self.download_file(image_file).local_filename)
+            with download_temporary_file(filename_or_url) as f:
+                return fun(f.name)
+
     def resolve_image_exif(self, image_url):
         """
         Get the EXIF metadata about an image URL as :py:class:`ocrd_models.ocrd_exif.OcrdExif`
@@ -467,19 +481,7 @@ class Workspace():
         Returns:
             :py:class:`ocrd_models.ocrd_exif.OcrdExif`
         """
-        if not image_url:
-            # avoid "finding" just any file
-            raise ValueError(f"'image_url' must be a non-empty string, not '{image_url}' ({type(image_url)})")
-        try:
-            f = next(self.mets.find_files(local_filename=str(image_url)))
-            return exif_from_filename(f.local_filename)
-        except StopIteration:
-            try:
-                f = next(self.mets.find_files(url=str(image_url)))
-                return exif_from_filename(self.download_file(f).local_filename)
-            except StopIteration:
-                with download_temporary_file(image_url) as f:
-                    return exif_from_filename(f.name)
+        return self._apply_mets_file(image_url, exif_from_filename)
 
     @deprecated(version='1.0.0', reason="Use workspace.image_from_page and workspace.image_from_segment")
     def resolve_image_as_pil(self, image_url, coords=None):
@@ -498,22 +500,9 @@ class Workspace():
         return self._resolve_image_as_pil(image_url, coords)
 
     def _resolve_image_as_pil(self, image_url, coords=None):
-        if not image_url:
-            # avoid "finding" just any file
-            raise Exception("Cannot resolve empty image path")
         log = getLogger('ocrd.workspace._resolve_image_as_pil')
-        with pushd_popd(self.directory):
-            try:
-                f = next(self.mets.find_files(local_filename=str(image_url)))
-                pil_image = Image.open(f.local_filename)
-            except StopIteration:
-                try:
-                    f = next(self.mets.find_files(url=str(image_url)))
-                    pil_image = Image.open(self.download_file(f).local_filename)
-                except StopIteration:
-                    with download_temporary_file(image_url) as f:
-                        pil_image = Image.open(f.name)
-            pil_image.load() # alloc and give up the FD
+        pil_image = self._apply_mets_file(image_url, Image.open)
+        pil_image.load() # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
         # (e.g. 16-bit or 32-bit or floating point grayscale),
