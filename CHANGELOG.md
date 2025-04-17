@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.3.2] - 2025-04-17
+
 Fixed:
 
   * METS Server: properly escape `.` for UDS variant, #1323
@@ -2527,6 +2529,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.3.2]: ../../compare/v3.3.1..v3.3.0
 [3.3.1]: ../../compare/v3.3.1..v3.3.0
 [3.3.0]: ../../compare/v3.3.0..v3.2.0
 [3.2.0]: ../../compare/v3.2.0..v3.1.0
