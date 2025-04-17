@@ -46,7 +46,7 @@ class OcrdFileModel(BaseModel):
     ):
         return OcrdFileModel(
             file_grp=file_grp, file_id=file_id, page_id=page_id, mimetype=mimetype, url=url,
-            local_filename=str(local_filename)
+            local_filename=str(local_filename) if local_filename else None
         )
 
 
