@@ -308,4 +308,8 @@ class Resolver():
                     if not is_file_in_directory(directory, mets_url):
                         raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
 
+        if mets_server_url and not mets_server_url.startswith('http://'):
+            # UDS socket
+            mets_server_url = str(Path(mets_server_url).resolve())
+
         return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_url
