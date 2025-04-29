@@ -314,7 +314,7 @@ class ClientSideOcrdMets:
         else:
             r = self.session.request("POST", self.url, json=MpxReq.add_file(self.ws_dir_path, kwargs))
             if not r.ok:
-                raise RuntimeError(f"Failed to add file ({str(data)}): {r.json()[errors]}")
+                raise RuntimeError(f"Failed to add file ({str(data)}): {r.json()}")
 
         return ClientSideOcrdFile(
             None, fileGrp=file_grp,
