@@ -18,7 +18,8 @@ from ocrd.processor import Processor
 from ocrd_utils import (
     set_json_key_value_overrides,
     parse_json_string_or_file,
-    parse_json_string_with_comments as loads
+    parse_json_string_with_comments as loads,
+    get_moduledir
 )
 from ocrd_validators import ParameterValidator, OcrdToolValidator
 
@@ -103,6 +104,13 @@ def ocrd_tool_list(ctx):
 @pass_ocrd_tool
 def ocrd_tool_dump(ctx):
     print(dumps(ctx.json['tools'], indent=True))
+
+@ocrd_tool_cli.command('dump-module-dirs', help="Dump module directory of each tool")
+@pass_ocrd_tool
+def ocrd_tool_dump_module_dirs(ctx):
+    print(dumps({tool_name: get_moduledir(tool_name)
+                 for tool_name in ctx.json['tools']},
+                indent=True))
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool
