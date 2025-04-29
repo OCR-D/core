@@ -474,11 +474,11 @@ def workspace_find(ctx, file_grp, mimetype, page_id, file_id, output_field, incl
                 if wait:
                     time.sleep(wait)
             if undo_download and f.url and f.local_filename:
-                f.local_filename = None
                 modified_mets = True
                 if not keep_files:
                     ctx.log.debug("rm %s [cwd=%s]", f.local_filename, workspace.directory)
                     unlink(f.local_filename)
+                f.local_filename = None
             ret_entry = [f.ID if field == 'pageId' else str(getattr(f, field)) or '' for field in output_field]
             ret.append(ret_entry)
     if modified_mets:
