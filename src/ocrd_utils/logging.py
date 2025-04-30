@@ -32,6 +32,7 @@ import logging
 import logging.config
 from pathlib import Path
 import sys
+from os import chmod
 
 from .constants import LOG_FORMAT, LOG_TIMEFMT
 from .config import config
@@ -166,6 +167,15 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
         if not silent:
             print(f"[LOGGING] Picked up logging config at {config_file}", file=sys.stderr)
         logging.config.fileConfig(config_file)
+        # Set permission of processing-server logfile to 666 to prevent possible permission erros while logging
+        try:
+            network_logger = logging.getLogger("ocrd_network")
+            for handler in network_logger.handlers:
+                if isinstance(handler, logging.FileHandler):
+                    chmod(handler.baseFilename, 0o666)
+        except PermissionError:
+            # if the file exists the permissions are supposed to already fit
+            pass
     else:
         if not silent:
             print("[LOGGING] Initializing logging with built-in defaults", file=sys.stderr)

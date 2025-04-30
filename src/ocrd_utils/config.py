@@ -277,13 +277,23 @@ config.add(name="OCRD_NETWORK_SOCKETS_ROOT_DIR",
            description="The root directory where all mets server related socket files are created",
            parser=lambda val: Path(val),
            default=(True, Path(gettempdir(), "ocrd_network_sockets")))
-config.OCRD_NETWORK_SOCKETS_ROOT_DIR.mkdir(parents=True, exist_ok=True)
+config.OCRD_NETWORK_SOCKETS_ROOT_DIR.mkdir(mode=0o777, parents=True, exist_ok=True)
+try:
+    config.OCRD_NETWORK_SOCKETS_ROOT_DIR.chmod(0o777)
+except PermissionError:
+    # if the folder exists the permissions are supposed to already fit
+    pass
 
 config.add(name="OCRD_NETWORK_LOGS_ROOT_DIR",
            description="The root directory where all ocrd_network related file logs are stored",
            parser=lambda val: Path(val),
            default=(True, Path(gettempdir(), "ocrd_network_logs")))
-config.OCRD_NETWORK_LOGS_ROOT_DIR.mkdir(parents=True, exist_ok=True)
+config.OCRD_NETWORK_LOGS_ROOT_DIR.mkdir(mode=0o777, parents=True, exist_ok=True)
+try:
+    config.OCRD_NETWORK_LOGS_ROOT_DIR.chmod(0o777)
+except PermissionError:
+    # if the folder exists the permissions are supposed to already fit
+    pass
 
 config.add("HOME",
     description="Directory to look for `ocrd_logging.conf`, fallback for unset XDG variables.",
