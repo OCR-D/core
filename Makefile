@@ -299,6 +299,14 @@ test-logging: assets
 	rm -rf $$tempdir/.coverage; \
 	rmdir $$tempdir
 
+# ensure shapely#1598 does not hit
+# ensure CUDA works for Torch or TF
+test-cuda-torch:
+	$(PYTHON) -c "from shapely.geometry import Polygon; import torch; torch.randn(10).cuda()"
+	$(PYTHON) -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"
+test-cuda-tf2 test-cuda-tf1:
+	$(PYTHON) -c "import tensorflow as tf, sys; sys.exit(0 if tf.test.is_gpu_available() else 1)"
+
 network-module-test: assets
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -s -v --durations=10\
