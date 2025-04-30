@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `make test-cuda-{torch,tf2,tf1}`: ensure CUDA is available and shapely#1598 does not trigger, #1326
+  * `ocrd ocrd-tool dump-module-dirs` to dump `moduledir` of every tool in an `ocrd-tool.json`, #1326
+
 Fixed:
 
   * `ocrd workspace find --undo-download`: Unset `local_filename` only after unlinking, #1324, #1325
