@@ -1,6 +1,6 @@
 from pathlib import Path
 from os.path import join
-from os import environ, listdir, getcwd, path, unlink
+from os import environ, listdir, getcwd, unlink
 from shutil import copytree, rmtree, copy
 from fnmatch import filter as apply_glob
 from datetime import datetime
@@ -13,18 +13,27 @@ from gdown.parse_url import parse_url as gparse_url
 from gdown.download import get_url_from_gdrive_confirmation
 from yaml import safe_load, safe_dump
 
+# pylint: disable=wrong-import-position
+
 # https://github.com/OCR-D/core/issues/867
 # https://stackoverflow.com/questions/50900727/skip-converting-entities-while-loading-a-yaml-string-using-pyyaml
 import yaml.constructor
-yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:timestamp'] = \
-    yaml.constructor.SafeConstructor.yaml_constructors[u'tag:yaml.org,2002:str']
+yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:timestamp'] = \
+    yaml.constructor.SafeConstructor.yaml_constructors['tag:yaml.org,2002:str']
+
+# pylint: enable=wrong-import-position
+
+# pylint: enable=wrong-import-position
+
+# pylint: enable=wrong-import-position
 
 from ocrd_validators import OcrdResourceListValidator
-from ocrd_utils import getLogger, directory_size, get_moduledir, EXT_TO_MIME, nth_url_segment, guess_media_type, config
+from ocrd_utils import getLogger, directory_size, get_moduledir, guess_media_type, config
 from ocrd_utils.os import get_processor_resource_types, list_all_resources, pushd_popd, get_ocrd_tool_json
 from .constants import RESOURCE_LIST_FILENAME, RESOURCE_USER_LIST_COMMENT
 
-class OcrdResourceManager():
+
+class OcrdResourceManager:
 
     """
     Managing processor resources
@@ -81,7 +90,7 @@ class OcrdResourceManager():
             report = OcrdResourceListValidator.validate(list_loaded)
             if not report.is_valid:
                 self.log.error('\n'.join(report.errors))
-                raise ValueError("Resource list %s is invalid!" % (list_filename))
+                raise ValueError(f"Resource list {list_filename} is invalid!")
             for executable, resource_list in list_loaded.items():
                 if executable not in database:
                     database[executable] = []
@@ -98,8 +107,14 @@ class OcrdResourceManager():
         if not executable:
             return database.items()
         if dynamic:
+            skip_executables = ["ocrd-cis-data", "ocrd-import", "ocrd-make"]
             for exec_dir in environ['PATH'].split(':'):
                 for exec_path in Path(exec_dir).glob(f'{executable}'):
+                    if not exec_path.name.startswith('ocrd-'):
+                        self.log.warning(f"OCR-D processor executable '{exec_path}' has no 'ocrd-' prefix")
+                    if exec_path.name in skip_executables:
+                        self.log.debug(f"Not an OCR-D processor CLI, skipping '{exec_path}'")
+                        continue
                     self.log.debug(f"Inspecting '{exec_path} --dump-json' for resources")
                     ocrd_tool = get_ocrd_tool_json(exec_path)
                     for resdict in ocrd_tool.get('resources', ()):
@@ -176,7 +191,8 @@ class OcrdResourceManager():
         Add a stub entry to the user resource.yml
         """
         res_name = Path(res_filename).name
-        self.log.info("%s resource '%s' (%s) not a known resource, creating stub in %s'", executable, res_name, str(res_filename), self.user_list)
+        self.log.info(f"{executable} resource '{res_name}' ({str(res_filename)}) not a known resource, "
+                      f"creating stub in {self.user_list}'")
         if Path(res_filename).is_dir():
             res_size = directory_size(res_filename)
         else:
@@ -190,7 +206,7 @@ class OcrdResourceManager():
             resdict = {
                 'name': res_name,
                 'url': url if url else '???',
-                'description': 'Found at %s on %s' % (self.resource_dir_to_location(res_filename), datetime.now()),
+                'description': f'Found at {self.resource_dir_to_location(res_filename)} on {datetime.now()}',
                 'version_range': '???',
                 'type': resource_type,
                 'size': res_size
@@ -218,74 +234,82 @@ class OcrdResourceManager():
                'cwd' if resource_path.startswith(getcwd()) else \
                resource_path
 
-    def parameter_usage(self, name, usage='as-is'):
+    @staticmethod
+    def parameter_usage(name, usage='as-is'):
         if usage == 'as-is':
             return name
         elif usage == 'without-extension':
             return Path(name).stem
-        raise ValueError("No such usage '%s'" % usage)
+        raise ValueError(f"No such usage '{usage}'")
 
-    def _download_impl(self, url, filename, progress_cb=None, size=None):
+    @staticmethod
+    def _download_impl(url, filename, progress_cb=None, size=None):
         log = getLogger('ocrd.resource_manager._download_impl')
-        log.info("Downloading %s to %s" % (url, filename))
-        with open(filename, 'wb') as f:
+        log.info(f"Downloading {url} to {filename}")
+        try:
             gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
             if gdrive_file_id:
                 if not is_gdrive_download_link:
-                    url = "https://drive.google.com/uc?id={id}".format(id=gdrive_file_id)
+                    url = f"https://drive.google.com/uc?id={gdrive_file_id}"
                 try:
                     with requests.get(url, stream=True) as r:
                         if "Content-Disposition" not in r.headers:
                             url = get_url_from_gdrive_confirmation(r.text)
                 except RuntimeError as e:
-                    log.warning("Cannot unwrap Google Drive URL: ", e)
-            with requests.get(url, stream=True) as r:
-                r.raise_for_status()
-                for data in r.iter_content(chunk_size=4096):
-                    if progress_cb:
-                        progress_cb(len(data))
-                    f.write(data)
-
-    def _copy_impl(self, src_filename, filename, progress_cb=None):
-        log = getLogger('ocrd.resource_manager._copy_impl')
-        log.info("Copying %s to %s", src_filename, filename)
-        if Path(src_filename).is_dir():
-            log.info(f"Copying recursively from {src_filename} to {filename}")
-            for child in Path(src_filename).rglob('*'):
-                child_dst = Path(filename) / child.relative_to(src_filename)
-                child_dst.parent.mkdir(parents=True, exist_ok=True)
-                with open(child_dst, 'wb') as f_out, open(child, 'rb') as f_in:
-                    while True:
-                        chunk = f_in.read(4096)
-                        if chunk:
-                            f_out.write(chunk)
-                            if progress_cb:
-                                progress_cb(len(chunk))
-                        else:
-                            break
-        else:
-            with open(filename, 'wb') as f_out, open(src_filename, 'rb') as f_in:
-                while True:
-                    chunk = f_in.read(4096)
-                    if chunk:
-                        f_out.write(chunk)
+                    log.warning("Cannot unwrap Google Drive URL: %s", e)
+            with open(filename, 'wb') as f:
+                with requests.get(url, stream=True) as r:
+                    r.raise_for_status()
+                    for data in r.iter_content(chunk_size=4096):
                         if progress_cb:
-                            progress_cb(len(chunk))
-                    else:
-                        break
+                            progress_cb(len(data))
+                        f.write(data)
+        except Exception as e:
+            rmtree(filename, ignore_errors=True)
+            Path(filename).unlink(missing_ok=True)
+            raise e
+
+    @staticmethod
+    def _copy_file(src, dst, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_file')
+        log.info(f"Copying file {src} to {dst}")
+        with open(dst, 'wb') as f_out, open(src, 'rb') as f_in:
+            while True:
+                chunk = f_in.read(4096)
+                if chunk:
+                    f_out.write(chunk)
+                    if progress_cb:
+                        progress_cb(len(chunk))
+                else:
+                    break
+
+    @staticmethod
+    def _copy_dir(src, dst, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_dir')
+        log.info(f"Copying dir recursively from {src} to {dst}")
+        if not Path(src).is_dir():
+            raise ValueError(f"The source is not a directory: {src}")
+        Path(dst).mkdir(parents=True, exist_ok=True)
+        for child in Path(src).rglob('*'):
+            child_dst = Path(dst) / child.relative_to(src)
+            if Path(child).is_dir():
+                OcrdResourceManager._copy_dir(child, child_dst, progress_cb)
+            else:
+                OcrdResourceManager._copy_file(child, child_dst, progress_cb)
+
+    @staticmethod
+    def _copy_impl(src_filename, filename, progress_cb=None):
+        log = getLogger('ocrd.resource_manager._copy_impl')
+        log.info(f"Copying {src_filename} to {filename}")
+        if Path(src_filename).is_dir():
+            OcrdResourceManager._copy_dir(src_filename, filename, progress_cb)
+        else:
+            OcrdResourceManager._copy_file(src_filename, filename, progress_cb)
 
     # TODO Proper caching (make head request for size, If-Modified etc)
     def download(
-        self,
-        executable,
-        url,
-        basedir,
-        overwrite=False,
-        no_subdir=False,
-        name=None,
-        resource_type='file',
-        path_in_archive='.',
-        progress_cb=None,
+        self, executable, url, basedir, overwrite=False, no_subdir=False, name=None, resource_type='file',
+        path_in_archive='.', progress_cb=None,
     ):
         """
         Download a resource by URL
@@ -299,12 +323,15 @@ class OcrdResourceManager():
         is_url = url.startswith('https://') or url.startswith('http://')
         if fpath.exists():
             if not overwrite:
-                raise FileExistsError("%s %s already exists but --overwrite is not set" % ('Directory' if fpath.is_dir() else 'File', fpath))
+                fpath_type = 'Directory' if fpath.is_dir() else 'File'
+                log.warning(f"{fpath_type} {fpath} already exists but --overwrite is not set, skipping the download")
+                # raise FileExistsError(f"{fpath_type} {fpath} already exists but --overwrite is not set")
+                return fpath
             if fpath.is_dir():
-                log.info("Removing existing target directory {fpath}")
+                log.info(f"Removing existing target directory {fpath}")
                 rmtree(str(fpath))
             else:
-                log.info("Removing existing target file {fpath}")
+                log.info(f"Removing existing target file {fpath}")
                 unlink(str(fpath))
         destdir.mkdir(parents=True, exist_ok=True)
         if resource_type in ('file', 'directory'):
@@ -322,7 +349,7 @@ class OcrdResourceManager():
                 Path('out').mkdir()
                 with pushd_popd('out'):
                     mimetype = guess_media_type(f'../{archive_fname}', fallback='application/octet-stream')
-                    log.info("Extracting %s archive to %s/out" % (mimetype, tempdir))
+                    log.info(f"Extracting {mimetype} archive to {tempdir}/out")
                     if mimetype == 'application/zip':
                         with ZipFile(f'../{archive_fname}', 'r') as zipf:
                             zipf.extractall()
@@ -330,8 +357,8 @@ class OcrdResourceManager():
                         with open_tarfile(f'../{archive_fname}', 'r:*') as tar:
                             tar.extractall()
                     else:
-                        raise RuntimeError("Unable to handle extraction of %s archive %s" % (mimetype, url))
-                    log.info("Copying '%s' from archive to %s" % (path_in_archive, fpath))
+                        raise RuntimeError(f"Unable to handle extraction of {mimetype} archive {url}")
+                    log.info(f"Copying '{path_in_archive}' from archive to {fpath}")
                     if Path(path_in_archive).is_dir():
                         copytree(path_in_archive, str(fpath))
                     else:

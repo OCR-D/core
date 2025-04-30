@@ -56,6 +56,20 @@ test_config.add(
 )
 
 test_config.add(
+    "OCRD_NETWORK_CLIENT_POLLING_SLEEP",
+    description="How many seconds to sleep before trying again.",
+    parser=int,
+    default=(True, 30)
+)
+
+test_config.add(
+    "OCRD_NETWORK_CLIENT_POLLING_TIMEOUT",
+    description="Timeout for a blocking ocrd network client (in seconds).",
+    parser=int,
+    default=(True, 3600)
+)
+
+test_config.add(
     name="OCRD_NETWORK_SERVER_ADDR_PROCESSING",
     description="Default address of Processing Server to connect to (for `ocrd network client processing`).",
     default=(True, '')
@@ -75,11 +89,19 @@ test_config.add(
 
 test_config.add(
     name="OCRD_NETWORK_RABBITMQ_CLIENT_CONNECT_ATTEMPTS",
-    description="""
-    Number of attempts for a RabbitMQ client to connect before failing
-    """,
+    description="Number of attempts for a RabbitMQ client to connect before failing",
     parser=int,
     default=(True, 3)
+)
+
+test_config.add(
+    name="OCRD_NETWORK_RABBITMQ_HEARTBEAT",
+    description="""
+    Controls AMQP heartbeat timeout (in seconds) negotiation during connection tuning. An integer value always overrides the value 
+    proposed by broker. Use 0 to deactivate heartbeat.
+    """,
+    parser=int,
+    default=(True, 0)
 )
 
 test_config.add(

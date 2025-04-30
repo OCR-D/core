@@ -4,9 +4,10 @@ Utility functions for strings, paths and URL.
 
 import re
 import json
-from typing import List, Union
+from typing import List
 from .constants import REGEX_FILE_ID, SPARKLINE_CHARS
-from .deprecate import deprecation_warning
+#from .deprecate import deprecation_warning
+from deprecated import deprecated
 from warnings import warn
 from numpy import array_split
 
@@ -18,7 +19,9 @@ __all__ = [
     'partition_list',
     'is_string',
     'make_file_id',
+    'make_xml_id',
     'nth_url_segment',
+    'parse_json_file_with_comments',
     'parse_json_string_or_file',
     'parse_json_string_with_comments',
     'remove_non_path_from_url',
@@ -26,6 +29,7 @@ __all__ = [
 ]
 
 
+@deprecated(version='3.0', reason='specify input and output file_grp_cardinality in ocrd-tool.json instead')
 def assert_file_grp_cardinality(grps, n, msg=None):
     """
     Assert that a string of comma-separated fileGrps contains exactly ``n`` entries.
@@ -95,8 +99,16 @@ def make_file_id(ocrd_file, output_file_grp):
             ret = output_file_grp + '_' + ocrd_file.pageId
         else:
             ret = output_file_grp + '_' + ocrd_file.ID
+    return make_xml_id(ret)
+
+def make_xml_id(idstr: str) -> str:
+    """
+    Turn ``idstr`` into a valid ``xml:id`` literal by replacing ``:`` with ``_``, removing everything non-alphanumeric, ``.`` and ``-`` and prepending `id_` if ``idstr`` starts with a number.
+    """
+    ret = idstr
     if not REGEX_FILE_ID.fullmatch(ret):
         ret = ret.replace(':', '_')
+        ret = ret.replace('/', '_')
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
         ret = re.sub(r'[^\w.-]', r'', ret)
     return ret
@@ -152,6 +164,13 @@ def is_string(val):
     return isinstance(val, str)
 
 
+def parse_json_file_with_comments(val):
+    """
+    Parse a file of JSON interspersed with #-prefixed full-line comments
+    """
+    with open(val, 'r', encoding='utf-8') as inputf:
+        return parse_json_string_with_comments(inputf.read())
+
 def parse_json_string_with_comments(val):
     """
     Parse a string of JSON interspersed with #-prefixed full-line comments
@@ -159,7 +178,7 @@ def parse_json_string_with_comments(val):
     jsonstr = re.sub(r'^\s*#.*$', '', val, flags=re.MULTILINE)
     return json.loads(jsonstr)
 
-def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
+def parse_json_string_or_file(*values, resolve_preset_file=None):    # pylint: disable=unused-argument
     """
     Parse a string as either the path to a JSON object or a literal JSON object.
 
@@ -173,7 +192,10 @@ def parse_json_string_or_file(*values):    # pylint: disable=unused-argument
             continue
         try:
             try:
-                with open(value, 'r') as f:
+                path = value
+                if callable(resolve_preset_file):
+                    path = resolve_preset_file(value) or value
+                with open(path, 'r') as f:
                     value_parsed = parse_json_string_with_comments(f.read())
             except (FileNotFoundError, OSError):
                 value_parsed = parse_json_string_with_comments(value.strip())
@@ -252,4 +274,3 @@ def sparkline(values : List[int]) -> str:
     # normalize to 0..1 and convert to index in SPARKLINE_CHARS
     mapped = [int(x / max_value * max_mapping) for x in values]
     return ''.join(SPARKLINE_CHARS[x] for x in mapped)
-

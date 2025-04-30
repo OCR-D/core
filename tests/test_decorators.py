@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from click.testing import CliRunner
 from tempfile import TemporaryDirectory
 from os.path import join, exists
+import pytest
 
 from tests.base import CapturingTestCase as TestCase, assets, main, copy_of_directory # pylint: disable=import-error, no-name-in-module
 from tests.data import DummyProcessor
@@ -14,7 +15,7 @@ from ocrd.decorators import (
     ocrd_loglevel,
     ocrd_cli_wrap_processor,
 )    # pylint: disable=protected-access
-from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging
+from ocrd_utils import pushd_popd, VERSION as OCRD_VERSION, disableLogging, initLogging, get_logging_config_files, config
 
 @click.command()
 @ocrd_cli_options
@@ -40,18 +41,20 @@ DEFAULT_IN_OUT = ('-I', 'OCR-D-IMG', '-O', 'OUTPUT')
 
 class TestDecorators(TestCase):
 
-    def setUp(self):
-        super().setUp()
+    def tearDown(self):
+        super().tearDown()
+        config.reset_defaults()
         disableLogging()
 
     def test_minimal(self):
-        exit_code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
-        print(out, err)
-        assert not exit_code
+        initLogging()
+        code, out, err = self.invoke_cli(cli_with_ocrd_cli_options, ['-l', 'DEBUG'])
+        assert not code, (out, err)
 
     def test_loglevel_invalid(self):
-        code, _, err = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
-        assert code
+        initLogging()
+        code, out, err = self.invoke_cli(cli_with_ocrd_loglevel, ['--log-level', 'foo'])
+        assert code, (out, err)
         import click
         if int(click.__version__[0]) < 8:
             assert 'invalid choice: foo' in err
@@ -59,8 +62,10 @@ class TestDecorators(TestCase):
             assert "'foo' is not one of" in err
 
     def test_loglevel_override(self):
+        if get_logging_config_files():
+            pytest.skip(f"ocrd_logging.conf found at {get_logging_config_files()}, skipping logging test")
         import logging
-        disableLogging()
+        assert logging.getLogger('').getEffectiveLevel() == logging.WARNING
         assert logging.getLogger('ocrd').getEffectiveLevel() == logging.WARNING
         initLogging()
         assert logging.getLogger('ocrd').getEffectiveLevel() == logging.INFO
@@ -105,6 +110,7 @@ class TestDecorators(TestCase):
                 exit_code, out, err = self.invoke_cli(cli_dummy_processor, ['-p', '{"baz": "forty-two"}', '--mets', 'mets.xml', *DEFAULT_IN_OUT])
                 assert not exit_code
 
+    @pytest.mark.skip(reason="now deferred to ocrd_cli_wrap_processor (to resolve preset resources)")
     def test_param_merging(self):
         json1 = '{"foo": 23, "bar": 100}'
         json2 = '{"foo": 42}'

@@ -12,8 +12,8 @@ skeleton = '''
                 "ocrd-xyz": {
                     "executable": "ocrd-xyz",
                     "description": "bars all the foos",
-                    "input_file_grp": ["OCR-D-FOO"],
-                    "output_file_grp": ["OCR-D-BAR"],
+                    "input_file_grp_cardinality": 1,
+                    "output_file_grp_cardinality": 1,
                     "categories": ["Layout analysis"],
                     "steps": ["layout/analysis"]
                 }
@@ -29,7 +29,7 @@ class TestOcrdToolValidator(TestCase):
 
     def test_smoke(self):
         report = OcrdToolValidator.validate(self.ocrd_tool)
-        self.assertEqual(report.is_valid, True)
+        self.assertTrue(report.is_valid, str(report.to_xml()))
 
     def test_additional_props(self):
         self.ocrd_tool['not-allowed'] = 'YUP'
@@ -48,7 +48,7 @@ class TestOcrdToolValidator(TestCase):
         ocrd_tool = json.loads(skeleton)
         ocrd_tool['tools']['ocrd-xyz']['parameters'] = {"file-param": {"description": "...", "type": "string", "content-type": 'application/rdf+xml'}}
         report = OcrdToolValidator.validate(ocrd_tool)
-        self.assertEqual(report.is_valid, True)
+        self.assertTrue(report.is_valid, str(report.to_xml()))
 
     # Not restricted anymore since spec 3.3.0
     #  def test_file_param_bad_content_types(self):

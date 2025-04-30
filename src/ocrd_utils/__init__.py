@@ -13,6 +13,7 @@ Utility functions and constants usable in various circumstances.
     :py:meth:`ocrd.workspace.Workspace.image_from_segment`.)
 
 * :py:func:`rotate_coordinates`, 
+  :py:func:`scale_coordinates`,
   :py:func:`shift_coordinates`,
   :py:func:`transpose_coordinates`,
   :py:func:`transform_coordinates`
@@ -74,11 +75,13 @@ Utility functions and constants usable in various circumstances.
   :py:func:`concat_padded`,
   :py:func:`nth_url_segment`,
   :py:func:`remove_non_path_from_url`,
+  :py:func:`parse_json_file_with_comments`,
   :py:func:`parse_json_string_with_comments`,
   :py:func:`parse_json_string_or_file`,
   :py:func:`set_json_key_value_overrides`,
   :py:func:`assert_file_grp_cardinality`,
   :py:func:`make_file_id`
+  :py:func:`make_xml_id`
   :py:func:`generate_range`
 
     String and OOP utilities
@@ -147,6 +150,7 @@ from .image import (
     polygon_mask,
     rotate_coordinates,
     rotate_image,
+    scale_coordinates,
     shift_coordinates,
     transform_coordinates,
     transpose_coordinates,
@@ -169,6 +173,7 @@ from .logging import (
     disableLogging,
     getLevelName,
     getLogger,
+    get_logging_config_files,
     initLogging,
     setOverrideLogLevel,
     )
@@ -197,8 +202,10 @@ from .str import (
     is_local_filename,
     is_string,
     make_file_id,
+    make_xml_id,
     nth_url_segment,
     partition_list,
+    parse_json_file_with_comments,
     parse_json_string_or_file,
     parse_json_string_with_comments,
     sparkline,

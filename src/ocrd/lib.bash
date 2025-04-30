@@ -27,12 +27,22 @@ ocrd__log () {
 ## Ensure minimum version
 # ht https://stackoverflow.com/posts/4025065
 ocrd__minversion () {
-    local minversion="$1"
-    local version=$(ocrd --version|sed 's/ocrd, version //')
-    #echo "$minversion < $version?"
-    local IFS=.
-    version=($version)
-    minversion=($minversion)
+    set -e
+    local minversion_raw="$1"
+    local version_raw=$(ocrd --version|sed 's/ocrd, version //')
+    local version_mmp=$(echo "$version_raw" | grep -Eo '([0-9]+\.?){3}')
+    local version_prerelease_suffix="${version_raw#$version_mmp}"
+    if [[ -z $version_prerelease_suffix ]];then
+      version_prerelease_suffix=0
+    fi
+    local minversion_mmp=$(echo "$minversion_raw" | grep -Eo '([0-9]+\.?){3}')
+    local minversion_prerelease_suffix="${minversion_raw#$minversion_mmp}"
+    if [[ -z $minversion_prerelease_suffix ]];then
+      minversion_prerelease_suffix=0
+    fi
+    local IFS='.'
+    version=($version_mmp)
+    minversion=($minversion_mmp)
     # MAJOR > MAJOR
     if (( ${version[0]} > ${minversion[0]} ));then
         return
@@ -44,12 +54,17 @@ ocrd__minversion () {
         # MINOR == MINOR
         elif (( ${version[1]} == ${minversion[1]} ));then
             # PATCH > PATCH
-            if (( ${version[2]} >= ${minversion[2]} ));then
+            if (( ${version[2]} > ${minversion[2]} ));then
                 return
+            elif (( ${version[2]} == ${minversion[2]}));then
+              # Match prerelease suffix like a1, b1 alphabetically
+              if [ "$version_prerelease_suffix" = "$minversion_prerelease_suffix" -o "$version_prerelease_suffix" \> "$minversion_prerelease_suffix" ]; then
+                return
+              fi
             fi
         fi
     fi
-    ocrd__raise "ocrd/core is too old (${version[*]} < ${minversion[*]}). Please update OCR-D/core"
+    ocrd__raise "ocrd/core is too old ($version_raw < $minversion_raw). Please update OCR-D/core"
 }
 
 ## ### `ocrd__dumpjson`
@@ -65,6 +80,13 @@ ocrd__minversion () {
 ##
 ocrd__dumpjson () {
     ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" dump
+}
+
+##
+## Output file resource path.
+##
+ocrd__resolve_resource () {
+    ocrd ocrd-tool "$OCRD_TOOL_JSON" tool "$OCRD_TOOL_NAME" resolve-resource "$1"
 }
 
 ##
@@ -101,6 +123,7 @@ ocrd__usage () {
 ## declare -A ocrd__argv=()
 ## ```
 ocrd__parse_argv () {
+    set -e
 
     # if [[ -n "$ZSH_VERSION" ]];then
     #     print -r -- ${+ocrd__argv} ${(t)ocrd__argv}
@@ -113,11 +136,16 @@ ocrd__parse_argv () {
         ocrd__raise "Must set \$params (declare -A params)"
     fi
 
+    if ! declare -p "params_json" >/dev/null 2>/dev/null ;then
+        ocrd__raise "Must set \$params_json (declare params_json)"
+    fi
+
     if [[ $# = 0 ]];then
         ocrd__usage
         exit 1
     fi
 
+    ocrd__argv[debug]=false
     ocrd__argv[overwrite]=false
     ocrd__argv[profile]=false
     ocrd__argv[profile_file]=
@@ -134,12 +162,13 @@ ocrd__parse_argv () {
     while [[ "${1:-}" = -* ]];do
         case "$1" in
             -l|--log-level) ocrd__argv[log_level]=$2 ; shift ;;
+            --log-filename) exec 2> "$2" ; shift ;;
             -h|--help|--usage) ocrd__usage; exit ;;
             -J|--dump-json) ocrd__dumpjson; exit ;;
             -D|--dump-module-dir) echo $(dirname "$OCRD_TOOL_JSON"); exit ;;
             -C|--show-resource) ocrd__show_resource "$2"; exit ;;
             -L|--list-resources) ocrd__list_resources; exit ;;
-            -p|--parameter) __parameters+=(-p "$2") ; shift ;;
+            -p|--parameter)  __parameters+=(-p "$(ocrd__resolve_resource "$2" 2>/dev/null || echo "$2")") ; shift ;;
             -P|--parameter-override) __parameter_overrides+=(-P "$2" "$3") ; shift ; shift ;;
             -g|--page-id) ocrd__argv[page_id]=$2 ; shift ;;
             -O|--output-file-grp) ocrd__argv[output_file_grp]=$2 ; shift ;;
@@ -147,6 +176,7 @@ ocrd__parse_argv () {
             -w|--working-dir) ocrd__argv[working_dir]=$(realpath "$2") ; shift ;;
             -m|--mets) ocrd__argv[mets_file]=$(realpath "$2") ; shift ;;
             -U|--mets-server-url) ocrd__argv[mets_server_url]="$2" ; shift ;;
+            --debug) ocrd__argv[debug]=true ;;
             --overwrite) ocrd__argv[overwrite]=true ;;
             --profile) ocrd__argv[profile]=true ;;
             --profile-file) ocrd__argv[profile_file]=$(realpath "$2") ; shift ;;
@@ -219,17 +249,6 @@ ocrd__parse_argv () {
         trap showtime DEBUG
     fi
 
-    # check fileGrps
-    local _valopts=( --workspace "${ocrd__argv[working_dir]}" --mets-basename "$(basename ${ocrd__argv[mets_file]})" )
-    if [[ ${ocrd__argv[overwrite]} = true ]]; then
-        _valopts+=( --overwrite )
-    fi
-    if [[ -n "${ocrd__argv[page_id]:-}" ]]; then
-        _valopts+=( --page-id "${ocrd__argv[page_id]}" )
-    fi
-    _valopts+=( "${OCRD_TOOL_NAME#ocrd-} -I ${ocrd__argv[input_file_grp]} -O ${ocrd__argv[output_file_grp]} ${__parameters[*]@Q} ${__parameter_overrides[*]@Q}" )
-    ocrd validate tasks "${_valopts[@]}" || exit $?
-
     # check parameters
     local params_parsed retval
     params_parsed="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params "${__parameters[@]}" "${__parameter_overrides[@]}")" || {
@@ -238,10 +257,12 @@ ocrd__parse_argv () {
 $params_parsed"
     }
     eval "$params_parsed"
+    params_json="$(ocrd ocrd-tool "$OCRD_TOOL_JSON" tool $OCRD_TOOL_NAME parse-params --json "${__parameters[@]}" "${__parameter_overrides[@]}")"
 
 }
 
 ocrd__wrap () {
+    set -e
 
     declare -gx OCRD_TOOL_JSON="$1"
     declare -gx OCRD_TOOL_NAME="$2"
@@ -249,6 +270,7 @@ ocrd__wrap () {
     shift
     declare -Agx params
     params=()
+    declare -g params_json
     declare -Agx ocrd__argv
     ocrd__argv=()
 
@@ -270,20 +292,26 @@ ocrd__wrap () {
 
     ocrd__parse_argv "$@"
 
-    i=0
-    declare -ag ocrd__files=()
-    while read line; do
-        eval declare -Ag "ocrd__file$i=( $line )"
-        eval "ocrd__files[$i]=ocrd__file$i"
-        let ++i
-    done < <(ocrd bashlib input-files \
+    declare -ag ocrd__files
+    IFS=$'\n'
+    ocrd__files=( $(ocrd bashlib input-files \
+                  --ocrd-tool $OCRD_TOOL_JSON \
+                  --executable $OCRD_TOOL_NAME \
+                  $(if [[ ${ocrd__argv[debug]} = true ]]; then echo --debug; fi) \
+                  $(if [[ ${ocrd__argv[overwrite]} = true ]]; then echo --overwrite; fi) \
                   -m "${ocrd__argv[mets_file]}" \
+                  -d "${ocrd__argv[working_dir]}" \
+                  ${ocrd__argv[mets_server_url]:+-U} ${ocrd__argv[mets_server_url]:-} \
+                  -p "$params_json" \
                   -I "${ocrd__argv[input_file_grp]}" \
                   -O "${ocrd__argv[output_file_grp]}" \
-                  ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-})
+                  ${ocrd__argv[page_id]:+-g} ${ocrd__argv[page_id]:-}) )
+    IFS=$' \t\n'
 }
 
 ## usage: pageId=$(ocrd__input_file 3 pageId)
 ocrd__input_file() {
-    eval echo "\${${ocrd__files[$1]}[$2]}"
+    declare -A input_file
+    eval input_file=( "${ocrd__files[$1]}" )
+    eval echo "${input_file[$2]}"
 }

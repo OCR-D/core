@@ -21,6 +21,7 @@ class OcrdExif():
             * ``RGB`` for 24-bit truecolor,
             * ``I`` for 32-bit signed integer grayscale,
             * ``F`` for floating-point grayscale
+
           (see PIL concept **mode**)
         resolution (int): pixel density
         xResolution (int): pixel density
@@ -48,11 +49,11 @@ class OcrdExif():
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
         if img.filename:
-            ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U', img.filename], check=False, stderr=PIPE, stdout=PIPE)
+            ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U ', img.filename], check=False, stderr=PIPE, stdout=PIPE)
         else:
             with BytesIO() as bio:
                 img.save(bio, format=img.format)
-                ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U', '/dev/stdin'], check=False, stderr=PIPE, stdout=PIPE, input=bio.getvalue())
+                ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U ', '/dev/stdin'], check=False, stderr=PIPE, stdout=PIPE, input=bio.getvalue())
         if ret.returncode:
             stderr = ret.stderr.decode('utf-8')
             if 'no decode delegate for this image format' in stderr:
@@ -101,7 +102,7 @@ class OcrdExif():
         Serialize all properties as XML string.
         """
         ret = '<exif>'
-        for k in self.__dict__:
-            ret += '<%s>%s</%s>' % (k, self.__dict__[k], k)
+        for k, v in self.__dict__.items():
+            ret += f'<{k}>{v}</{k}>'
         ret += '</exif>'
         return ret

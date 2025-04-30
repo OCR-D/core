@@ -8,8 +8,8 @@ from .constants import NAMESPACES
 from .utils import xmllint_format
 
 
-for curie in NAMESPACES:
-    ET.register_namespace(curie, NAMESPACES[curie])
+for curie, url in NAMESPACES.items():
+    ET.register_namespace(curie, url)
 
 class OcrdXmlDocument():
     """

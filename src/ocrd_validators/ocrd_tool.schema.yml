@@ -11,7 +11,7 @@ properties:
     type: string
     pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
   git_url:
-    description: Github/Gitlab URL
+    description: GitHub/GitLab URL
     type: string
     format: url
   dockerhub:
@@ -29,28 +29,54 @@ properties:
           - steps
           - executable
           - categories
-          - input_file_grp
-          # Not required because not all processors produce output files
-          # - output_file_grp
+          - input_file_grp_cardinality
+          - output_file_grp_cardinality
         properties:
           executable:
             description: The name of the CLI executable in $PATH
             type: string
           input_file_grp:
-            description: Input fileGrp@USE this tool expects by default
+            deprecated: true
+            description: (DEPRECATED) Input fileGrp@USE this tool expects by default
             type: array
             items:
               type: string
               # pattern: '^OCR-D-[A-Z0-9-]+$'
           output_file_grp:
-            description: Output fileGrp@USE this tool produces by default
+            deprecated: true
+            description: (DEPRECATED) Output fileGrp@USE this tool produces by default
             type: array
             items:
               type: string
               # pattern: '^OCR-D-[A-Z0-9-]+$'
+          input_file_grp_cardinality:
+            description: Number of (comma-separated) input fileGrp@USE this tool expects (either an exact value or a minimum,maximum list with -1 for unlimited)
+            oneOf:
+              - type: number
+                multipleOf: 1
+              - type: array
+                items:
+                  type: number
+                  multipleOf: 1
+                minItems: 2
+                maxItems: 2
+            default: 1
+          output_file_grp_cardinality:
+            description: Number of (comma-separated) output fileGrp@USE this tool expects (either an exact value or a minimum,maximum list with -1 for unlimited)
+            oneOf:
+              - type: number
+                multipleOf: 1
+              - type: array
+                items:
+                  type: number
+                  multipleOf: 1
+                minItems: 2
+                maxItems: 2
+            default: 1
           parameters:
             description: Object describing the parameters of a tool. Keys are parameter names, values sub-schemas.
             type: object
+            default: {}
             patternProperties:
               ".*":
                 type: object
@@ -82,6 +108,12 @@ properties:
                   maximum:
                     type: number
                     description: Maximum value for number parameters, including the maximum
+                  minProperties:
+                    type: number
+                    description: Minimum number of properties of an object
+                  maxProperties:
+                    type: number
+                    description: Maximum number of properties of an object
                   exclusiveMinimum:
                     type: number
                     description: Minimum value for number parameters, excluding the minimum
@@ -95,8 +127,11 @@ properties:
                     type: object
                     description: Describe the properties of an object value
                   additionalProperties:
-                    type: boolean
-                    description: Whether an object value may contain properties not explicitly defined
+                    oneOf:
+                    - type: boolean
+                      description: Whether an object value may contain properties not explicitly defined
+                    - type: object
+                      description: Schema any additional properties need to adhere to
                   required:
                     type: boolean
                     description: Whether this parameter is required
@@ -121,9 +156,9 @@ properties:
                     description: "If parameter is reference to file: Whether the file should be cached, e.g. because it is large and won't change."
                     default: false
           description:
-            description: Concise description what the tool does
+            description: Concise description of what the tool does
           categories:
-            description: Tools belong to this categories, representing modules within the OCR-D project structure
+            description: Tools belong to these categories, representing modules within the OCR-D project structure
             type: array
             items:
               type: string
@@ -140,6 +175,7 @@ properties:
             items:
               type: string
               enum:
+                - preprocessing/format-conversion
                 - preprocessing/characterization
                 - preprocessing/optimization
                 - preprocessing/optimization/cropping
@@ -158,6 +194,10 @@ properties:
                 - layout/segmentation/word
                 - layout/segmentation/classification
                 - layout/analysis
+                - postprocessing/format-conversion
+                - postprocessing/archival
+                - evaluation/layout
+                - evaluation/text
           resource_locations:
             type: array
             description: The locations in the filesystem this processor supports for resource lookup
@@ -198,7 +238,7 @@ properties:
                   default: 'as-is'
                 path_in_archive:
                   type: string
-                  description: if type is archive, the resource is at this location in the archive
+                  description: If type is archive, the resource is at this location in the archive
                   default: '.'
                 version_range:
                   type: string
@@ -206,4 +246,4 @@ properties:
                   default: '>= 0.0.1'
                 size:
                   type: number
-                  description: Size of the resource in bytes
+                  description: "Size of the resource in bytes to be retrieved (for archives: size of the archive)"

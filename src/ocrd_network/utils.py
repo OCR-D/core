@@ -3,6 +3,9 @@ from datetime import datetime
 from fastapi import UploadFile
 from functools import wraps
 from hashlib import md5
+from json import loads
+from logging import Logger
+from pathlib import Path
 from re import compile as re_compile, split as re_split
 from requests import get as requests_get, Session as Session_TCP
 from requests_unixsocket import Session as Session_UDS
@@ -12,7 +15,9 @@ from uuid import uuid4
 
 from ocrd.resolver import Resolver
 from ocrd.workspace import Workspace
-from ocrd_utils import generate_range, REGEX_PREFIX
+from ocrd.mets_server import MpxReq
+from ocrd_utils import config, generate_range, REGEX_PREFIX, safe_filename, getLogger, resource_string
+from .constants import OCRD_ALL_TOOL_JSON
 from .rabbitmq_utils import OcrdResultMessage
 
 
@@ -90,14 +95,12 @@ def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3) -> bool:
     return False
 
 
-def download_ocrd_all_tool_json(ocrd_all_url: str):
-    if not ocrd_all_url:
-        raise ValueError(f"The URL of ocrd all tool json is empty")
-    headers = {"Accept": "application/json"}
-    response = Session_TCP().get(ocrd_all_url, headers=headers)
-    if not response.status_code == 200:
-        raise ValueError(f"Failed to download ocrd all tool json from: '{ocrd_all_url}'")
-    return response.json()
+def load_ocrd_all_tool_json():
+    try:
+        ocrd_all_tool_json = loads(resource_string('ocrd', OCRD_ALL_TOOL_JSON))
+    except Exception as error:
+        raise ValueError(f"Failed to load ocrd all tool json from: '{OCRD_ALL_TOOL_JSON}', {error}")
+    return ocrd_all_tool_json
 
 
 def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMessage):
@@ -115,7 +118,7 @@ def post_to_callback_url(logger, callback_url: str, result_message: OcrdResultMe
 
 def get_ocrd_workspace_instance(mets_path: str, mets_server_url: str = None) -> Workspace:
     if mets_server_url:
-        if not is_mets_server_running(mets_server_url=mets_server_url):
+        if not is_mets_server_running(mets_server_url=mets_server_url, ws_dir_path=str(Path(mets_path).parent)):
             raise RuntimeError(f'The mets server is not running: {mets_server_url}')
     return Resolver().workspace_from_url(mets_url=mets_path, mets_server_url=mets_server_url)
 
@@ -124,25 +127,50 @@ def get_ocrd_workspace_physical_pages(mets_path: str, mets_server_url: str = Non
     return get_ocrd_workspace_instance(mets_path=mets_path, mets_server_url=mets_server_url).mets.physical_pages
 
 
-def is_mets_server_running(mets_server_url: str) -> bool:
+def is_mets_server_running(mets_server_url: str, ws_dir_path: str = None) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
     session = Session_TCP() if protocol == "tcp" else Session_UDS()
     if protocol == "uds":
         mets_server_url = convert_url_to_uds_format(mets_server_url)
     try:
-        response = session.get(url=f"{mets_server_url}/workspace_path")
+        if 'tcp_mets' in mets_server_url:
+            if not ws_dir_path:
+                return False
+            path = session.post(
+                url=f"{mets_server_url}",
+                json=MpxReq.workspace_path(ws_dir_path)
+            ).json()["text"]
+            return bool(path)
+        else:
+            try:
+                response = session.get(url=f"{mets_server_url}/workspace_path")
+                return response.status_code == 200
+            except OSError:
+                return False
     except Exception:
+        getLogger("ocrd_network.utils").exception("Unexpected exception in is_mets_server_running: ")
         return False
-    return response.status_code == 200
 
 
-def stop_mets_server(mets_server_url: str) -> bool:
+def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str) -> bool:
     protocol = "tcp" if (mets_server_url.startswith("http://") or mets_server_url.startswith("https://")) else "uds"
-    session = Session_TCP() if protocol == "tcp" else Session_UDS()
-    if protocol == "uds":
-        mets_server_url = convert_url_to_uds_format(mets_server_url)
-    try:
-        response = session.delete(url=f"{mets_server_url}/")
-    except Exception:
-        return False
-    return response.status_code == 200
+    # If the mets server URL is the proxy endpoint
+    if protocol == "tcp" and "tcp_mets" in mets_server_url:
+        # Convert the mets server url to UDS format
+        ws_socket_file = str(get_uds_path(ws_dir_path))
+        mets_server_url = convert_url_to_uds_format(ws_socket_file)
+        protocol = "uds"
+    if protocol == "tcp":
+        request_json = MpxReq.stop(ws_dir_path)
+        logger.info(f"Sending POST request to: {mets_server_url}, request_json: {request_json}")
+        response = Session_TCP().post(url=f"{mets_server_url}", json=request_json)
+        return response.status_code == 200
+    elif protocol == "uds":
+        logger.info(f"Sending DELETE request to: {mets_server_url}/")
+        response = Session_UDS().delete(url=f"{mets_server_url}/")
+        return response.status_code == 200
+    else:
+        ValueError(f"Unexpected protocol type: {protocol}")
+
+def get_uds_path(ws_dir_path: str) -> Path:
+    return Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(ws_dir_path)}.sock")

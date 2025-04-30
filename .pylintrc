@@ -1,19 +1,22 @@
 [MASTER]
-extension-pkg-whitelist=lxml
-ignored-modules=cv2,tesserocr,ocrd.model
+extension-pkg-whitelist=lxml,pydantic
+ignored-modules=cv2,tesserocr,ocrd_models.ocrd_page_generateds
+ignore-paths=ocrd_page_generateds.py
+ignore-patterns=.*generateds.*
 
 [MESSAGES CONTROL]
-ignore-patterns='.*generateds.*'
 disable =
     fixme,
-    E501,
+    line-too-long,
+    consider-using-f-string,
+    logging-fstring-interpolation,
     trailing-whitespace,
     logging-not-lazy,
     inconsistent-return-statements,
+    disallowed-name,
     invalid-name,
     line-too-long,
     missing-docstring,
-    no-self-use,
     wrong-import-order,
     too-many-nested-blocks,
     superfluous-parens,
@@ -25,12 +28,8 @@ disable =
     ungrouped-imports,
     useless-object-inheritance,
     useless-import-alias,
-    bad-continuation,
     no-else-return,
     logging-not-lazy
-
-[FORMAT]
-no-space-check=empty-line
 
 [DESIGN]
 # Maximum number of arguments for function / method
@@ -40,7 +39,7 @@ max-locals=30
 # Maximum number of return / yield for function / method body
 max-returns=12
 # Maximum number of branch for function / method body
-max-branchs=30
+max-branches=30
 # Maximum number of statements in function / method body
 max-statements=60
 # Maximum number of parents for a class (see R0901).

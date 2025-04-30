@@ -11,6 +11,7 @@ from ocrd_utils.os import (
     redirect_stderr_and_stdout_to_file,
     guess_media_type,
 )
+from ocrd_utils import config
 
 class TestOsUtils(TestCase):
 
@@ -26,6 +27,8 @@ class TestOsUtils(TestCase):
 
     def test_resolve_basic(self):
         def dehomify(s):
+            if ENV['HOME'] == '/' or expanduser('~') == '/':
+                return s
             return s.replace(ENV['HOME'], '$HOME').replace(expanduser('~'), '$HOME')
         fname = 'foo.bar'
         cands = list_resource_candidates('ocrd-dummy', fname)
@@ -34,7 +37,7 @@ class TestOsUtils(TestCase):
         self.assertEqual(cands, [join(x, fname) for x in [
             dehomify(join(getcwd())),
             dehomify(self.tempdir_path),
-            '$HOME/.local/share/ocrd-resources/ocrd-dummy',
+            dehomify(join(config.XDG_DATA_HOME, 'ocrd-resources', 'ocrd-dummy')),
             '/usr/local/share/ocrd-resources/ocrd-dummy',
         ]])
 

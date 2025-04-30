@@ -1,12 +1,18 @@
+import os
+import re
+import signal
+from pathlib import Path
+from json import dumps, loads
+from urllib.parse import urljoin
+from typing import Dict, List, Optional, Union
+from time import time
+
 from fastapi import HTTPException, status, UploadFile
 from fastapi.responses import FileResponse
 from httpx import AsyncClient, Timeout
-from json import dumps, loads
 from logging import Logger
-from pathlib import Path
 from requests import get as requests_get
-from typing import Dict, List, Union
-from urllib.parse import urljoin
+from requests_unixsocket import sys
 
 from ocrd.resolver import Resolver
 from ocrd.task_sequence import ProcessorTask
@@ -125,14 +131,13 @@ def request_processor_server_tool_json(logger: Logger, processor_server_base_url
             urljoin(base=processor_server_base_url, url="info"),
             headers={"Content-Type": "application/json"}
         )
-        if response.status_code != 200:
-            message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
-            raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
-        return response.json()
     except Exception as error:
         message = f"Failed to retrieve ocrd tool json from: {processor_server_base_url}"
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message, error)
-
+    if response.status_code != 200:
+        message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
+        raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
+    return response.json()
 
 async def forward_job_to_processor_server(
     logger: Logger, job_input: PYJobInput, processor_server_base_url: str
@@ -193,11 +198,14 @@ def parse_workflow_tasks(logger: Logger, workflow_content: str) -> List[Processo
 
 
 def raise_http_exception(logger: Logger, status_code: int, message: str, error: Exception = None) -> None:
-    logger.exception(f"{message} {error}")
+    if error:
+        message = f"{message} {error}"
+    logger.exception(f"{message}")
     raise HTTPException(status_code=status_code, detail=message)
 
 
 def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job_input: PYJobInput) -> None:
+    # logger.warning(f"Job input: {job_input}")
     if bool(job_input.path_to_mets) == bool(job_input.workspace_id):
         message = (
             "Wrong processing job input format. "
@@ -210,12 +218,12 @@ def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
     try:
         report = ParameterValidator(ocrd_tool).validate(dict(job_input.parameters))
-        if not report.is_valid:
-            message = f"Failed to validate processing job input against the tool json of processor: {processor_name}\n"
-            raise_http_exception(logger, status.HTTP_404_BAD_REQUEST, message + report.errors)
     except Exception as error:
         message = f"Failed to validate processing job input against the ocrd tool json of processor: {processor_name}"
-        raise_http_exception(logger, status.HTTP_404_BAD_REQUEST, message, error)
+        raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, message, error)
+    if report and not report.is_valid:
+        message = f"Failed to validate processing job input against the tool json of processor: {processor_name}\n"
+        raise_http_exception(logger, status.HTTP_400_BAD_REQUEST, f"{message}{report.errors}")
 
 
 def validate_workflow(logger: Logger, workflow: str) -> None:
@@ -239,3 +247,33 @@ def validate_first_task_input_file_groups_existence(logger: Logger, mets_path: s
         if group not in available_groups:
             message = f"Input file group '{group}' of the first processor not found: {input_file_grps}"
             raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
+
+
+def kill_mets_server_zombies(minutes_ago : Optional[int], dry_run : Optional[bool]) -> List[int]:
+    if minutes_ago == None:
+        minutes_ago = 90
+    if dry_run == None:
+        dry_run = False
+
+    now = time()
+    cmdline_pat = r'.*ocrd workspace -U.*server start $'
+    ret = []
+    for procdir in sorted(Path('/proc').glob('*'), key=os.path.getctime):
+        if not procdir.is_dir():
+            continue
+        cmdline_file = procdir.joinpath('cmdline')
+        if not cmdline_file.is_file():
+            continue
+        ctime_ago = int((now - procdir.stat().st_ctime) / 60)
+        if ctime_ago < minutes_ago:
+            continue
+        cmdline = cmdline_file.read_text().replace('\x00', ' ')
+        if re.match(cmdline_pat, cmdline):
+            pid = int(procdir.name)
+            ret.append(pid)
+            print(f'METS Server with PID {pid} was created {ctime_ago} minutes ago, more than {minutes_ago}, so killing (cmdline="{cmdline})', file=sys.stderr)
+            if dry_run:
+                print(f'[dry_run is active] kill {pid}')
+            else:
+                os.kill(pid, signal.SIGTERM)
+    return ret

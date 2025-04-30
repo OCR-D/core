@@ -7,12 +7,16 @@ build:
     python:
       version: 3.8.2
       virtualenv: true
+    variables:
+      DEBIAN_FRONTEND: noninteractive
   nodes:
     analysis:
       dependencies:
         override:
-          - sudo make deps-ubuntu
-          - make install
+          - echo "Skipped"
+          # - command: sudo make deps-ubuntu
+          #   idle_timeout: 600
+          # - make install
       tests:
         override:
           - py-scrutinizer-run

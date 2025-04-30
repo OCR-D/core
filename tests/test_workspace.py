@@ -87,10 +87,10 @@ def test_workspace_add_file_overwrite(plain_workspace):
     plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id='phys1', local_filename=fpath)
     with pytest.raises(FileExistsError) as fn_exc:
         plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id=None, local_filename=fpath)
-        assert str(fn_exc.value) == "File with file_id='ID1' already exists"
+    assert "already exists" in str(fn_exc.value)
     with pytest.raises(FileExistsError) as fn_exc:
         plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT', page_id='phys2', local_filename=fpath, force=True)
-        assert 'cannot mitigate' in str(fn_exc.value)
+    assert 'cannot mitigate' in str(fn_exc.value)
     plain_workspace.add_file('GRP', file_id='ID1', mimetype='image/tiff', content='CONTENT2', page_id='phys1', local_filename=fpath, force=True)
 
     f = plain_workspace.mets.find_all_files()[0]
@@ -224,7 +224,7 @@ def test_superfluous_copies_in_ws_dir(tmp_path):
     https://github.com/OCR-D/core/issues/227
     """
     # arrange
-    src_path = assets.path_to('SBB0000F29300010000/data/mets_one_file.xml')
+    src_path = assets.path_to('sample_bagit-with-fetch/data/PPN595930174.xml')
     dst_path = join(tmp_path, 'mets.xml')
     copyfile(src_path, dst_path)
     ws1 = Workspace(Resolver(), tmp_path)
@@ -233,12 +233,12 @@ def test_superfluous_copies_in_ws_dir(tmp_path):
     assert count_files(tmp_path) == 1
 
     # act
-    for file in ws1.mets.find_all_files():
-        ws1.download_file(file)
+    file1 = next(ws1.mets.find_files(fileGrp='DEFAULT'))
+    ws1.download_file(file1)
 
     # assert
     assert count_files(tmp_path) == 2
-    assert exists(join(tmp_path, 'OCR-D-IMG/FILE_0005_IMAGE.tif'))
+    assert exists(join(tmp_path, 'DEFAULT/FILE_0000_DEFAULT.jpg'))
 
 
 @pytest.fixture(name='sbb_data_tmp')
@@ -270,9 +270,9 @@ def test_remove_file_force(sbb_data_workspace):
 
     # TODO check semantics - can a non-existent thing be removed?
     assert not sbb_data_workspace.remove_file('non-existing-id', force=True)
-    # should also succeed
-    sbb_data_workspace.overwrite_mode = True
-    assert not sbb_data_workspace.remove_file('non-existing-id', force=False)
+    with pytest.raises(FileNotFoundError) as not_found_exc:
+        sbb_data_workspace.remove_file('non-existing-id', force=False)
+    assert "not found in METS" in str(not_found_exc.value)
 
 
 def test_remove_file_remote_not_available_raises_exception(plain_workspace):
@@ -292,9 +292,9 @@ def test_remove_file_remote(plain_workspace):
     assert plain_workspace.remove_file('page1_img', force=True)
 
     # TODO check returned value
-    # should also "succeed", because overwrite_mode is set which also sets 'force' to 'True'
-    plain_workspace.overwrite_mode = True
-    assert not plain_workspace.remove_file('page1_img')
+    with pytest.raises(FileNotFoundError) as not_found_exc:
+        plain_workspace.remove_file('page1_img')
+    assert "not found in METS" in str(not_found_exc.value)
 
 
 def test_rename_file_group(tmp_path):
@@ -341,9 +341,6 @@ def test_remove_file_group_force(sbb_data_workspace):
     # check function and tests semantics
     # should succeed
     assert not sbb_data_workspace.remove_file_group('I DO NOT EXIST', force=True)
-    # should also succeed
-    sbb_data_workspace.overwrite_mode = True
-    assert not sbb_data_workspace.remove_file_group('I DO NOT EXIST', force=False)
 
 
 def test_remove_file_group_rmdir(sbb_data_tmp, sbb_data_workspace):
@@ -417,7 +414,7 @@ def test_save_image_file_invalid_mimetype_raises_exception(plain_workspace):
 
     # act raise
     with pytest.raises(KeyError) as key_exc:
-        plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'ceci/nest/pas/une/mimetype')
+        plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='ceci/nest/pas/une/mimetype')
 
     assert "'ceci/nest/pas/une/mimetype'" == str(key_exc.value)
 
@@ -428,13 +425,18 @@ def test_save_image_file(plain_workspace):
     img = Image.new('RGB', (1000, 1000))
 
     # act
-    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg')
+    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg')
     assert exists(join(plain_workspace.directory, 'IMG', 'page1_img.jpg'))
     # should succeed
-    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg', force=True)
-    # should also succeed
-    plain_workspace.overwrite_mode = True
-    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', 'page1', 'image/jpeg')
+    assert plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg', force=True)
+    # should fail
+    with pytest.raises(FileExistsError) as exists_exc:
+        plain_workspace.save_image_file(img, 'page1_img', 'IMG', page_id='page1', mimetype='image/jpeg')
+    assert "neither force nor ignore are set" in str(exists_exc.value)
+
+    # check file_path kwarg
+    assert plain_workspace.save_image_file(img, 'page1_img2', 'IMG', page_id='page1', file_path='IMG/page1_img2.png')
+    assert exists(join(plain_workspace.directory, 'IMG', 'page1_img2.png'))
 
 
 @pytest.fixture(name='workspace_kant_aufklaerung')
@@ -484,8 +486,10 @@ def test_image_from_page_basic(workspace_gutachten_data):
         pcgts = parseString(f.read().encode('utf8'), silence=True)
 
     # act + assert
-    _, info, _ = workspace_gutachten_data.image_from_page(pcgts.get_Page(), page_id='PHYS_0017', feature_selector='clipped', feature_filter='cropped')
-    assert info['features'] == 'binarized,clipped'
+    img, coords, _ = workspace_gutachten_data.image_from_page(pcgts.get_Page(), page_id='PHYS_0017', feature_selector='clipped', feature_filter='cropped')
+    assert coords['features'] == 'binarized,clipped'
+    assert isinstance(img.info.get('dpi', None), tuple)
+    assert img.info['dpi'][0] == coords['DPI']
     _, info, _ = workspace_gutachten_data.image_from_page(pcgts.get_Page(), page_id='PHYS_0017')
     assert info['features'] == 'binarized,clipped'
 
@@ -526,6 +530,7 @@ def test_deskewing(plain_workspace):
     skew = 4.625
     image = Image.new('L', size)
     image = polygon_mask(image, poly)
+    image.info['dpi'] = (300, 300)
     #image.show(title='image')
     pixels = np.count_nonzero(np.array(image) > 0)
     name = 'foo0'
@@ -536,9 +541,12 @@ def test_deskewing(plain_workspace):
                             Coords=CoordsType(points=points_from_polygon(poly)),
                             orientation=-skew)
     page.add_TextRegion(region)
-    page_image, page_coords, _ = plain_workspace.image_from_page(page, '')
+    page_image, page_coords, page_info = plain_workspace.image_from_page(page, '')
     #page_image.show(title='page_image')
     assert list(image.getdata()) == list(page_image.getdata())
+    assert 'dpi' in page_image.info
+    assert round(page_image.info['dpi'][0]) == 300
+    assert page_coords['DPI'] == 300
     assert np.all(page_coords['transform'] == np.eye(3))
     reg_image, reg_coords = plain_workspace.image_from_segment(region, page_image, page_coords,
                                                                feature_filter='deskewed', fill=0)
@@ -547,6 +555,7 @@ def test_deskewing(plain_workspace):
     assert reg_image.height == xywh['h'] == 335
     assert reg_coords['transform'][0, 2] == -xywh['x']
     assert reg_coords['transform'][1, 2] == -xywh['y']
+    assert round(reg_image.info['dpi'][0]) == 300
     # same fg after cropping to minimal bbox
     reg_pixels = np.count_nonzero(np.array(reg_image) > 0)
     assert pixels == reg_pixels
@@ -558,6 +567,7 @@ def test_deskewing(plain_workspace):
     assert reg_coords['transform'][0, 1] != 0
     assert reg_coords['transform'][1, 0] != 0
     assert 'deskewed' in reg_coords['features']
+    assert round(reg_image.info['dpi'][0]) == 300
     # same fg after cropping to minimal bbox (roughly - due to aliasing)
     reg_pixels = np.count_nonzero(np.array(reg_image) > 0)
     assert np.abs(pixels - reg_pixels) / pixels < 0.005
@@ -579,6 +589,7 @@ def test_deskewing(plain_workspace):
     assert reg_image2.height == reg_image.height
     assert np.allclose(reg_coords2['transform'], reg_coords['transform'])
     assert reg_coords2['features'] == reg_coords['features']
+    assert round(reg_image2.info['dpi'][0]) == 300
     # same fg after cropping to minimal bbox (roughly - due to aliasing)
     reg_pixels2 = np.count_nonzero(np.array(reg_image) > 0)
     assert reg_pixels2 == reg_pixels
@@ -673,7 +684,7 @@ def test_merge_overwrite(tmp_path):
         ws1.add_file('X', page_id='X', mimetype='X', file_id='id123', local_filename='X/X', content='ws1')
         ws2.add_file('X', page_id='X', mimetype='X', file_id='id456', local_filename='X/X', content='ws2')
         ws1.merge(ws2)
-        assert "would overwrite" == str(exc.value)
+    assert "would overwrite" in str(exc.value)
 
 def test_merge_with_filter(plain_workspace, tmp_path):
     # arrange
@@ -734,7 +745,7 @@ def _fixture_metsDocumentID(tmp_path):
 def test_agent_before_metsDocumentID(workspace_metsDocumentID):
     report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
     assert report.is_valid
-    workspace_metsDocumentID.mets.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'OTHER')
+    workspace_metsDocumentID.mets.add_agent(name='foo bar v0.0.1', _type='OTHER', othertype='OTHER', role='OTHER')
     workspace_metsDocumentID.save_mets()
     report = WorkspaceValidator.validate(Resolver(), mets_url=workspace_metsDocumentID.mets_target)
     print(report.errors)

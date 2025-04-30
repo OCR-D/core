@@ -28,6 +28,8 @@ __all__ = [
     'TAG_PAGE_TEXTEQUIV',
     'TAG_PAGE_TEXTREGION',
     'METS_PAGE_DIV_ATTRIBUTE',
+    'PAGE_REGION_TYPES',
+    'PAGE_ALTIMG_FEATURES',
 ]
 
 
@@ -44,7 +46,6 @@ NAMESPACES = {
     'ocrd': 'https://ocr-d.de',
 }
 
-# pylint: disable=bad-whitespace
 TAG_METS_AGENT            = '{%s}agent' % NAMESPACES['mets']
 TAG_METS_DIV              = '{%s}div' % NAMESPACES['mets']
 TAG_METS_FILE             = '{%s}file' % NAMESPACES['mets']
@@ -72,6 +73,20 @@ PAGE_REGION_TYPES = [
     'LineDrawing', 'Map', 'Maths', 'Music', 'Noise',
     'Separator', 'Table', 'Text', 'Unknown'
 ]
+
+PAGE_ALTIMG_FEATURES = [
+    'binarized',
+    'grayscale_normalized',
+    'despeckled',
+    'cropped',
+    'deskewed',
+    'rotated-90',
+    'rotated-180',
+    'rotated-270',
+    'dewarped',
+    'clipped',
+]
+
 
 class METS_PAGE_DIV_ATTRIBUTE(Enum):
     ID = auto()

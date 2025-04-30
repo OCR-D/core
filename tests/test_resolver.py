@@ -117,6 +117,9 @@ def test_workspace_from_url_kant_with_resources(mock_request, tmp_path):
 
 @patch.object(Session, "get")
 def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp_path):
+    """
+    Fail with clobber_mets=False, succeed with clobber_mets=True
+    """
 
     # arrange
     url_src = 'https://raw.githubusercontent.com/OCR-D/assets/master/data/kant_aufklaerung_1784/data/mets.xml'
@@ -127,12 +130,14 @@ def test_workspace_from_url_kant_with_resources_existing_local(mock_request, tmp
     dst_mets = Path(dst_dir, 'mets.xml')
     shutil.copyfile(src_mets, dst_mets)
 
-    # act
-    Resolver().workspace_from_url(url_src, clobber_mets=False, dst_dir=dst_dir)
+    # fail
+    with pytest.raises(FileExistsError) as exc:
+        Resolver().workspace_from_url(url_src, clobber_mets=False, dst_dir=dst_dir)
+        assert mock_request.call_count == 0
 
-    # assert
-    # no real request was made, since mets already present
-    assert mock_request.call_count == 0
+    # succeed
+    Resolver().workspace_from_url(url_src, clobber_mets=True, dst_dir=dst_dir)
+    assert mock_request.call_count == 1
 
 
 @patch.object(Session, "get")
@@ -229,7 +234,7 @@ def test_workspace_from_nothing_noclobber(tmp_path):
     ws2 = Resolver().workspace_from_nothing(tmp_path)
     assert ws2.directory == tmp_path
 
-    with pytest.raises(Exception) as exc:
+    with pytest.raises(FileExistsError) as exc:
         Resolver().workspace_from_nothing(tmp_path)
 
     # assert
@@ -287,20 +292,21 @@ def test_resolve_mets_arguments():
     https://github.com/OCR-D/core/issues/517
     """
     resolver = Resolver()
-    assert resolver.resolve_mets_arguments(None, None, None, None) == (str(Path.cwd()), str(Path.cwd() / 'mets.xml'), 'mets.xml', None)
-    assert resolver.resolve_mets_arguments('/', None, 'mets.xml', None) == ('/', '/mets.xml', 'mets.xml', None)
-    assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
-    assert resolver.resolve_mets_arguments(None, '/foo/foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
-    assert resolver.resolve_mets_arguments('/foo', 'foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
-    assert resolver.resolve_mets_arguments('/foo', 'http://bar/foo.xml', None, None) == ('/foo', 'http://bar/foo.xml', 'foo.xml', None)
-    with pytest.raises(ValueError, match="Use either --mets or --mets-basename, not both"):
-        resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml', None)
-    with pytest.raises(ValueError, match="inconsistent with --directory"):
-        resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None, None)
-    with pytest.warns(DeprecationWarning):
-        resolver.resolve_mets_arguments('/foo', None, 'not_mets.xml', None)
-    with pytest.raises(ValueError, match=r"--mets is an http\(s\) URL but no --directory was given"):
-        resolver.resolve_mets_arguments(None, 'http://bar/foo.xml', None, None)
+    with pytest.warns(DeprecationWarning, match='--mets-basename'):
+        assert resolver.resolve_mets_arguments(None, None, None, None) == (str(Path.cwd()), str(Path.cwd() / 'mets.xml'), 'mets.xml', None)
+        assert resolver.resolve_mets_arguments('/', None, 'mets.xml', None) == ('/', '/mets.xml', 'mets.xml', None)
+        assert resolver.resolve_mets_arguments('/foo', '/foo/foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
+        assert resolver.resolve_mets_arguments(None, '/foo/foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
+        assert resolver.resolve_mets_arguments('/foo', 'foo.xml', None, None) == ('/foo', '/foo/foo.xml', 'foo.xml', None)
+        assert resolver.resolve_mets_arguments('/foo', 'http://bar/foo.xml', None, None) == ('/foo', 'http://bar/foo.xml', 'foo.xml', None)
+        with pytest.raises(ValueError, match="Use either --mets or --mets-basename, not both"):
+            resolver.resolve_mets_arguments('/', '/foo/bar', 'foo.xml', None)
+        with pytest.raises(ValueError, match="inconsistent with --directory"):
+            resolver.resolve_mets_arguments('/foo', '/bar/foo.xml', None, None)
+        with pytest.warns(DeprecationWarning):
+            resolver.resolve_mets_arguments('/foo', None, 'not_mets.xml', None)
+        with pytest.raises(ValueError, match=r"--mets is an http\(s\) URL but no --directory was given"):
+            resolver.resolve_mets_arguments(None, 'http://bar/foo.xml', None, None)
 
 if __name__ == '__main__':
     main(__file__)

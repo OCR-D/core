@@ -61,10 +61,11 @@ def test_unique_identifier_from_nothing():
 
 
 def test_str():
-    mets = OcrdMets(content='<mets/>', cache_flag=False)
-    assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
-    mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
-    assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
+    with temp_env_var('OCRD_METS_CACHING', None):
+        mets = OcrdMets(content='<mets/>', cache_flag=False)
+        assert str(mets) == 'OcrdMets[cached=False,fileGrps=[],files=[]]'
+        mets_cached = OcrdMets(content='<mets/>', cache_flag=True)
+        assert str(mets_cached) == 'OcrdMets[cached=True,fileGrps=[],files=[]]'
 
 
 def test_file_groups(sbb_sample_01):
@@ -85,7 +86,7 @@ def test_find_all_files(sbb_sample_01):
     assert len(mets.find_all_files(mimetype='//application/.*')) == 22, '22 application/.*'
     assert len(mets.find_all_files(mimetype=MIMETYPE_PAGE)) == 20, '20 ' + MIMETYPE_PAGE
     assert len(mets.find_all_files(local_filename='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 FILE xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
-    assert len(mets.find_all_files(url='https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif')) == 1, '1 URL xlink:href="https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif"'
+    assert len(mets.find_all_files(url='https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/data/00000001_DESKEW.tif')) == 1, '1 URL xlink:href="https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif"'
     assert len(mets.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
     assert len(mets.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
     assert len(mets.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
@@ -247,7 +248,7 @@ def test_file_pageid(sbb_sample_01):
 
 def test_agent(sbb_sample_01):
     beforelen = len(sbb_sample_01.agents)
-    sbb_sample_01.add_agent('foo bar v0.0.1', 'OTHER', 'OTHER', 'YETOTHERSTILL')
+    sbb_sample_01.add_agent(name='foo bar v0.0.1', _type='OTHER', othertype='OTHER', role='YETOTHERSTILL')
     assert len(sbb_sample_01.agents) == beforelen + 1
 
 def test_metshdr():
@@ -383,16 +384,20 @@ def test_invalid_filegrp():
 @contextmanager
 def temp_env_var(k, v):
     v_before = environ.get(k, None)
-    environ[k] = v
+    if v == None:
+        environ.pop(k, None)
+    else:
+        environ[k] = v
     yield
     if v_before is not None:
         environ[k] = v_before
     else:
-        del environ[k]
+        environ.pop(k, None)
 
 def test_envvar():
-    assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
-    assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
+    with temp_env_var('OCRD_METS_CACHING', None):
+        assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
+        assert not OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag
     with temp_env_var('OCRD_METS_CACHING', 'true'):
         assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=True)._cache_flag
         assert OcrdMets(filename=assets.url_of('SBB0000F29300010000/data/mets.xml'), cache_flag=False)._cache_flag

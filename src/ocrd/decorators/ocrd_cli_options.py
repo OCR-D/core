@@ -13,44 +13,43 @@ from ocrd_network import (
 
 def ocrd_cli_options(f):
     """
-    Implement MP CLI.
+    Implement Processor CLI.
 
     Usage::
 
-        import ocrd_click_cli from ocrd.utils
+        from ocrd.decorators import ocrd_cli_options
 
         @click.command()
-        @ocrd_click_cli
-        def cli(mets_url):
-            print(mets_url)
+        @ocrd_cli_options
+        def cli(**kwargs):
+            print(kwargs['mets_url'])
     """
     # XXX Note that the `--help` output is statically generate_processor_help
     params = [
         option('-m', '--mets', help="METS to process", default=DEFAULT_METS_BASENAME),
         option('-w', '--working-dir', help="Working Directory"),
         option('-U', '--mets-server-url', help="METS server URL. Starts with http:// then TCP, otherwise unix socket path"),
-        # TODO OCR-D/core#274
-        # option('-I', '--input-file-grp', required=True),
-        # option('-O', '--output-file-grp', required=True),
-        option('-I', '--input-file-grp', default='INPUT'),
-        option('-O', '--output-file-grp', default='OUTPUT'),
+        option('-I', '--input-file-grp', default=None),
+        option('-O', '--output-file-grp', default=None),
         option('-g', '--page-id'),
         option('--overwrite', is_flag=True, default=False),
+        option('--debug', is_flag=True, default=False),
         option('--profile', is_flag=True, default=False),
         option('--profile-file', type=Path(dir_okay=False, writable=True)),
         parameter_option,
         parameter_override_option,
         loglevel_option,
+        option('--log-filename', default=None),
         option('--address', type=ServerAddressParamType()),
         option('--queue', type=QueueServerParamType()),
         option('--database', type=DatabaseParamType()),
+        option('-R', '--resolve-resource'),
         option('-C', '--show-resource'),
         option('-L', '--list-resources', is_flag=True, default=False),
         option('-J', '--dump-json', is_flag=True, default=False),
         option('-D', '--dump-module-dir', is_flag=True, default=False),
         option('-h', '--help', is_flag=True, default=False),
         option('-V', '--version', is_flag=True, default=False),
-        option('--log-filename', default=None),
         # Subcommand, only used for 'worker'/'server'. Cannot be handled in
         # click because processors use the @command decorator and even if they
         # were using `group`, you cannot combine have a command with

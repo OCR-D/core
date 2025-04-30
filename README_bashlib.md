@@ -21,6 +21,9 @@ For example:
 * [`ocrd__log`](#ocrd__log)
 * [`ocrd__minversion`](#ocrd__minversion)
 * [`ocrd__dumpjson`](#ocrd__dumpjson)
+* [`ocrd__resolve_resource`](#ocrd__resolve_resource)
+* [`ocrd__show_resource`](#ocrd__show_resource)
+* [`ocrd__list_resources`](#ocrd__list_resources)
 * [`ocrd__usage`](#ocrd__usage)
 * [`ocrd__parse_argv`](#ocrd__parse_argv)
 <!-- END-MARKDOWN-TOC -->
@@ -56,6 +59,10 @@ export OCRD_TOOL_NAME=ocrd-foo-bar
 
 (Which you automatically get from [`ocrd__wrap`](#ocrd__wrap).)
 
+### `ocrd__resolve_resource`
+
+Output given resource file's path.
+
 ### `ocrd__show_resource`
 
 Output given resource file's content.
@@ -88,6 +95,7 @@ This will be filled by the parser along the following keys:
 - `profile`: whether `--profile` is enabled
 - `profile_file`: the argument of `--profile-file`
 - `log_level`: the argument of `--log-level`
+- `mets_server_url`: the argument of `--mets-server-url` argument
 - `mets_file`: absolute path of the `--mets` argument
 - `working_dir`: absolute path of the `--working-dir` argument or the parent of `mets_file`
 - `page_id`: the argument of `--page-id`
@@ -95,7 +103,7 @@ This will be filled by the parser along the following keys:
 - `output_file_grp`: the argument of `--output-file-grp`
 
 Moreover, there will be an associative array **`params`**
-with the fully expanded runtime values of the ocrd-tool.json parameters.
+with the fully validated and default-expanded runtime values of the `ocrd-tool.json` parameters.
 
 ### `ocrd__wrap`
 

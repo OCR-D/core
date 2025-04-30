@@ -17,7 +17,7 @@ from ocrd.decorators import parameter_option, parameter_override_option
 from ocrd.processor import Processor
 from ocrd_utils import (
     set_json_key_value_overrides,
-    VERSION as OCRD_VERSION,
+    parse_json_string_or_file,
     parse_json_string_with_comments as loads
 )
 from ocrd_validators import ParameterValidator, OcrdToolValidator
@@ -28,7 +28,29 @@ class OcrdToolCtx():
         self.filename = filename
         with codecs.open(filename, encoding='utf-8') as f:
             self.content = f.read()
+            # perhaps the validator should _always_ run (for default expansion)
+            # so validate command only for the report?
             self.json = loads(self.content)
+        self.tool_name = ''
+
+        class BashProcessor(Processor):
+            @property
+            def metadata(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+                return self.json
+            @property
+            def executable(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+                return self.tool_name
+            @property
+            def moduledir(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+                return os.path.dirname(self.filename)
+            # set docstrings to empty
+            __doc__ = None
+            # HACK: override the module-level docstring, too
+            getmodule(OcrdToolCtx).__doc__ = None
+            def process(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+                return super()
+
+        self.processor = BashProcessor
 
 pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
 
@@ -74,6 +96,15 @@ def ocrd_tool_list(ctx):
         print(tool)
 
 # ----------------------------------------------------------------------
+# ocrd ocrd-tool dump-tools
+# ----------------------------------------------------------------------
+
+@ocrd_tool_cli.command('dump-tools', help="Dump tools")
+@pass_ocrd_tool
+def ocrd_tool_dump(ctx):
+    print(dumps(ctx.json['tools'], indent=True))
+
+# ----------------------------------------------------------------------
 # ocrd ocrd-tool tool
 # ----------------------------------------------------------------------
 
@@ -97,37 +128,25 @@ def ocrd_tool_tool_description(ctx):
 @ocrd_tool_tool.command('list-resources', help="List tool's file resources")
 @pass_ocrd_tool
 def ocrd_tool_tool_list_resources(ctx):
-    class BashProcessor(Processor):
-        @property
-        def moduledir(self):
-            return os.path.dirname(ctx.filename)
-    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  list_resources=True)
+    ctx.processor(None).list_resources()
+
+@ocrd_tool_tool.command('resolve-resource', help="Get a tool's file resource full path name")
+@click.argument('res_name')
+@pass_ocrd_tool
+def ocrd_tool_tool_resolve_resource(ctx, res_name):
+    print(ctx.processor(None).resolve_resource(res_name))
 
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
 @pass_ocrd_tool
 def ocrd_tool_tool_show_resource(ctx, res_name):
-    class BashProcessor(Processor):
-        @property
-        def moduledir(self):
-            return os.path.dirname(ctx.filename)
-    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  show_resource=res_name)
+    ctx.processor(None).show_resource(res_name)
 
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @click.argument('subcommand', required=False)
 @pass_ocrd_tool
 def ocrd_tool_tool_params_help(ctx, subcommand):
-    class BashProcessor(Processor):
-        # set docstrings to empty
-        __doc__ = None
-        # HACK: override the module-level docstring, too
-        getmodule(OcrdToolCtx).__doc__ = None
-        def process(self):
-            return super()
-    BashProcessor(None, ocrd_tool=ctx.json['tools'][ctx.tool_name],
-                  show_help=True, subcommand=subcommand)
+    ctx.processor(None).show_help(subcommand=subcommand)
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories
@@ -169,7 +188,7 @@ def ocrd_tool_tool_parse_params(ctx, parameter, parameter_override, json):
     """
     Parse parameters with fallback to defaults and output as shell-eval'able assignments to params var.
     """
-    set_json_key_value_overrides(parameter, *parameter_override)
+    parameter = set_json_key_value_overrides(parse_json_string_or_file(*parameter), *parameter_override)
     parameterValidator = ParameterValidator(ctx.json['tools'][ctx.tool_name])
     report = parameterValidator.validate(parameter)
     if not report.is_valid:

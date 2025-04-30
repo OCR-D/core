@@ -5,6 +5,465 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.3.2] - 2025-04-17
+
+Fixed:
+
+  * METS Server: properly escape `.` for UDS variant, #1323
+  * METS Server: resolve workspace path to absolute, #1323
+
+## [3.3.1] - 2025-04-16
+
+Changed:
+
+  - Allow not setting a `-O` output `fileGrp` for processors that work only on METS or don't produce output, #1321
+
+Fixed:
+
+  - Typo in `config.OCRD_MISSING_OUTPUT` behavior: `abort` -> `ABORT`, #1321
+
+## [3.3.0] - 2025-03-28
+
+Fixed:
+
+  * Revert accidental early merge of #1309 from merging #1315, #1317
+
+## [3.2.0] - 2025-03-25
+
+Fixed:
+
+  * `make deps-tf1`: typo escaping dollar sign, #1314
+  * Fix and update `WorkspaceValidator`, #1316:
+    - we did not update to the `.url` vs `.local_filename` change yet
+    - the METS `fileGrp` names check is obsolete
+    - the `@imageFilename` check was disabled accidentally
+    - it did not cover `AlternativeImage/@filename`
+    - we did not check for `AlternativeImage/@comments` either
+    - the validator crashed during `dimension` check, because `image_from_page` depends on all other checks succeeding – I switched to `_resolve_image_pil` instead
+    - we did not have a check for the `URL` vs. `OTHER` `FLocat`s
+  * <del>`ocrd resmgr`: do not recurse into subdirectories when looking for resources in their resp. locations, OCR-D/spec#263, #1315</del>
+  * <del>`ocrd resmgr`: correctly handle filtering of resources via media type, #1315</del>
+
+Changed:
+
+  * Update OCR-D/spec to v3.27.0, including OCR-D/spec#263
+
+## [3.1.2] - 2025-03-10
+
+Fixed:
+
+  * `make deps-tf1`: path to `requirements.txt` now correct, #1313
+
+## [3.1.1] - 2025-03-07
+
+Fixed:
+
+  * Fix CUDA Docker deployment, #1312
+  * Consistent Docker image metadata, #1312
+  * Default `ocrd-all-tool.json` should contain `ocrd-{dummy,filter}`, #1312
+
+## [3.1.0] - 2025-03-06
+
+Fixed:
+
+  * Use `config.OCRD_DOWNLOAD_INPUT` consistently instead of ambiguous kwargs, #1310
+
+Added:
+
+  * `ocrd ocrd-tool dump-tools` command to output the `tools` section, #1310
+
+Changed:
+
+  * Update spec-derived data files from OCR-D/spec v3.26.0, #1311
+
+## [3.0.4] - 2025-02-18
+
+Changed:
+
+- METS Server: downgrade log messages (`INFO`→`DEBUG`), #1305
+
+Fixed:
+
+- METS Server: make `add_file` (POST `/file`) work with `pageId=None`, #1305
+- PAGE API: serialization of `OrderedGroup/*` namespace prefixes, #1305
+- run_processor: handle frozendict and empty `parameter` when logging, #1305
+
+Added:
+
+- tests for processors with `add_file(... page_id=None ...)`, #1305
+- tests for ocrd_page roundtrip, #1305
+- tests for processor logging, #1305
+
+## [3.0.3] - 2025-02-14
+
+Fixed:
+
+  - do not `stop` log listener in multiprocessing to avoid deadlock in testing, #1304
+
+Changed:
+  - Added docstring on how instance caching works,  #1304
+  - Test processors with instance caching and page-parallel conditions, #1304
+
+## [3.0.2] - 2025-02-11
+
+Fixed:
+
+  - `send_processing_job`: Match method signature to order of click parameters, #1303
+  - `Workspace.image_from_*`: remove obsolete workaround for tesserocr#194, #1303
+  - Use `fork`-context `Queue` instead of `mp.Queue` to avoid shutdown deadlock, #1303
+  - Update docstrings for `ocrd_cli_options` and the `OCRD_MAX_PARALLEL_PAGES`, #1303
+
+## [3.0.1] - 2025-02-04
+
+Fixed:
+
+  - Fix processor executor shutdown (which led to hanging tests), #1302
+
+## [3.0.0] - 2025-01-09
+
+Changed:
+
+  - Merge v2 master into new-procesor-api
+  - PAGE API: Update to latest generateDS 2.44.1, bertsky/core#21
+
+Fixed:
+
+  - `ocrd --help` output was broken for multiline config options, bertsky/core#25
+  - Call `initLogging` before instantiating processors in `ocrd_cli_wrap_processor`, bertsky/core#24, #1296
+  - PAGE API: Fully reversable mapping from/to XML element/generateDS instances, bertsky/core#21
+
+Added:
+
+  - `ocrd-filter` processor to remove segments based on XPath expressions, bertsky/core#21
+  - XPath function `pc:pixelarea` for the number of pixels of the bounding box (or sum area on node sets), bertsky/core#21
+  - XPath function `pc:textequiv` for the first TextEquiv unicode string (or concatenated string on node sets), bertsky/core#21
+
+## [3.0.0b7] - 2024-11-12
+
+Fixed:
+ - `initLogging`: only add root handler instead of multiple redundant handlers with `propagate=false`
+ - `setOverrideLogLevel`: override all currently active loggers' level
+
+Changed:
+ - :fire: logging: increase default root (not `ocrd`) level from `INFO` to `WARNING`
+ - :fire: `initLogging`: do not remove any previous handlers/levels, unless `force_reinit`
+ - :fire: `disableLogging`: remove all handlers, reset all levels - instead of being selective
+ - :fire: Processor: replace `weakref` with `__del__` to trigger `shutdown`
+ - :fire: `OCRD_MAX_PARALLEL_PAGES>1`: log via `QueueHandler` in subprocess, `QueueListener` in main
+
+## [3.0.0b6] - 2024-10-30
+
+Fixed:
+ - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
+
+Changed:
+ - :fire: `ocrd_utils.initLogging`: also add handler to root logger (as in file config),
+   but disable message propagation to avoid duplication
+ - only import `ocrd_network` in `src/ocrd/decorators/__init__.py` once needed
+ - `Processor.process_page_file`: skip computing `process_page_pcgts` if output already exists,  
+   but `OCRD_EXISTING_OUTPUT!=OVERWRITE`
+ - :fire: `OCRD_MAX_PARALLEL_PAGES>1`: switch from multithreading to multiprocessing, depend on
+   `loky` instead of stdlib `concurrent.futures`
+ - `OCRD_PROCESSING_PAGE_TIMEOUT>0`: actually enforce timeout within worker
+ - `OCRD_MAX_MISSING_OUTPUTS>0`: abort early if too many failures already, prospectively
+ - `Processor.process_workspace`: split up into overridable sub-methods:
+   - `process_workspace_submit_tasks` (iterate input file group and schedule page tasks)
+     - `process_workspace_submit_page_task` (download input files and submit single page task)
+   - `process_workspace_handle_tasks` (monitor page tasks and aggregate results)
+     - `process_workspace_handle_page_task` (await single page task and handle errors)
+
+
+## [3.0.0b5] - 2024-09-16
+
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `ocrd.cli.bashlib "input-files"`: pass on `--mets-server-url`
+  - `lib.bash input-files`: pass on `--mets-server-url`, `--overwrite`, and parameters
+  - `lib.bash`: fix `errexit` handling
+  - `ocrd.cli.ocrd-tool "resolve-resource"`: forgot to actually print result
+
+Changed:
+  - :fire: `Processor` / `Workspace.add_file`: always `force` if `OCRD_EXISTING_OUTPUT==OVERWRITE`
+  - :fire: `Processor.verify`: revert 3.0.0b1 enforcing cardinality checks (stay backwards compatible)
+  - :fire: `Processor.verify`: check output fileGrps, too
+     (must not exist unless `OCRD_EXISTING_OUTPUT=OVERWRITE|SKIP` or disjoint `--page-id` range)
+  - lib.bash `input-files`: do not try to validate tasks here (now covered by `Processor.verify()`)
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - METS Server: export and delegate `physical_pages`
+  - processor CLI: delegate `--resolve-resource`, too
+  - `Processor.process_page_file` / `OcrdPageResultImage`: allow `None` besides `AlternativeImageType`
+
+## [3.0.0b4] - 2024-09-02
+
+Fixed:
+
+  * `Processor.metadata_location`: `src` workaround respects namespace packages, qurator-spk/eynollah#134
+  * `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+
+## [3.0.0b3] - 2024-08-30
+
+Added:
+
+  * `OcrdConfig.reset_defaults` to reset config variables to their defaults
+
+## [3.0.0b2] - 2024-08-30
+
+Added:
+ - `Processor.max_workers`: class attribute to control per-page parallelism of this implementation
+ - `Processor.max_page_seconds`: class attribute to control per-page timeout of this implementation
+ - `OCRD_MAX_PARALLEL_PAGES` for whether and how many workers should process pages in parallel
+ - `OCRD_PROCESSING_PAGE_TIMEOUT` for whether and how long processors should wait for single pages
+ - `OCRD_MAX_MISSING_OUTPUTS` for maximum rate (fraction) of pages before making `OCRD_MISSING_OUTPUT=abort`
+
+Fixed:
+  - `disableLogging`: also re-instate root logger to Python defaults
+
+## [3.0.0b1] - 2024-08-26
+
+Fixed:
+  - actually apply CLI `--log-filename`, and show in `--help`
+  - adapt to Pillow changes
+  - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
+
+Changed:
+  - :fire: `ocrd_utils`, `ocrd_models`, `ocrd_modelfactory`, `ocrd_validators` and `ocrd_network` are not published
+    as separate packages anymore, everything is contained in `ocrd` - you should adapt your `requirements.txt` accordingly
+  - :fire: `Processor.parameter` now a property (attribute always exists, but `None` for non-processing contexts)
+  - :fire: `Processor.parameter` is now a `frozendict` (contents immutable)
+  - :fire: `Processor.parameter` validate when(ever) set instead of (just) the constructor
+  - setting `Processor.parameter` will also trigger (`Processor.shutdown() and) `Processor.setup()`
+  - `get_processor(... instance_caching=True)`: use `min(max_instances, OCRD_MAX_PROCESSOR_CACHE)`
+  - :fire: `Processor.verify` always validates fileGrp cardinalities (because we have `ocrd-tool.json` defaults now)
+  - :fire: `OcrdMets.add_agent` without positional arguments
+  - `ocrd bashlib input-files` now uses normal Processor decorator, and gets passed actual `ocrd-tool.json` and tool name
+    from bashlib's `ocrd__wrap`
+
+Added:
+  - `Processor.metadata_filename`: expose to make local path of `ocrd-tool.json` in Python distribution reusable+overridable
+  - `Processor.metadata_location`: expose to make absolute path of `ocrd-tool.json` reusable+overridable
+  - `Processor.metadata_rawdict`: expose to make in-memory contents of `ocrd-tool.json` reusable+overridable
+  - `Processor.metadata`: expose to make validated and default-expanded contents of `ocrd-tool.json` reusable+overridable
+  - `Processor.shutdown`: to shut down processor after processing, optional
+  - `Processor.max_instances`: class attribute to control instance caching of this implementation
+
+## [3.0.0a2] - 2024-08-22
+
+Changed:
+ - :fire: `OcrdPage` as proxy of `PcGtsType` instead of alias; also contains `etree` and `mapping` now
+ - :fire: `page_from_file`: removed kwarg `with_tree` - use `OcrdPage.etree` and `OcrdPage.mapping` instead
+ - :fire: `Processor.zip_input_files` now can throw `ocrd.NonUniqueInputFile` and `ocrd.MissingInputFile`
+   (the latter only if `OCRD_MISSING_INPUT=ABORT`)
+ - :fire: `Processor.zip_input_files` does not by default use `require_first` anymore
+   (so the first file in any input file tuple per page can be `None` as well)
+ - :fire: no more `Workspace.overwrite_mode`, merely delegate to `OCRD_EXISTING_OUTPUT=OVERWRITE`
+ - :art: improve on docs result for `ocrd_utils.config`
+
+Added:
+  - :point_right: `OCRD_DOWNLOAD_INPUT` for whether input files should be downloaded before processing
+  - :point_right: `OCRD_MISSING_INPUT` for how to handle missing input files (**`SKIP`** or `ABORT`)
+  - :point_right: `OCRD_MISSING_OUTPUT` for how to handle processing failures (**`SKIP`** or `ABORT` or `COPY`)
+     the latter behaves like ocrd-dummy for the failed page(s)
+  - :point_right: `OCRD_EXISTING_OUTPUT` for how to handle existing output files (**`SKIP`** or `ABORT` or `OVERWRITE`)
+  - new CLI option `--debug` as short-hand for `ABORT` choices above
+  - `Processor.logger` set up by constructor already (for re-use by processor implementors)
+  - `default`-expand and validate `ocrd_tool.json` in `Processor` constructor, log invalidities
+  - handle JSON `deprecation` in `ocrd_tool.json` by reporting warnings
+
+## [3.0.0a1] - 2024-08-15
+
+Changed:
+  - :fire: Deprecate `Processor.process`
+  - update spec to v3.25.0, which requires annotating fileGrp cardinality in `ocrd-tool.json`
+  - :fire: Remove passing non-processing kwargs to `Processor` constructor, add as members  
+     (i.e. `show_help`, `dump_json`, `dump_module_dir`, `list_resources`, `show_resource`, `resolve_resource`)
+  - :fire: Deprecate passing processing arg / kwargs to `Processor` constructor  
+     (i.e. `workspace`, `page_id`, `input_file_grp`, `output_file_grp`; now all set by `run_processor`)
+  - :fire: Deprecate passing `ocrd-tool.json` metadata to `Processor` constructor
+  - `ocrd.processor`: Handle loading of bundled `ocrd-tool.json` generically
+
+Added:
+  - `Processor.process_workspace`: process a complete workspace, with default implementation
+  - `Processor.process_page_file`: process an OcrdFile, with default implementation
+  - `Processor.process_page_pcgts`: process a single OcrdPage, produce a single OcrdPage, required to implement
+  - `Processor.verify`: handle fileGrp cardinality verification, with default implementation
+  - `Processor.setup`: to set up processor before processing, optional
+
+## [2.71.1] - 2025-01-06
+
+Changed:
+
+  * Do `initLogging` before calling processors in `ocrd_cli_wrap_processor`, #1232, #1296
+
+## [2.71.0] - 2024-11-20
+
+Changed:
+
+  * Rewrite `ocrd_utils.logging`, #1288
+    * Handle only `''` as the root logger
+    * `disableLogging`: Remove handlers from root and all configured loggers
+    * Do not do any module-level modification of the log config
+
+Fixed:
+
+  * Typo in processing_worker log message, #1293
+  * Call `initLogging` at the right time in `ocrd_network`, #1292
+  * `make docs` fixed with absolute path to location, #1273
+
+## [2.70.0] - 2024-10-10
+
+Added:
+
+  - `ocrd network client workflow run`: Add `--print-status` flag to periodically print the job status, #1277
+  - Processing Server: `DELETE /mets_server_zombies` to kill any renegade METS servers, #1277
+  - No more zombie METS Server by properly shutting them down, #1284
+  - `OCRD_NETWORK_RABBITMQ_HEARBEAT` to allow overriding the [heartbeat](https://pika.readthedocs.io/en/stable/examples/heartbeat_and_blocked_timeouts.html) behavior of RabbitMQ, #1285
+
+Changed:
+
+  - significantly more detailed logging for the METS Server and Processing Server, #1284
+  - Only import `ocrd_network` in src/ocrd/decorators/__init__.py once needed, #1289
+  - Automate release via GitHub Actions, #1290
+
+Fixed:
+
+  - `ocrd/core-cuda-torch`: Install torchvision as well, #1286
+  - Processing Server: remove shut down METS servers from deployer's cache, #1287
+  - typos, #1274
+
+## [2.69.0] - 2024-09-30
+
+Fixed:
+  - tests: ensure `ocrd_utils.config` gets reset whenever changing it globally
+  - `ocrd.cli.workspace`: consistently pass on `--mets-server-url` and `--backup`
+  - `ocrd.cli.workspace`: make `list-page` work w/ METS Server
+  - `ocrd.cli.validate "tasks"`: pass on `--mets-server-url`
+  - `lib.bash`: fix `errexit` handling
+  - actually apply CLI `--log-filename`, and show in `--help`
+  - adapt to Pillow changes
+  - `ocrd workspace clone`: do pass on `--file-grp` (for download filtering)
+  - `OcrdMetsServer.add_file`: pass on `force` kwarg
+  - `Workspace.reload_mets`: handle ClientSideOcrdMets as well
+  - `OcrdMets.get_physical_pages`: cover `return_divs` w/o `for_fileIds` and `for_pageIds`
+  - `disableLogging`: also re-instate root logger to Python defaults
+  - `OcrdExif`: handle multi-frame TIFFs gracefully in `identify` callout, #1276
+
+Changed:
+  - `run_processor`: be robust if `ocrd_tool` is missing `steps`
+  - `PcGtsType.PageType.id` via `make_xml_id`: replace `/` with `_`
+  - `ClientSideOcrdMets`: use same logger name prefix as METS Server
+  - `Processor.zip_input_files`: when `--page-id` yields empty list, just log instead of raise
+
+Added:
+  - `OcrdPage`: new `PageType.get_ReadingOrderGroups()` to retrieve recursive RO as dict
+  - METS Server: export and delegate `physical_pages`
+  - ocrd.cli.workspace `server`: add subcommands `reload` and `save`
+  - processor CLI: delegate `--resolve-resource`, too
+  - `OcrdConfig.reset_defaults` to reset config variables to their defaults
+  - `ocrd_utils.scale_coordinates` for resizing images
+
+## [2.68.0] - 2024-08-23
+
+Changed:
+
+  * ocrd_network: Use `ocrd-all-tool.json` bundled by core instead of download from website, #1257, #1260
+  * :fire: `ocrd network client processing processor` renamed `ocrd network client processing run`, #1269
+  * `ocrd network client processing run` supports blocking behavior with `--block` by polling job status, #1265, #1269
+
+Added:
+
+  * `ocrd network client workflow run` Run, optionally blocking, a workflow on the processing server, #1265, #1269
+  * `ocrd network client workflow check-status` to get the status of a workflow job, #1269
+  * `ocrd network client processing check-status` to get the status of a processing (processor) job, #1269
+  * `ocrd network client discovery processors` to list the processors deployed in the processing server, #1269
+  * `ocrd network client discovery processor` to get the `ocrd-tool.json` of a deployed processor, #1269
+  * `ocrd network client processing check-log` to retrieve the log data for a processing job, #1269
+  * Environment variables `OCRD_NETWORK_CLIENT_POLLING_SLEEP` and `OCRD_NETWORK_CLIENT_POLLING_TIMEOUT` to control polling interval and timeout for `ocrd network client {processing processor,workflow run`, #1269
+  * `ocrd workspace clone`/`Resolver.workspace_from_url`: with `clobber_mets=False`, raise a FileExistsError for existing mets.xml on disk, #563, #1268
+  * `ocrd workspace find --download`: print the the correct, up-to-date field, not `None`, #1202, #1266
+
+Fixed:
+
+  * Sanitize `self.imageFilename` for the `pcGtsId` to ensure it is a valid `xml:id`, #1271
+
+## [2.67.2] - 2024-07-19
+
+Fixed:
+
+  * Run `multiprocessing.set_start_method('fork')` only for OSX, #1261
+  * Broken PyPI release, #1262
+
+## [2.67.1] - 2024-07-17
+
+Fixed:
+
+  - Build and tests fixed, no functional changes from #1258
+
+## [2.67.0] - 2024-07-16
+
+Changed:
+
+  - Additional docker base images with preinstalled tensorflow 1 (`core-cuda-tf1`), tensorflow 2 (`core-cuda-tf2`) and torch (`core-cuda-torch`), #1239
+  - Resource Manager: Skip instead of raise an exception download if target file already exists (unless `--overwrite`), #1246
+  - Resource Manager: Try to use bundled `ocrd-all-tool.json` if available, #1250, OCR-D/all#444
+
+Added:
+
+  - `ocrd process` does support `-U/--mets-server`, #1243
+
+Fixed:
+
+  - `ocrd process`-derived tasks are not run in a temporary directory when not called from within workspace, #1243
+  - regression from #1238 where processors failed that had required parameters, #1255, #1256
+  - METS Server: Unlink UDS sockert file if it exists before startup, #1244
+  - Resource Manager: Do not create zero-size files for failing downloads, #1201, #1246
+  - Workspace.add_file: Allow multiple processors to create file group folders simultaneously, #1203, #1253
+  - Resource Manager: Do not try to run `--dump-json` for known non-processors `ocrd-{cis-data,import,make}`, #1218, #1249
+  - Resource Manager: Properly handle copying of directories, #1237, #1248
+  - bashlib: regression in parsing JSON from introducing parameter preset files, #1258
+
+Removed:
+
+  - Defaults for `-I/--input-file-grp`/`-O/--output-file-grp`, #1256, #274
+
+## [2.66.1] - 2024-06-26
+
+Fixed:
+
+  * GHA Docker: build docker.io first, then tag ghcr.io
+
+## [2.66.0] - 2024-06-07
+
+Fixed:
+
+  * `OcrdFile.url` can now be removed properly, #1226, #1227
+  * `ocrd workspace find --undo-download`: Only remove file refs if it's an actual download, #1150, #1235
+  * `ocrd workspace find --undo-download`: When `--keep-files` is not set, remove file from disk, #1150, #1235
+  * `OCRD_LOGGING_DEBUG`: Normalize/lowercase boolean values, #1230, #1231
+  * `Workspace.download_file`: Use `Ocrd.local_filename` if set but not already present in the FS, #1149, #1228
+
+Changed:
+
+  * Install ocrd with `pip --editable` inside Docker, #1225, OCR-D/ocrd_all#416
+  * Reduce log spam in ocrd_network, #1222
+  * CI: Stop testing for 3.7, #1207, #1221
+
+Added:
+
+  * Separate docker versions for tensorflow v1, tensorflow v2 and torch, #1186
+  * Processing server can serve as a proxy for METS Server TCP requests, forwarding to UDS, #1220
+  * `ocrd workspace clean` to remove "untracked", i.e. not METS-referenced, files, #1150, #1236
+  * `-p` now supports parameter preset resources in addition to raw JSON and absolute/relative paths to JSON files, #930, #969, #1238
+
+## [2.65.0] - 2024-05-03
+
 Fixed:
 
   - bashlib processors will download on-demand, like pythonic processors do, #1216, #1217
@@ -2067,8 +2526,40 @@ Fixed
 ## [0.0.1] - 2018-04-17
 
 Initial Release
+## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.3.2]: ../../compare/v3.3.1..v3.3.0
+[3.3.1]: ../../compare/v3.3.1..v3.3.0
+[3.3.0]: ../../compare/v3.3.0..v3.2.0
+[3.2.0]: ../../compare/v3.2.0..v3.1.0
+[3.1.2]: ../../compare/v3.1.2..v3.1.1
+[3.1.1]: ../../compare/v3.1.1..v3.1.0
+[3.1.0]: ../../compare/v3.1.0..v3.0.4
+[3.0.4]: ../../compare/v3.0.4..v3.0.3
+[3.0.3]: ../../compare/v3.0.3..v3.0.2
+[3.0.2]: ../../compare/v3.0.2..v3.0.1
+[3.0.1]: ../../compare/v3.0.1..v3.0.0
+[3.0.0]: ../../compare/v3.0.0..v3.0.0b7
+[3.0.0b7]: ../../compare/v3.0.0b7..v3.0.0b6
+[3.0.0b6]: ../../compare/v3.0.0b6..v3.0.0b5
+[3.0.0b5]: ../../compare/v3.0.0b5..v3.0.0b4
+[3.0.0b4]: ../../compare/v3.0.0b4..v3.0.0b3
+[3.0.0b3]: ../../compare/v3.0.0b3..v3.0.0b2
+[3.0.0b2]: ../../compare/v3.0.0b2..v3.0.0b1
+[3.0.0b1]: ../../compare/v3.0.0b1..v3.0.0a2
+[3.0.0a2]: ../../compare/v3.0.0a2..v3.0.0a1
+[3.0.0a1]: ../../compare/v3.0.0a1..v2.67.2
+[2.71.1]: ../../compare/v2.71.1..v2.71.0
+[2.71.0]: ../../compare/v2.71.0..v2.70.0
+[2.70.0]: ../../compare/v2.70.0..v2.69.0
+[2.69.0]: ../../compare/v2.69.0..v2.68.0
+[2.68.0]: ../../compare/v2.68.0..v2.67.2
+[2.67.2]: ../../compare/v2.67.2..v2.67.1
+[2.67.1]: ../../compare/v2.67.1..v2.67.0
+[2.67.0]: ../../compare/v2.67.0..v2.66.1
+[2.66.1]: ../../compare/v2.66.1..v2.66.0
+[2.66.0]: ../../compare/v2.66.0..v2.65.0
 [2.65.0]: ../../compare/v2.65.0..v2.64.1
 [2.64.1]: ../../compare/v2.64.1..v2.64.0
 [2.64.0]: ../../compare/v2.63.0..v2.63.3

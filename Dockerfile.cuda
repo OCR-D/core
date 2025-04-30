@@ -1,4 +1,4 @@
-ARG BASE_IMAGE
+ARG BASE_IMAGE=docker.io/ocrd/core
 FROM $BASE_IMAGE AS ocrd_core_base
 
 ENV MAMBA_EXE=/usr/local/bin/conda
@@ -8,15 +8,15 @@ ENV CONDA_EXE=$MAMBA_EXE
 ENV CONDA_PREFIX=$MAMBA_ROOT_PREFIX
 ENV CONDA_SHLVL='1'
 
-WORKDIR /build
+WORKDIR /build/core
 
 COPY Makefile .
 
 RUN make deps-cuda
+# Smoke Test
+RUN ocrd --version
 
 WORKDIR /data
-
-RUN rm -fr /build
 
 CMD ["/usr/local/bin/ocrd", "--help"]
 

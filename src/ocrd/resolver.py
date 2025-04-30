@@ -18,7 +18,6 @@ from ocrd_utils import (
 )
 from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
-from ocrd_models.constants import NAMESPACES as NS
 from ocrd_models.utils import handle_oai_response
 
 class Resolver():
@@ -95,12 +94,15 @@ class Resolver():
                 log.debug("Stop early, src_path and dst_path are the same: '%s' (url: '%s')" % (src_path, url))
                 return str(ret)
 
-        # Respect 'if_exists' arg
+        # Respect 'if_exists' kwarg
         if dst_path.exists():
             if if_exists == 'skip':
+                log.debug(f"File already exists but if_exists == {if_exists}, skipping.")
                 return str(ret)
-            if if_exists == 'raise':
-                raise FileExistsError(f"File already exists and if_exists == 'raise': {dst_path}")
+            elif if_exists == 'raise':
+                raise FileExistsError(f"File already exists and if_exists == '{if_exists}': {dst_path}")
+            else:
+                log.debug(f"File already exists but if_exists == {if_exists}, overwriting.")
 
         # Create dst_path parent dir
         dst_path.parent.mkdir(parents=True, exist_ok=True)
@@ -174,6 +176,9 @@ class Resolver():
                 By default existing ``mets.xml`` will raise an exception.
             download (boolean, False): Whether to also download all the files referenced by the METS
             src_baseurl (string, None): Base URL for resolving relative file locations
+            mets_server_url (string, None): URI of TCP or local path of UDS for METS server handling
+                the `OcrdMets` of the workspace. By default the METS will be read from and written to
+                the filesystem directly.
             **kwargs (): Passed on to ``OcrdMets.find_files`` if download == True
 
         Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless 
@@ -215,7 +220,7 @@ class Resolver():
 
         log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
             mets_basename, mets_url, src_baseurl, dst_dir)
-        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'skip')
+        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'raise')
 
         workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl, mets_server_url=mets_server_url)
 
@@ -303,6 +308,8 @@ class Resolver():
                     if not is_file_in_directory(directory, mets_url):
                         raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
 
+        if mets_server_url and not mets_server_url.startswith('http://'):
+            # UDS socket
+            mets_server_url = str(Path(mets_server_url).resolve())
+
         return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_url
-
-

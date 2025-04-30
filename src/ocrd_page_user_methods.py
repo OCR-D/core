@@ -104,7 +104,7 @@ METHOD_SPECS = (
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'clear_AllIndexed'),
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'extend_AllIndexed'),
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'sort_AllIndexed'),
-    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren', 'exportChildren_GroupType'),
+    _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren', '_exportChildren_GroupType'),
     _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
     _add_method(r'^(PcGtsType|PageType)$', 'id'),
     _add_method(r'^(PageType)$', 'get_AllRegions'),
@@ -116,6 +116,7 @@ METHOD_SPECS = (
     _add_method(r'^(PageType)$', 'set_Border'),
     _add_method(r'^(CoordsType)$', 'set_points'),
     _add_method(r'^(PageType)$', 'get_AllTextLines'),
+    _add_method(r'^(PageType)$', 'get_ReadingOrderGroups'),
     # for some reason, pagecontent.xsd does not declare @orientation at the abstract/base RegionType:
     _add_method(r'^(PageType|AdvertRegionType|MusicRegionType|MapRegionType|ChemRegionType|MathsRegionType|SeparatorRegionType|ChartRegionType|TableRegionType|GraphicRegionType|LineDrawingRegionType|ImageRegionType|TextRegionType)$', 'set_orientation'),
     )

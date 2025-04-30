@@ -22,7 +22,7 @@ services:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 1s
       timeout: 3s
-      retries: 30
+      retries: 90
 
   ocrd_network_rabbit_mq:
     image: "rabbitmq:3.12-management"
@@ -42,7 +42,7 @@ services:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1s
       timeout: 3s
-      retries: 30
+      retries: 90
 
   ocrd_network_processing_server:
     image: "ocrd_core_test"
@@ -52,6 +52,7 @@ services:
       args:
         BASE_IMAGE: 'ubuntu:22.04'
       target: ocrd_core_test
+    pull_policy: build
     hostname: ${OCRD_PS_HOST}
     container_name: ocrd_network_processing_server
     depends_on:
@@ -84,6 +85,13 @@ services:
 
   ocrd_dummy_processing_worker:
     image: "ocrd_core_test"
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: 'ubuntu:22.04'
+      target: ocrd_core_test
+    pull_policy: build
     depends_on:
       ocrd_network_processing_server:
         condition: service_healthy
@@ -100,6 +108,13 @@ services:
 
   ocrd_network_core_test:
     image: "ocrd_core_test"
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: 'ubuntu:22.04'
+      target: ocrd_core_test
+    pull_policy: build
     container_name: core_test
     depends_on:
       ocrd_network_processing_server:

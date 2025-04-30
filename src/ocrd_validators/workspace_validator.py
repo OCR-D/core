@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ocrd_utils import getLogger, MIMETYPE_PAGE, pushd_popd, is_local_filename, DEFAULT_METS_BASENAME
 from ocrd_models import ValidationReport
+from ocrd_models.constants import PAGE_ALTIMG_FEATURES
 from ocrd_modelfactory import page_from_file
 
 from .constants import FILE_GROUP_CATEGORIES, FILE_GROUP_PREFIX
@@ -98,12 +99,15 @@ class WorkspaceValidator():
         self.page_coordinate_consistency = page_coordinate_consistency
         # there will be more options to come
         self.page_checks = [check for check in ['mets_fileid_page_pcgtsid',
+                                                'imagefilename',
+                                                'alternativeimage_filename',
+                                                'alternativeimage_comments',
                                                 'dimension',
                                                 'page',
                                                 'page_xsd']
                             if check not in self.skip]
 
-        self.find_kwargs = dict(include_fileGrp=include_fileGrp, exclude_fileGrp=exclude_fileGrp)
+        self.find_kwargs = {"include_fileGrp": include_fileGrp, "exclude_fileGrp": exclude_fileGrp}
         self.src_dir = src_dir
         self.workspace = None
         self.mets = None
@@ -118,7 +122,7 @@ class WorkspaceValidator():
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
             skip (list): Validation checks to omit. One or more of 
-                'mets_unique_identifier', 'mets_file_group_names', 
+                'mets_unique_identifier',
                 'mets_files', 'pixel_density', 'dimension', 'url',
                 'multipage', 'page', 'page_xsd', 'mets_xsd', 
                 'mets_fileid_page_pcgtsid'
@@ -139,14 +143,12 @@ class WorkspaceValidator():
             self._resolve_workspace()
         except Exception as e: # pylint: disable=broad-except
             self.log.warning("Failed to instantiate workspace: %s", e)
-            self.report.add_error("Failed to instantiate workspace: %s" % e)
+            self.report.add_error(f"Failed to instantiate workspace: {e}")
             return self.report
         with pushd_popd(self.workspace.directory):
             try:
                 if 'mets_unique_identifier' not in self.skip:
                     self._validate_mets_unique_identifier()
-                if 'mets_file_group_names' not in self.skip:
-                    self._validate_mets_file_group_names()
                 if 'mets_files' not in self.skip:
                     self._validate_mets_files()
                 if 'pixel_density' not in self.skip:
@@ -158,7 +160,7 @@ class WorkspaceValidator():
                 if self.page_checks:
                     self._validate_page()
             except Exception: # pylint: disable=broad-except
-                self.report.add_error("Validation aborted with exception: %s" % format_exc())
+                self.report.add_error(f"Validation aborted with exception: {format_exc()}")
         return self.report
 
     def _resolve_workspace(self):
@@ -192,10 +194,14 @@ class WorkspaceValidator():
             self.workspace.download_file(f)
             page = page_from_file(f).get_Page()
             imageFilename = page.imageFilename
-            if not self.mets.find_files(url=imageFilename, **self.find_kwargs):
-                self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.local_filename, imageFilename))
+            if is_local_filename(imageFilename):
+                kwargs = dict(local_filename=imageFilename, **self.find_kwargs)
+            else:
+                kwargs = dict(url=imageFilename, **self.find_kwargs)
+            if not self.mets.find_files(**kwargs):
+                self.report.add_error(f"PAGE '{f.ID}': imageFilename '{imageFilename}' not found in METS")
             if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.local_filename, imageFilename))
+                self.report.add_warning(f"PAGE '{f.ID}': imageFilename '{imageFilename}' points to non-existent local file")
 
     def _validate_dimension(self):
         """
@@ -210,9 +216,9 @@ class WorkspaceValidator():
             page = page_from_file(f).get_Page()
             _, _, exif = self.workspace.image_from_page(page, f.pageId)
             if page.imageHeight != exif.height:
-                self.report.add_error("PAGE '%s': @imageHeight != image's actual height (%s != %s)" % (f.ID, page.imageHeight, exif.height))
+                self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height ({page.imageHeight} != {exif.height})")
             if page.imageWidth != exif.width:
-                self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
+                self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width ({page.imageWidth} != {exif.width})")
 
     def _validate_multipage(self):
         """
@@ -229,9 +235,9 @@ class WorkspaceValidator():
             try:
                 exif = self.workspace.resolve_image_exif(f.local_filename)
                 if exif.n_frames > 1:
-                    self.report.add_error("Image %s: More than 1 frame: %s" % (f.ID, exif.n_frames))
+                    self.report.add_error(f"Image '{f.ID}': More than 1 frame: {exif.n_frames}")
             except FileNotFoundError:
-                self.report.add_error("Image %s: Could not retrieve %s (local_filename=%s, url=%s)" % (f.ID, f.local_filename, f.url))
+                self.report.add_error(f"Image '{f.ID}': Could not retrieve (local_filename='{f.local_filename}', url='{f.url}')")
                 return
 
     def _validate_pixel_density(self):
@@ -250,7 +256,7 @@ class WorkspaceValidator():
             for k in ['xResolution', 'yResolution']:
                 v = exif.__dict__.get(k)
                 if v is None or v <= 72:
-                    self.report.add_notice("Image %s: %s (%s pixels per %s) is suspiciously low" % (f.ID, k, v, exif.resolutionUnit))
+                    self.report.add_notice(f"Image '{f.ID}': {k} ({v} pixels per {exif.resolutionUnit}) is suspiciously low")
 
     def _validate_mets_file_group_names(self):
         """
@@ -261,7 +267,7 @@ class WorkspaceValidator():
         self.log.debug('_validate_mets_file_group_names')
         for fileGrp in self.mets.file_groups:
             if not fileGrp.startswith(FILE_GROUP_PREFIX):
-                self.report.add_notice("fileGrp USE does not begin with '%s': %s" % (FILE_GROUP_PREFIX, fileGrp))
+                self.report.add_notice(f"fileGrp USE '{fileGrp}' does not begin with '{FILE_GROUP_PREFIX}'")
             else:
                 # OCR-D-FOO-BAR -> ('FOO', 'BAR')
                 # \____/\_/ \_/
@@ -273,9 +279,9 @@ class WorkspaceValidator():
                 if '-' in category:
                     category, name = category.split('-', 1)
                 if category not in FILE_GROUP_CATEGORIES:
-                    self.report.add_notice("Unspecified USE category '%s' in fileGrp '%s'" % (category, fileGrp))
+                    self.report.add_notice(f"Unspecified USE category '{category}' in fileGrp '{fileGrp}'")
                 if name is not None and not re.match(r'^[A-Z0-9-]{3,}$', name):
-                    self.report.add_notice("Invalid USE name '%s' in fileGrp '%s'" % (name, fileGrp))
+                    self.report.add_notice(f"Invalid USE name '{name}' in fileGrp '{fileGrp}'")
 
     def _validate_mets_files(self):
         """
@@ -288,16 +294,19 @@ class WorkspaceValidator():
             self.report.add_error("No files")
         for f in self.mets.find_files(**self.find_kwargs):
             if f._el.get('GROUPID'): # pylint: disable=protected-access
-                self.report.add_notice("File '%s' has GROUPID attribute - document might need an update" % f.ID)
+                self.report.add_notice(f"File '{f.ID}' has GROUPID attribute - document might need an update")
             if not (f.url or f.local_filename):
-                self.report.add_error("File '%s' has neither mets:Flocat[@LOCTYPE='URL']/@xlink:href nor mets:FLocat[@LOCTYPE='OTHER'][@OTHERLOCTYPE='FILE']/xlink:href" % f.ID)
+                self.report.add_error(f"File '{f.ID}' has neither mets:Flocat[@LOCTYPE='URL']/@xlink:href nor mets:FLocat[@LOCTYPE='OTHER'][@OTHERLOCTYPE='FILE']/xlink:href")
                 continue
             if f.url and 'url' not in self.skip:
                 if re.match(r'^file:/[^/]', f.url):
-                    self.report.add_error("File '%s' has an invalid (Java-specific) file URL '%s'" % (f.ID, f.url))
+                    self.report.add_error(f"File '{f.ID}' has an invalid (Java-specific) file URL '{f.url}'")
+                elif ':' not in f.url:
+                    self.report.add_error(f"File '{f.ID}' has an invalid (non-URI) file URL '{f.url}'")
+                    continue
                 scheme = f.url[0:f.url.index(':')]
                 if scheme not in ('http', 'https', 'file'):
-                    self.report.add_warning("File '%s' has non-HTTP, non-file URL '%s'" % (f.ID, f.url))
+                    self.report.add_warning(f"File '{f.ID}' has non-HTTP, non-file URL '{f.url}'")
 
     def _validate_page(self):
         """
@@ -321,17 +330,43 @@ class WorkspaceValidator():
             pcgts = page_from_file(f)
             page = pcgts.get_Page()
             if 'dimension' in self.page_checks:
-                _, _, exif = self.workspace.image_from_page(page, f.pageId)
-                if page.imageHeight != exif.height:
-                    self.report.add_error("PAGE '%s': @imageHeight != image's actual height (%s != %s)" % (f.ID, page.imageHeight, exif.height))
-                if page.imageWidth != exif.width:
-                    self.report.add_error("PAGE '%s': @imageWidth != image's actual width (%s != %s)" % (f.ID, page.imageWidth, exif.width))
+                img = self.workspace._resolve_image_as_pil(page.imageFilename)
+                if page.imageHeight != img.height:
+                    self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height ({page.imageHeight} != {img.height})")
+                if page.imageWidth != img.width:
+                    self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width ({page.imageWidth} != {img.width})")
             if 'imagefilename' in self.page_checks:
                 imageFilename = page.imageFilename
-                if not self.mets.find_files(url=imageFilename):
-                    self.report.add_error("PAGE-XML %s : imageFilename '%s' not found in METS" % (f.url, imageFilename))
+                if is_local_filename(imageFilename):
+                    kwargs = dict(local_filename=imageFilename, **self.find_kwargs)
+                else:
+                    kwargs = dict(url=imageFilename, **self.find_kwargs)
+                if not self.mets.find_files(**kwargs):
+                    self.report.add_error(f"PAGE '{f.ID}': imageFilename '{imageFilename}' not found in METS")
                 if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                    self.report.add_warning("PAGE-XML %s : imageFilename '%s' points to non-existent local file" % (f.url, imageFilename))
+                    self.report.add_warning(f"PAGE '{f.ID}': imageFilename '{imageFilename}' points to non-existent local file")
+            if 'alternativeimage_filename' in self.page_checks:
+                for altimg in page.get_AllAlternativeImages():
+                    if is_local_filename(altimg.filename):
+                        kwargs = dict(local_filename=altimg.filename, **self.find_kwargs)
+                    else:
+                        kwargs = dict(url=altimg.filename, **self.find_kwargs)
+                    if not self.mets.find_files(**kwargs):
+                        self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
+                                              f"'{altimg.filename}' not found in METS")
+                    if is_local_filename(altimg.filename) and not Path(altimg.filename).exists():
+                        self.report.add_warning(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
+                                                f"'{altimg.filename}' points to non-existent local file")
+            if 'alternativeimage_comments' in self.page_checks:
+                for altimg in page.get_AllAlternativeImages():
+                    if altimg.comments is None:
+                        self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
+                                              f"'{altimg.filename}' features not specified in PAGE")
+                    else:
+                        for feature in altimg.comments.split(','):
+                            if feature not in PAGE_ALTIMG_FEATURES:
+                                self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
+                                                      f"'{altimg.filename}' feature '{feature}' not standardized for PAGE")
             if 'mets_fileid_page_pcgtsid' in self.page_checks and pcgts.pcGtsId != f.ID:
                 self.report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pcgts.pcGtsId or '', f.ID or ''))
 

@@ -1,0 +1,45 @@
+{
+ "ocrd-dummy": {
+  "executable": "ocrd-dummy",
+  "description": "Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group",
+  "steps": [
+   "preprocessing/optimization"
+  ],
+  "categories": [
+   "Image preprocessing"
+  ],
+  "input_file_grp_cardinality": 1,
+  "output_file_grp_cardinality": 1,
+  "parameters": {
+   "copy_files": {
+    "type": "boolean",
+    "default": false,
+    "description": "Whether to actually copy files (true) or just create PAGE-XML as a side effect (false)"
+   }
+  }
+ },
+ "ocrd-filter": {
+  "executable": "ocrd-filter",
+  "description": "Bare-bones processor can be dynamically configured to remove segments based on XPath queries",
+  "steps": [
+   "recognition/post-correction"
+  ],
+  "categories": [
+   "Quality assurance"
+  ],
+  "input_file_grp_cardinality": 1,
+  "output_file_grp_cardinality": 1,
+  "parameters": {
+   "select": {
+    "type": "string",
+    "default": "//*[ends-with(local-name(),'Region')]",
+    "description": "Which segments to select for removal. An XPath 2.0 query expression (path and optional predicates), with 'pc' as namespace prefix for PAGE-XML and our extension functions (see help text). Only selection of segment hierarchy elements is allowed (so e.g. `*` would be equivalent to `pc:NoiseRegion|pc:LineDrawingRegion|pc:AdvertRegion|pc:ImageRegion|pc:ChartRegion|pc:MusicRegion|pc:GraphicRegion|pc:UnknownRegion|pc:CustomRegion|pc:SeparatorRegion|pc:MathsRegion|pc:TextRegion|pc:MapRegion|pc:ChemRegion|pc:TableRegion|pc:TextLine|pc:Word|pc:Glyph`, but `pc:MetadataItem` or `pc:Border` or `pc:Coords` would not match).\nFor example, to remove words or glyphs with low text confidence, select '(pc:Word|pc:Glyph)[pc:TextEquiv/@conf < 0.7]'. Or low layout confidence, '*[pc:Coords/@conf < 0.7]'.\nTo remove high pixel-to-character rate, select '*[pc:pixelarea(.) div string-length(pc:textequiv(.)) > 10000]'."
+   },
+   "plot": {
+    "type": "boolean",
+    "default": false,
+    "description": "Whether to extract an image for each filtered segment and write to the output fileGrp."
+   }
+  }
+ }
+}

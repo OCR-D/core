@@ -2,45 +2,45 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Wed Nov  3 12:30:32 2021 by generateDS.py version 2.35.20.
-# Python 3.6.9 (default, Jan 26 2021, 15:33:00)  [GCC 8.4.0]
+# Generated Mon Feb 17 10:32:54 2025 by generateDS.py version 2.44.1.
+# Python 3.8.17+ (heads/3.8-dirty:1663f8ba84, Aug 15 2023, 18:13:01)  [GCC 8.3.0]
 #
 # Command line options:
 #   ('-f', '')
 #   ('--root-element', 'PcGts')
-#   ('-o', 'ocrd_models/ocrd_models/ocrd_page_generateds.py')
+#   ('-o', 'src/ocrd_models/ocrd_page_generateds.py')
 #   ('--silence', '')
 #   ('--export', 'write etree')
 #   ('--disable-generatedssuper-lookup', '')
-#   ('--user-methods', 'ocrd_models/ocrd_page_user_methods.py')
+#   ('--user-methods', 'src/ocrd_page_user_methods.py')
 #
 # Command line arguments:
-#   ocrd_validators/ocrd_validators/page.xsd
+#   src/ocrd_validators/page.xsd
 #
 # Command line:
-#   /home/kba/monorepo/ocrd_all/venv/bin/generateDS -f --root-element="PcGts" -o "ocrd_models/ocrd_models/ocrd_page_generateds.py" --silence --export="write etree" --disable-generatedssuper-lookup --user-methods="ocrd_models/ocrd_page_user_methods.py" ocrd_validators/ocrd_validators/page.xsd
+#   /data/ocr-d/ocrd_all/venv38/bin/generateDS -f --root-element="PcGts" -o "src/ocrd_models/ocrd_page_generateds.py" --silence --export="write etree" --disable-generatedssuper-lookup --user-methods="src/ocrd_page_user_methods.py" src/ocrd_validators/page.xsd
 #
 # Current working directory (os.getcwd()):
 #   core
 #
 
-# type: ignore
-
+import sys
+try:
+    ModulenotfoundExp_ = ModuleNotFoundError
+except NameError:
+    ModulenotfoundExp_ = ImportError
 from itertools import zip_longest
 import os
-import sys
 import re as re_
 import base64
 import datetime as datetime_
 import decimal as decimal_
-try:
-    from lxml import etree as etree_
-except ImportError:
-    from xml.etree import ElementTree as etree_
+from lxml import etree as etree_
 
 
 Validate_simpletypes_ = True
 SaveElementTreeNode = True
+TagNamePrefix = ""
 if sys.version_info.major == 2:
     BaseStrType_ = basestring
 else:
@@ -99,7 +99,7 @@ def parsexmlstring_(instring, parser=None, **kwargs):
 # Additionally, the generatedsnamespaces module can contain a python
 # dictionary named GenerateDSNamespaceTypePrefixes that associates element
 # types with the namespace prefixes that are to be added to the
-# "xsi:type" attribute value.  See the exportAttributes method of
+# "xsi:type" attribute value.  See the _exportAttributes method of
 # any generated element type and the generation of "xsi:type" for an
 # example of the use of this table.
 # An example table:
@@ -114,11 +114,11 @@ def parsexmlstring_(instring, parser=None, **kwargs):
 
 try:
     from generatedsnamespaces import GenerateDSNamespaceDefs as GenerateDSNamespaceDefs_
-except ImportError:
+except ModulenotfoundExp_ :
     GenerateDSNamespaceDefs_ = {}
 try:
     from generatedsnamespaces import GenerateDSNamespaceTypePrefixes as GenerateDSNamespaceTypePrefixes_
-except ImportError:
+except ModulenotfoundExp_ :
     GenerateDSNamespaceTypePrefixes_ = {}
 
 #
@@ -129,7 +129,7 @@ except ImportError:
 #
 try:
     from generatedscollector import GdsCollector as GdsCollector_
-except ImportError:
+except ModulenotfoundExp_ :
 
     class GdsCollector_(object):
 
@@ -163,7 +163,7 @@ except ImportError:
 
 try:
     from enum import Enum
-except ImportError:
+except ModulenotfoundExp_ :
     Enum = object
 
 #
@@ -176,7 +176,7 @@ except ImportError:
 
 class GeneratedsSuper(object):
     __hash__ = object.__hash__
-    tzoff_pattern = re_.compile(r'(\+|-)((0\d|1[0-3]):[0-5]\d|14:00)$')
+    tzoff_pattern = re_.compile('(\\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00)$')
     class _FixedOffsetTZ(datetime_.tzinfo):
         def __init__(self, offset, name):
             self.__offset = datetime_.timedelta(minutes=offset)
@@ -187,6 +187,33 @@ class GeneratedsSuper(object):
             return self.__name
         def dst(self, dt):
             return None
+    def __str__(self):
+        settings = {
+            'str_pretty_print': True,
+            'str_indent_level': 0,
+            'str_namespaceprefix': '',
+            'str_name': self.__class__.__name__,
+            'str_namespacedefs': '',
+        }
+        for n in settings:
+            if hasattr(self, n):
+                settings[n] = getattr(self, n)
+        if sys.version_info.major == 2:
+            from StringIO import StringIO
+        else:
+            from io import StringIO
+        output = StringIO()
+        self.export(
+            output,
+            settings['str_indent_level'],
+            pretty_print=settings['str_pretty_print'],
+            namespaceprefix_=settings['str_namespaceprefix'],
+            name_=settings['str_name'],
+            namespacedef_=settings['str_namespacedefs']
+        )
+        strval = output.getvalue()
+        output.close()
+        return strval
     def gds_format_string(self, input_data, input_name=''):
         return input_data
     def gds_parse_string(self, input_data, node=None, input_name=''):
@@ -197,11 +224,11 @@ class GeneratedsSuper(object):
         else:
             return input_data
     def gds_format_base64(self, input_data, input_name=''):
-        return base64.b64encode(input_data)
+        return base64.b64encode(input_data).decode('ascii')
     def gds_validate_base64(self, input_data, node=None, input_name=''):
         return input_data
     def gds_format_integer(self, input_data, input_name=''):
-        return '%d' % input_data
+        return '%d' % int(input_data)
     def gds_parse_integer(self, input_data, node=None, input_name=''):
         try:
             ival = int(input_data)
@@ -215,6 +242,8 @@ class GeneratedsSuper(object):
             raise_parse_error(node, 'Requires integer value')
         return value
     def gds_format_integer_list(self, input_data, input_name=''):
+        if len(input_data) > 0 and not isinstance(input_data[0], BaseStrType_):
+            input_data = [str(s) for s in input_data]
         return '%s' % ' '.join(input_data)
     def gds_validate_integer_list(
             self, input_data, node=None, input_name=''):
@@ -226,7 +255,11 @@ class GeneratedsSuper(object):
                 raise_parse_error(node, 'Requires sequence of integer values')
         return values
     def gds_format_float(self, input_data, input_name=''):
-        return ('%.15f' % input_data).rstrip('0')
+        value = ('%.15f' % float(input_data)).rstrip('0')
+        if value.endswith('.'):
+            value += '0'
+        return value
+
     def gds_parse_float(self, input_data, node=None, input_name=''):
         try:
             fval_ = float(input_data)
@@ -240,6 +273,8 @@ class GeneratedsSuper(object):
             raise_parse_error(node, 'Requires float value')
         return value
     def gds_format_float_list(self, input_data, input_name=''):
+        if len(input_data) > 0 and not isinstance(input_data[0], BaseStrType_):
+            input_data = [str(s) for s in input_data]
         return '%s' % ' '.join(input_data)
     def gds_validate_float_list(
             self, input_data, node=None, input_name=''):
@@ -251,7 +286,12 @@ class GeneratedsSuper(object):
                 raise_parse_error(node, 'Requires sequence of float values')
         return values
     def gds_format_decimal(self, input_data, input_name=''):
-        return ('%s' % input_data).rstrip('0')
+        return_value = '%s' % input_data
+        if '.' in return_value:
+            return_value = return_value.rstrip('0')
+            if return_value.endswith('.'):
+                return_value = return_value.rstrip('.')
+        return return_value
     def gds_parse_decimal(self, input_data, node=None, input_name=''):
         try:
             decimal_value = decimal_.Decimal(input_data)
@@ -265,7 +305,9 @@ class GeneratedsSuper(object):
             raise_parse_error(node, 'Requires decimal value')
         return value
     def gds_format_decimal_list(self, input_data, input_name=''):
-        return '%s' % ' '.join(input_data)
+        if len(input_data) > 0 and not isinstance(input_data[0], BaseStrType_):
+            input_data = [str(s) for s in input_data]
+        return ' '.join([self.gds_format_decimal(item) for item in input_data])
     def gds_validate_decimal_list(
             self, input_data, node=None, input_name=''):
         values = input_data.split()
@@ -276,7 +318,7 @@ class GeneratedsSuper(object):
                 raise_parse_error(node, 'Requires sequence of decimal values')
         return values
     def gds_format_double(self, input_data, input_name=''):
-        return '%e' % input_data
+        return '%s' % input_data
     def gds_parse_double(self, input_data, node=None, input_name=''):
         try:
             fval_ = float(input_data)
@@ -290,6 +332,8 @@ class GeneratedsSuper(object):
             raise_parse_error(node, 'Requires double or float value')
         return value
     def gds_format_double_list(self, input_data, input_name=''):
+        if len(input_data) > 0 and not isinstance(input_data[0], BaseStrType_):
+            input_data = [str(s) for s in input_data]
         return '%s' % ' '.join(input_data)
     def gds_validate_double_list(
             self, input_data, node=None, input_name=''):
@@ -304,6 +348,7 @@ class GeneratedsSuper(object):
     def gds_format_boolean(self, input_data, input_name=''):
         return ('%s' % input_data).lower()
     def gds_parse_boolean(self, input_data, node=None, input_name=''):
+        input_data = input_data.strip()
         if input_data in ('true', '1'):
             bval = True
         elif input_data in ('false', '0'):
@@ -319,11 +364,14 @@ class GeneratedsSuper(object):
                 '(one of True, 1, False, 0)')
         return input_data
     def gds_format_boolean_list(self, input_data, input_name=''):
+        if len(input_data) > 0 and not isinstance(input_data[0], BaseStrType_):
+            input_data = [str(s) for s in input_data]
         return '%s' % ' '.join(input_data)
     def gds_validate_boolean_list(
             self, input_data, node=None, input_name=''):
         values = input_data.split()
         for value in values:
+            value = self.gds_parse_boolean(value, node, input_name)
             if value not in (True, 1, False, 0, ):
                 raise_parse_error(
                     node,
@@ -480,6 +528,7 @@ class GeneratedsSuper(object):
         # The target value must match at least one of the patterns
         # in order for the test to succeed.
         found1 = True
+        target = str(target)
         for patterns1 in patterns:
             found2 = False
             for patterns2 in patterns1:
@@ -565,7 +614,7 @@ class GeneratedsSuper(object):
         path_list.reverse()
         path = '/'.join(path_list)
         return path
-    Tag_strip_pattern_ = re_.compile(r'\{.*\}')
+    Tag_strip_pattern_ = re_.compile(r'{.*}')
     def get_path_list_(self, node, path_list):
         if node is None:
             return
@@ -725,6 +774,7 @@ def quote_attrib(inStr):
     s1 = s1.replace('&', '&amp;')
     s1 = s1.replace('<', '&lt;')
     s1 = s1.replace('>', '&gt;')
+    s1 = s1.replace('\n', '&#10;')
     if '"' in s1:
         if "'" in s1:
             s1 = '"%s"' % s1.replace('"', "&quot;")
@@ -770,7 +820,10 @@ def find_attr_value_(attr_name, node):
         value = attrs.get(attr_name)
     elif len(attr_parts) == 2:
         prefix, name = attr_parts
-        namespace = node.nsmap.get(prefix)
+        if prefix == 'xml':
+            namespace = 'http://www.w3.org/XML/1998/namespace'
+        else:
+            namespace = node.nsmap.get(prefix)
         if namespace is not None:
             value = attrs.get('{%s}%s' % (namespace, name, ))
     return value
@@ -851,7 +904,7 @@ class MixedContainer:
                 self.name,
                 base64.b64encode(self.value),
                 self.name))
-    def to_etree(self, element, mapping_=None, nsmap_=None):
+    def to_etree(self, element, mapping_=None, reverse_mapping_=None, nsmap_=None):
         if self.category == MixedContainer.CategoryText:
             # Prevent exporting empty content as empty lines.
             if self.value.strip():
@@ -871,7 +924,7 @@ class MixedContainer:
             subelement.text = self.to_etree_simple()
         else:    # category == MixedContainer.CategoryComplex
             self.value.to_etree(element)
-    def to_etree_simple(self, mapping_=None, nsmap_=None):
+    def to_etree_simple(self, mapping_=None, reverse_mapping_=None, nsmap_=None):
         if self.content_type == MixedContainer.TypeString:
             text = self.value
         elif (self.content_type == MixedContainer.TypeInteger or
@@ -944,11 +997,10 @@ def _cast(typ, value):
         return value
     return typ(value)
 
-#
-# Data representation classes.
-#
 
-
+#
+# Start enum classes
+#
 class AlignSimpleType(str, Enum):
     LEFT='left'
     CENTRE='centre'
@@ -1015,6 +1067,200 @@ class GroupTypeSimpleType(str, Enum):
     OTHER='other'
 
 
+class LanguageSimpleType(str, Enum):
+    """LanguageSimpleType -- ISO 639.x 2016-07-14
+    
+    """
+    ABKHAZ='Abkhaz'
+    AFAR='Afar'
+    AFRIKAANS='Afrikaans'
+    AKAN='Akan'
+    ALBANIAN='Albanian'
+    AMHARIC='Amharic'
+    ARABIC='Arabic'
+    ARAGONESE='Aragonese'
+    ARMENIAN='Armenian'
+    ASSAMESE='Assamese'
+    AVARIC='Avaric'
+    AVESTAN='Avestan'
+    AYMARA='Aymara'
+    AZERBAIJANI='Azerbaijani'
+    BAMBARA='Bambara'
+    BASHKIR='Bashkir'
+    BASQUE='Basque'
+    BELARUSIAN='Belarusian'
+    BENGALI='Bengali'
+    BIHARI='Bihari'
+    BISLAMA='Bislama'
+    BOSNIAN='Bosnian'
+    BRETON='Breton'
+    BULGARIAN='Bulgarian'
+    BURMESE='Burmese'
+    CAMBODIAN='Cambodian'
+    CANTONESE='Cantonese'
+    CATALAN='Catalan'
+    CHAMORRO='Chamorro'
+    CHECHEN='Chechen'
+    CHICHEWA='Chichewa'
+    CHINESE='Chinese'
+    CHUVASH='Chuvash'
+    CORNISH='Cornish'
+    CORSICAN='Corsican'
+    CREE='Cree'
+    CROATIAN='Croatian'
+    CZECH='Czech'
+    DANISH='Danish'
+    DIVEHI='Divehi'
+    DUTCH='Dutch'
+    DZONGKHA='Dzongkha'
+    ENGLISH='English'
+    ESPERANTO='Esperanto'
+    ESTONIAN='Estonian'
+    EWE='Ewe'
+    FAROESE='Faroese'
+    FIJIAN='Fijian'
+    FINNISH='Finnish'
+    FRENCH='French'
+    FULA='Fula'
+    GAELIC='Gaelic'
+    GALICIAN='Galician'
+    GANDA='Ganda'
+    GEORGIAN='Georgian'
+    GERMAN='German'
+    GREEK='Greek'
+    GUARANÍ='Guaraní'
+    GUJARATI='Gujarati'
+    HAITIAN='Haitian'
+    HAUSA='Hausa'
+    HEBREW='Hebrew'
+    HERERO='Herero'
+    HINDI='Hindi'
+    HIRI_MOTU='Hiri Motu'
+    HUNGARIAN='Hungarian'
+    ICELANDIC='Icelandic'
+    IDO='Ido'
+    IGBO='Igbo'
+    INDONESIAN='Indonesian'
+    INTERLINGUA='Interlingua'
+    INTERLINGUE='Interlingue'
+    INUKTITUT='Inuktitut'
+    INUPIAQ='Inupiaq'
+    IRISH='Irish'
+    ITALIAN='Italian'
+    JAPANESE='Japanese'
+    JAVANESE='Javanese'
+    KALAALLISUT='Kalaallisut'
+    KANNADA='Kannada'
+    KANURI='Kanuri'
+    KASHMIRI='Kashmiri'
+    KAZAKH='Kazakh'
+    KHMER='Khmer'
+    KIKUYU='Kikuyu'
+    KINYARWANDA='Kinyarwanda'
+    KIRUNDI='Kirundi'
+    KOMI='Komi'
+    KONGO='Kongo'
+    KOREAN='Korean'
+    KURDISH='Kurdish'
+    KWANYAMA='Kwanyama'
+    KYRGYZ='Kyrgyz'
+    LAO='Lao'
+    LATIN='Latin'
+    LATVIAN='Latvian'
+    LIMBURGISH='Limburgish'
+    LINGALA='Lingala'
+    LITHUANIAN='Lithuanian'
+    LUBA_KATANGA='Luba-Katanga'
+    LUXEMBOURGISH='Luxembourgish'
+    MACEDONIAN='Macedonian'
+    MALAGASY='Malagasy'
+    MALAY='Malay'
+    MALAYALAM='Malayalam'
+    MALTESE='Maltese'
+    MANX='Manx'
+    MĀORI='Māori'
+    MARATHI='Marathi'
+    MARSHALLESE='Marshallese'
+    MONGOLIAN='Mongolian'
+    NAURU='Nauru'
+    NAVAJO='Navajo'
+    NDONGA='Ndonga'
+    NEPALI='Nepali'
+    NORTH_NDEBELE='North Ndebele'
+    NORTHERN_SAMI='Northern Sami'
+    NORWEGIAN='Norwegian'
+    NORWEGIAN_BOKMÅL='Norwegian Bokmål'
+    NORWEGIAN_NYNORSK='Norwegian Nynorsk'
+    NUOSU='Nuosu'
+    OCCITAN='Occitan'
+    OJIBWE='Ojibwe'
+    OLD_CHURCH_SLAVONIC='Old Church Slavonic'
+    ORIYA='Oriya'
+    OROMO='Oromo'
+    OSSETIAN='Ossetian'
+    PĀLI='Pāli'
+    PANJABI='Panjabi'
+    PASHTO='Pashto'
+    PERSIAN='Persian'
+    POLISH='Polish'
+    PORTUGUESE='Portuguese'
+    PUNJABI='Punjabi'
+    QUECHUA='Quechua'
+    ROMANIAN='Romanian'
+    ROMANSH='Romansh'
+    RUSSIAN='Russian'
+    SAMOAN='Samoan'
+    SANGO='Sango'
+    SANSKRIT='Sanskrit'
+    SARDINIAN='Sardinian'
+    SERBIAN='Serbian'
+    SHONA='Shona'
+    SINDHI='Sindhi'
+    SINHALA='Sinhala'
+    SLOVAK='Slovak'
+    SLOVENE='Slovene'
+    SOMALI='Somali'
+    SOUTH_NDEBELE='South Ndebele'
+    SOUTHERN_SOTHO='Southern Sotho'
+    SPANISH='Spanish'
+    SUNDANESE='Sundanese'
+    SWAHILI='Swahili'
+    SWATI='Swati'
+    SWEDISH='Swedish'
+    TAGALOG='Tagalog'
+    TAHITIAN='Tahitian'
+    TAJIK='Tajik'
+    TAMIL='Tamil'
+    TATAR='Tatar'
+    TELUGU='Telugu'
+    THAI='Thai'
+    TIBETAN='Tibetan'
+    TIGRINYA='Tigrinya'
+    TONGA='Tonga'
+    TSONGA='Tsonga'
+    TSWANA='Tswana'
+    TURKISH='Turkish'
+    TURKMEN='Turkmen'
+    TWI='Twi'
+    UIGHUR='Uighur'
+    UKRAINIAN='Ukrainian'
+    URDU='Urdu'
+    UZBEK='Uzbek'
+    VENDA='Venda'
+    VIETNAMESE='Vietnamese'
+    VOLAPÜK='Volapük'
+    WALLOON='Walloon'
+    WELSH='Welsh'
+    WESTERN_FRISIAN='Western Frisian'
+    WOLOF='Wolof'
+    XHOSA='Xhosa'
+    YIDDISH='Yiddish'
+    YORUBA='Yoruba'
+    ZHUANG='Zhuang'
+    ZULU='Zulu'
+    OTHER='other'
+
+
 class PageTypeSimpleType(str, Enum):
     FRONTCOVER='front-cover'
     BACKCOVER='back-cover'
@@ -1027,7 +1273,9 @@ class PageTypeSimpleType(str, Enum):
 
 
 class ProductionSimpleType(str, Enum):
-    """Text production type"""
+    """ProductionSimpleType -- Text production type
+    
+    """
     PRINTED='printed'
     TYPEWRITTEN='typewritten'
     HANDWRITTENCURSIVE='handwritten-cursive'
@@ -1041,6 +1289,193 @@ class ReadingDirectionSimpleType(str, Enum):
     RIGHTTOLEFT='right-to-left'
     TOPTOBOTTOM='top-to-bottom'
     BOTTOMTOTOP='bottom-to-top'
+
+
+class ScriptSimpleType(str, Enum):
+    """ScriptSimpleType -- iso15924 2016-07-14
+    
+    """
+    ADLM_ADLAM='Adlm - Adlam'
+    AFAK_AFAKA='Afak - Afaka'
+    AGHB_CAUCASIAN_ALBANIAN='Aghb - Caucasian Albanian'
+    AHOM_AHOM_TAI_AHOM='Ahom - Ahom, Tai Ahom'
+    ARAB_ARABIC='Arab - Arabic'
+    ARAN_ARABIC_NASTALIQVARIANT='Aran - Arabic (Nastaliq variant)'
+    ARMI_IMPERIAL_ARAMAIC='Armi - Imperial Aramaic'
+    ARMN_ARMENIAN='Armn - Armenian'
+    AVST_AVESTAN='Avst - Avestan'
+    BALI_BALINESE='Bali - Balinese'
+    BAMU_BAMUM='Bamu - Bamum'
+    BASS_BASSA_VAH='Bass - Bassa Vah'
+    BATK_BATAK='Batk - Batak'
+    BENG_BENGALI='Beng - Bengali'
+    BHKS_BHAIKSUKI='Bhks - Bhaiksuki'
+    BLIS_BLISSYMBOLS='Blis - Blissymbols'
+    BOPO_BOPOMOFO='Bopo - Bopomofo'
+    BRAH_BRAHMI='Brah - Brahmi'
+    BRAI_BRAILLE='Brai - Braille'
+    BUGI_BUGINESE='Bugi - Buginese'
+    BUHD_BUHID='Buhd - Buhid'
+    CAKM_CHAKMA='Cakm - Chakma'
+    CANS_UNIFIED_CANADIAN_ABORIGINAL_SYLLABICS='Cans - Unified Canadian Aboriginal Syllabics'
+    CARI_CARIAN='Cari - Carian'
+    CHAM_CHAM='Cham - Cham'
+    CHER_CHEROKEE='Cher - Cherokee'
+    CIRT_CIRTH='Cirt - Cirth'
+    COPT_COPTIC='Copt - Coptic'
+    CPRT_CYPRIOT='Cprt - Cypriot'
+    CYRL_CYRILLIC='Cyrl - Cyrillic'
+    CYRS_CYRILLIC_OLD_CHURCH_SLAVONICVARIANT='Cyrs - Cyrillic (Old Church Slavonic variant)'
+    DEVA_DEVANAGARI_NAGARI='Deva - Devanagari (Nagari)'
+    DSRT_DESERET_MORMON='Dsrt - Deseret (Mormon)'
+    DUPL_DUPLOYANSHORTHAND_DUPLOYANSTENOGRAPHY='Dupl - Duployan shorthand, Duployan stenography'
+    EGYD_EGYPTIANDEMOTIC='Egyd - Egyptian demotic'
+    EGYH_EGYPTIANHIERATIC='Egyh - Egyptian hieratic'
+    EGYP_EGYPTIANHIEROGLYPHS='Egyp - Egyptian hieroglyphs'
+    ELBA_ELBASAN='Elba - Elbasan'
+    ETHI_ETHIOPIC='Ethi - Ethiopic'
+    GEOK_KHUTSURI_ASOMTAVRULIAND_NUSKHURI='Geok - Khutsuri (Asomtavruli and Nuskhuri)'
+    GEOR_GEORGIAN_MKHEDRULI='Geor - Georgian (Mkhedruli)'
+    GLAG_GLAGOLITIC='Glag - Glagolitic'
+    GOTH_GOTHIC='Goth - Gothic'
+    GRAN_GRANTHA='Gran - Grantha'
+    GREK_GREEK='Grek - Greek'
+    GUJR_GUJARATI='Gujr - Gujarati'
+    GURU_GURMUKHI='Guru - Gurmukhi'
+    HANB_HANWITH_BOPOMOFO='Hanb - Han with Bopomofo'
+    HANG_HANGUL='Hang - Hangul'
+    HANI_HAN_HANZI_KANJI_HANJA='Hani - Han (Hanzi, Kanji, Hanja)'
+    HANO_HANUNOO_HANUNÓO='Hano - Hanunoo (Hanunóo)'
+    HANS_HAN_SIMPLIFIEDVARIANT='Hans - Han (Simplified variant)'
+    HANT_HAN_TRADITIONALVARIANT='Hant - Han (Traditional variant)'
+    HATR_HATRAN='Hatr - Hatran'
+    HEBR_HEBREW='Hebr - Hebrew'
+    HIRA_HIRAGANA='Hira - Hiragana'
+    HLUW_ANATOLIAN_HIEROGLYPHS='Hluw - Anatolian Hieroglyphs'
+    HMNG_PAHAWH_HMONG='Hmng - Pahawh Hmong'
+    HRKT_JAPANESESYLLABARIES='Hrkt - Japanese syllabaries'
+    HUNG_OLD_HUNGARIAN_HUNGARIAN_RUNIC='Hung - Old Hungarian (Hungarian Runic)'
+    INDS_INDUS_HARAPPAN='Inds - Indus (Harappan)'
+    ITAL_OLD_ITALIC_ETRUSCAN_OSCANETC='Ital - Old Italic (Etruscan, Oscan etc.)'
+    JAMO_JAMO='Jamo - Jamo'
+    JAVA_JAVANESE='Java - Javanese'
+    JPAN_JAPANESE='Jpan - Japanese'
+    JURC_JURCHEN='Jurc - Jurchen'
+    KALI_KAYAH_LI='Kali - Kayah Li'
+    KANA_KATAKANA='Kana - Katakana'
+    KHAR_KHAROSHTHI='Khar - Kharoshthi'
+    KHMR_KHMER='Khmr - Khmer'
+    KHOJ_KHOJKI='Khoj - Khojki'
+    KITL_KHITANLARGESCRIPT='Kitl - Khitan large script'
+    KITS_KHITANSMALLSCRIPT='Kits - Khitan small script'
+    KNDA_KANNADA='Knda - Kannada'
+    KORE_KOREANALIASFOR_HANGUL_HAN='Kore - Korean (alias for Hangul + Han)'
+    KPEL_KPELLE='Kpel - Kpelle'
+    KTHI_KAITHI='Kthi - Kaithi'
+    LANA_TAI_THAM_LANNA='Lana - Tai Tham (Lanna)'
+    LAOO_LAO='Laoo - Lao'
+    LATF_LATIN_FRAKTURVARIANT='Latf - Latin (Fraktur variant)'
+    LATG_LATIN_GAELICVARIANT='Latg - Latin (Gaelic variant)'
+    LATN_LATIN='Latn - Latin'
+    LEKE_LEKE='Leke - Leke'
+    LEPC_LEPCHARÓNG='Lepc - Lepcha (Róng)'
+    LIMB_LIMBU='Limb - Limbu'
+    LINA_LINEARA='Lina - Linear A'
+    LINB_LINEARB='Linb - Linear B'
+    LISU_LISU_FRASER='Lisu - Lisu (Fraser)'
+    LOMA_LOMA='Loma - Loma'
+    LYCI_LYCIAN='Lyci - Lycian'
+    LYDI_LYDIAN='Lydi - Lydian'
+    MAHJ_MAHAJANI='Mahj - Mahajani'
+    MAND_MANDAIC_MANDAEAN='Mand - Mandaic, Mandaean'
+    MANI_MANICHAEAN='Mani - Manichaean'
+    MARC_MARCHEN='Marc - Marchen'
+    MAYA_MAYANHIEROGLYPHS='Maya - Mayan hieroglyphs'
+    MEND_MENDE_KIKAKUI='Mend - Mende Kikakui'
+    MERC_MEROITIC_CURSIVE='Merc - Meroitic Cursive'
+    MERO_MEROITIC_HIEROGLYPHS='Mero - Meroitic Hieroglyphs'
+    MLYM_MALAYALAM='Mlym - Malayalam'
+    MODI_MODI_MOḌĪ='Modi - Modi, Moḍī'
+    MONG_MONGOLIAN='Mong - Mongolian'
+    MOON_MOON_MOONCODE_MOONSCRIPT_MOONTYPE='Moon - Moon (Moon code, Moon script, Moon type)'
+    MROO_MRO_MRU='Mroo - Mro, Mru'
+    MTEI_MEITEI_MAYEK_MEITHEI_MEETEI='Mtei - Meitei Mayek (Meithei, Meetei)'
+    MULT_MULTANI='Mult - Multani'
+    MYMR_MYANMAR_BURMESE='Mymr - Myanmar (Burmese)'
+    NARB_OLD_NORTH_ARABIAN_ANCIENT_NORTH_ARABIAN='Narb - Old North Arabian (Ancient North Arabian)'
+    NBAT_NABATAEAN='Nbat - Nabataean'
+    NEWA_NEWA_NEWAR_NEWARI='Newa - Newa, Newar, Newari'
+    NKGB_NAKHI_GEBA='Nkgb - Nakhi Geba'
+    NKOON_KO='Nkoo - N’Ko'
+    NSHUNÜSHU='Nshu - Nüshu'
+    OGAM_OGHAM='Ogam - Ogham'
+    OLCK_OL_CHIKI_OL_CEMET_OL_SANTALI='Olck - Ol Chiki (Ol Cemet’, Ol, Santali)'
+    ORKH_OLD_TURKIC_ORKHON_RUNIC='Orkh - Old Turkic, Orkhon Runic'
+    ORYA_ORIYA='Orya - Oriya'
+    OSGE_OSAGE='Osge - Osage'
+    OSMA_OSMANYA='Osma - Osmanya'
+    PALM_PALMYRENE='Palm - Palmyrene'
+    PAUC_PAU_CIN_HAU='Pauc - Pau Cin Hau'
+    PERM_OLD_PERMIC='Perm - Old Permic'
+    PHAG_PHAGSPA='Phag - Phags-pa'
+    PHLI_INSCRIPTIONAL_PAHLAVI='Phli - Inscriptional Pahlavi'
+    PHLP_PSALTER_PAHLAVI='Phlp - Psalter Pahlavi'
+    PHLV_BOOK_PAHLAVI='Phlv - Book Pahlavi'
+    PHNX_PHOENICIAN='Phnx - Phoenician'
+    PIQD_KLINGONKLIP_IQA_D='Piqd - Klingon (KLI pIqaD)'
+    PLRD_MIAO_POLLARD='Plrd - Miao (Pollard)'
+    PRTI_INSCRIPTIONAL_PARTHIAN='Prti - Inscriptional Parthian'
+    RJNG_REJANG_REDJANG_KAGANGA='Rjng - Rejang (Redjang, Kaganga)'
+    RORO_RONGORONGO='Roro - Rongorongo'
+    RUNR_RUNIC='Runr - Runic'
+    SAMR_SAMARITAN='Samr - Samaritan'
+    SARA_SARATI='Sara - Sarati'
+    SARB_OLD_SOUTH_ARABIAN='Sarb - Old South Arabian'
+    SAUR_SAURASHTRA='Saur - Saurashtra'
+    SGNW_SIGN_WRITING='Sgnw - SignWriting'
+    SHAW_SHAVIAN_SHAW='Shaw - Shavian (Shaw)'
+    SHRD_SHARADAŚĀRADĀ='Shrd - Sharada, Śāradā'
+    SIDD_SIDDHAM='Sidd - Siddham'
+    SIND_KHUDAWADI_SINDHI='Sind - Khudawadi, Sindhi'
+    SINH_SINHALA='Sinh - Sinhala'
+    SORA_SORA_SOMPENG='Sora - Sora Sompeng'
+    SUND_SUNDANESE='Sund - Sundanese'
+    SYLO_SYLOTI_NAGRI='Sylo - Syloti Nagri'
+    SYRC_SYRIAC='Syrc - Syriac'
+    SYRE_SYRIAC_ESTRANGELOVARIANT='Syre - Syriac (Estrangelo variant)'
+    SYRJ_SYRIAC_WESTERNVARIANT='Syrj - Syriac (Western variant)'
+    SYRN_SYRIAC_EASTERNVARIANT='Syrn - Syriac (Eastern variant)'
+    TAGB_TAGBANWA='Tagb - Tagbanwa'
+    TAKR_TAKRI='Takr - Takri'
+    TALE_TAI_LE='Tale - Tai Le'
+    TALU_NEW_TAI_LUE='Talu - New Tai Lue'
+    TAML_TAMIL='Taml - Tamil'
+    TANG_TANGUT='Tang - Tangut'
+    TAVT_TAI_VIET='Tavt - Tai Viet'
+    TELU_TELUGU='Telu - Telugu'
+    TENG_TENGWAR='Teng - Tengwar'
+    TFNG_TIFINAGH_BERBER='Tfng - Tifinagh (Berber)'
+    TGLG_TAGALOG_BAYBAYIN_ALIBATA='Tglg - Tagalog (Baybayin, Alibata)'
+    THAA_THAANA='Thaa - Thaana'
+    THAI_THAI='Thai - Thai'
+    TIBT_TIBETAN='Tibt - Tibetan'
+    TIRH_TIRHUTA='Tirh - Tirhuta'
+    UGAR_UGARITIC='Ugar - Ugaritic'
+    VAII_VAI='Vaii - Vai'
+    VISP_VISIBLE_SPEECH='Visp - Visible Speech'
+    WARA_WARANG_CITI_VARANG_KSHITI='Wara - Warang Citi (Varang Kshiti)'
+    WOLE_WOLEAI='Wole - Woleai'
+    XPEO_OLD_PERSIAN='Xpeo - Old Persian'
+    XSUX_CUNEIFORM_SUMERO_AKKADIAN='Xsux - Cuneiform, Sumero-Akkadian'
+    YIII_YI='Yiii - Yi'
+    ZINH_CODEFORINHERITEDSCRIPT='Zinh - Code for inherited script'
+    ZMTH_MATHEMATICALNOTATION='Zmth - Mathematical notation'
+    ZSYE_SYMBOLS_EMOJIVARIANT='Zsye - Symbols (Emoji variant)'
+    ZSYM_SYMBOLS='Zsym - Symbols'
+    ZXXX_CODEFORUNWRITTENDOCUMENTS='Zxxx - Code for unwritten documents'
+    ZYYY_CODEFORUNDETERMINEDSCRIPT='Zyyy - Code for undetermined script'
+    ZZZZ_CODEFORUNCODEDSCRIPT='Zzzz - Code for uncoded script'
+    OTHER='other'
 
 
 class TextDataTypeSimpleType(str, Enum):
@@ -1089,10 +1524,58 @@ class UnderlineStyleSimpleType(str, Enum):
     OTHER='other'
 
 
+class charTypeType(str, Enum):
+    """charTypeType --
+    Type of character represented by the
+    grapheme, group, or non-printing character element.
+    
+    """
+    BASE='base'
+    COMBINING='combining'
+
+
+class imageResolutionUnitType(str, Enum):
+    """imageResolutionUnitType --
+    Specifies the unit of the resolution information
+    referring to a standardised unit of measurement
+    (pixels per inch, pixels per centimeter or other).
+    
+    """
+    PPI='PPI'
+    PPCM='PPCM'
+    OTHER='other'
+
+
+class typeType(str, Enum):
+    """typeType --
+    Type of metadata (e.g. author)
+    
+    """
+    AUTHOR='author'
+    IMAGE_PROPERTIES='imageProperties'
+    PROCESSING_STEP='processingStep'
+    OTHER='other'
+
+
+class typeType1(str, Enum):
+    LINK='link'
+    JOIN='join'
+
+
+class typeType3(str, Enum):
+    XSDSTRING='xsd:string'
+    XSDINTEGER='xsd:integer'
+    XSDBOOLEAN='xsd:boolean'
+    XSDFLOAT='xsd:float'
+
+
+#
+# Start data representation classes
+#
 class PcGtsType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('pcGtsId', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('pcGtsId', 'string', 0, 1, {'use': 'optional', 'name': 'pcGtsId'}),
         MemberSpec_('Metadata', 'MetadataType', 0, 0, {'name': 'Metadata', 'type': 'MetadataType'}, None),
         MemberSpec_('Page', 'PageType', 0, 0, {'name': 'Page', 'type': 'PageType'}, None),
     ]
@@ -1103,7 +1586,7 @@ class PcGtsType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.pcGtsId = _cast(None, pcGtsId)
         self.pcGtsId_nsprefix_ = "pc"
         self.Metadata = Metadata
@@ -1137,7 +1620,7 @@ class PcGtsType(GeneratedsSuper):
         return self.pcGtsId
     def set_pcGtsId(self, pcGtsId):
         self.pcGtsId = pcGtsId
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Metadata is not None or
             self.Page is not None
@@ -1160,19 +1643,19 @@ class PcGtsType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PcGtsType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PcGtsType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PcGtsType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PcGtsType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PcGtsType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PcGtsType'):
         if self.pcGtsId is not None and 'pcGtsId' not in already_processed:
             already_processed.add('pcGtsId')
             outfile.write(' pcGtsId=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.pcGtsId), input_name='pcGtsId')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PcGtsType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PcGtsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1183,7 +1666,7 @@ class PcGtsType(GeneratedsSuper):
         if self.Page is not None:
             namespaceprefix_ = self.Page_nsprefix_ + ':' if (UseCapturedNS_ and self.Page_nsprefix_) else ''
             self.Page.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Page', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='PcGtsType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='PcGtsType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -1192,12 +1675,14 @@ class PcGtsType(GeneratedsSuper):
             element.set('pcGtsId', self.gds_format_string(self.pcGtsId))
         if self.Metadata is not None:
             Metadata_ = self.Metadata
-            Metadata_.to_etree(element, name_='Metadata', mapping_=mapping_, nsmap_=nsmap_)
+            Metadata_.to_etree(element, name_='Metadata', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Page is not None:
             Page_ = self.Page
-            Page_.to_etree(element, name_='Page', mapping_=mapping_, nsmap_=nsmap_)
+            Page_.to_etree(element, name_='Page', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -1205,17 +1690,17 @@ class PcGtsType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('pcGtsId', node)
         if value is not None and 'pcGtsId' not in already_processed:
             already_processed.add('pcGtsId')
             self.pcGtsId = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Metadata':
             obj_ = MetadataType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -1230,9 +1715,10 @@ class PcGtsType(GeneratedsSuper):
         return hash(self.id)
     @property
     def id(self):
+        from ocrd_utils import make_xml_id
         if hasattr(self, 'pcGtsId'):
             return self.pcGtsId or ''
-        return self.imageFilename
+        return make_xml_id(self.imageFilename)
     def get_AllAlternativeImagePaths(self, page=True, region=True, line=True, word=True, glyph=True):
         """
         Get all the ``pc:AlternativeImage/@filename`` paths referenced in the PAGE-XML document.
@@ -1304,10 +1790,20 @@ class PcGtsType(GeneratedsSuper):
 
 
 class MetadataType(GeneratedsSuper):
-    """External reference of any kind"""
+    """externalRef -- External reference of any kind
+    Created --
+    The timestamp has to be in UTC (Coordinated
+    Universal Time) and not local time.
+      
+    * LastChange --
+      The timestamp has to be in UTC
+      (Coordinated Universal Time)
+      and not local time.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('externalRef', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('externalRef', 'string', 0, 1, {'use': 'optional', 'name': 'externalRef'}),
         MemberSpec_('Creator', 'string', 0, 0, {'name': 'Creator', 'type': 'string'}, None),
         MemberSpec_('Created', 'dateTime', 0, 0, {'name': 'Created', 'type': 'dateTime'}, None),
         MemberSpec_('LastChange', 'dateTime', 0, 0, {'name': 'LastChange', 'type': 'dateTime'}, None),
@@ -1397,7 +1893,7 @@ class MetadataType(GeneratedsSuper):
         return self.externalRef
     def set_externalRef(self, externalRef):
         self.externalRef = externalRef
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Creator is not None or
             self.Created is not None or
@@ -1424,19 +1920,19 @@ class MetadataType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MetadataType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MetadataType'):
         if self.externalRef is not None and 'externalRef' not in already_processed:
             already_processed.add('externalRef')
             outfile.write(' externalRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalRef), input_name='externalRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='MetadataType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='MetadataType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1463,7 +1959,7 @@ class MetadataType(GeneratedsSuper):
         for MetadataItem_ in self.MetadataItem:
             namespaceprefix_ = self.MetadataItem_nsprefix_ + ':' if (UseCapturedNS_ and self.MetadataItem_nsprefix_) else ''
             MetadataItem_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MetadataItem', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='MetadataType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='MetadataType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -1484,11 +1980,13 @@ class MetadataType(GeneratedsSuper):
             etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Comments').text = self.gds_format_string(Comments_)
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for MetadataItem_ in self.MetadataItem:
-            MetadataItem_.to_etree(element, name_='MetadataItem', mapping_=mapping_, nsmap_=nsmap_)
+            MetadataItem_.to_etree(element, name_='MetadataItem', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -1496,17 +1994,17 @@ class MetadataType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('externalRef', node)
         if value is not None and 'externalRef' not in already_processed:
             already_processed.add('externalRef')
             self.externalRef = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Creator':
             value_ = child_.text
             value_ = self.gds_parse_string(value_, node, 'Creator')
@@ -1545,15 +2043,22 @@ class MetadataType(GeneratedsSuper):
 
 
 class MetadataItemType(GeneratedsSuper):
-    """Type of metadata (e.g. author)
-    E.g. imagePhotometricInterpretation
-    E.g. RGB"""
+    """type --
+    Type of metadata (e.g. author)
+      
+    * name --
+      E.g. imagePhotometricInterpretation
+      
+    * value -- E.g. RGB
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('name', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('value', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('date', 'dateTime', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'typeType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('name', 'string', 0, 1, {'use': 'optional', 'name': 'name'}),
+        MemberSpec_('value', 'string', 0, 0, {'use': 'required', 'name': 'value'}),
+        MemberSpec_('date', 'dateTime', 0, 1, {'use': 'optional', 'name': 'date'}),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
     ]
     subclass = None
@@ -1563,7 +2068,7 @@ class MetadataItemType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.type_ = _cast(None, type_)
         self.type__nsprefix_ = "pc"
         self.name = _cast(None, name)
@@ -1621,7 +2126,20 @@ class MetadataItemType(GeneratedsSuper):
         return self.date
     def set_date(self, date):
         self.date = date
-    def hasContent_(self):
+    def validate_typeType(self, value):
+        # Validate type typeType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['author', 'imageProperties', 'processingStep', 'other']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on typeType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
+    def has__content(self):
         if (
             self.Labels
         ):
@@ -1643,15 +2161,15 @@ class MetadataItemType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataItemType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MetadataItemType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataItemType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MetadataItemType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MetadataItemType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MetadataItemType'):
         if self.type_ is not None and 'type_' not in already_processed:
             already_processed.add('type_')
             outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
@@ -1664,7 +2182,7 @@ class MetadataItemType(GeneratedsSuper):
         if self.date is not None and 'date' not in already_processed:
             already_processed.add('date')
             outfile.write(' date="%s"' % self.gds_format_datetime(self.date, input_name='date'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MetadataItemType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1672,7 +2190,7 @@ class MetadataItemType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='MetadataItemType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='MetadataItemType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -1686,9 +2204,11 @@ class MetadataItemType(GeneratedsSuper):
         if self.date is not None:
             element.set('date', self.gds_format_datetime(self.date))
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -1696,16 +2216,17 @@ class MetadataItemType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('type', node)
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
             self.type_ = value
+            self.validate_typeType(self.type_)    # validate type typeType
         value = find_attr_value_('name', node)
         if value is not None and 'name' not in already_processed:
             already_processed.add('name')
@@ -1721,7 +2242,7 @@ class MetadataItemType(GeneratedsSuper):
                 self.date = self.gds_parse_datetime(value)
             except ValueError as exp:
                 raise ValueError('Bad date-time attribute (date): %s' % exp)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Labels':
             obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -1733,16 +2254,26 @@ class MetadataItemType(GeneratedsSuper):
 
 
 class LabelsType(GeneratedsSuper):
-    """Reference to external model / ontology / schema
-    E.g. an RDF resource identifier
-    (to be used as subject or object of an RDF triple)
-    Prefix for all labels (e.g. first part of an URI)"""
+    """externalModel --
+    Reference to external model / ontology / schema
+      
+    * externalId --
+      E.g. an RDF resource identifier
+      (to be used as subject or object of an RDF triple)
+      
+    * prefix --
+      Prefix for all labels (e.g. first part of an URI)
+      
+    * Label --
+      A semantic label / tag
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('externalModel', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('externalId', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('prefix', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('externalModel', 'string', 0, 1, {'use': 'optional', 'name': 'externalModel'}),
+        MemberSpec_('externalId', 'string', 0, 1, {'use': 'optional', 'name': 'externalId'}),
+        MemberSpec_('prefix', 'string', 0, 1, {'use': 'optional', 'name': 'prefix'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('Label', 'LabelType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Label', 'type': 'LabelType'}, None),
     ]
     subclass = None
@@ -1752,7 +2283,7 @@ class LabelsType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.externalModel = _cast(None, externalModel)
         self.externalModel_nsprefix_ = "pc"
         self.externalId = _cast(None, externalId)
@@ -1807,7 +2338,7 @@ class LabelsType(GeneratedsSuper):
         return self.comments
     def set_comments(self, comments):
         self.comments = comments
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Label
         ):
@@ -1829,15 +2360,15 @@ class LabelsType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelsType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelsType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelsType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelsType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LabelsType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LabelsType'):
         if self.externalModel is not None and 'externalModel' not in already_processed:
             already_processed.add('externalModel')
             outfile.write(' externalModel=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.externalModel), input_name='externalModel')), ))
@@ -1850,7 +2381,7 @@ class LabelsType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelsType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -1858,7 +2389,7 @@ class LabelsType(GeneratedsSuper):
         for Label_ in self.Label:
             namespaceprefix_ = self.Label_nsprefix_ + ':' if (UseCapturedNS_ and self.Label_nsprefix_) else ''
             Label_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Label', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='LabelsType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='LabelsType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -1872,9 +2403,11 @@ class LabelsType(GeneratedsSuper):
         if self.comments is not None:
             element.set('comments', self.gds_format_string(self.comments))
         for Label_ in self.Label:
-            Label_.to_etree(element, name_='Label', mapping_=mapping_, nsmap_=nsmap_)
+            Label_.to_etree(element, name_='Label', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -1882,12 +2415,12 @@ class LabelsType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('externalModel', node)
         if value is not None and 'externalModel' not in already_processed:
             already_processed.add('externalModel')
@@ -1904,7 +2437,7 @@ class LabelsType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Label':
             obj_ = LabelType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -1916,18 +2449,23 @@ class LabelsType(GeneratedsSuper):
 
 
 class LabelType(GeneratedsSuper):
-    """Semantic label
+    """LabelType -- Semantic label
+    value --
     The label / tag (e.g. 'person').
     Can be an RDF resource identifier
     (e.g. object of an RDF triple).
-    Additional information on the label
-    (e.g. 'YYYY-mm-dd' for a date label).
-    Can be used as predicate of an RDF triple."""
+      
+    * type --
+      Additional information on the label
+      (e.g. 'YYYY-mm-dd' for a date label).
+      Can be used as predicate of an RDF triple.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('value', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('value', 'string', 0, 0, {'use': 'required', 'name': 'value'}),
+        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
     ]
     subclass = None
     superclass = None
@@ -1936,7 +2474,7 @@ class LabelType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.value = _cast(None, value)
         self.value_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -1970,7 +2508,7 @@ class LabelType(GeneratedsSuper):
         return self.comments
     def set_comments(self, comments):
         self.comments = comments
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -1992,14 +2530,14 @@ class LabelType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LabelType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LabelType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LabelType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LabelType'):
         if self.value is not None and 'value' not in already_processed:
             already_processed.add('value')
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
@@ -2009,9 +2547,9 @@ class LabelType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LabelType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='LabelType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='LabelType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -2024,6 +2562,8 @@ class LabelType(GeneratedsSuper):
             element.set('comments', self.gds_format_string(self.comments))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -2031,12 +2571,12 @@ class LabelType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('value', node)
         if value is not None and 'value' not in already_processed:
             already_processed.add('value')
@@ -2049,7 +2589,7 @@ class LabelType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -2057,57 +2597,102 @@ class LabelType(GeneratedsSuper):
 
 
 class PageType(GeneratedsSuper):
-    """Contains the image file name including the file extension.
-    Specifies the width of the image.Specifies the height of the
-    image.Specifies the image resolution in width.Specifies the image
-    resolution in height.
-    Specifies the unit of the resolution information
-    referring to a standardised unit of measurement
-    (pixels per inch, pixels per centimeter or other).
-    For generic use
-    The angle the rectangle encapsulating the page
-    (or its Border) has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    (The rotated image can be further referenced
-    via “AlternativeImage”.)
-    Range: -179.999,180
-    The type of the page within the document
-    (e.g. cover page).
-    The primary language used in the page
-    (lower-level definitions override the page-level definition).
-    The secondary language used in the page
-    (lower-level definitions override the page-level definition).
-    The primary script used in the page
-    (lower-level definitions override the page-level definition).
-    The secondary script used in the page
-    (lower-level definitions override the page-level definition).
-    The direction in which text within lines
-    should be read (order of words and characters),
-    in addition to “textLineOrder”
-    (lower-level definitions override the page-level definition).
-    The order of text lines within a block,
-    in addition to “readingDirection”
-    (lower-level definitions override the page-level definition).
-    Confidence value for whole page (between 0 and 1)"""
+    """imageFilename --
+    Contains the image file name including the file extension.
+      
+    * imageWidth -- Specifies the width of the image.
+    * imageHeight -- Specifies the height of the image.
+    * imageXResolution -- Specifies the image resolution in width.
+    * imageYResolution -- Specifies the image resolution in height.
+    * imageResolutionUnit --
+      Specifies the unit of the resolution information
+      referring to a standardised unit of measurement
+      (pixels per inch, pixels per centimeter or other).
+      
+    * custom -- For generic use
+    * orientation --
+      The angle the rectangle encapsulating the page
+      (or its Border)	has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      (The rotated image can be further referenced
+      via
+      “
+      AlternativeImage
+      ”
+      .)
+      Range: -179.999,180
+      
+    * type --
+      The type of the page within the document
+      (e.g. cover page).
+      
+    * primaryLanguage --
+      The primary language used in the page
+      (lower-level definitions override the page-level definition).
+      
+    * secondaryLanguage --
+      The secondary language used in the page
+      (lower-level definitions override the page-level definition).
+      
+    * primaryScript --
+      The primary script used in the page
+      (lower-level definitions override the page-level definition).
+      
+    * secondaryScript --
+      The secondary script used in the page
+      (lower-level definitions override the page-level definition).
+      
+    * readingDirection --
+      The direction in which text within lines
+      should be read (order of words and characters),
+      in addition to
+      “
+      textLineOrder
+      ”
+      (lower-level definitions override the page-level definition).
+      
+    * textLineOrder --
+      The order of text lines within a block,
+      in addition to
+      “
+      readingDirection
+      ”
+      (lower-level definitions override the page-level definition).
+      
+    * conf -- Confidence value for whole page (between 0 and 1)
+    * AlternativeImage --
+      Alternative document page images
+      (e.g. black-and-white).
+      
+    * ReadingOrder -- Order of blocks within the page.
+    * Layers --
+      Unassigned regions are considered to be in the
+      (virtual) default layer which is to be treated
+      as below any other layers.
+      
+    * TextStyle -- Default text style
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('imageFilename', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('imageWidth', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('imageHeight', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('imageXResolution', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('imageYResolution', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('imageResolutionUnit', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:PageTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('secondaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('textLineOrder', 'pc:TextLineOrderSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('imageFilename', 'string', 0, 0, {'use': 'required', 'name': 'imageFilename'}),
+        MemberSpec_('imageWidth', 'int', 0, 0, {'use': 'required', 'name': 'imageWidth'}),
+        MemberSpec_('imageHeight', 'int', 0, 0, {'use': 'required', 'name': 'imageHeight'}),
+        MemberSpec_('imageXResolution', 'float', 0, 1, {'use': 'optional', 'name': 'imageXResolution'}),
+        MemberSpec_('imageYResolution', 'float', 0, 1, {'use': 'optional', 'name': 'imageYResolution'}),
+        MemberSpec_('imageResolutionUnit', 'imageResolutionUnitType', 0, 1, {'use': 'optional', 'name': 'imageResolutionUnit'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('type_', 'pc:PageTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional', 'name': 'primaryLanguage'}),
+        MemberSpec_('secondaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional', 'name': 'secondaryLanguage'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'primaryScript'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'secondaryScript'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional', 'name': 'readingDirection'}),
+        MemberSpec_('textLineOrder', 'pc:TextLineOrderSimpleType', 0, 1, {'use': 'optional', 'name': 'textLineOrder'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional', 'name': 'conf'}),
         MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
         MemberSpec_('Border', 'BorderType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Border', 'type': 'BorderType'}, None),
         MemberSpec_('PrintSpace', 'PrintSpaceType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'PrintSpace', 'type': 'PrintSpaceType'}, None),
@@ -2140,7 +2725,7 @@ class PageType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.imageFilename = _cast(None, imageFilename)
         self.imageFilename_nsprefix_ = "pc"
         self.imageWidth = _cast(int, imageWidth)
@@ -2549,6 +3134,19 @@ class PageType(GeneratedsSuper):
         return self.conf
     def set_conf(self, conf):
         self.conf = conf
+    def validate_imageResolutionUnitType(self, value):
+        # Validate type imageResolutionUnitType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['PPI', 'PPCM', 'other']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on imageResolutionUnitType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
     def validate_PageTypeSimpleType(self, value):
         # Validate type pc:PageTypeSimpleType, a restriction on string.
         if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
@@ -2629,7 +3227,7 @@ class PageType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd maxInclusive restriction on ConfSimpleType' % {"value": value, "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.AlternativeImage or
             self.Border is not None or
@@ -2674,15 +3272,15 @@ class PageType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PageType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PageType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PageType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PageType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PageType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PageType'):
         if self.imageFilename is not None and 'imageFilename' not in already_processed:
             already_processed.add('imageFilename')
             outfile.write(' imageFilename=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.imageFilename), input_name='imageFilename')), ))
@@ -2731,7 +3329,7 @@ class PageType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PageType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PageType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -2808,7 +3406,7 @@ class PageType(GeneratedsSuper):
         for CustomRegion_ in self.CustomRegion:
             namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='PageType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='PageType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -2846,62 +3444,64 @@ class PageType(GeneratedsSuper):
         if self.conf is not None:
             element.set('conf', self.gds_format_float(self.conf))
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Border is not None:
             Border_ = self.Border
-            Border_.to_etree(element, name_='Border', mapping_=mapping_, nsmap_=nsmap_)
+            Border_.to_etree(element, name_='Border', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.PrintSpace is not None:
             PrintSpace_ = self.PrintSpace
-            PrintSpace_.to_etree(element, name_='PrintSpace', mapping_=mapping_, nsmap_=nsmap_)
+            PrintSpace_.to_etree(element, name_='PrintSpace', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.ReadingOrder is not None:
             ReadingOrder_ = self.ReadingOrder
-            ReadingOrder_.to_etree(element, name_='ReadingOrder', mapping_=mapping_, nsmap_=nsmap_)
+            ReadingOrder_.to_etree(element, name_='ReadingOrder', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Layers is not None:
             Layers_ = self.Layers
-            Layers_.to_etree(element, name_='Layers', mapping_=mapping_, nsmap_=nsmap_)
+            Layers_.to_etree(element, name_='Layers', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Relations is not None:
             Relations_ = self.Relations
-            Relations_.to_etree(element, name_='Relations', mapping_=mapping_, nsmap_=nsmap_)
+            Relations_.to_etree(element, name_='Relations', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
             TextStyle_ = self.TextStyle
-            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TextRegion_ in self.TextRegion:
-            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for ImageRegion_ in self.ImageRegion:
-            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for LineDrawingRegion_ in self.LineDrawingRegion:
-            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for GraphicRegion_ in self.GraphicRegion:
-            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TableRegion_ in self.TableRegion:
-            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for ChartRegion_ in self.ChartRegion:
-            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for MapRegion_ in self.MapRegion:
-            MapRegion_.to_etree(element, name_='MapRegion', mapping_=mapping_, nsmap_=nsmap_)
+            MapRegion_.to_etree(element, name_='MapRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for SeparatorRegion_ in self.SeparatorRegion:
-            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for MathsRegion_ in self.MathsRegion:
-            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for ChemRegion_ in self.ChemRegion:
-            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for MusicRegion_ in self.MusicRegion:
-            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for AdvertRegion_ in self.AdvertRegion:
-            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for NoiseRegion_ in self.NoiseRegion:
-            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for UnknownRegion_ in self.UnknownRegion:
-            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for CustomRegion_ in self.CustomRegion:
-            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -2909,12 +3509,12 @@ class PageType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('imageFilename', node)
         if value is not None and 'imageFilename' not in already_processed:
             already_processed.add('imageFilename')
@@ -2941,6 +3541,7 @@ class PageType(GeneratedsSuper):
         if value is not None and 'imageResolutionUnit' not in already_processed:
             already_processed.add('imageResolutionUnit')
             self.imageResolutionUnit = value
+            self.validate_imageResolutionUnitType(self.imageResolutionUnit)    # validate type imageResolutionUnitType
         value = find_attr_value_('custom', node)
         if value is not None and 'custom' not in already_processed:
             already_processed.add('custom')
@@ -2991,7 +3592,7 @@ class PageType(GeneratedsSuper):
             value = self.gds_parse_float(value, node, 'conf')
             self.conf = value
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'AlternativeImage':
             obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -3116,9 +3717,10 @@ class PageType(GeneratedsSuper):
         return hash(self.id)
     @property
     def id(self):
+        from ocrd_utils import make_xml_id
         if hasattr(self, 'pcGtsId'):
             return self.pcGtsId or ''
-        return self.imageFilename
+        return make_xml_id(self.imageFilename)
     # pylint: disable=line-too-long,invalid-name,protected-access,missing-module-docstring
     def _region_class(self, x): # pylint: disable=unused-argument
         return x.__class__.__name__.replace('RegionType', '')
@@ -3314,6 +3916,39 @@ class PageType(GeneratedsSuper):
                 ret += lines if lo in ['top-to-bottom', 'left-to-right'] else list(reversed(lines))
         return ret
     
+    def get_ReadingOrderGroups(self) -> dict:
+        """
+        Aggregate recursive ReadingOrder into a dictionary, mapping each regionRef
+        (i.e. segment `@id`) to its referring group object (i.e one of
+    
+        \b
+        - :py:class:`.RegionRefType`
+        - :py:class:`.RegionRefIndexedType`
+        - :py:class:`.OrderedGroupType`
+        - :py:class:`.OrderedGroupIndexedType`
+        - :py:class:`.UnoderedGroupType`
+        - :py:class:`.UnoderedGroupIndexedType`
+        """
+        def get_groupdict(group):
+            regionrefs = list()
+            if isinstance(group, (OrderedGroupType, OrderedGroupIndexedType)):
+                regionrefs = (group.get_RegionRefIndexed() +
+                              group.get_OrderedGroupIndexed() +
+                              group.get_UnorderedGroupIndexed())
+            if isinstance(group, (UnorderedGroupType, UnorderedGroupIndexedType)):
+                regionrefs = (group.get_RegionRef() +
+                              group.get_OrderedGroup() +
+                              group.get_UnorderedGroup())
+            refdict = {}
+            for elem in regionrefs:
+                refdict[elem.get_regionRef()] = elem
+                if not isinstance(elem, (RegionRefType, RegionRefIndexedType)):
+                    refdict = {**refdict, **get_groupdict(elem)}
+            return refdict
+        ro = self.get_ReadingOrder()
+        if ro is None:
+            return {}
+        return get_groupdict(ro.get_OrderedGroup() or ro.get_UnorderedGroup())
     def set_orientation(self, orientation):
         """
         Set deskewing angle to given `orientation` number.
@@ -3329,18 +3964,22 @@ class PageType(GeneratedsSuper):
 
 
 class CoordsType(GeneratedsSuper):
-    """Polygon outline of the element as a path of points.
+    """points --
+    Polygon outline of the element as a path of points.
     No points may lie outside the outline of its parent,
     which in the case of Border is the bounding rectangle
     of the root image. Paths are closed by convention,
     i.e. the last point logically connects with the first
     (and at least 3 points are required to span an area).
     Paths must be planar (i.e. must not self-intersect).
-    Confidence value (between 0 and 1)"""
+      
+    * conf -- Confidence value (between 0 and 1)
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required'}),
-        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required', 'name': 'points'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional', 'name': 'conf'}),
     ]
     subclass = None
     superclass = None
@@ -3349,7 +3988,7 @@ class CoordsType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.points = _cast(None, points)
         self.points_nsprefix_ = "pc"
         self.conf = _cast(float, conf)
@@ -3403,7 +4042,7 @@ class CoordsType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd maxInclusive restriction on ConfSimpleType' % {"value": value, "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -3425,23 +4064,23 @@ class CoordsType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CoordsType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CoordsType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='CoordsType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='CoordsType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='CoordsType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='CoordsType'):
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CoordsType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='CoordsType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='CoordsType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -3452,6 +4091,8 @@ class CoordsType(GeneratedsSuper):
             element.set('conf', self.gds_format_float(self.conf))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -3459,12 +4100,12 @@ class CoordsType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('points', node)
         if value is not None and 'points' not in already_processed:
             already_processed.add('points')
@@ -3476,7 +4117,7 @@ class CoordsType(GeneratedsSuper):
             value = self.gds_parse_float(value, node, 'conf')
             self.conf = value
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -3500,28 +4141,51 @@ class CoordsType(GeneratedsSuper):
 
 
 class TextLineType(GeneratedsSuper):
-    """Overrides primaryLanguage attribute of parent text
+    """primaryLanguage --
+    Overrides primaryLanguage attribute of parent text
     region
-    The primary script used in the text line
-    The secondary script used in the text line
-    The direction in which text within the line
-    should be read (order of words and characters).
-    Overrides the production attribute of the parent
-    text region
-    For generic use
-    Position (order number) of this text line within the
-    parent text region."""
+      
+    * primaryScript --
+      The primary script used in the text line
+      
+    * secondaryScript --
+      The secondary script used in the text line
+      
+    * readingDirection --
+      The direction in which text within the line
+      should be read (order of words and characters).
+      
+    * production --
+      Overrides the production attribute of the parent
+      text region
+      
+    * custom -- For generic use
+    * index --
+      Position (order number) of this text line within the
+      parent text region.
+      
+    * AlternativeImage --
+      Alternative text line images (e.g.
+      black-and-white)
+      
+    * Baseline --
+      Multiple connected points that mark the baseline
+      of the glyphs
+      
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('index', 'int', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional', 'name': 'primaryLanguage'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'primaryScript'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'secondaryScript'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional', 'name': 'readingDirection'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional', 'name': 'production'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
+        MemberSpec_('index', 'int', 0, 1, {'use': 'optional', 'name': 'index'}),
         MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
         MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
         MemberSpec_('Baseline', 'BaselineType', 0, 1, {'minOccurs': '0', 'name': 'Baseline', 'type': 'BaselineType'}, None),
@@ -3538,7 +4202,7 @@ class TextLineType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.primaryLanguage = _cast(None, primaryLanguage)
@@ -3744,7 +4408,7 @@ class TextLineType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ProductionSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.AlternativeImage or
             self.Coords is not None or
@@ -3773,15 +4437,15 @@ class TextLineType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextLineType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextLineType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextLineType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextLineType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextLineType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextLineType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -3809,7 +4473,7 @@ class TextLineType(GeneratedsSuper):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextLineType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextLineType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -3838,7 +4502,7 @@ class TextLineType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='TextLineType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='TextLineType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -3862,27 +4526,29 @@ class TextLineType(GeneratedsSuper):
         if self.index is not None:
             element.set('index', self.gds_format_integer(self.index))
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
             Coords_ = self.Coords
-            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Baseline is not None:
             Baseline_ = self.Baseline
-            Baseline_.to_etree(element, name_='Baseline', mapping_=mapping_, nsmap_=nsmap_)
+            Baseline_.to_etree(element, name_='Baseline', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Word_ in self.Word:
-            Word_.to_etree(element, name_='Word', mapping_=mapping_, nsmap_=nsmap_)
+            Word_.to_etree(element, name_='Word', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
             TextStyle_ = self.TextStyle
-            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -3890,12 +4556,12 @@ class TextLineType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -3937,7 +4603,7 @@ class TextLineType(GeneratedsSuper):
         if value is not None and 'index' not in already_processed:
             already_processed.add('index')
             self.index = self.gds_parse_integer(value, node, 'index')
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'AlternativeImage':
             obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -4029,25 +4695,42 @@ class TextLineType(GeneratedsSuper):
 
 
 class WordType(GeneratedsSuper):
-    """Overrides primaryLanguage attribute of parent line
+    """language --
+    Overrides primaryLanguage attribute of parent line
     and/or text region
-    The primary script used in the word
-    The secondary script used in the word
-    The direction in which text within the word
-    should be read (order of characters).
-    Overrides the production attribute of the parent
-    text line and/or text region.
-    For generic use"""
+      
+    * primaryScript --
+      The primary script used in the word
+      
+    * secondaryScript --
+      The secondary script used in the word
+      
+    * readingDirection --
+      The direction in which text within the word
+      should be read (order of characters).
+      
+    * production --
+      Overrides the production attribute of the parent
+      text line and/or text region.
+      
+    * custom -- For generic use
+    * AlternativeImage --
+      Alternative word images (e.g.
+      black-and-white)
+      
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('language', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('language', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional', 'name': 'language'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'primaryScript'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'secondaryScript'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional', 'name': 'readingDirection'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional', 'name': 'production'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
         MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
         MemberSpec_('Glyph', 'GlyphType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Glyph', 'type': 'GlyphType'}, None),
@@ -4063,7 +4746,7 @@ class WordType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.language = _cast(None, language)
@@ -4257,7 +4940,7 @@ class WordType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ProductionSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.AlternativeImage or
             self.Coords is not None or
@@ -4285,15 +4968,15 @@ class WordType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='WordType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='WordType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='WordType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='WordType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='WordType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='WordType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -4318,7 +5001,7 @@ class WordType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='WordType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='WordType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -4344,7 +5027,7 @@ class WordType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='WordType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='WordType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -4366,24 +5049,26 @@ class WordType(GeneratedsSuper):
         if self.comments is not None:
             element.set('comments', self.gds_format_string(self.comments))
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
             Coords_ = self.Coords
-            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Glyph_ in self.Glyph:
-            Glyph_.to_etree(element, name_='Glyph', mapping_=mapping_, nsmap_=nsmap_)
+            Glyph_.to_etree(element, name_='Glyph', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
             TextStyle_ = self.TextStyle
-            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -4391,12 +5076,12 @@ class WordType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -4434,7 +5119,7 @@ class WordType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'AlternativeImage':
             obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -4521,19 +5206,34 @@ class WordType(GeneratedsSuper):
 
 
 class GlyphType(GeneratedsSuper):
-    """The script used for the glyph
-    Overrides the production attribute of the parent
-    word / text line / text region.
-    For generic use"""
+    """script --
+    The script used for the glyph
+      
+    * production --
+      Overrides the production attribute of the parent
+      word / text line / text region.
+      
+    * custom -- For generic use
+    * AlternativeImage --
+      Alternative glyph images (e.g.
+      black-and-white)
+      
+    * Graphemes --
+      Container for graphemes, grapheme groups and
+      non-printing characters
+      
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('ligature', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('symbol', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('script', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('ligature', 'boolean', 0, 1, {'use': 'optional', 'name': 'ligature'}),
+        MemberSpec_('symbol', 'boolean', 0, 1, {'use': 'optional', 'name': 'symbol'}),
+        MemberSpec_('script', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'script'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional', 'name': 'production'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
         MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
         MemberSpec_('Graphemes', 'GraphemesType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Graphemes', 'type': 'GraphemesType'}, None),
@@ -4549,7 +5249,7 @@ class GlyphType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.ligature = _cast(bool, ligature)
@@ -4702,7 +5402,7 @@ class GlyphType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ProductionSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.AlternativeImage or
             self.Coords is not None or
@@ -4730,15 +5430,15 @@ class GlyphType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GlyphType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GlyphType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GlyphType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GlyphType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GlyphType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GlyphType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -4760,7 +5460,7 @@ class GlyphType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GlyphType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GlyphType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -4786,7 +5486,7 @@ class GlyphType(GeneratedsSuper):
         for Labels_ in self.Labels:
             namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='GlyphType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='GlyphType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -4806,25 +5506,27 @@ class GlyphType(GeneratedsSuper):
         if self.comments is not None:
             element.set('comments', self.gds_format_string(self.comments))
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
             Coords_ = self.Coords
-            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Graphemes is not None:
             Graphemes_ = self.Graphemes
-            Graphemes_.to_etree(element, name_='Graphemes', mapping_=mapping_, nsmap_=nsmap_)
+            Graphemes_.to_etree(element, name_='Graphemes', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
             TextStyle_ = self.TextStyle
-            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -4832,12 +5534,12 @@ class GlyphType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -4878,7 +5580,7 @@ class GlyphType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'AlternativeImage':
             obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -4965,22 +5667,40 @@ class GlyphType(GeneratedsSuper):
 
 
 class TextEquivType(GeneratedsSuper):
-    """Used for sort order in case multiple TextEquivs are defined.
+    """index --
+    Used for sort order in case multiple TextEquivs are defined.
     The text content with the lowest index should be interpreted
     as the main text content.
-    OCR confidence value (between 0 and 1)
-    Type of text content (is it free text or a number, for instance).
-    This is only a descriptive attribute, the text type
-    is not checked during XML validation.
-    Refinement for dataType attribute. Can be a regular expression, for
-    instance."""
+      
+    * conf -- OCR confidence value (between 0 and 1)
+    * dataType --
+      Type of text content (is it free text or a number, for instance).
+      This is only a descriptive attribute, the text type
+      is not checked during XML validation.
+      
+    * dataTypeDetails --
+      Refinement for dataType attribute. Can be a regular expression, for instance.
+      
+    * PlainText --
+      Text in a "simple" form (ASCII or extended ASCII
+      as mostly used for typing). I.e. no use of
+      special characters for ligatures (should be
+      stored as two separate characters) etc.
+      
+    * Unicode --
+      Correct encoding of the original, always using
+      the corresponding Unicode code point. I.e.
+      ligatures have to be represented as one
+      character etc.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('index', 'integer', 0, 1, {'use': 'optional'}),
-        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('dataType', 'pc:TextDataTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('dataTypeDetails', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('index', 'indexType', 0, 1, {'use': 'optional', 'name': 'index'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional', 'name': 'conf'}),
+        MemberSpec_('dataType', 'pc:TextDataTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'dataType'}),
+        MemberSpec_('dataTypeDetails', 'string', 0, 1, {'use': 'optional', 'name': 'dataTypeDetails'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('PlainText', 'string', 0, 1, {'minOccurs': '0', 'name': 'PlainText', 'type': 'string'}, None),
         MemberSpec_('Unicode', 'string', 0, 0, {'name': 'Unicode', 'type': 'string'}, None),
     ]
@@ -5049,6 +5769,17 @@ class TextEquivType(GeneratedsSuper):
         return self.comments
     def set_comments(self, comments):
         self.comments = comments
+    def validate_indexType(self, value):
+        # Validate type indexType, a restriction on integer.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, int):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (int)' % {"value": value, "lineno": lineno, })
+                return False
+            if value < 0:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd minInclusive restriction on indexType' % {"value": value, "lineno": lineno} )
+                result = False
     def validate_ConfSimpleType(self, value):
         # Validate type pc:ConfSimpleType, a restriction on float.
         if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
@@ -5077,7 +5808,7 @@ class TextEquivType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on TextDataTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.PlainText is not None or
             self.Unicode is not None
@@ -5100,15 +5831,15 @@ class TextEquivType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextEquivType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextEquivType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextEquivType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextEquivType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextEquivType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextEquivType'):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
@@ -5124,7 +5855,7 @@ class TextEquivType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='TextEquivType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15" xmlns:None="http://www.w3.org/2001/XMLSchema" ', name_='TextEquivType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5137,7 +5868,7 @@ class TextEquivType(GeneratedsSuper):
             namespaceprefix_ = self.Unicode_nsprefix_ + ':' if (UseCapturedNS_ and self.Unicode_nsprefix_) else ''
             showIndent(outfile, level, pretty_print)
             outfile.write('<%sUnicode>%s</%sUnicode>%s' % (namespaceprefix_ , self.gds_encode(self.gds_format_string(quote_xml(self.Unicode), input_name='Unicode')), namespaceprefix_ , eol_))
-    def to_etree(self, parent_element=None, name_='TextEquivType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='TextEquivType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -5160,6 +5891,8 @@ class TextEquivType(GeneratedsSuper):
             etree_.SubElement(element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}Unicode').text = self.gds_format_string(Unicode_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -5167,16 +5900,17 @@ class TextEquivType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('index', node)
         if value is not None and 'index' not in already_processed:
             already_processed.add('index')
             self.index = self.gds_parse_integer(value, node, 'index')
+            self.validate_indexType(self.index)    # validate type indexType
         value = find_attr_value_('conf', node)
         if value is not None and 'conf' not in already_processed:
             already_processed.add('conf')
@@ -5196,7 +5930,7 @@ class TextEquivType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'PlainText':
             value_ = child_.text
             value_ = self.gds_parse_string(value_, node, 'PlainText')
@@ -5215,7 +5949,15 @@ class TextEquivType(GeneratedsSuper):
 
 
 class GridType(GeneratedsSuper):
-    """Matrix of grid points defining the table grid on the page."""
+    """GridType --
+    Matrix of grid points defining the table grid on the page.
+      
+    * GridPoints --
+      One row in the grid point matrix.
+      Points with x,y coordinates.
+      (note: for a table with n table rows there should be n+1 grid rows)
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('GridPoints', 'GridPointsType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '2', 'name': 'GridPoints', 'type': 'GridPointsType'}, None),
@@ -5227,7 +5969,7 @@ class GridType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         if GridPoints is None:
             self.GridPoints = []
         else:
@@ -5258,7 +6000,7 @@ class GridType(GeneratedsSuper):
         self.GridPoints.insert(index, value)
     def replace_GridPoints_at(self, index, value):
         self.GridPoints[index] = value
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.GridPoints
         ):
@@ -5280,17 +6022,17 @@ class GridType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GridType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GridType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5298,15 +6040,17 @@ class GridType(GeneratedsSuper):
         for GridPoints_ in self.GridPoints:
             namespaceprefix_ = self.GridPoints_nsprefix_ + ':' if (UseCapturedNS_ and self.GridPoints_nsprefix_) else ''
             GridPoints_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GridPoints', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='GridType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='GridType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for GridPoints_ in self.GridPoints:
-            GridPoints_.to_etree(element, name_='GridPoints', mapping_=mapping_, nsmap_=nsmap_)
+            GridPoints_.to_etree(element, name_='GridPoints', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -5314,14 +6058,14 @@ class GridType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'GridPoints':
             obj_ = GridPointsType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -5333,12 +6077,15 @@ class GridType(GeneratedsSuper):
 
 
 class GridPointsType(GeneratedsSuper):
-    """Points with x,y coordinates.
-    The grid row index"""
+    """GridPointsType -- Points with x,y coordinates.
+    index --
+    The grid row index
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required'}),
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required', 'name': 'index'}),
+        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required', 'name': 'points'}),
     ]
     subclass = None
     superclass = None
@@ -5347,7 +6094,7 @@ class GridPointsType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.index = _cast(int, index)
         self.index_nsprefix_ = "pc"
         self.points = _cast(None, points)
@@ -5386,7 +6133,7 @@ class GridPointsType(GeneratedsSuper):
                     self.validate_PointsType_patterns_, value):
                 self.gds_collector_.add_message('Value "%s" does not match xsd pattern restrictions: %s' % (encode_str_2_3(value), self.validate_PointsType_patterns_, ))
     validate_PointsType_patterns_ = [['^(([0-9]+,[0-9]+ )+([0-9]+,[0-9]+))$']]
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -5408,23 +6155,23 @@ class GridPointsType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridPointsType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GridPointsType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridPointsType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GridPointsType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GridPointsType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GridPointsType'):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GridPointsType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='GridPointsType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='GridPointsType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -5435,6 +6182,8 @@ class GridPointsType(GeneratedsSuper):
             element.set('points', self.gds_format_string(self.points))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -5442,12 +6191,12 @@ class GridPointsType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('index', node)
         if value is not None and 'index' not in already_processed:
             already_processed.add('index')
@@ -5457,7 +6206,7 @@ class GridPointsType(GeneratedsSuper):
             already_processed.add('points')
             self.points = value
             self.validate_PointsType(self.points)    # validate type PointsType
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -5465,13 +6214,16 @@ class GridPointsType(GeneratedsSuper):
 
 
 class PrintSpaceType(GeneratedsSuper):
-    """Determines the effective area on the paper of a printed page.
+    """PrintSpaceType --
+    Determines the effective area on the paper of a printed page.
     Its size is equal for all pages of a book
     (exceptions: titlepage, multipage pictures).
     It contains all living elements (except marginals)
     like body type, footnotes, headings, running titles.
     It does not contain pagenumber (if not part of running title),
-    marginals, signature mark, preview words."""
+    marginals, signature mark, preview words.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
@@ -5483,7 +6235,7 @@ class PrintSpaceType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.Coords = Coords
         self.Coords_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -5505,7 +6257,7 @@ class PrintSpaceType(GeneratedsSuper):
         return self.Coords
     def set_Coords(self, Coords):
         self.Coords = Coords
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Coords is not None
         ):
@@ -5527,17 +6279,17 @@ class PrintSpaceType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PrintSpaceType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='PrintSpaceType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PrintSpaceType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='PrintSpaceType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PrintSpaceType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='PrintSpaceType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PrintSpaceType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='PrintSpaceType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5545,16 +6297,18 @@ class PrintSpaceType(GeneratedsSuper):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='PrintSpaceType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='PrintSpaceType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         if self.Coords is not None:
             Coords_ = self.Coords
-            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -5562,14 +6316,14 @@ class PrintSpaceType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Coords':
             obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -5581,14 +6335,18 @@ class PrintSpaceType(GeneratedsSuper):
 
 
 class ReadingOrderType(GeneratedsSuper):
-    """Definition of the reading order within the page.
+    """ReadingOrderType --
+    Definition of the reading order within the page.
     To express a reading order between elements
     they have to be included in an OrderedGroup.
     Groups may contain further groups.
-    Confidence value (between 0 and 1)"""
+      
+    * conf -- Confidence value (between 0 and 1)
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional', 'name': 'conf'}),
         MemberSpec_('OrderedGroup', 'OrderedGroupType', 0, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 2),
         MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 0, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 2),
     ]
@@ -5599,7 +6357,7 @@ class ReadingOrderType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.conf = _cast(float, conf)
         self.conf_nsprefix_ = "pc"
         self.OrderedGroup = OrderedGroup
@@ -5648,7 +6406,7 @@ class ReadingOrderType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd maxInclusive restriction on ConfSimpleType' % {"value": value, "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.OrderedGroup is not None or
             self.UnorderedGroup is not None
@@ -5671,19 +6429,19 @@ class ReadingOrderType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ReadingOrderType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ReadingOrderType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ReadingOrderType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ReadingOrderType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ReadingOrderType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ReadingOrderType'):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ReadingOrderType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -5694,7 +6452,7 @@ class ReadingOrderType(GeneratedsSuper):
         if self.UnorderedGroup is not None:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             self.UnorderedGroup.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='ReadingOrderType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='ReadingOrderType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -5703,12 +6461,14 @@ class ReadingOrderType(GeneratedsSuper):
             element.set('conf', self.gds_format_float(self.conf))
         if self.OrderedGroup is not None:
             OrderedGroup_ = self.OrderedGroup
-            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.UnorderedGroup is not None:
             UnorderedGroup_ = self.UnorderedGroup
-            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -5716,19 +6476,19 @@ class ReadingOrderType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('conf', node)
         if value is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             value = self.gds_parse_float(value, node, 'conf')
             self.conf = value
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'OrderedGroup':
             obj_ = OrderedGroupType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -5745,12 +6505,14 @@ class ReadingOrderType(GeneratedsSuper):
 
 
 class RegionRefIndexedType(GeneratedsSuper):
-    """Numbered regionPosition (order number) of this item within the current
-    hierarchy level."""
+    """RegionRefIndexedType -- Numbered region
+    index -- Position (order number) of this item within the current hierarchy level.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required', 'name': 'index'}),
+        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required', 'name': 'regionRef'}),
     ]
     subclass = None
     superclass = None
@@ -5759,7 +6521,7 @@ class RegionRefIndexedType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.index = _cast(int, index)
         self.index_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
@@ -5787,7 +6549,7 @@ class RegionRefIndexedType(GeneratedsSuper):
         return self.regionRef
     def set_regionRef(self, regionRef):
         self.regionRef = regionRef
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -5809,23 +6571,23 @@ class RegionRefIndexedType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefIndexedType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefIndexedType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefIndexedType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefIndexedType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefIndexedType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefIndexedType'):
         if self.index is not None and 'index' not in already_processed:
             already_processed.add('index')
             outfile.write(' index="%s"' % self.gds_format_integer(self.index, input_name='index'))
         if self.regionRef is not None and 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefIndexedType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='RegionRefIndexedType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='RegionRefIndexedType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -5836,6 +6598,8 @@ class RegionRefIndexedType(GeneratedsSuper):
             element.set('regionRef', self.gds_format_string(self.regionRef))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -5843,12 +6607,12 @@ class RegionRefIndexedType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('index', node)
         if value is not None and 'index' not in already_processed:
             already_processed.add('index')
@@ -5857,7 +6621,7 @@ class RegionRefIndexedType(GeneratedsSuper):
         if value is not None and 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             self.regionRef = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -5865,25 +6629,36 @@ class RegionRefIndexedType(GeneratedsSuper):
 
 
 class OrderedGroupIndexedType(GeneratedsSuper):
-    """Indexed group containing ordered elements
-    Optional link to a parent region of nested regions.
-    The parent region doubles as reading order group.
-    Only the nested regions should be allowed as group members.
-    Position (order number) of this item within the
-    current hierarchy level.
-    Is this group a continuation of another group (from
-    previous column or page, for example)?
-    For generic use"""
+    """OrderedGroupIndexedType --
+    Indexed group containing ordered elements
+      
+    * regionRef --
+      Optional link to a parent region of nested regions.
+      The parent region doubles as reading order group.
+      Only the nested regions should be allowed as group members.
+      
+    * index --
+      Position (order number) of this item within the
+      current hierarchy level.
+      
+    * continuation --
+      Is this group a continuation of another group (from
+      previous column or page, for example)?
+      
+    * custom -- For generic use
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required', 'name': 'index'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
         MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 3),
@@ -5897,7 +6672,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
@@ -6040,7 +6815,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.UserDefined is not None or
             self.Labels or
@@ -6066,15 +6841,15 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupIndexedType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupIndexedType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupIndexedType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupIndexedType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupIndexedType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupIndexedType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -6099,7 +6874,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -6119,7 +6894,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='OrderedGroupIndexedType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='OrderedGroupIndexedType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -6142,17 +6917,19 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for RegionRefIndexed_ in self.RegionRefIndexed:
-            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -6160,12 +6937,12 @@ class OrderedGroupIndexedType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -6204,7 +6981,7 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'UserDefined':
             obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -6308,11 +7085,16 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         return self.get_AllIndexed()
     
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
-        namespaceprefix_ = 'pc:'
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
         if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         cleaned = []
         def replaceWithRRI(group):
@@ -6335,25 +7117,36 @@ class OrderedGroupIndexedType(GeneratedsSuper):
 
 
 class UnorderedGroupIndexedType(GeneratedsSuper):
-    """Indexed group containing unordered elements
-    Optional link to a parent region of nested regions.
-    The parent region doubles as reading order group.
-    Only the nested regions should be allowed as group members.
-    Position (order number) of this item within the
-    current hierarchy level.
-    Is this group a continuation of another group
-    (from previous column or page, for example)?
-    For generic use"""
+    """UnorderedGroupIndexedType --
+    Indexed group containing unordered elements
+      
+    * regionRef --
+      Optional link to a parent region of nested regions.
+      The parent region doubles as reading order group.
+      Only the nested regions should be allowed as group members.
+      
+    * index --
+      Position (order number) of this item within the
+      current hierarchy level.
+      
+    * continuation --
+      Is this group a continuation of another group
+      (from previous column or page, for example)?
+      
+    * custom -- For generic use
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
+        MemberSpec_('index', 'int', 0, 0, {'use': 'required', 'name': 'index'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
         MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 4),
@@ -6367,7 +7160,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
@@ -6510,7 +7303,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.UserDefined is not None or
             self.Labels or
@@ -6536,15 +7329,15 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupIndexedType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupIndexedType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupIndexedType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupIndexedType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupIndexedType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupIndexedType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -6569,7 +7362,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupIndexedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -6589,7 +7382,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         for UnorderedGroup_ in self.UnorderedGroup:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='UnorderedGroupIndexedType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='UnorderedGroupIndexedType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -6612,17 +7405,19 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for RegionRef_ in self.RegionRef:
-            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for OrderedGroup_ in self.OrderedGroup:
-            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for UnorderedGroup_ in self.UnorderedGroup:
-            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -6630,12 +7425,12 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -6674,7 +7469,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'UserDefined':
             obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -6715,7 +7510,7 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
 class RegionRefType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required'}),
+        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required', 'name': 'regionRef'}),
     ]
     subclass = None
     superclass = None
@@ -6724,7 +7519,7 @@ class RegionRefType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
         self.regionRef_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -6746,7 +7541,7 @@ class RegionRefType(GeneratedsSuper):
         return self.regionRef
     def set_regionRef(self, regionRef):
         self.regionRef = regionRef
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -6768,20 +7563,20 @@ class RegionRefType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefType'):
         if self.regionRef is not None and 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -6790,6 +7585,8 @@ class RegionRefType(GeneratedsSuper):
             element.set('regionRef', self.gds_format_string(self.regionRef))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -6797,17 +7594,17 @@ class RegionRefType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('regionRef', node)
         if value is not None and 'regionRef' not in already_processed:
             already_processed.add('regionRef')
             self.regionRef = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -6815,22 +7612,31 @@ class RegionRefType(GeneratedsSuper):
 
 
 class OrderedGroupType(GeneratedsSuper):
-    """Numbered group (contains ordered elements)
-    Optional link to a parent region of nested regions.
-    The parent region doubles as reading order group.
-    Only the nested regions should be allowed as group members.
-    Is this group a continuation of another group
-    (from previous column or page, for example)?
-    For generic use"""
+    """OrderedGroupType --
+    Numbered group (contains ordered elements)
+      
+    * regionRef --
+      Optional link to a parent region of nested regions.
+      The parent region doubles as reading order group.
+      Only the nested regions should be allowed as group members.
+      
+    * continuation --
+      Is this group a continuation of another group
+      (from previous column or page, for example)?
+      
+    * custom -- For generic use
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
         MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 5),
@@ -6844,7 +7650,7 @@ class OrderedGroupType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
@@ -6981,7 +7787,7 @@ class OrderedGroupType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.UserDefined is not None or
             self.Labels or
@@ -7007,15 +7813,15 @@ class OrderedGroupType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -7037,7 +7843,7 @@ class OrderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -7057,7 +7863,7 @@ class OrderedGroupType(GeneratedsSuper):
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
             namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
             UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -7078,17 +7884,19 @@ class OrderedGroupType(GeneratedsSuper):
             element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for RegionRefIndexed_ in self.RegionRefIndexed:
-            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, nsmap_=nsmap_)
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, nsmap_=nsmap_)
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -7096,12 +7904,12 @@ class OrderedGroupType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -7136,7 +7944,7 @@ class OrderedGroupType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'UserDefined':
             obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -7240,11 +8048,16 @@ class OrderedGroupType(GeneratedsSuper):
         return self.get_AllIndexed()
     
     # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
-        namespaceprefix_ = 'pc:'
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
         if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
             self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
         for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
             Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
         cleaned = []
         def replaceWithRRI(group):
@@ -7267,22 +8080,31 @@ class OrderedGroupType(GeneratedsSuper):
 
 
 class UnorderedGroupType(GeneratedsSuper):
-    """Numbered group (contains unordered elements)
-    Optional link to a parent region of nested regions.
-    The parent region doubles as reading order group.
-    Only the nested regions should be allowed as group members.
-    Is this group a continuation of another group
-    (from previous column or page, for example)?
-    For generic use"""
+    """UnorderedGroupType --
+    Numbered group (contains unordered elements)
+      
+    * regionRef --
+      Optional link to a parent region of nested regions.
+      The parent region doubles as reading order group.
+      Only the nested regions should be allowed as group members.
+      
+    * continuation --
+      Is this group a continuation of another group
+      (from previous column or page, for example)?
+      
+    * custom -- For generic use
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
         MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 6),
@@ -7296,7 +8118,7 @@ class UnorderedGroupType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.regionRef = _cast(None, regionRef)
@@ -7433,7 +8255,7 @@ class UnorderedGroupType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.UserDefined is not None or
             self.Labels or
@@ -7459,15 +8281,15 @@ class UnorderedGroupType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -7489,7 +8311,7 @@ class UnorderedGroupType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -7509,7 +8331,7 @@ class UnorderedGroupType(GeneratedsSuper):
         for UnorderedGroup_ in self.UnorderedGroup:
             namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
             UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -7530,17 +8352,19 @@ class UnorderedGroupType(GeneratedsSuper):
             element.set('comments', self.gds_format_string(self.comments))
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for RegionRef_ in self.RegionRef:
-            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for OrderedGroup_ in self.OrderedGroup:
-            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for UnorderedGroup_ in self.UnorderedGroup:
-            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, nsmap_=nsmap_)
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -7548,12 +8372,12 @@ class UnorderedGroupType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -7588,7 +8412,7 @@ class UnorderedGroupType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'UserDefined':
             obj_ = UserDefinedType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -7627,8 +8451,11 @@ class UnorderedGroupType(GeneratedsSuper):
 
 
 class BorderType(GeneratedsSuper):
-    """Border of the actual page (if the scanned image
-    contains parts not belonging to the page)."""
+    """BorderType --
+    Border of the actual page (if the scanned image
+    contains parts not belonging to the page).
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
@@ -7640,7 +8467,7 @@ class BorderType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.Coords = Coords
         self.Coords_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -7662,7 +8489,7 @@ class BorderType(GeneratedsSuper):
         return self.Coords
     def set_Coords(self, Coords):
         self.Coords = Coords
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Coords is not None
         ):
@@ -7684,17 +8511,17 @@ class BorderType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BorderType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BorderType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BorderType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BorderType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='BorderType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='BorderType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BorderType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BorderType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -7702,16 +8529,18 @@ class BorderType(GeneratedsSuper):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='BorderType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='BorderType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         if self.Coords is not None:
             Coords_ = self.Coords
-            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -7719,14 +8548,14 @@ class BorderType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Coords':
             obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -7752,9 +8581,12 @@ class BorderType(GeneratedsSuper):
 
 
 class LayersType(GeneratedsSuper):
-    """Can be used to express the z-index of overlapping
+    """LayersType --
+    Can be used to express the z-index of overlapping
     regions. An element with a greater z-index is always in
-    front of another element with lower z-index."""
+    front of another element with lower z-index.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('Layer', 'LayerType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'Layer', 'type': 'LayerType'}, None),
@@ -7766,7 +8598,7 @@ class LayersType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         if Layer is None:
             self.Layer = []
         else:
@@ -7797,7 +8629,7 @@ class LayersType(GeneratedsSuper):
         self.Layer.insert(index, value)
     def replace_Layer_at(self, index, value):
         self.Layer[index] = value
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Layer
         ):
@@ -7819,17 +8651,17 @@ class LayersType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayersType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayersType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayersType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayersType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LayersType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LayersType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayersType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayersType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -7837,15 +8669,17 @@ class LayersType(GeneratedsSuper):
         for Layer_ in self.Layer:
             namespaceprefix_ = self.Layer_nsprefix_ + ':' if (UseCapturedNS_ and self.Layer_nsprefix_) else ''
             Layer_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Layer', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='LayersType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='LayersType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for Layer_ in self.Layer:
-            Layer_.to_etree(element, name_='Layer', mapping_=mapping_, nsmap_=nsmap_)
+            Layer_.to_etree(element, name_='Layer', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -7853,14 +8687,14 @@ class LayersType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Layer':
             obj_ = LayerType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -7874,9 +8708,9 @@ class LayersType(GeneratedsSuper):
 class LayerType(GeneratedsSuper):
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('zIndex', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('zIndex', 'int', 0, 0, {'use': 'required', 'name': 'zIndex'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
         MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'RegionRef', 'type': 'RegionRefType'}, None),
     ]
     subclass = None
@@ -7886,7 +8720,7 @@ class LayerType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.zIndex = _cast(int, zIndex)
@@ -7935,7 +8769,7 @@ class LayerType(GeneratedsSuper):
         return self.caption
     def set_caption(self, caption):
         self.caption = caption
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.RegionRef
         ):
@@ -7957,15 +8791,15 @@ class LayerType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayerType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LayerType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayerType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LayerType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LayerType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LayerType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -7975,7 +8809,7 @@ class LayerType(GeneratedsSuper):
         if self.caption is not None and 'caption' not in already_processed:
             already_processed.add('caption')
             outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayerType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LayerType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -7983,7 +8817,7 @@ class LayerType(GeneratedsSuper):
         for RegionRef_ in self.RegionRef:
             namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
             RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='LayerType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='LayerType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -7995,9 +8829,11 @@ class LayerType(GeneratedsSuper):
         if self.caption is not None:
             element.set('caption', self.gds_format_string(self.caption))
         for RegionRef_ in self.RegionRef:
-            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, nsmap_=nsmap_)
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -8005,12 +8841,12 @@ class LayerType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -8023,7 +8859,7 @@ class LayerType(GeneratedsSuper):
         if value is not None and 'caption' not in already_processed:
             already_processed.add('caption')
             self.caption = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'RegionRef':
             obj_ = RegionRefType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -8035,11 +8871,13 @@ class LayerType(GeneratedsSuper):
 
 
 class BaselineType(GeneratedsSuper):
-    """Confidence value (between 0 and 1)"""
+    """conf -- Confidence value (between 0 and 1)
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required'}),
-        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('points', 'pc:PointsType', 0, 0, {'use': 'required', 'name': 'points'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional', 'name': 'conf'}),
     ]
     subclass = None
     superclass = None
@@ -8048,7 +8886,7 @@ class BaselineType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.points = _cast(None, points)
         self.points_nsprefix_ = "pc"
         self.conf = _cast(float, conf)
@@ -8102,7 +8940,7 @@ class BaselineType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd maxInclusive restriction on ConfSimpleType' % {"value": value, "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -8124,23 +8962,23 @@ class BaselineType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BaselineType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='BaselineType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BaselineType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='BaselineType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='BaselineType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='BaselineType'):
         if self.points is not None and 'points' not in already_processed:
             already_processed.add('points')
             outfile.write(' points=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.points), input_name='points')), ))
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='BaselineType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='BaselineType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='BaselineType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -8151,6 +8989,8 @@ class BaselineType(GeneratedsSuper):
             element.set('conf', self.gds_format_float(self.conf))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -8158,12 +8998,12 @@ class BaselineType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('points', node)
         if value is not None and 'points' not in already_processed:
             already_processed.add('points')
@@ -8175,7 +9015,7 @@ class BaselineType(GeneratedsSuper):
             value = self.gds_parse_float(value, node, 'conf')
             self.conf = value
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -8183,9 +9023,12 @@ class BaselineType(GeneratedsSuper):
 
 
 class RelationsType(GeneratedsSuper):
-    """Container for one-to-one relations between layout
+    """RelationsType --
+    Container for one-to-one relations between layout
     objects (for example: DropCap - paragraph, caption -
-    image)."""
+    image).
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('Relation', 'RelationType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'Relation', 'type': 'RelationType'}, None),
@@ -8197,7 +9040,7 @@ class RelationsType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         if Relation is None:
             self.Relation = []
         else:
@@ -8228,7 +9071,7 @@ class RelationsType(GeneratedsSuper):
         self.Relation.insert(index, value)
     def replace_Relation_at(self, index, value):
         self.Relation[index] = value
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Relation
         ):
@@ -8250,17 +9093,17 @@ class RelationsType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationsType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationsType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationsType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationsType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RelationsType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RelationsType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationsType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationsType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -8268,15 +9111,17 @@ class RelationsType(GeneratedsSuper):
         for Relation_ in self.Relation:
             namespaceprefix_ = self.Relation_nsprefix_ + ':' if (UseCapturedNS_ and self.Relation_nsprefix_) else ''
             Relation_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Relation', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='RelationsType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='RelationsType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for Relation_ in self.Relation:
-            Relation_.to_etree(element, name_='Relation', mapping_=mapping_, nsmap_=nsmap_)
+            Relation_.to_etree(element, name_='Relation', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -8284,14 +9129,14 @@ class RelationsType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Relation':
             obj_ = RelationType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -8303,7 +9148,8 @@ class RelationsType(GeneratedsSuper):
 
 
 class RelationType(GeneratedsSuper):
-    """One-to-one relation between to layout object. Use 'link'
+    """RelationType --
+    One-to-one relation between to layout object. Use 'link'
     for loose relations and 'join' for strong relations
     (where something is fragmented for instance).
     Examples for 'link': caption - image floating -
@@ -8317,13 +9163,17 @@ class RelationType(GeneratedsSuper):
     pragraph is split across columns and the last word of
     the first paragraph DOES continue in the second
     paragraph)
-    For generic use"""
+      
+    * custom -- For generic use
+    * Labels -- Semantic labels / tags
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('type_', 'typeType1', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
         MemberSpec_('SourceRegionRef', 'RegionRefType', 0, 0, {'maxOccurs': '1', 'minOccurs': '1', 'name': 'SourceRegionRef', 'type': 'RegionRefType'}, None),
         MemberSpec_('TargetRegionRef', 'RegionRefType', 0, 0, {'maxOccurs': '1', 'minOccurs': '1', 'name': 'TargetRegionRef', 'type': 'RegionRefType'}, None),
@@ -8335,7 +9185,7 @@ class RelationType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -8402,7 +9252,20 @@ class RelationType(GeneratedsSuper):
         return self.comments
     def set_comments(self, comments):
         self.comments = comments
-    def hasContent_(self):
+    def validate_typeType1(self, value):
+        # Validate type typeType1, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['link', 'join']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on typeType1' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
+    def has__content(self):
         if (
             self.Labels or
             self.SourceRegionRef is not None or
@@ -8426,15 +9289,15 @@ class RelationType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RelationType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RelationType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RelationType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RelationType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -8447,7 +9310,7 @@ class RelationType(GeneratedsSuper):
         if self.comments is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RelationType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -8461,7 +9324,7 @@ class RelationType(GeneratedsSuper):
         if self.TargetRegionRef is not None:
             namespaceprefix_ = self.TargetRegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.TargetRegionRef_nsprefix_) else ''
             self.TargetRegionRef.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TargetRegionRef', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='RelationType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='RelationType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -8475,15 +9338,17 @@ class RelationType(GeneratedsSuper):
         if self.comments is not None:
             element.set('comments', self.gds_format_string(self.comments))
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.SourceRegionRef is not None:
             SourceRegionRef_ = self.SourceRegionRef
-            SourceRegionRef_.to_etree(element, name_='SourceRegionRef', mapping_=mapping_, nsmap_=nsmap_)
+            SourceRegionRef_.to_etree(element, name_='SourceRegionRef', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.TargetRegionRef is not None:
             TargetRegionRef_ = self.TargetRegionRef
-            TargetRegionRef_.to_etree(element, name_='TargetRegionRef', mapping_=mapping_, nsmap_=nsmap_)
+            TargetRegionRef_.to_etree(element, name_='TargetRegionRef', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -8491,12 +9356,12 @@ class RelationType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -8505,6 +9370,7 @@ class RelationType(GeneratedsSuper):
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
             self.type_ = value
+            self.validate_typeType1(self.type_)    # validate type typeType1
         value = find_attr_value_('custom', node)
         if value is not None and 'custom' not in already_processed:
             already_processed.add('custom')
@@ -8513,7 +9379,7 @@ class RelationType(GeneratedsSuper):
         if value is not None and 'comments' not in already_processed:
             already_processed.add('comments')
             self.comments = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Labels':
             obj_ = LabelsType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -8535,49 +9401,69 @@ class RelationType(GeneratedsSuper):
 
 
 class TextStyleType(GeneratedsSuper):
-    """Monospace (fixed-pitch, non-proportional) or
+    """TextStyleType --
+    Monospace (fixed-pitch, non-proportional) or
     proportional font.
-    For instance: Arial, Times New Roman.
-    Add more information if necessary
-    (e.g. blackletter, antiqua).
-    Serif or sans-serif typeface.
-    The size of the characters in points.
-    The x-height or corpus size refers to the distance
-    between the baseline and the mean line of
-    lower-case letters in a typeface.
-    The unit is assumed to be pixels.
-    The degree of space (in points) between
-    the characters in a string of text.
-    Text colour in RGB encoded format
-    (red value) + (256 x green value) + (65536 x blue value).
-    Background colour
-    Background colour in RGB encoded format
-    (red value) + (256 x green value) + (65536 x blue value).
-    Specifies whether the colour of the text appears
-    reversed against a background colour.
-    Line style details if "underlined" is TRUE"""
+      
+    * fontFamily --
+      For instance: Arial, Times New Roman.
+      Add more information if necessary
+      (e.g. blackletter, antiqua).
+      
+    * serif --
+      Serif or sans-serif typeface.
+      
+    * fontSize --
+      The size of the characters in points.
+      
+    * xHeight --
+      The x-height or corpus size refers to the distance
+      between the baseline and the mean line of
+      lower-case letters in a typeface.
+      The unit is assumed to be pixels.
+      
+    * kerning --
+      The degree of space (in points) between
+      the characters in a string of text.
+      
+    * textColourRgb --
+      Text colour in RGB encoded format
+      (red value) + (256 x green value) + (65536 x blue value).
+      
+    * bgColour -- Background colour
+    * bgColourRgb --
+      Background colour in RGB encoded format
+      (red value) + (256 x green value) + (65536 x blue value).
+      
+    * reverseVideo --
+      Specifies whether the colour of the text appears
+      reversed against a background colour.
+      
+    * underlineStyle -- Line style details if "underlined" is TRUE
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('fontFamily', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('serif', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('monospace', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('fontSize', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('xHeight', 'integer', 0, 1, {'use': 'optional'}),
-        MemberSpec_('kerning', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('textColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('textColourRgb', 'integer', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColourRgb', 'integer', 0, 1, {'use': 'optional'}),
-        MemberSpec_('reverseVideo', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bold', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('italic', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('underlined', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('underlineStyle', 'pc:UnderlineStyleSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('subscript', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('superscript', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('strikethrough', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('smallCaps', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('letterSpaced', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('fontFamily', 'string', 0, 1, {'use': 'optional', 'name': 'fontFamily'}),
+        MemberSpec_('serif', 'boolean', 0, 1, {'use': 'optional', 'name': 'serif'}),
+        MemberSpec_('monospace', 'boolean', 0, 1, {'use': 'optional', 'name': 'monospace'}),
+        MemberSpec_('fontSize', 'float', 0, 1, {'use': 'optional', 'name': 'fontSize'}),
+        MemberSpec_('xHeight', 'integer', 0, 1, {'use': 'optional', 'name': 'xHeight'}),
+        MemberSpec_('kerning', 'int', 0, 1, {'use': 'optional', 'name': 'kerning'}),
+        MemberSpec_('textColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'textColour'}),
+        MemberSpec_('textColourRgb', 'integer', 0, 1, {'use': 'optional', 'name': 'textColourRgb'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
+        MemberSpec_('bgColourRgb', 'integer', 0, 1, {'use': 'optional', 'name': 'bgColourRgb'}),
+        MemberSpec_('reverseVideo', 'boolean', 0, 1, {'use': 'optional', 'name': 'reverseVideo'}),
+        MemberSpec_('bold', 'boolean', 0, 1, {'use': 'optional', 'name': 'bold'}),
+        MemberSpec_('italic', 'boolean', 0, 1, {'use': 'optional', 'name': 'italic'}),
+        MemberSpec_('underlined', 'boolean', 0, 1, {'use': 'optional', 'name': 'underlined'}),
+        MemberSpec_('underlineStyle', 'pc:UnderlineStyleSimpleType', 0, 1, {'use': 'optional', 'name': 'underlineStyle'}),
+        MemberSpec_('subscript', 'boolean', 0, 1, {'use': 'optional', 'name': 'subscript'}),
+        MemberSpec_('superscript', 'boolean', 0, 1, {'use': 'optional', 'name': 'superscript'}),
+        MemberSpec_('strikethrough', 'boolean', 0, 1, {'use': 'optional', 'name': 'strikethrough'}),
+        MemberSpec_('smallCaps', 'boolean', 0, 1, {'use': 'optional', 'name': 'smallCaps'}),
+        MemberSpec_('letterSpaced', 'boolean', 0, 1, {'use': 'optional', 'name': 'letterSpaced'}),
     ]
     subclass = None
     superclass = None
@@ -8586,7 +9472,7 @@ class TextStyleType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.fontFamily = _cast(None, fontFamily)
         self.fontFamily_nsprefix_ = "pc"
         self.serif = _cast(bool, serif)
@@ -8748,7 +9634,7 @@ class TextStyleType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on UnderlineStyleSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -8770,14 +9656,14 @@ class TextStyleType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextStyleType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextStyleType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextStyleType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextStyleType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextStyleType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextStyleType'):
         if self.fontFamily is not None and 'fontFamily' not in already_processed:
             already_processed.add('fontFamily')
             outfile.write(' fontFamily=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.fontFamily), input_name='fontFamily')), ))
@@ -8838,9 +9724,9 @@ class TextStyleType(GeneratedsSuper):
         if self.letterSpaced is not None and 'letterSpaced' not in already_processed:
             already_processed.add('letterSpaced')
             outfile.write(' letterSpaced="%s"' % self.gds_format_boolean(self.letterSpaced, input_name='letterSpaced'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextStyleType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='TextStyleType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='TextStyleType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -8887,6 +9773,8 @@ class TextStyleType(GeneratedsSuper):
             element.set('letterSpaced', self.gds_format_boolean(self.letterSpaced))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -8894,12 +9782,12 @@ class TextStyleType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('fontFamily', node)
         if value is not None and 'fontFamily' not in already_processed:
             already_processed.add('fontFamily')
@@ -9039,7 +9927,7 @@ class TextStyleType(GeneratedsSuper):
                 self.letterSpaced = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -9047,15 +9935,27 @@ class TextStyleType(GeneratedsSuper):
 
 
 class RegionType(GeneratedsSuper):
-    """For generic use
+    """custom -- For generic use
+    continuation --
     Is this region a continuation of another region
-    (in previous column or page, for example)?"""
+    (in previous column or page, for example)?
+      
+    * AlternativeImage --
+      Alternative region images
+      (e.g. black-and-white).
+      
+    * Labels -- Semantic labels / tags
+    * Roles --
+      Roles the region takes
+      (e.g. in context of a parent region).
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
         MemberSpec_('AlternativeImage', 'AlternativeImageType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'AlternativeImage', 'type': 'AlternativeImageType'}, None),
         MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
         MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
@@ -9083,7 +9983,7 @@ class RegionType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.custom = _cast(None, custom)
@@ -9384,7 +10284,7 @@ class RegionType(GeneratedsSuper):
         self.continuation = continuation
     def get_extensiontype_(self): return self.extensiontype_
     def set_extensiontype_(self, extensiontype_): self.extensiontype_ = extensiontype_
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.AlternativeImage or
             self.Coords is not None or
@@ -9424,15 +10324,15 @@ class RegionType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -9453,7 +10353,7 @@ class RegionType(GeneratedsSuper):
                 outfile.write(' xsi:type="%s%s"' % (imported_ns_type_prefix_, self.extensiontype_))
             else:
                 outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -9515,7 +10415,7 @@ class RegionType(GeneratedsSuper):
         for CustomRegion_ in self.CustomRegion:
             namespaceprefix_ = self.CustomRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.CustomRegion_nsprefix_) else ''
             CustomRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='CustomRegion', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='RegionType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='RegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -9531,48 +10431,50 @@ class RegionType(GeneratedsSuper):
         if self.continuation is not None:
             element.set('continuation', self.gds_format_boolean(self.continuation))
         for AlternativeImage_ in self.AlternativeImage:
-            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, nsmap_=nsmap_)
+            AlternativeImage_.to_etree(element, name_='AlternativeImage', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Coords is not None:
             Coords_ = self.Coords
-            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.UserDefined is not None:
             UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, nsmap_=nsmap_)
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, nsmap_=nsmap_)
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.Roles is not None:
             Roles_ = self.Roles
-            Roles_.to_etree(element, name_='Roles', mapping_=mapping_, nsmap_=nsmap_)
+            Roles_.to_etree(element, name_='Roles', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TextRegion_ in self.TextRegion:
-            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, nsmap_=nsmap_)
+            TextRegion_.to_etree(element, name_='TextRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for ImageRegion_ in self.ImageRegion:
-            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, nsmap_=nsmap_)
+            ImageRegion_.to_etree(element, name_='ImageRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for LineDrawingRegion_ in self.LineDrawingRegion:
-            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, nsmap_=nsmap_)
+            LineDrawingRegion_.to_etree(element, name_='LineDrawingRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for GraphicRegion_ in self.GraphicRegion:
-            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, nsmap_=nsmap_)
+            GraphicRegion_.to_etree(element, name_='GraphicRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TableRegion_ in self.TableRegion:
-            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, nsmap_=nsmap_)
+            TableRegion_.to_etree(element, name_='TableRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for ChartRegion_ in self.ChartRegion:
-            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, nsmap_=nsmap_)
+            ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for SeparatorRegion_ in self.SeparatorRegion:
-            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, nsmap_=nsmap_)
+            SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for MathsRegion_ in self.MathsRegion:
-            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, nsmap_=nsmap_)
+            MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for ChemRegion_ in self.ChemRegion:
-            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, nsmap_=nsmap_)
+            ChemRegion_.to_etree(element, name_='ChemRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for MusicRegion_ in self.MusicRegion:
-            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, nsmap_=nsmap_)
+            MusicRegion_.to_etree(element, name_='MusicRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for AdvertRegion_ in self.AdvertRegion:
-            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, nsmap_=nsmap_)
+            AdvertRegion_.to_etree(element, name_='AdvertRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for NoiseRegion_ in self.NoiseRegion:
-            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, nsmap_=nsmap_)
+            NoiseRegion_.to_etree(element, name_='NoiseRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for UnknownRegion_ in self.UnknownRegion:
-            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, nsmap_=nsmap_)
+            UnknownRegion_.to_etree(element, name_='UnknownRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for CustomRegion_ in self.CustomRegion:
-            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, nsmap_=nsmap_)
+            CustomRegion_.to_etree(element, name_='CustomRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -9580,12 +10482,12 @@ class RegionType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -9611,7 +10513,7 @@ class RegionType(GeneratedsSuper):
         if value is not None and 'xsi:type' not in already_processed:
             already_processed.add('xsi:type')
             self.extensiontype_ = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'AlternativeImage':
             obj_ = AlternativeImageType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -9758,12 +10660,14 @@ class RegionType(GeneratedsSuper):
 
 
 class AlternativeImageType(GeneratedsSuper):
-    """Confidence value (between 0 and 1)"""
+    """conf -- Confidence value (between 0 and 1)
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('filename', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('filename', 'string', 0, 0, {'use': 'required', 'name': 'filename'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
+        MemberSpec_('conf', 'pc:ConfSimpleType', 0, 1, {'use': 'optional', 'name': 'conf'}),
     ]
     subclass = None
     superclass = None
@@ -9772,7 +10676,7 @@ class AlternativeImageType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.filename = _cast(None, filename)
         self.filename_nsprefix_ = "pc"
         self.comments = _cast(None, comments)
@@ -9821,7 +10725,7 @@ class AlternativeImageType(GeneratedsSuper):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd maxInclusive restriction on ConfSimpleType' % {"value": value, "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -9843,14 +10747,14 @@ class AlternativeImageType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AlternativeImageType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AlternativeImageType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AlternativeImageType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AlternativeImageType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='AlternativeImageType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='AlternativeImageType'):
         if self.filename is not None and 'filename' not in already_processed:
             already_processed.add('filename')
             outfile.write(' filename=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.filename), input_name='filename')), ))
@@ -9860,9 +10764,9 @@ class AlternativeImageType(GeneratedsSuper):
         if self.conf is not None and 'conf' not in already_processed:
             already_processed.add('conf')
             outfile.write(' conf="%s"' % self.gds_format_float(self.conf, input_name='conf'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AlternativeImageType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='AlternativeImageType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='AlternativeImageType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -9875,6 +10779,8 @@ class AlternativeImageType(GeneratedsSuper):
             element.set('conf', self.gds_format_float(self.conf))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -9882,12 +10788,12 @@ class AlternativeImageType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('filename', node)
         if value is not None and 'filename' not in already_processed:
             already_processed.add('filename')
@@ -9902,7 +10808,7 @@ class AlternativeImageType(GeneratedsSuper):
             value = self.gds_parse_float(value, node, 'conf')
             self.conf = value
             self.validate_ConfSimpleType(self.conf)    # validate type ConfSimpleType
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -9910,8 +10816,11 @@ class AlternativeImageType(GeneratedsSuper):
 
 
 class GraphemesType(GeneratedsSuper):
-    """Container for graphemes, grapheme groups and
-    non-printing characters."""
+    """GraphemesType --
+    Container for graphemes, grapheme groups and
+    non-printing characters.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('Grapheme', 'GraphemeType', 1, 0, {'name': 'Grapheme', 'type': 'GraphemeType'}, 8),
@@ -9925,7 +10834,7 @@ class GraphemesType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         if Grapheme is None:
             self.Grapheme = []
         else:
@@ -9986,7 +10895,7 @@ class GraphemesType(GeneratedsSuper):
         self.GraphemeGroup.insert(index, value)
     def replace_GraphemeGroup_at(self, index, value):
         self.GraphemeGroup[index] = value
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Grapheme or
             self.NonPrintingChar or
@@ -10010,17 +10919,17 @@ class GraphemesType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemesType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemesType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemesType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemesType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemesType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemesType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemesType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemesType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -10034,19 +10943,21 @@ class GraphemesType(GeneratedsSuper):
         for GraphemeGroup_ in self.GraphemeGroup:
             namespaceprefix_ = self.GraphemeGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.GraphemeGroup_nsprefix_) else ''
             GraphemeGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='GraphemeGroup', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='GraphemesType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='GraphemesType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for Grapheme_ in self.Grapheme:
-            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for NonPrintingChar_ in self.NonPrintingChar:
-            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for GraphemeGroup_ in self.GraphemeGroup:
-            GraphemeGroup_.to_etree(element, name_='GraphemeGroup', mapping_=mapping_, nsmap_=nsmap_)
+            GraphemeGroup_.to_etree(element, name_='GraphemeGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -10054,14 +10965,14 @@ class GraphemesType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Grapheme':
             obj_ = GraphemeType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -10083,20 +10994,29 @@ class GraphemesType(GeneratedsSuper):
 
 
 class GraphemeBaseType(GeneratedsSuper):
-    """Base type for graphemes, grapheme groups and non-printing characters.
-    Order index of grapheme, group, or non-printing character
-    within the parent container (graphemes or glyph or grapheme group).
-    Type of character represented by the
-    grapheme, group, or non-printing character element.
-    For generic useFor generic use"""
+    """GraphemeBaseType --
+    Base type for graphemes, grapheme groups and non-printing characters.
+      
+    * index --
+      Order index of grapheme, group, or non-printing character
+      within the parent container (graphemes or glyph or grapheme group).
+      
+    * charType --
+      Type of character represented by the
+      grapheme, group, or non-printing character element.
+      
+    * custom -- For generic use
+    * comments -- For generic use
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required'}),
-        MemberSpec_('index', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('ligature', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('charType', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('index', 'indexType2', 0, 0, {'use': 'required', 'name': 'index'}),
+        MemberSpec_('ligature', 'boolean', 0, 1, {'use': 'optional', 'name': 'ligature'}),
+        MemberSpec_('charType', 'charTypeType', 0, 1, {'use': 'optional', 'name': 'charType'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
     ]
     subclass = None
@@ -10106,7 +11026,7 @@ class GraphemeBaseType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.id = _cast(None, id)
         self.id_nsprefix_ = "pc"
         self.index = _cast(int, index)
@@ -10176,7 +11096,31 @@ class GraphemeBaseType(GeneratedsSuper):
         self.comments = comments
     def get_extensiontype_(self): return self.extensiontype_
     def set_extensiontype_(self, extensiontype_): self.extensiontype_ = extensiontype_
-    def hasContent_(self):
+    def validate_indexType2(self, value):
+        # Validate type indexType2, a restriction on int.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, int):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (int)' % {"value": value, "lineno": lineno, })
+                return False
+            if value < 0:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd minInclusive restriction on indexType2' % {"value": value, "lineno": lineno} )
+                result = False
+    def validate_charTypeType(self, value):
+        # Validate type charTypeType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['base', 'combining']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on charTypeType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
+    def has__content(self):
         if (
             self.TextEquiv
         ):
@@ -10198,15 +11142,15 @@ class GraphemeBaseType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeBaseType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeBaseType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeBaseType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeBaseType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeBaseType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeBaseType'):
         if self.id is not None and 'id' not in already_processed:
             already_processed.add('id')
             outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
@@ -10233,7 +11177,7 @@ class GraphemeBaseType(GeneratedsSuper):
                 outfile.write(' xsi:type="%s%s"' % (imported_ns_type_prefix_, self.extensiontype_))
             else:
                 outfile.write(' xsi:type="%s"' % self.extensiontype_)
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeBaseType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeBaseType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -10241,7 +11185,7 @@ class GraphemeBaseType(GeneratedsSuper):
         for TextEquiv_ in self.TextEquiv:
             namespaceprefix_ = self.TextEquiv_nsprefix_ + ':' if (UseCapturedNS_ and self.TextEquiv_nsprefix_) else ''
             TextEquiv_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextEquiv', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='GraphemeBaseType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='GraphemeBaseType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -10261,9 +11205,11 @@ class GraphemeBaseType(GeneratedsSuper):
         if self.comments is not None:
             element.set('comments', self.gds_format_string(self.comments))
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -10271,12 +11217,12 @@ class GraphemeBaseType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('id', node)
         if value is not None and 'id' not in already_processed:
             already_processed.add('id')
@@ -10285,6 +11231,7 @@ class GraphemeBaseType(GeneratedsSuper):
         if value is not None and 'index' not in already_processed:
             already_processed.add('index')
             self.index = self.gds_parse_integer(value, node, 'index')
+            self.validate_indexType2(self.index)    # validate type indexType2
         value = find_attr_value_('ligature', node)
         if value is not None and 'ligature' not in already_processed:
             already_processed.add('ligature')
@@ -10298,6 +11245,7 @@ class GraphemeBaseType(GeneratedsSuper):
         if value is not None and 'charType' not in already_processed:
             already_processed.add('charType')
             self.charType = value
+            self.validate_charTypeType(self.charType)    # validate type charTypeType
         value = find_attr_value_('custom', node)
         if value is not None and 'custom' not in already_processed:
             already_processed.add('custom')
@@ -10310,7 +11258,7 @@ class GraphemeBaseType(GeneratedsSuper):
         if value is not None and 'xsi:type' not in already_processed:
             already_processed.add('xsi:type')
             self.extensiontype_ = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'TextEquiv':
             obj_ = TextEquivType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -10322,9 +11270,12 @@ class GraphemeBaseType(GeneratedsSuper):
 
 
 class GraphemeType(GraphemeBaseType):
-    """Represents a sub-element of a glyph.
+    """GraphemeType --
+    Represents a sub-element of a glyph.
     Smallest graphical unit that can be
-    assigned a Unicode code point."""
+    assigned a Unicode code point.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('Coords', 'CoordsType', 0, 0, {'name': 'Coords', 'type': 'CoordsType'}, None),
@@ -10336,8 +11287,8 @@ class GraphemeType(GraphemeBaseType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(GraphemeType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("GraphemeType"), self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
         self.Coords = Coords
         self.Coords_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -10359,10 +11310,10 @@ class GraphemeType(GraphemeBaseType):
         return self.Coords
     def set_Coords(self, Coords):
         self.Coords = Coords
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Coords is not None or
-            super(GraphemeType, self).hasContent_()
+            super(GraphemeType, self).has__content()
         ):
             return True
         else:
@@ -10382,18 +11333,18 @@ class GraphemeType(GraphemeBaseType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeType'):
-        super(GraphemeType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeType', fromsubclass_=False, pretty_print=True):
-        super(GraphemeType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeType'):
+        super(GraphemeType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeType')
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeType', fromsubclass_=False, pretty_print=True):
+        super(GraphemeType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
@@ -10401,13 +11352,15 @@ class GraphemeType(GraphemeBaseType):
         if self.Coords is not None:
             namespaceprefix_ = self.Coords_nsprefix_ + ':' if (UseCapturedNS_ and self.Coords_nsprefix_) else ''
             self.Coords.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Coords', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='GraphemeType', mapping_=None, nsmap_=None):
-        element = super(GraphemeType, self).to_etree(parent_element, name_, mapping_)
+    def to_etree(self, parent_element=None, name_='GraphemeType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(GraphemeType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.Coords is not None:
             Coords_ = self.Coords
-            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, nsmap_=nsmap_)
+            Coords_.to_etree(element, name_='Coords', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -10415,30 +11368,33 @@ class GraphemeType(GraphemeBaseType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
-        super(GraphemeType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildAttributes(self, node, attrs, already_processed):
+        super(GraphemeType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Coords':
             obj_ = CoordsType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Coords = obj_
             obj_.original_tagname_ = 'Coords'
-        super(GraphemeType, self).buildChildren(child_, node, nodeName_, True)
+        super(GraphemeType, self)._buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
         return hash(self.id)
 # end class GraphemeType
 
 
 class NonPrintingCharType(GraphemeBaseType):
-    """A glyph component without visual representation
+    """NonPrintingCharType --
+    A glyph component without visual representation
     but with Unicode code point.
     Non-visual / non-printing / control character.
-    Part of grapheme container (of glyph) or grapheme sub group."""
+    Part of grapheme container (of glyph) or grapheme sub group.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
     ]
@@ -10449,8 +11405,8 @@ class NonPrintingCharType(GraphemeBaseType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(NonPrintingCharType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("NonPrintingCharType"), self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -10466,9 +11422,9 @@ class NonPrintingCharType(GraphemeBaseType):
         return self.ns_prefix_
     def set_ns_prefix_(self, ns_prefix):
         self.ns_prefix_ = ns_prefix
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(NonPrintingCharType, self).hasContent_()
+            super(NonPrintingCharType, self).has__content()
         ):
             return True
         else:
@@ -10488,22 +11444,24 @@ class NonPrintingCharType(GraphemeBaseType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NonPrintingCharType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NonPrintingCharType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='NonPrintingCharType'):
-        super(NonPrintingCharType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
-        super(NonPrintingCharType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='NonPrintingCharType', mapping_=None, nsmap_=None):
-        element = super(NonPrintingCharType, self).to_etree(parent_element, name_, mapping_)
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='NonPrintingCharType'):
+        super(NonPrintingCharType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NonPrintingCharType')
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NonPrintingCharType', fromsubclass_=False, pretty_print=True):
+        super(NonPrintingCharType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NonPrintingCharType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(NonPrintingCharType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -10511,15 +11469,15 @@ class NonPrintingCharType(GraphemeBaseType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
-        super(NonPrintingCharType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(NonPrintingCharType, self).buildChildren(child_, node, nodeName_, True)
+    def _buildAttributes(self, node, attrs, already_processed):
+        super(NonPrintingCharType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(NonPrintingCharType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -10539,8 +11497,8 @@ class GraphemeGroupType(GraphemeBaseType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(GraphemeGroupType, self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("GraphemeGroupType"), self).__init__(id, index, ligature, charType, custom, comments, TextEquiv,  **kwargs_)
         if Grapheme is None:
             self.Grapheme = []
         else:
@@ -10586,11 +11544,11 @@ class GraphemeGroupType(GraphemeBaseType):
         self.NonPrintingChar.insert(index, value)
     def replace_NonPrintingChar_at(self, index, value):
         self.NonPrintingChar[index] = value
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Grapheme or
             self.NonPrintingChar or
-            super(GraphemeGroupType, self).hasContent_()
+            super(GraphemeGroupType, self).has__content()
         ):
             return True
         else:
@@ -10610,18 +11568,18 @@ class GraphemeGroupType(GraphemeBaseType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeGroupType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphemeGroupType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeGroupType'):
-        super(GraphemeGroupType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeGroupType', fromsubclass_=False, pretty_print=True):
-        super(GraphemeGroupType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphemeGroupType'):
+        super(GraphemeGroupType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphemeGroupType')
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphemeGroupType', fromsubclass_=False, pretty_print=True):
+        super(GraphemeGroupType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
@@ -10632,14 +11590,16 @@ class GraphemeGroupType(GraphemeBaseType):
         for NonPrintingChar_ in self.NonPrintingChar:
             namespaceprefix_ = self.NonPrintingChar_nsprefix_ + ':' if (UseCapturedNS_ and self.NonPrintingChar_nsprefix_) else ''
             NonPrintingChar_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='NonPrintingChar', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='GraphemeGroupType', mapping_=None, nsmap_=None):
-        element = super(GraphemeGroupType, self).to_etree(parent_element, name_, mapping_)
+    def to_etree(self, parent_element=None, name_='GraphemeGroupType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(GraphemeGroupType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         for Grapheme_ in self.Grapheme:
-            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, nsmap_=nsmap_)
+            Grapheme_.to_etree(element, name_='Grapheme', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for NonPrintingChar_ in self.NonPrintingChar:
-            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, nsmap_=nsmap_)
+            NonPrintingChar_.to_etree(element, name_='NonPrintingChar', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -10647,14 +11607,14 @@ class GraphemeGroupType(GraphemeBaseType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
-        super(GraphemeGroupType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildAttributes(self, node, attrs, already_processed):
+        super(GraphemeGroupType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Grapheme':
             obj_ = GraphemeType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -10665,14 +11625,16 @@ class GraphemeGroupType(GraphemeBaseType):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.NonPrintingChar.append(obj_)
             obj_.original_tagname_ = 'NonPrintingChar'
-        super(GraphemeGroupType, self).buildChildren(child_, node, nodeName_, True)
+        super(GraphemeGroupType, self)._buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
         return hash(self.id)
 # end class GraphemeGroupType
 
 
 class UserDefinedType(GeneratedsSuper):
-    """Container for user-defined attributes"""
+    """UserDefinedType -- Container for user-defined attributes
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('UserAttribute', 'UserAttributeType', 1, 0, {'maxOccurs': 'unbounded', 'minOccurs': '1', 'name': 'UserAttribute', 'type': 'UserAttributeType'}, None),
@@ -10684,7 +11646,7 @@ class UserDefinedType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         if UserAttribute is None:
             self.UserAttribute = []
         else:
@@ -10715,7 +11677,7 @@ class UserDefinedType(GeneratedsSuper):
         self.UserAttribute.insert(index, value)
     def replace_UserAttribute_at(self, index, value):
         self.UserAttribute[index] = value
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.UserAttribute
         ):
@@ -10737,17 +11699,17 @@ class UserDefinedType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserDefinedType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserDefinedType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserDefinedType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserDefinedType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UserDefinedType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UserDefinedType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserDefinedType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserDefinedType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -10755,15 +11717,17 @@ class UserDefinedType(GeneratedsSuper):
         for UserAttribute_ in self.UserAttribute:
             namespaceprefix_ = self.UserAttribute_nsprefix_ + ':' if (UseCapturedNS_ and self.UserAttribute_nsprefix_) else ''
             UserAttribute_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserAttribute', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='UserDefinedType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='UserDefinedType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         for UserAttribute_ in self.UserAttribute:
-            UserAttribute_.to_etree(element, name_='UserAttribute', mapping_=mapping_, nsmap_=nsmap_)
+            UserAttribute_.to_etree(element, name_='UserAttribute', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -10771,14 +11735,14 @@ class UserDefinedType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'UserAttribute':
             obj_ = UserAttributeType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -10790,13 +11754,15 @@ class UserDefinedType(GeneratedsSuper):
 
 
 class UserAttributeType(GeneratedsSuper):
-    """Structured custom data defined by name, type and value."""
+    """UserAttributeType -- Structured custom data defined by name, type and value.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('name', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('description', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
-        MemberSpec_('value', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('name', 'string', 0, 1, {'use': 'optional', 'name': 'name'}),
+        MemberSpec_('description', 'string', 0, 1, {'use': 'optional', 'name': 'description'}),
+        MemberSpec_('type_', 'typeType3', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('value', 'string', 0, 1, {'use': 'optional', 'name': 'value'}),
     ]
     subclass = None
     superclass = None
@@ -10805,7 +11771,7 @@ class UserAttributeType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.name = _cast(None, name)
         self.name_nsprefix_ = "pc"
         self.description = _cast(None, description)
@@ -10845,7 +11811,20 @@ class UserAttributeType(GeneratedsSuper):
         return self.value
     def set_value(self, value):
         self.value = value
-    def hasContent_(self):
+    def validate_typeType3(self, value):
+        # Validate type typeType3, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['xsd:string', 'xsd:integer', 'xsd:boolean', 'xsd:float']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on typeType3' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
+    def has__content(self):
         if (
 
         ):
@@ -10867,14 +11846,14 @@ class UserAttributeType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserAttributeType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UserAttributeType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserAttributeType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UserAttributeType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UserAttributeType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UserAttributeType'):
         if self.name is not None and 'name' not in already_processed:
             already_processed.add('name')
             outfile.write(' name=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.name), input_name='name')), ))
@@ -10887,9 +11866,9 @@ class UserAttributeType(GeneratedsSuper):
         if self.value is not None and 'value' not in already_processed:
             already_processed.add('value')
             outfile.write(' value=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.value), input_name='value')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UserAttributeType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='UserAttributeType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='UserAttributeType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -10904,6 +11883,8 @@ class UserAttributeType(GeneratedsSuper):
             element.set('value', self.gds_format_string(self.value))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -10911,12 +11892,12 @@ class UserAttributeType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('name', node)
         if value is not None and 'name' not in already_processed:
             already_processed.add('name')
@@ -10929,11 +11910,12 @@ class UserAttributeType(GeneratedsSuper):
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
             self.type_ = value
+            self.validate_typeType3(self.type_)    # validate type typeType3
         value = find_attr_value_('value', node)
         if value is not None and 'value' not in already_processed:
             already_processed.add('value')
             self.value = value
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -10941,17 +11923,21 @@ class UserAttributeType(GeneratedsSuper):
 
 
 class TableCellRoleType(GeneratedsSuper):
-    """Cell position in table starting with row 0Cell position in table
-    starting with column 0Number of rows the cell spans (optional; default
-    is 1)Number of columns the cell spans (optional; default is 1)
-    Is the cell a column or row header?"""
+    """rowIndex -- Cell position in table starting with row 0
+    columnIndex -- Cell position in table starting with column 0
+    rowSpan -- Number of rows the cell spans (optional; default is 1)
+    colSpan -- Number of columns the cell spans (optional; default is 1)
+    header --
+    Is the cell a column or row header?
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('rowIndex', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('columnIndex', 'int', 0, 0, {'use': 'required'}),
-        MemberSpec_('rowSpan', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('colSpan', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('header', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('rowIndex', 'int', 0, 0, {'use': 'required', 'name': 'rowIndex'}),
+        MemberSpec_('columnIndex', 'int', 0, 0, {'use': 'required', 'name': 'columnIndex'}),
+        MemberSpec_('rowSpan', 'int', 0, 1, {'use': 'optional', 'name': 'rowSpan'}),
+        MemberSpec_('colSpan', 'int', 0, 1, {'use': 'optional', 'name': 'colSpan'}),
+        MemberSpec_('header', 'boolean', 0, 1, {'use': 'optional', 'name': 'header'}),
     ]
     subclass = None
     superclass = None
@@ -10960,7 +11946,7 @@ class TableCellRoleType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.rowIndex = _cast(int, rowIndex)
         self.rowIndex_nsprefix_ = "pc"
         self.columnIndex = _cast(int, columnIndex)
@@ -11006,7 +11992,7 @@ class TableCellRoleType(GeneratedsSuper):
         return self.header
     def set_header(self, header):
         self.header = header
-    def hasContent_(self):
+    def has__content(self):
         if (
 
         ):
@@ -11028,14 +12014,14 @@ class TableCellRoleType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableCellRoleType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableCellRoleType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableCellRoleType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableCellRoleType', pretty_print=pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TableCellRoleType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TableCellRoleType'):
         if self.rowIndex is not None and 'rowIndex' not in already_processed:
             already_processed.add('rowIndex')
             outfile.write(' rowIndex="%s"' % self.gds_format_integer(self.rowIndex, input_name='rowIndex'))
@@ -11051,9 +12037,9 @@ class TableCellRoleType(GeneratedsSuper):
         if self.header is not None and 'header' not in already_processed:
             already_processed.add('header')
             outfile.write(' header="%s"' % self.gds_format_boolean(self.header, input_name='header'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableCellRoleType', fromsubclass_=False, pretty_print=True):
         pass
-    def to_etree(self, parent_element=None, name_='TableCellRoleType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='TableCellRoleType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
@@ -11070,6 +12056,8 @@ class TableCellRoleType(GeneratedsSuper):
             element.set('header', self.gds_format_boolean(self.header))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11077,12 +12065,12 @@ class TableCellRoleType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('rowIndex', node)
         if value is not None and 'rowIndex' not in already_processed:
             already_processed.add('rowIndex')
@@ -11108,7 +12096,7 @@ class TableCellRoleType(GeneratedsSuper):
                 self.header = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         pass
     def __hash__(self):
         return hash(self.id)
@@ -11116,6 +12104,11 @@ class TableCellRoleType(GeneratedsSuper):
 
 
 class RolesType(GeneratedsSuper):
+    """TableCellRole --
+    Data for a region that takes on the role
+    of a table cell within a parent table region.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
         MemberSpec_('TableCellRole', 'TableCellRoleType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'TableCellRole', 'type': 'TableCellRoleType'}, None),
@@ -11127,7 +12120,7 @@ class RolesType(GeneratedsSuper):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
+        self.ns_prefix_ = "pc"
         self.TableCellRole = TableCellRole
         self.TableCellRole_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -11149,7 +12142,7 @@ class RolesType(GeneratedsSuper):
         return self.TableCellRole
     def set_TableCellRole(self, TableCellRole):
         self.TableCellRole = TableCellRole
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.TableCellRole is not None
         ):
@@ -11171,17 +12164,17 @@ class RolesType(GeneratedsSuper):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RolesType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RolesType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RolesType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RolesType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RolesType'):
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RolesType'):
         pass
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RolesType', fromsubclass_=False, pretty_print=True):
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RolesType', fromsubclass_=False, pretty_print=True):
         if pretty_print:
             eol_ = '\n'
         else:
@@ -11189,16 +12182,18 @@ class RolesType(GeneratedsSuper):
         if self.TableCellRole is not None:
             namespaceprefix_ = self.TableCellRole_nsprefix_ + ':' if (UseCapturedNS_ and self.TableCellRole_nsprefix_) else ''
             self.TableCellRole.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TableCellRole', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='RolesType', mapping_=None, nsmap_=None):
+    def to_etree(self, parent_element=None, name_='RolesType', mapping_=None, reverse_mapping_=None, nsmap_=None):
         if parent_element is None:
             element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         else:
             element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
         if self.TableCellRole is not None:
             TableCellRole_ = self.TableCellRole
-            TableCellRole_.to_etree(element, name_='TableCellRole', mapping_=mapping_, nsmap_=nsmap_)
+            TableCellRole_.to_etree(element, name_='TableCellRole', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11206,14 +12201,14 @@ class RolesType(GeneratedsSuper):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         pass
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'TableCellRole':
             obj_ = TableCellRoleType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -11225,14 +12220,19 @@ class RolesType(GeneratedsSuper):
 
 
 class CustomRegionType(RegionType):
-    """Regions containing content that is not covered
+    """CustomRegionType --
+    Regions containing content that is not covered
     by the default types (text, graphic, image,
     line drawing, chart, table, separator, maths,
     map, music, chem, advert, noise, unknown).
-    Information on the type of content represented by this region"""
+      
+    * type --
+      Information on the type of content represented by this region
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional'}),
+        MemberSpec_('type_', 'string', 0, 1, {'use': 'optional', 'name': 'type_'}),
     ]
     subclass = None
     superclass = RegionType
@@ -11241,8 +12241,8 @@ class CustomRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(CustomRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("CustomRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.type_ = _cast(None, type_)
         self.type__nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -11264,14 +12264,14 @@ class CustomRegionType(RegionType):
         return self.type_
     def set_type(self, type_):
         self.type_ = type_
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(CustomRegionType, self).hasContent_()
+            super(CustomRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CustomRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CustomRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('CustomRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -11286,27 +12286,29 @@ class CustomRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CustomRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CustomRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='CustomRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='CustomRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='CustomRegionType'):
-        super(CustomRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CustomRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='CustomRegionType'):
+        super(CustomRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='CustomRegionType')
         if self.type_ is not None and 'type_' not in already_processed:
             already_processed.add('type_')
             outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='CustomRegionType', fromsubclass_=False, pretty_print=True):
-        super(CustomRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='CustomRegionType', mapping_=None, nsmap_=None):
-        element = super(CustomRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='CustomRegionType', fromsubclass_=False, pretty_print=True):
+        super(CustomRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='CustomRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(CustomRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.type_ is not None:
             element.set('type', self.gds_format_string(self.type_))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11314,19 +12316,19 @@ class CustomRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('type', node)
         if value is not None and 'type' not in already_processed:
             already_processed.add('type')
             self.type_ = value
-        super(CustomRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(CustomRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(CustomRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(CustomRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -11334,7 +12336,10 @@ class CustomRegionType(RegionType):
 
 
 class UnknownRegionType(RegionType):
-    """To be used if the region type cannot be ascertained."""
+    """UnknownRegionType --
+    To be used if the region type cannot be ascertained.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
     ]
@@ -11345,8 +12350,8 @@ class UnknownRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(UnknownRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("UnknownRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -11362,14 +12367,14 @@ class UnknownRegionType(RegionType):
         return self.ns_prefix_
     def set_ns_prefix_(self, ns_prefix):
         self.ns_prefix_ = ns_prefix
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(UnknownRegionType, self).hasContent_()
+            super(UnknownRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnknownRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnknownRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnknownRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -11384,22 +12389,24 @@ class UnknownRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnknownRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnknownRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnknownRegionType'):
-        super(UnknownRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
-        super(UnknownRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='UnknownRegionType', mapping_=None, nsmap_=None):
-        element = super(UnknownRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnknownRegionType'):
+        super(UnknownRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnknownRegionType')
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnknownRegionType', fromsubclass_=False, pretty_print=True):
+        super(UnknownRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnknownRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(UnknownRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11407,15 +12414,15 @@ class UnknownRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
-        super(UnknownRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(UnknownRegionType, self).buildChildren(child_, node, nodeName_, True)
+    def _buildAttributes(self, node, attrs, already_processed):
+        super(UnknownRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(UnknownRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -11423,9 +12430,12 @@ class UnknownRegionType(RegionType):
 
 
 class NoiseRegionType(RegionType):
-    """Noise regions are regions where no real data lies, only
+    """NoiseRegionType --
+    Noise regions are regions where no real data lies, only
     false data created by artifacts on the document or
-    scanner noise."""
+    scanner noise.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
     ]
@@ -11436,8 +12446,8 @@ class NoiseRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(NoiseRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("NoiseRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -11453,14 +12463,14 @@ class NoiseRegionType(RegionType):
         return self.ns_prefix_
     def set_ns_prefix_(self, ns_prefix):
         self.ns_prefix_ = ns_prefix
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(NoiseRegionType, self).hasContent_()
+            super(NoiseRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NoiseRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NoiseRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('NoiseRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -11475,22 +12485,24 @@ class NoiseRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NoiseRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='NoiseRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='NoiseRegionType'):
-        super(NoiseRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
-        super(NoiseRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='NoiseRegionType', mapping_=None, nsmap_=None):
-        element = super(NoiseRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='NoiseRegionType'):
+        super(NoiseRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='NoiseRegionType')
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='NoiseRegionType', fromsubclass_=False, pretty_print=True):
+        super(NoiseRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='NoiseRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(NoiseRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11498,15 +12510,15 @@ class NoiseRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
-        super(NoiseRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(NoiseRegionType, self).buildChildren(child_, node, nodeName_, True)
+    def _buildAttributes(self, node, attrs, already_processed):
+        super(NoiseRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(NoiseRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -11514,17 +12526,24 @@ class NoiseRegionType(RegionType):
 
 
 class AdvertRegionType(RegionType):
-    """Regions containing advertisements.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The background colour of the region"""
+    """AdvertRegionType --
+    Regions containing advertisements.
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * bgColour --
+      The background colour of the region
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
     ]
     subclass = None
     superclass = RegionType
@@ -11533,8 +12552,8 @@ class AdvertRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(AdvertRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("AdvertRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -11575,14 +12594,14 @@ class AdvertRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(AdvertRegionType, self).hasContent_()
+            super(AdvertRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AdvertRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AdvertRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('AdvertRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -11597,32 +12616,34 @@ class AdvertRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AdvertRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='AdvertRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='AdvertRegionType'):
-        super(AdvertRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='AdvertRegionType'):
+        super(AdvertRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='AdvertRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
-        super(AdvertRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='AdvertRegionType', mapping_=None, nsmap_=None):
-        element = super(AdvertRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='AdvertRegionType', fromsubclass_=False, pretty_print=True):
+        super(AdvertRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='AdvertRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(AdvertRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.bgColour is not None:
             element.set('bgColour', self.gds_format_string(self.bgColour))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11630,12 +12651,12 @@ class AdvertRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -11646,9 +12667,9 @@ class AdvertRegionType(RegionType):
             already_processed.add('bgColour')
             self.bgColour = value
             self.validate_ColourSimpleType(self.bgColour)    # validate type ColourSimpleType
-        super(AdvertRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(AdvertRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(AdvertRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(AdvertRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -11667,17 +12688,24 @@ class AdvertRegionType(RegionType):
 
 
 class MusicRegionType(RegionType):
-    """Regions containing musical notations.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The background colour of the region"""
+    """MusicRegionType --
+    Regions containing musical notations.
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * bgColour --
+      The background colour of the region
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
     ]
     subclass = None
     superclass = RegionType
@@ -11686,8 +12714,8 @@ class MusicRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(MusicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("MusicRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -11728,14 +12756,14 @@ class MusicRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(MusicRegionType, self).hasContent_()
+            super(MusicRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MusicRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MusicRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MusicRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -11750,32 +12778,34 @@ class MusicRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MusicRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MusicRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MusicRegionType'):
-        super(MusicRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MusicRegionType'):
+        super(MusicRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MusicRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
-        super(MusicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='MusicRegionType', mapping_=None, nsmap_=None):
-        element = super(MusicRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MusicRegionType', fromsubclass_=False, pretty_print=True):
+        super(MusicRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MusicRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(MusicRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.bgColour is not None:
             element.set('bgColour', self.gds_format_string(self.bgColour))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11783,12 +12813,12 @@ class MusicRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -11799,9 +12829,9 @@ class MusicRegionType(RegionType):
             already_processed.add('bgColour')
             self.bgColour = value
             self.validate_ColourSimpleType(self.bgColour)    # validate type ColourSimpleType
-        super(MusicRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(MusicRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(MusicRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(MusicRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -11820,16 +12850,21 @@ class MusicRegionType(RegionType):
 
 
 class MapRegionType(RegionType):
-    """Regions containing maps.
-    The angle the rectangle encapsulating a
-    region has to be rotated in clockwise
-    direction in order to correct the present
-    skew (negative values indicate
-    anti-clockwise rotation). Range:
-    -179.999,180"""
+    """MapRegionType --
+    Regions containing maps.
+      
+    * orientation --
+      The angle the rectangle encapsulating a
+      region has to be rotated in clockwise
+      direction in order to correct the present
+      skew (negative values indicate
+      anti-clockwise rotation). Range:
+      -179.999,180
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
     ]
     subclass = None
     superclass = RegionType
@@ -11838,8 +12873,8 @@ class MapRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(MapRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("MapRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -11861,14 +12896,14 @@ class MapRegionType(RegionType):
         return self.orientation
     def set_orientation(self, orientation):
         self.orientation = orientation
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(MapRegionType, self).hasContent_()
+            super(MapRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MapRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MapRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MapRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -11883,27 +12918,29 @@ class MapRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MapRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MapRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MapRegionType'):
-        super(MapRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MapRegionType'):
+        super(MapRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MapRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
-        super(MapRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='MapRegionType', mapping_=None, nsmap_=None):
-        element = super(MapRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MapRegionType', fromsubclass_=False, pretty_print=True):
+        super(MapRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MapRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(MapRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -11911,20 +12948,20 @@ class MapRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             value = self.gds_parse_float(value, node, 'orientation')
             self.orientation = value
-        super(MapRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(MapRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(MapRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(MapRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -11943,18 +12980,25 @@ class MapRegionType(RegionType):
 
 
 class ChemRegionType(RegionType):
-    """Regions containing chemical formulas.
-    The angle the rectangle encapsulating a
-    region has to be rotated in clockwise
-    direction in order to correct the present
-    skew (negative values indicate
-    anti-clockwise rotation). Range:
-    -179.999,180
-    The background colour of the region"""
+    """ChemRegionType --
+    Regions containing chemical formulas.
+      
+    * orientation --
+      The angle the rectangle encapsulating a
+      region has to be rotated in clockwise
+      direction in order to correct the present
+      skew (negative values indicate
+      anti-clockwise rotation). Range:
+      -179.999,180
+      
+    * bgColour --
+      The background colour of the region
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
     ]
     subclass = None
     superclass = RegionType
@@ -11963,8 +13007,8 @@ class ChemRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(ChemRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("ChemRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -12005,14 +13049,14 @@ class ChemRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(ChemRegionType, self).hasContent_()
+            super(ChemRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChemRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ChemRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ChemRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -12027,32 +13071,34 @@ class ChemRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChemRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChemRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ChemRegionType'):
-        super(ChemRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ChemRegionType'):
+        super(ChemRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChemRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
-        super(ChemRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='ChemRegionType', mapping_=None, nsmap_=None):
-        element = super(ChemRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ChemRegionType', fromsubclass_=False, pretty_print=True):
+        super(ChemRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChemRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(ChemRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.bgColour is not None:
             element.set('bgColour', self.gds_format_string(self.bgColour))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -12060,12 +13106,12 @@ class ChemRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -12076,9 +13122,9 @@ class ChemRegionType(RegionType):
             already_processed.add('bgColour')
             self.bgColour = value
             self.validate_ColourSimpleType(self.bgColour)    # validate type ColourSimpleType
-        super(ChemRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(ChemRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(ChemRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(ChemRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -12097,18 +13143,25 @@ class ChemRegionType(RegionType):
 
 
 class MathsRegionType(RegionType):
-    """Regions containing equations and mathematical symbols
+    """MathsRegionType --
+    Regions containing equations and mathematical symbols
     should be marked as maths regions.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The background colour of the region"""
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * bgColour --
+      The background colour of the region
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
     ]
     subclass = None
     superclass = RegionType
@@ -12117,8 +13170,8 @@ class MathsRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(MathsRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("MathsRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -12159,14 +13212,14 @@ class MathsRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(MathsRegionType, self).hasContent_()
+            super(MathsRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MathsRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MathsRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('MathsRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -12181,32 +13234,34 @@ class MathsRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MathsRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='MathsRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MathsRegionType'):
-        super(MathsRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='MathsRegionType'):
+        super(MathsRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='MathsRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.bgColour is not None and 'bgColour' not in already_processed:
             already_processed.add('bgColour')
             outfile.write(' bgColour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.bgColour), input_name='bgColour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
-        super(MathsRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='MathsRegionType', mapping_=None, nsmap_=None):
-        element = super(MathsRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='MathsRegionType', fromsubclass_=False, pretty_print=True):
+        super(MathsRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='MathsRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(MathsRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.bgColour is not None:
             element.set('bgColour', self.gds_format_string(self.bgColour))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -12214,12 +13269,12 @@ class MathsRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -12230,9 +13285,9 @@ class MathsRegionType(RegionType):
             already_processed.add('bgColour')
             self.bgColour = value
             self.validate_ColourSimpleType(self.bgColour)    # validate type ColourSimpleType
-        super(MathsRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(MathsRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(MathsRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(MathsRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -12251,19 +13306,26 @@ class MathsRegionType(RegionType):
 
 
 class SeparatorRegionType(RegionType):
-    """Separators are lines that lie between columns and
+    """SeparatorRegionType --
+    Separators are lines that lie between columns and
     paragraphs and can be used to logically separate
     different articles from each other.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The colour of the separator"""
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * colour --
+      The colour of the separator
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('colour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('colour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'colour'}),
     ]
     subclass = None
     superclass = RegionType
@@ -12272,8 +13334,8 @@ class SeparatorRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(SeparatorRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("SeparatorRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.colour = _cast(None, colour)
@@ -12314,14 +13376,14 @@ class SeparatorRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(SeparatorRegionType, self).hasContent_()
+            super(SeparatorRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='SeparatorRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='SeparatorRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('SeparatorRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -12336,32 +13398,34 @@ class SeparatorRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='SeparatorRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='SeparatorRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='SeparatorRegionType'):
-        super(SeparatorRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='SeparatorRegionType'):
+        super(SeparatorRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='SeparatorRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
         if self.colour is not None and 'colour' not in already_processed:
             already_processed.add('colour')
             outfile.write(' colour=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.colour), input_name='colour')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
-        super(SeparatorRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='SeparatorRegionType', mapping_=None, nsmap_=None):
-        element = super(SeparatorRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='SeparatorRegionType', fromsubclass_=False, pretty_print=True):
+        super(SeparatorRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='SeparatorRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(SeparatorRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.colour is not None:
             element.set('colour', self.gds_format_string(self.colour))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -12369,12 +13433,12 @@ class SeparatorRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -12385,9 +13449,9 @@ class SeparatorRegionType(RegionType):
             already_processed.add('colour')
             self.colour = value
             self.validate_ColourSimpleType(self.colour)    # validate type ColourSimpleType
-        super(SeparatorRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(SeparatorRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(SeparatorRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(SeparatorRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -12406,26 +13470,39 @@ class SeparatorRegionType(RegionType):
 
 
 class ChartRegionType(RegionType):
-    """Regions containing charts or graphs of any type, should
+    """ChartRegionType --
+    Regions containing charts or graphs of any type, should
     be marked as chart regions.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The type of chart in the region
-    An approximation of the number of colours
-    used in the region
-    The background colour of the region
-    Specifies whether the region also contains
-    text"""
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * type --
+      The type of chart in the region
+      
+    * numColours --
+      An approximation of the number of colours
+      used in the region
+      
+    * bgColour --
+      The background colour of the region
+      
+    * embText --
+      Specifies whether the region also contains
+      text
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:ChartTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('numColours', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('type_', 'pc:ChartTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('numColours', 'int', 0, 1, {'use': 'optional', 'name': 'numColours'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional', 'name': 'embText'}),
     ]
     subclass = None
     superclass = RegionType
@@ -12434,8 +13511,8 @@ class ChartRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(ChartRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("ChartRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -12507,14 +13584,14 @@ class ChartRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(ChartRegionType, self).hasContent_()
+            super(ChartRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChartRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ChartRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ChartRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -12529,16 +13606,16 @@ class ChartRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChartRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ChartRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ChartRegionType'):
-        super(ChartRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ChartRegionType'):
+        super(ChartRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ChartRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -12554,10 +13631,10 @@ class ChartRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
-        super(ChartRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='ChartRegionType', mapping_=None, nsmap_=None):
-        element = super(ChartRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ChartRegionType', fromsubclass_=False, pretty_print=True):
+        super(ChartRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ChartRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(ChartRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.type_ is not None:
@@ -12570,6 +13647,8 @@ class ChartRegionType(RegionType):
             element.set('embText', self.gds_format_boolean(self.embText))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -12577,12 +13656,12 @@ class ChartRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -12611,9 +13690,9 @@ class ChartRegionType(RegionType):
                 self.embText = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-        super(ChartRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(ChartRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(ChartRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(ChartRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -12632,30 +13711,49 @@ class ChartRegionType(RegionType):
 
 
 class TableRegionType(RegionType):
-    """Tabular data in any form is represented with a table
+    """TableRegionType --
+    Tabular data in any form is represented with a table
     region. Rows and columns may or may not have separator
     lines; these lines are not separator regions.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The number of rows present in the table
-    The number of columns present in the table
-    The colour of the lines used in the region
-    The background colour of the region
-    Specifies the presence of line separators
-    Specifies whether the region also contains
-    text"""
+      
+    * orientation --
+      The angle the rectangle encapsulating a	region
+      has to be rotated in clockwise direction
+      in order to correct the present	skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * rows --
+      The number of rows present in the table
+      
+    * columns --
+      The number of columns present in the table
+      
+    * lineColour --
+      The colour of the lines used in the region
+      
+    * bgColour --
+      The background colour of the region
+      
+    * lineSeparators --
+      Specifies the presence of line separators
+      
+    * embText --
+      Specifies whether the region also contains
+      text
+      
+    * Grid -- Table grid (visible or virtual grid lines)
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('rows', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('columns', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('lineColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('lineSeparators', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('rows', 'int', 0, 1, {'use': 'optional', 'name': 'rows'}),
+        MemberSpec_('columns', 'int', 0, 1, {'use': 'optional', 'name': 'columns'}),
+        MemberSpec_('lineColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'lineColour'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
+        MemberSpec_('lineSeparators', 'boolean', 0, 1, {'use': 'optional', 'name': 'lineSeparators'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional', 'name': 'embText'}),
         MemberSpec_('Grid', 'GridType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'Grid', 'type': 'GridType'}, None),
     ]
     subclass = None
@@ -12665,8 +13763,8 @@ class TableRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(TableRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("TableRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.rows = _cast(int, rows)
@@ -12743,15 +13841,15 @@ class TableRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.Grid is not None or
-            super(TableRegionType, self).hasContent_()
+            super(TableRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TableRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TableRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -12766,16 +13864,16 @@ class TableRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TableRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TableRegionType'):
-        super(TableRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TableRegionType'):
+        super(TableRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TableRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -12797,8 +13895,8 @@ class TableRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TableRegionType', fromsubclass_=False, pretty_print=True):
-        super(TableRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TableRegionType', fromsubclass_=False, pretty_print=True):
+        super(TableRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
@@ -12806,8 +13904,8 @@ class TableRegionType(RegionType):
         if self.Grid is not None:
             namespaceprefix_ = self.Grid_nsprefix_ + ':' if (UseCapturedNS_ and self.Grid_nsprefix_) else ''
             self.Grid.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Grid', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='TableRegionType', mapping_=None, nsmap_=None):
-        element = super(TableRegionType, self).to_etree(parent_element, name_, mapping_)
+    def to_etree(self, parent_element=None, name_='TableRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(TableRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.rows is not None:
@@ -12824,9 +13922,11 @@ class TableRegionType(RegionType):
             element.set('embText', self.gds_format_boolean(self.embText))
         if self.Grid is not None:
             Grid_ = self.Grid
-            Grid_.to_etree(element, name_='Grid', mapping_=mapping_, nsmap_=nsmap_)
+            Grid_.to_etree(element, name_='Grid', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -12834,12 +13934,12 @@ class TableRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -12881,14 +13981,14 @@ class TableRegionType(RegionType):
                 self.embText = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-        super(TableRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(TableRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'Grid':
             obj_ = GridType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
             self.Grid = obj_
             obj_.original_tagname_ = 'Grid'
-        super(TableRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(TableRegionType, self)._buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
         return hash(self.id)
     def set_orientation(self, orientation):
@@ -12906,24 +14006,35 @@ class TableRegionType(RegionType):
 
 
 class GraphicRegionType(RegionType):
-    """Regions containing simple graphics, such as a company
+    """GraphicRegionType --
+    Regions containing simple graphics, such as a company
     logo, should be marked as graphic regions.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The type of graphic in the region
-    An approximation of the number of colours
-    used in the region
-    Specifies whether the region also contains
-    text."""
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * type --
+      The type of graphic in the region
+      
+    * numColours --
+      An approximation of the number of colours
+      used in the region
+      
+    * embText --
+      Specifies whether the region also contains
+      text.
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:GraphicsTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('numColours', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('type_', 'pc:GraphicsTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('numColours', 'int', 0, 1, {'use': 'optional', 'name': 'numColours'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional', 'name': 'embText'}),
     ]
     subclass = None
     superclass = RegionType
@@ -12932,8 +14043,8 @@ class GraphicRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(GraphicRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("GraphicRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -12986,14 +14097,14 @@ class GraphicRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GraphicsTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(GraphicRegionType, self).hasContent_()
+            super(GraphicRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphicRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphicRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('GraphicRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -13008,16 +14119,16 @@ class GraphicRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphicRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='GraphicRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphicRegionType'):
-        super(GraphicRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='GraphicRegionType'):
+        super(GraphicRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='GraphicRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -13030,10 +14141,10 @@ class GraphicRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
-        super(GraphicRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='GraphicRegionType', mapping_=None, nsmap_=None):
-        element = super(GraphicRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='GraphicRegionType', fromsubclass_=False, pretty_print=True):
+        super(GraphicRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='GraphicRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(GraphicRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.type_ is not None:
@@ -13044,6 +14155,8 @@ class GraphicRegionType(RegionType):
             element.set('embText', self.gds_format_boolean(self.embText))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -13051,12 +14164,12 @@ class GraphicRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -13080,9 +14193,9 @@ class GraphicRegionType(RegionType):
                 self.embText = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-        super(GraphicRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(GraphicRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(GraphicRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(GraphicRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -13101,23 +14214,34 @@ class GraphicRegionType(RegionType):
 
 
 class LineDrawingRegionType(RegionType):
-    """A line drawing is a single colour illustration without
+    """LineDrawingRegionType --
+    A line drawing is a single colour illustration without
     solid areas.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The pen (foreground) colour of the region
-    The background colour of the region
-    Specifies whether the region also contains
-    text"""
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * penColour --
+      The pen (foreground) colour of the region
+      
+    * bgColour --
+      The background colour of the region
+      
+    * embText --
+      Specifies whether the region also contains
+      text
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('penColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('penColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'penColour'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional', 'name': 'embText'}),
     ]
     subclass = None
     superclass = RegionType
@@ -13126,8 +14250,8 @@ class LineDrawingRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(LineDrawingRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("LineDrawingRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.penColour = _cast(None, penColour)
@@ -13180,14 +14304,14 @@ class LineDrawingRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(LineDrawingRegionType, self).hasContent_()
+            super(LineDrawingRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LineDrawingRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LineDrawingRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('LineDrawingRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -13202,16 +14326,16 @@ class LineDrawingRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LineDrawingRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='LineDrawingRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LineDrawingRegionType'):
-        super(LineDrawingRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='LineDrawingRegionType'):
+        super(LineDrawingRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='LineDrawingRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -13224,10 +14348,10 @@ class LineDrawingRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
-        super(LineDrawingRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='LineDrawingRegionType', mapping_=None, nsmap_=None):
-        element = super(LineDrawingRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='LineDrawingRegionType', fromsubclass_=False, pretty_print=True):
+        super(LineDrawingRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='LineDrawingRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(LineDrawingRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.penColour is not None:
@@ -13238,6 +14362,8 @@ class LineDrawingRegionType(RegionType):
             element.set('embText', self.gds_format_boolean(self.embText))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -13245,12 +14371,12 @@ class LineDrawingRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -13275,9 +14401,9 @@ class LineDrawingRegionType(RegionType):
                 self.embText = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-        super(LineDrawingRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(LineDrawingRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(LineDrawingRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(LineDrawingRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -13296,23 +14422,34 @@ class LineDrawingRegionType(RegionType):
 
 
 class ImageRegionType(RegionType):
-    """An image is considered to be more intricate and complex
+    """ImageRegionType --
+    An image is considered to be more intricate and complex
     than a graphic. These can be photos or drawings.
-    The angle the rectangle encapsulating a region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    The colour bit depth required for the region
-    The background colour of the region
-    Specifies whether the region also contains
-    text"""
+      
+    * orientation --
+      The angle the rectangle encapsulating a region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * colourDepth --
+      The colour bit depth required for the region
+      
+    * bgColour --
+      The background colour of the region
+      
+    * embText --
+      Specifies whether the region also contains
+      text
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('colourDepth', 'pc:ColourDepthSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('colourDepth', 'pc:ColourDepthSimpleType', 0, 1, {'use': 'optional', 'name': 'colourDepth'}),
+        MemberSpec_('bgColour', 'pc:ColourSimpleType', 0, 1, {'use': 'optional', 'name': 'bgColour'}),
+        MemberSpec_('embText', 'boolean', 0, 1, {'use': 'optional', 'name': 'embText'}),
     ]
     subclass = None
     superclass = RegionType
@@ -13321,8 +14458,8 @@ class ImageRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(ImageRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("ImageRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.colourDepth = _cast(None, colourDepth)
@@ -13388,14 +14525,14 @@ class ImageRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ColourSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
-            super(ImageRegionType, self).hasContent_()
+            super(ImageRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ImageRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ImageRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('ImageRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -13410,16 +14547,16 @@ class ImageRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ImageRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='ImageRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ImageRegionType'):
-        super(ImageRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='ImageRegionType'):
+        super(ImageRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='ImageRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -13432,10 +14569,10 @@ class ImageRegionType(RegionType):
         if self.embText is not None and 'embText' not in already_processed:
             already_processed.add('embText')
             outfile.write(' embText="%s"' % self.gds_format_boolean(self.embText, input_name='embText'))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
-        super(ImageRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='ImageRegionType', mapping_=None, nsmap_=None):
-        element = super(ImageRegionType, self).to_etree(parent_element, name_, mapping_)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='ImageRegionType', fromsubclass_=False, pretty_print=True):
+        super(ImageRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='ImageRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(ImageRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.colourDepth is not None:
@@ -13446,6 +14583,8 @@ class ImageRegionType(RegionType):
             element.set('embText', self.gds_format_boolean(self.embText))
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -13453,12 +14592,12 @@ class ImageRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -13483,9 +14622,9 @@ class ImageRegionType(RegionType):
                 self.embText = False
             else:
                 raise_parse_error(node, 'Bad boolean attribute')
-        super(ImageRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        super(ImageRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(ImageRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(ImageRegionType, self)._buildChildren(child_, node, nodeName_, True)
         pass
     def __hash__(self):
         return hash(self.id)
@@ -13504,52 +14643,92 @@ class ImageRegionType(RegionType):
 
 
 class TextRegionType(RegionType):
-    """Pure text is represented as a text region. This includes
+    """TextRegionType --
+    Pure text is represented as a text region. This includes
     drop capitals, but practically ornate text may be
     considered as a graphic.
-    The angle the rectangle encapsulating the region
-    has to be rotated in clockwise direction
-    in order to correct the present skew
-    (negative values indicate anti-clockwise rotation).
-    (The rotated image can be further referenced
-    via “AlternativeImage”.)
-    Range: -179.999,180
-    The nature of the text in the region
-    The degree of space in points between the lines of
-    text (line spacing)
-    The direction in which text within lines
-    should be read (order of words and characters),
-    in addition to “textLineOrder”.
-    The order of text lines within the block,
-    in addition to “readingDirection”.
-    The angle the baseline of text within the region
-    has to be rotated (relative to the rectangle
-    encapsulating the region) in clockwise direction
-    in order to correct the present skew,
-    in addition to “orientation”
-    (negative values indicate anti-clockwise rotation).
-    Range: -179.999,180
-    Defines whether a region of text is indented or not
-    Text align
-    The primary language used in the region
-    The secondary language used in the region
-    The primary script used in the region
-    The secondary script used in the region"""
+      
+    * orientation --
+      The angle the rectangle encapsulating the region
+      has to be rotated in clockwise direction
+      in order to correct the present skew
+      (negative values indicate anti-clockwise rotation).
+      (The rotated image can be further referenced
+      via
+      “
+      AlternativeImage
+      ”
+      .)
+      Range: -179.999,180
+      
+    * type --
+      The nature of the text in the region
+      
+    * leading --
+      The degree of space in points between the lines of
+      text (line spacing)
+      
+    * readingDirection --
+      The direction in which text within lines
+      should be read (order of words and characters),
+      in addition to
+      “
+      textLineOrder
+      ”
+      .
+      
+    * textLineOrder --
+      The order of text lines within the block,
+      in addition to
+      “
+      readingDirection
+      ”
+      .
+      
+    * readingOrientation --
+      The angle the baseline of text within the region
+      has to be rotated (relative to the rectangle
+      encapsulating the region) in clockwise direction
+      in order to correct the present skew,
+      in addition to
+      “
+      orientation
+      ”
+      (negative values indicate anti-clockwise rotation).
+      Range: -179.999,180
+      
+    * indented --
+      Defines whether a region of text is indented or not
+      
+    * align -- Text align
+    * primaryLanguage --
+      The primary language used in the region
+      
+    * secondaryLanguage --
+      The secondary language used in the region
+      
+    * primaryScript --
+      The primary script used in the region
+      
+    * secondaryScript --
+      The secondary script used in the region
+    
+    """
     __hash__ = GeneratedsSuper.__hash__
     member_data_items_ = [
-        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('type_', 'pc:TextTypeSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('leading', 'int', 0, 1, {'use': 'optional'}),
-        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('textLineOrder', 'pc:TextLineOrderSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('readingOrientation', 'float', 0, 1, {'use': 'optional'}),
-        MemberSpec_('indented', 'boolean', 0, 1, {'use': 'optional'}),
-        MemberSpec_('align', 'pc:AlignSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('secondaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional'}),
-        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional'}),
+        MemberSpec_('orientation', 'float', 0, 1, {'use': 'optional', 'name': 'orientation'}),
+        MemberSpec_('type_', 'pc:TextTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('leading', 'int', 0, 1, {'use': 'optional', 'name': 'leading'}),
+        MemberSpec_('readingDirection', 'pc:ReadingDirectionSimpleType', 0, 1, {'use': 'optional', 'name': 'readingDirection'}),
+        MemberSpec_('textLineOrder', 'pc:TextLineOrderSimpleType', 0, 1, {'use': 'optional', 'name': 'textLineOrder'}),
+        MemberSpec_('readingOrientation', 'float', 0, 1, {'use': 'optional', 'name': 'readingOrientation'}),
+        MemberSpec_('indented', 'boolean', 0, 1, {'use': 'optional', 'name': 'indented'}),
+        MemberSpec_('align', 'pc:AlignSimpleType', 0, 1, {'use': 'optional', 'name': 'align'}),
+        MemberSpec_('primaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional', 'name': 'primaryLanguage'}),
+        MemberSpec_('secondaryLanguage', 'pc:LanguageSimpleType', 0, 1, {'use': 'optional', 'name': 'secondaryLanguage'}),
+        MemberSpec_('primaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'primaryScript'}),
+        MemberSpec_('secondaryScript', 'pc:ScriptSimpleType', 0, 1, {'use': 'optional', 'name': 'secondaryScript'}),
+        MemberSpec_('production', 'pc:ProductionSimpleType', 0, 1, {'use': 'optional', 'name': 'production'}),
         MemberSpec_('TextLine', 'TextLineType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextLine', 'type': 'TextLineType'}, None),
         MemberSpec_('TextEquiv', 'TextEquivType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'TextEquiv', 'type': 'TextEquivType'}, None),
         MemberSpec_('TextStyle', 'TextStyleType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'TextStyle', 'type': 'TextStyleType'}, None),
@@ -13561,8 +14740,8 @@ class TextRegionType(RegionType):
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = None
-        super(TextRegionType, self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        self.ns_prefix_ = "pc"
+        super(globals().get("TextRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -13783,17 +14962,17 @@ class TextRegionType(RegionType):
                 lineno = self.gds_get_node_lineno_()
                 self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on ProductionSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
                 result = False
-    def hasContent_(self):
+    def has__content(self):
         if (
             self.TextLine or
             self.TextEquiv or
             self.TextStyle is not None or
-            super(TextRegionType, self).hasContent_()
+            super(TextRegionType, self).has__content()
         ):
             return True
         else:
             return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextRegionType', pretty_print=True):
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextRegionType', pretty_print=True):
         imported_ns_def_ = GenerateDSNamespaceDefs_.get('TextRegionType')
         if imported_ns_def_ is not None:
             namespacedef_ = imported_ns_def_
@@ -13808,16 +14987,16 @@ class TextRegionType(RegionType):
         showIndent(outfile, level, pretty_print)
         outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
         already_processed = set()
-        self.exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
-        if self.hasContent_():
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
+        if self.has__content():
             outfile.write('>%s' % (eol_, ))
-            self.exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextRegionType', pretty_print=pretty_print)
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='TextRegionType', pretty_print=pretty_print)
             showIndent(outfile, level, pretty_print)
             outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
         else:
             outfile.write('/>%s' % (eol_, ))
-    def exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextRegionType'):
-        super(TextRegionType, self).exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='TextRegionType'):
+        super(TextRegionType, self)._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='TextRegionType')
         if self.orientation is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
             outfile.write(' orientation="%s"' % self.gds_format_float(self.orientation, input_name='orientation'))
@@ -13857,8 +15036,8 @@ class TextRegionType(RegionType):
         if self.production is not None and 'production' not in already_processed:
             already_processed.add('production')
             outfile.write(' production=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.production), input_name='production')), ))
-    def exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='', name_='TextRegionType', fromsubclass_=False, pretty_print=True):
-        super(TextRegionType, self).exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='TextRegionType', fromsubclass_=False, pretty_print=True):
+        super(TextRegionType, self)._exportChildren(outfile, level, namespaceprefix_, namespacedef_, name_, True, pretty_print=pretty_print)
         if pretty_print:
             eol_ = '\n'
         else:
@@ -13872,8 +15051,8 @@ class TextRegionType(RegionType):
         if self.TextStyle is not None:
             namespaceprefix_ = self.TextStyle_nsprefix_ + ':' if (UseCapturedNS_ and self.TextStyle_nsprefix_) else ''
             self.TextStyle.export(outfile, level, namespaceprefix_, namespacedef_='', name_='TextStyle', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='TextRegionType', mapping_=None, nsmap_=None):
-        element = super(TextRegionType, self).to_etree(parent_element, name_, mapping_)
+    def to_etree(self, parent_element=None, name_='TextRegionType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        element = super(TextRegionType, self).to_etree(parent_element, name_, mapping_, reverse_mapping_, nsmap_)
         if self.orientation is not None:
             element.set('orientation', self.gds_format_float(self.orientation))
         if self.type_ is not None:
@@ -13901,14 +15080,16 @@ class TextRegionType(RegionType):
         if self.production is not None:
             element.set('production', self.gds_format_string(self.production))
         for TextLine_ in self.TextLine:
-            TextLine_.to_etree(element, name_='TextLine', mapping_=mapping_, nsmap_=nsmap_)
+            TextLine_.to_etree(element, name_='TextLine', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for TextEquiv_ in self.TextEquiv:
-            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, nsmap_=nsmap_)
+            TextEquiv_.to_etree(element, name_='TextEquiv', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if self.TextStyle is not None:
             TextStyle_ = self.TextStyle
-            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, nsmap_=nsmap_)
+            TextStyle_.to_etree(element, name_='TextStyle', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         if mapping_ is not None:
             mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
         return element
     def build(self, node, gds_collector_=None):
         self.gds_collector_ = gds_collector_
@@ -13916,12 +15097,12 @@ class TextRegionType(RegionType):
             self.gds_elementtree_node_ = node
         already_processed = set()
         self.ns_prefix_ = node.prefix
-        self.buildAttributes(node, node.attrib, already_processed)
+        self._buildAttributes(node, node.attrib, already_processed)
         for child in node:
             nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self.buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
         return self
-    def buildAttributes(self, node, attrs, already_processed):
+    def _buildAttributes(self, node, attrs, already_processed):
         value = find_attr_value_('orientation', node)
         if value is not None and 'orientation' not in already_processed:
             already_processed.add('orientation')
@@ -13990,8 +15171,8 @@ class TextRegionType(RegionType):
             already_processed.add('production')
             self.production = value
             self.validate_ProductionSimpleType(self.production)    # validate type ProductionSimpleType
-        super(TextRegionType, self).buildAttributes(node, attrs, already_processed)
-    def buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        super(TextRegionType, self)._buildAttributes(node, attrs, already_processed)
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
         if nodeName_ == 'TextLine':
             obj_ = TextLineType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -14007,7 +15188,7 @@ class TextRegionType(RegionType):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.TextStyle = obj_
             obj_.original_tagname_ = 'TextStyle'
-        super(TextRegionType, self).buildChildren(child_, node, nodeName_, True)
+        super(TextRegionType, self)._buildChildren(child_, node, nodeName_, True)
     def __hash__(self):
         return hash(self.id)
     def set_orientation(self, orientation):
@@ -14022,6 +15203,11 @@ class TextRegionType(RegionType):
             self.invalidate_AlternativeImage(feature_selector='deskewed')
         self.orientation = orientation
 # end class TextRegionType
+
+
+#
+# End data representation classes.
+#
 
 
 GDSClassesMapping = {
@@ -14041,9 +15227,10 @@ def usage():
 
 def get_root_tag(node):
     tag = Tag_pattern_.match(node.tag).groups()[-1]
-    rootClass = GDSClassesMapping.get(tag)
+    prefix_tag = TagNamePrefix + tag
+    rootClass = GDSClassesMapping.get(prefix_tag)
     if rootClass is None:
-        rootClass = globals().get(tag)
+        rootClass = globals().get(prefix_tag)
     return tag, rootClass
 
 
@@ -14097,7 +15284,7 @@ def parse(inFileName, silence=False, print_warnings=True):
 
 
 def parseEtree(inFileName, silence=False, print_warnings=True,
-               mapping=None, nsmap=None):
+               mapping=None, reverse_mapping=None, nsmap=None):
     parser = None
     doc = parsexml_(inFileName, parser)
     gds_collector = GdsCollector_()
@@ -14108,12 +15295,15 @@ def parseEtree(inFileName, silence=False, print_warnings=True,
         rootClass = PcGts
     rootObj = rootClass.factory()
     rootObj.build(rootNode, gds_collector_=gds_collector)
-    # Enable Python to collect the space used by the DOM.
     if mapping is None:
         mapping = {}
+    if reverse_mapping is None:
+        reverse_mapping = {}
     rootElement = rootObj.to_etree(
-        None, name_=rootTag, mapping_=mapping, nsmap_=nsmap)
-    reverse_mapping = rootObj.gds_reverse_node_mapping(mapping)
+        None, name_=rootTag, mapping_=mapping,
+        reverse_mapping_=reverse_mapping, nsmap_=nsmap)
+    reverse_node_mapping = rootObj.gds_reverse_node_mapping(mapping)
+    # Enable Python to collect the space used by the DOM.
     if not SaveElementTreeNode:
         doc = None
         rootNode = None
@@ -14130,7 +15320,7 @@ def parseEtree(inFileName, silence=False, print_warnings=True,
             len(gds_collector.get_messages()), ))
         gds_collector.write_messages(sys.stderr)
         sys.stderr.write(separator)
-    return rootObj, rootElement, mapping, reverse_mapping
+    return rootObj, rootElement, mapping, reverse_node_mapping
 
 
 def parseString(inString, silence=False, print_warnings=True):
@@ -14213,6 +15403,224 @@ if __name__ == '__main__':
 
 RenameMappings_ = {
 }
+
+#
+# Mapping of namespaces to types defined in them
+# and the file in which each is defined.
+# simpleTypes are marked "ST" and complexTypes "CT".
+NamespaceToDefMappings_ = {'http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15': [('ColourSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ReadingDirectionSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('TextLineOrderSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('TextTypeSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('PageTypeSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ConfSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('LanguageSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ScriptSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ColourDepthSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('GraphicsTypeSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ChartTypeSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('PointsType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('ProductionSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('AlignSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('GroupTypeSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('TextDataTypeSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('UnderlineStyleSimpleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'ST'),
+                                                                     ('PcGtsType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MetadataType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MetadataItemType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LabelsType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LabelType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('PageType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('CoordsType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextLineType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('WordType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GlyphType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextEquivType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ImageRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LineDrawingRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphicRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TableRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GridType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GridPointsType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ChartRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('SeparatorRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MathsRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ChemRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MapRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('MusicRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('AdvertRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('NoiseRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UnknownRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('CustomRegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('PrintSpaceType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('ReadingOrderType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RegionRefIndexedType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('OrderedGroupIndexedType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UnorderedGroupIndexedType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RegionRefType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('OrderedGroupType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UnorderedGroupType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('BorderType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LayersType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('LayerType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('BaselineType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RelationsType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RelationType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TextStyleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RegionType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('AlternativeImageType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemesType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemeBaseType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemeType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('NonPrintingCharType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('GraphemeGroupType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UserDefinedType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UserAttributeType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('TableCellRoleType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RolesType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT')]}
 
 __all__ = [
     "AdvertRegionType",

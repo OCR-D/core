@@ -6,8 +6,9 @@ on:
   workflow_dispatch: # run manually
 
 env:
-  GHCRIO_DOCKER_TAG: ghcr.io/ocr-d/core
-  DOCKERIO_DOCKER_TAG: docker.io/ocrd/core
+  # FIXME: linux/arm/v7 disabled as long as scikit-build/cmake-python-distributions#503 is unresolved
+  # PLATFORMS: linux/amd64,linux/arm/v7,linux/arm64/v8,linux/ppc64le
+  PLATFORMS: linux/amd64,linux/arm64/v8,linux/ppc64le
 
 jobs:
 
@@ -17,22 +18,27 @@ jobs:
     permissions:
       packages: write
       contents: read
-
+    env:
+      DOCKER_BASE_TAG: ghcr.io/ocr-d docker.io/ocrd
+      # TODO(kba): make the interpolation work correctly
+      # DOCKER_BUILD: docker buildx build --progress=plain --platform ${{ env.PLATFORMS }} --push
+      # TODO(kba): Investigate why ppc64le build hangs on "Installing build dependencies"
+      # TODO(kba): Investigate why arm64 fails with .buildkit_qemu_emulator: /usr/local/bin/conda: Invalid ELF image for this architecture
+      DOCKER_BUILD: docker buildx build --progress=plain --platform linux/amd64 --push
     steps:
-    - uses: actions/checkout@v4
+    - name: Export variables
+      run: |
+        echo "DOCKER_BASE_TAG=${{ env.DOCKER_BASE_TAG }}" >> $GITHUB_ENV
+        echo "DOCKER_BUILD=${{ env.DOCKER_BUILD }}" >> $GITHUB_ENV
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        # we need tags for docker version tagging
+        fetch-tags: true
+        fetch-depth: 0
     - # Activate cache export feature to reduce build time of images
       name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
-    - name: Build the Docker image
-      # default tag uses docker.io, so override on command-line
-      run: make docker DOCKER_TAG=${{ env.GHCRIO_DOCKER_TAG }}
-    - name: Build the Docker image with GPU support
-      # default tag uses docker.io, so override on command-line
-      run: make docker-cuda DOCKER_TAG=${{ env.GHCRIO_DOCKER_TAG }}-cuda DOCKER_BASE_IMAGE=${{ env.GHCRIO_DOCKER_TAG }}
-    - name: Smoke Test that ocrd --help works
-      run: |
-        docker run --rm ${{ env.GHCRIO_DOCKER_TAG }} ocrd --version
-        docker run --rm ${{ env.GHCRIO_DOCKER_TAG }}-cuda ocrd --version
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
       with:
@@ -44,20 +50,9 @@ jobs:
       with:
         username: ${{ secrets.DOCKERIO_USERNAME }}
         password: ${{ secrets.DOCKERIO_PASSWORD }}
-    - name: Push images to Github Container Registry
-      run: |
-        docker push ${{ env.GHCRIO_DOCKER_TAG }}:latest
-        docker push ${{ env.GHCRIO_DOCKER_TAG }}-cuda:latest
-    - name: Push images to Docker Hub
-      run: |
-        docker tag ${{ env.GHCRIO_DOCKER_TAG }} ${{ env.DOCKERIO_DOCKER_TAG }}
-        docker tag ${{ env.GHCRIO_DOCKER_TAG }}-cuda ${{ env.DOCKERIO_DOCKER_TAG }}-cuda
-        docker push ${{ env.DOCKERIO_DOCKER_TAG }}:latest
-        docker push ${{ env.DOCKERIO_DOCKER_TAG }}-cuda:latest
-        docker push ${{ env.DOCKERIO_DOCKER_TAG }}:latest
-        docker push ${{ env.DOCKERIO_DOCKER_TAG }}-cuda:latest
-        docker tag ${{ env.DOCKERIO_DOCKER_TAG }} ${{ env.DOCKERIO_DOCKER_TAG }}:$(git describe --tags --abbrev=0)
-        docker tag ${{ env.DOCKERIO_DOCKER_TAG }}-cuda ${{ env.DOCKERIO_DOCKER_TAG }}-cuda:$(git describe --tags --abbrev=0)
-        docker push ${{ env.DOCKERIO_DOCKER_TAG }}:$(git describe --tags --abbrev=0)
-        docker push ${{ env.DOCKERIO_DOCKER_TAG }}-cuda:$(git describe --tags --abbrev=0)
-    
+    - name: Build the Docker image
+      run: make docker
+    - name: Build the Docker image with GPU support
+      run: make docker-cuda
+    - name: Build the Docker images with GPU support and ML frameworks
+      run: make docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch

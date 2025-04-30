@@ -33,7 +33,7 @@ class TestDummyProcessor(TestCase):
             output_files = workspace.mets.find_all_files(fileGrp='OUTPUT')
             output_files.sort(key=lambda x: x.url)
             assert output_files[0].local_filename == 'OUTPUT/OUTPUT_PHYS_0001.tif'
-            assert output_files[1].local_filename == 'OUTPUT/OUTPUT_PHYS_0001.xml'
+            assert output_files[1].local_filename == 'OUTPUT/OUTPUT_PHYS_0001_PAGE.xml'
             self.assertEqual(page_from_file(output_files[1]).pcGtsId, output_files[1].ID)
             assert page_from_file(output_files[1]).get_Page().imageFilename == str(output_files[0].local_filename)
             self.assertEqual(len(output_files), 6)

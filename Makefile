@@ -57,13 +57,19 @@ help:
 PIP_INSTALL ?= $(PIP) install
 PIP_INSTALL_CONFIG_OPTION ?=
 
-.PHONY: deps-cuda deps-ubuntu deps-test
+.PHONY: get-conda deps-cuda deps-ubuntu deps-test
 
-deps-cuda: CONDA_EXE ?= /usr/local/bin/conda
-deps-cuda: export CONDA_PREFIX ?= /conda
-deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
-deps-cuda:
-	curl -Ls https://micro.mamba.pm/api/micromamba/linux-64/latest | tar -xvj bin/micromamba
+ifeq ($(shell command -v conda),)
+# Conda installation: get Micromamba distribution
+get-conda: CONDA_EXE ?= /usr/local/bin/conda
+get-conda: export CONDA_PREFIX ?= /conda
+# first part of recipe: see micro.mamba.pm/install.sh
+get-conda: OS != uname
+get-conda: PLATFORM = $(subst Darwin,osx,$(subst Linux,linux,$(OS)))
+get-conda: MACHINE = $(or $(filter aarch64 arm64 ppc64le, $(ARCH)), 64)
+get-conda: URL = https://micro.mamba.pm/api/micromamba/$(PLATFORM)-$(MACHINE)/latest
+get-conda:
+	curl --retry 6 -Ls $(URL) | tar -xvj bin/micromamba
 	mv bin/micromamba $(CONDA_EXE)
 # Install Conda system-wide (for interactive / login shells)
 	echo 'export MAMBA_EXE=$(CONDA_EXE) MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) CONDA_PREFIX=$(CONDA_PREFIX) PATH=$(CONDA_PREFIX)/bin:$$PATH' >> /etc/profile.d/98-conda.sh
@@ -71,6 +77,14 @@ deps-cuda:
 	echo 'export XLA_FLAGS=--xla_gpu_cuda_data_dir=$(CONDA_PREFIX)/' >> /etc/profile.d/98-conda.sh
 	mkdir -p $(CONDA_PREFIX)/lib $(CONDA_PREFIX)/include
 	echo $(CONDA_PREFIX)/lib >> /etc/ld.so.conf.d/conda.conf
+else
+# Conda installation already present: do nothing
+get-conda: ;
+endif
+
+# Dependencies for CUDA installation via Conda
+deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
+deps-cuda: get-conda
 # Get CUDA toolkit, including compiler and libraries with dev,
 # however, the Nvidia channels do not provide (recent) cudnn (needed for Torch, TF etc):
 #MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
@@ -79,7 +93,6 @@ deps-cuda:
 # The conda-forge channel has cudnn and cudatoolkit but no cudatoolkit-dev anymore (and we need both!),
 # so let's combine nvidia and conda-forge (will be same lib versions, no waste of space),
 # but omitting cuda-cudart-dev and cuda-libraries-dev (as these will be pulled by pip for torch anyway):
-	MAMBA_ROOT_PREFIX=$(CONDA_PREFIX) \
 	conda install -c nvidia/label/cuda-11.8.0 \
 	                 cuda-nvcc \
 	                 cuda-cccl \
@@ -95,29 +108,83 @@ deps-cuda:
 # let's jump the shark and pull these via NGC index directly,
 # but then share them with the rest of the system so native compilation/linking
 # works, too:
+	shopt -s nullglob; \
 	$(PIP) install nvidia-pyindex \
-	 && $(PIP) install nvidia-cudnn-cu11==8.6.0.163 \
-	                   nvidia-cublas-cu11 \
-	                   nvidia-cusparse-cu11 \
-	                   nvidia-cusolver-cu11 \
-	                   nvidia-curand-cu11 \
-	                   nvidia-cufft-cu11 \
-	                   nvidia-cuda-runtime-cu11 \
+	 && $(PIP) install nvidia-cudnn-cu11~=8.7 \
+	                   nvidia-cublas-cu11~=11.11 \
+	                   nvidia-cusparse-cu11~=11.7 \
+	                   nvidia-cusolver-cu11~=11.4 \
+	                   nvidia-curand-cu11~=10.3 \
+	                   nvidia-cufft-cu11~=10.9 \
+	                   nvidia-cuda-runtime-cu11~=11.8 \
+	                   nvidia-cuda-cupti-cu11~=11.8 \
 	                   nvidia-cuda-nvrtc-cu11 \
-	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_nvrtc; do \
+	 && for pkg in cudnn cublas cusparse cusolver curand cufft cuda_runtime cuda_cupti cuda_nvrtc; do \
 	        for lib in $(PYTHON_PREFIX)/nvidia/$$pkg/lib/lib*.so.*; do \
 	            base=`basename $$lib`; \
 	            ln -s $$lib $(CONDA_PREFIX)/lib/$$base.so; \
 	            ln -s $$lib $(CONDA_PREFIX)/lib/$${base%.so.*}.so; \
 	        done \
-	     && ln -s $(PYTHON_PREFIX)/nvidia/$$pkg/include/* $(CONDA_PREFIX)/include/; \
+	     && for inc in $(PYTHON_PREFIX)/nvidia/$$pkg/include/*; do \
+	            base=`basename $$inc`; case $$base in __*) continue; esac; \
+	            ln -s $$inc $(CONDA_PREFIX)/include/; \
+	        done \
 	    done \
 	 && ldconfig
 # gputil/nvidia-smi would be nice, too – but that drags in Python as a conda dependency...
 
+# Workaround for missing prebuilt versions of TF<2 for Python==3.8
+# todo: find another solution for 3.9, 3.10 etc
+# https://docs.nvidia.com/deeplearning/frameworks/tensorflow-wheel-release-notes/tf-wheel-rel.html
+# Nvidia has them, but under a different name, so let's rewrite that:
+# (hold at nv22.11, because newer releases require CUDA 12, which is not supported by TF2 (at py38),
+#  and therefore not in our ocrd/core-cuda base image yet)
+# However, at that time no Numpy 1.24 was known, which breaks TF1
+# (which is why later nv versions hold it at <1.24 automatically -
+#  see https://github.com/NVIDIA/tensorflow/blob/r1.15.5%2Bnv22.11/tensorflow/tools/pip_package/setup.py)
+deps-tf1:
+	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8 && \
+	! $(PIP) show -q tensorflow-gpu; then \
+	  $(PIP) install nvidia-pyindex && \
+	  pushd $$(mktemp -d) && \
+	  $(PIP) download --no-deps nvidia-tensorflow==1.15.5+nv22.11 && \
+	  for name in nvidia_tensorflow-*.whl; do name=$${name%.whl}; done && \
+	  $(PYTHON) -m wheel unpack $$name.whl && \
+	  for name in nvidia_tensorflow-*/; do name=$${name%/}; done && \
+	  newname=$${name/nvidia_tensorflow/tensorflow_gpu} &&\
+	  sed -i s/nvidia_tensorflow/tensorflow_gpu/g $$name/$$name.dist-info/METADATA && \
+	  sed -i s/nvidia_tensorflow/tensorflow_gpu/g $$name/$$name.dist-info/RECORD && \
+	  sed -i s/nvidia_tensorflow/tensorflow_gpu/g $$name/tensorflow_core/tools/pip_package/setup.py && \
+	  pushd $$name && for path in $$name*; do mv $$path $${path/$$name/$$newname}; done && popd && \
+	  $(PYTHON) -m wheel pack $$name && \
+	  $(PIP) install $$newname*.whl && popd && rm -fr $$OLDPWD; \
+	  $(PIP) install "numpy<1.24" -r $$DIRSTACK/requirements.txt; \
+	else \
+	  $(PIP) install "tensorflow-gpu<2.0" -r requirements.txt; \
+	fi
+
+deps-tf2:
+	if $(PYTHON) -c 'import sys; print("%u.%u" % (sys.version_info.major, sys.version_info.minor))' | fgrep 3.8; then \
+	$(PIP) install tensorflow -r requirements.txt; \
+	else \
+	$(PIP) install "tensorflow[and-cuda]"  -r requirements.txt; \
+	fi
+
+deps-torch:
+	$(PIP) install -i https://download.pytorch.org/whl/cu118 torchvision==0.16.2+cu118 torch==2.1.2+cu118 -r requirements.txt
+
+# deps-*: always mix core's requirements.txt with additional deps,
+# so pip does not ignore the older version reqs,
+# but instead tries to find a mutually compatible set.
+
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
-	apt-get install -y python3 imagemagick libgeos-dev
+	apt-get update
+	apt-get install -y python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev
+
+# Dependencies for deployment via Conda
+deps-conda: get-conda
+	conda install -c conda-forge python==3.8.* imagemagick geos pkgconfig
 
 # Install test python deps via pip
 deps-test:
@@ -133,7 +200,7 @@ build:
 
 # (Re)install the tool
 install: #build
-	# not stricttly necessary but a precaution against outdated python build tools, https://github.com/OCR-D/core/pull/1166
+	# not strictly necessary but a precaution against outdated python build tools, https://github.com/OCR-D/core/pull/1166
 	$(PIP) install -U pip wheel
 	$(PIP_INSTALL) . $(PIP_INSTALL_CONFIG_OPTION)
 	@# workaround for shapely#1598
@@ -193,9 +260,9 @@ repo/assets repo/spec: always-update
 
 .PHONY: spec
 # Copy JSON Schema, OpenAPI from OCR-D/spec
-spec: repo/spec
-	cp repo/spec/ocrd_tool.schema.yml ocrd_validators/ocrd_validators/ocrd_tool.schema.yml
-	cp repo/spec/bagit-profile.yml ocrd_validators/ocrd_validators/bagit-profile.yml
+spec: # repo/spec
+	cp repo/spec/ocrd_tool.schema.yml src/ocrd_validators/ocrd_tool.schema.yml
+	cp repo/spec/bagit-profile.yml src/ocrd_validators/bagit-profile.yml
 
 #
 # Assets
@@ -228,19 +295,20 @@ test-logging: assets
 	cp src/ocrd_utils/ocrd_logging.conf $$tempdir; \
 	cd $$tempdir; \
 	$(PYTHON) -m pytest --continue-on-collection-errors -k TestLogging -k TestDecorators $(TESTDIR); \
-	rm -r $$tempdir/ocrd_logging.conf $$tempdir/.benchmarks; \
+	rm -r $$tempdir/ocrd_logging.conf $$tempdir/ocrd.log $$tempdir/.benchmarks; \
+	rm -rf $$tempdir/.coverage; \
 	rmdir $$tempdir
 
 network-module-test: assets
 	$(PYTHON) \
-		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -v --durations=10\
+		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -s -v --durations=10\
 		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
 		$(TESTDIR)/network
 
 INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 network-integration-test:
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="$(TESTDIR)/network/*ocrd_all*.py"
+	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py"
 	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
 
 network-integration-test-cicd:
@@ -315,60 +383,51 @@ pyclean:
 .PHONY: docker docker-cuda
 
 # Additional arguments to docker build. Default: '$(DOCKER_ARGS)'
-DOCKER_ARGS =
+DOCKER_ARGS ?=
+DOCKER_BASE_TAG ?= ocrd
+DOCKER_BUILD ?= docker build --progress=plain
 
 # Build docker image
 docker: DOCKER_BASE_IMAGE = ubuntu:20.04
-docker: DOCKER_TAG = ocrd/core
+docker: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core)
 docker: DOCKER_FILE = Dockerfile
 
-docker-cuda: DOCKER_BASE_IMAGE = ocrd/core
-docker-cuda: DOCKER_TAG = ocrd/core-cuda
+# Build extended sets for maximal layer sharing
+docker-cuda: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core
+docker-cuda: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda)
 docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
 docker-cuda: docker
 
-docker docker-cuda:
-	docker build --progress=plain -f $(DOCKER_FILE) -t $(DOCKER_TAG) --target ocrd_core_base --build-arg BASE_IMAGE=$(DOCKER_BASE_IMAGE) $(DOCKER_ARGS) .
+docker-cuda-tf1: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda-tf1: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-tf1)
+docker-cuda-tf1: DOCKER_FILE = Dockerfile.cuda-tf1
+
+docker-cuda-tf1: docker-cuda
+
+docker-cuda-tf2: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda-tf2: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-tf2)
+docker-cuda-tf2: DOCKER_FILE = Dockerfile.cuda-tf2
+
+docker-cuda-tf2: docker-cuda
+
+docker-cuda-torch: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda-torch: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-torch)
+docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
+
+docker-cuda-torch: docker-cuda
+
+# if the current ref is a release, then use it as tag instead of :latest
+docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch: GIT_TAG := $(strip $(shell git describe --tags | grep -x "v[0-9]\.[0-9][[0-9]\.[0-9]"))
+docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
+	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) \
+	$(if $(GIT_TAG),$(DOCKER_TAG:%=-t %:$(GIT_TAG))) \
+	--target ocrd_core_base \
+	--build-arg BASE_IMAGE=$(lastword $(DOCKER_BASE_IMAGE)) \
+	--build-arg VCS_REF=$$(git rev-parse --short HEAD) \
+	--build-arg BUILD_DATE=$$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+	$(DOCKER_ARGS) .
 
 # Build wheels and source dist and twine upload them
 pypi: build
-	twine upload dist/ocrd-$(VERSION)*{tar.gz,whl}
-
-pypi-workaround: build-workaround
-	for dist in $(BUILD_ORDER);do twine upload dist/$$dist-$(VERSION)*{tar.gz,whl};done
-
-# Only in place until v3 so we don't break existing installations
-build-workaround: pyclean
-	cp pyproject.toml pyproject.toml.BAK
-	cp src/ocrd_utils/constants.py src/ocrd_utils/constants.py.BAK
-	cp src/ocrd/cli/__init__.py src/ocrd/cli/__init__.py.BAK
-	for dist in $(BUILD_ORDER);do \
-		cat pyproject.toml.BAK | sed "s,^name =.*,name = \"$$dist\"," > pyproject.toml; \
-		cat src/ocrd_utils/constants.py.BAK | sed "s,dist_version('ocrd'),dist_version('$$dist')," > src/ocrd_utils/constants.py; \
-		cat src/ocrd/cli/__init__.py.BAK | sed "s,package_name='ocrd',package_name='$$dist'," > src/ocrd/cli/__init__.py; \
-		$(MAKE) build; \
-	done
-	rm pyproject.toml.BAK
-	rm src/ocrd_utils/constants.py.BAK
-	rm src/ocrd/cli/__init__.py.BAK
-
-# test that the aliased packages work in isolation and combined
-test-workaround: build-workaround
-	$(MAKE) uninstall-workaround
-	for dist in $(BUILD_ORDER);do \
-		pip install dist/$$dist-*.whl ;\
-		ocrd --version ;\
-		make test ;\
-		pip uninstall --yes $$dist ;\
-	done
-	for dist in $(BUILD_ORDER);do \
-		pip install dist/$$dist-*.whl ;\
-	done
-	ocrd --version ;\
-	make test ;\
-	for dist in $(BUILD_ORDER);do pip uninstall --yes $$dist;done
-
-uninstall-workaround:
-	for dist in $(BUILD_ORDER);do $(PIP) uninstall --yes $$dist;done
-
+	twine upload --verbose dist/ocrd-$(VERSION)*{tar.gz,whl}

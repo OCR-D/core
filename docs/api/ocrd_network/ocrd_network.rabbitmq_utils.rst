@@ -15,5 +15,6 @@ Submodules
    ocrd_network.rabbitmq_utils.connector
    ocrd_network.rabbitmq_utils.constants
    ocrd_network.rabbitmq_utils.consumer
+   ocrd_network.rabbitmq_utils.helpers
    ocrd_network.rabbitmq_utils.ocrd_messages
    ocrd_network.rabbitmq_utils.publisher

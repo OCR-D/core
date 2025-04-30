@@ -8,13 +8,14 @@ Each Processing Worker is an instance of an OCR-D processor.
 """
 from __future__ import annotations
 from pathlib import Path
-from subprocess import Popen, run as subprocess_run
+import psutil
 from time import sleep
 from typing import Dict, List, Union
 
+from ocrd import OcrdMetsServer
 from ocrd_utils import config, getLogger, safe_filename
 from ..logging_utils import get_mets_server_logging_file_path
-from ..utils import is_mets_server_running, stop_mets_server
+from ..utils import get_uds_path, is_mets_server_running, stop_mets_server
 from .config_parser import parse_hosts_data, parse_mongodb_data, parse_rabbitmq_data, validate_and_load_config
 from .hosts import DataHost
 from .network_services import DataMongoDB, DataRabbitMQ
@@ -29,11 +30,14 @@ class Deployer:
         self.data_hosts: List[DataHost] = parse_hosts_data(ps_config["hosts"])
         self.internal_callback_url = ps_config.get("internal_callback_url", None)
         self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
+        # This is required to store UDS urls that are multiplexed through the TCP proxy and are not preserved anywhere
+        self.mets_servers_paths: Dict = {}  # {"ws_dir_path": "mets_server_url"}
+        self.use_tcp_mets = ps_config.get("use_tcp_mets", False)
 
     # TODO: Reconsider this.
     def find_matching_network_agents(
         self, worker_only: bool = False, server_only: bool = False, docker_only: bool = False,
-        native_only: bool = False, str_names_only: bool = False, unique_only: bool = False
+        native_only: bool = False, str_names_only: bool = False, unique_only: bool = False, sort: bool = False
     ) -> Union[List[str], List[object]]:
         """Finds and returns a list of matching data objects of type:
         `DataProcessingWorker` and `DataProcessorServer`.
@@ -44,6 +48,7 @@ class Deployer:
         :py:attr:`native_only` match only native network agents (DataProcessingWorker and DataProcessorServer)
         :py:attr:`str_names_only` returns the processor_name filed instead of the Data* object
         :py:attr:`unique_only` remove duplicate names from the matches
+        :py:attr:`sort` sort the result
 
         `worker_only` and `server_only` are mutually exclusive to each other
         `docker_only` and `native_only` are mutually exclusive to each other
@@ -60,6 +65,10 @@ class Deployer:
             raise ValueError(msg)
         if not str_names_only and unique_only:
             msg = f"Value 'unique_only' is allowed only together with 'str_names_only'"
+            self.log.exception(msg)
+            raise ValueError(msg)
+        if sort and not str_names_only:
+            msg = f"Value 'sort' is allowed only together with 'str_names_only'"
             self.log.exception(msg)
             raise ValueError(msg)
 
@@ -86,8 +95,12 @@ class Deployer:
         matched_names = [match.processor_name for match in matched_objects]
         if not unique_only:
             return matched_names
-        # Removes any duplicate entries from matched names
-        return list(dict.fromkeys(matched_names))
+        list_matched = list(dict.fromkeys(matched_names))
+        if not sort:
+            # Removes any duplicate entries from matched names
+            return list_matched
+        list_matched.sort()
+        return list_matched
 
     def resolve_processor_server_url(self, processor_name) -> str:
         processor_server_url = ''
@@ -129,46 +142,39 @@ class Deployer:
         self.stop_mongodb()
         self.stop_rabbitmq()
 
-    def start_unix_mets_server(self, mets_path: str) -> Path:
-        log_file = get_mets_server_logging_file_path(mets_path=mets_path)
-        mets_server_url = Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(mets_path)}.sock")
+    def start_uds_mets_server(self, ws_dir_path: str) -> Path:
+        log_file = get_mets_server_logging_file_path(mets_path=ws_dir_path)
+        mets_server_url = get_uds_path(ws_dir_path=ws_dir_path)
         if is_mets_server_running(mets_server_url=str(mets_server_url)):
-            self.log.warning(f"The mets server for {mets_path} is already started: {mets_server_url}")
+            self.log.debug(f"The UDS mets server for {ws_dir_path} is already started: {mets_server_url}")
             return mets_server_url
-        cwd = Path(mets_path).parent
+        elif Path(mets_server_url).is_socket():
+            self.log.warning(
+                f"The UDS mets server for {ws_dir_path} is not running but the socket file exists: {mets_server_url}."
+                "Removing to avoid any weird behavior before starting the server.")
+            Path(mets_server_url).unlink()
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
-        sub_process = Popen(
-            args=["nohup", "ocrd", "workspace", "--mets-server-url", f"{mets_server_url}",
-                  "-d", f"{cwd}", "server", "start"],
-            shell=False,
-            stdout=open(file=log_file, mode="w"),
-            stderr=open(file=log_file, mode="a"),
-            cwd=cwd,
-            universal_newlines=True
-        )
-        # Wait for the mets server to start
-        sleep(2)
-        self.mets_servers[mets_server_url] = sub_process.pid
+        pid = OcrdMetsServer.create_process(mets_server_url=str(mets_server_url), ws_dir_path=str(ws_dir_path), log_file=str(log_file))
+        self.mets_servers[str(mets_server_url)] = pid
+        self.mets_servers_paths[str(ws_dir_path)] = str(mets_server_url)
         return mets_server_url
 
-    def stop_unix_mets_server(self, mets_server_url: str, stop_with_pid: bool = False) -> None:
+    def stop_uds_mets_server(self, mets_server_url: str, path_to_mets: str) -> None:
         self.log.info(f"Stopping UDS mets server: {mets_server_url}")
-        if stop_with_pid:
-            if Path(mets_server_url) not in self.mets_servers:
-                message = f"Mets server not found at URL: {mets_server_url}"
-                self.log.exception(message)
-                raise Exception(message)
-            mets_server_pid = self.mets_servers[Path(mets_server_url)]
-            subprocess_run(
-                args=["kill", "-s", "SIGINT", f"{mets_server_pid}"],
-                shell=False,
-                universal_newlines=True
-            )
-            return
-        # TODO: Reconsider this again
-        #  Not having this sleep here causes connection errors
-        #  on the last request processed by the processing worker.
-        #  Sometimes 3 seconds is enough, sometimes not.
-        sleep(5)
-        stop_mets_server(mets_server_url=mets_server_url)
+        self.log.info(f"Path to the mets file: {path_to_mets}")
+        self.log.debug(f"mets_server: {self.mets_servers}")
+        self.log.debug(f"mets_server_paths: {self.mets_servers_paths}")
+        workspace_path = str(Path(path_to_mets).parent)
+        mets_server_url_uds = self.mets_servers_paths[workspace_path]
+        mets_server_pid = self.mets_servers[mets_server_url_uds]
+        self.log.info(f"Terminating mets server with pid: {mets_server_pid}")
+        p = psutil.Process(mets_server_pid)
+        stop_mets_server(self.log, mets_server_url=mets_server_url, ws_dir_path=workspace_path)
+        if p.is_running():
+            p.wait()
+            self.log.info(f"Terminated mets server with pid: {mets_server_pid}")
+        else:
+            self.log.info(f"Mets server with pid: {mets_server_pid} has already terminated.")
+        del self.mets_servers_paths[workspace_path]
+        del self.mets_servers[mets_server_url_uds]
         return

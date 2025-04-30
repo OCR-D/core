@@ -4,7 +4,7 @@ import pytest
 
 from tests.base import main, assets, create_ocrd_file_with_defaults
 
-from ocrd_modelfactory import page_from_image
+from ocrd_modelfactory import page_from_image, page_from_file
 from ocrd_models.ocrd_page_generateds import TextTypeSimpleType
 from ocrd_models.ocrd_page import (
     AlternativeImageType,
@@ -434,6 +434,18 @@ def test_serialize_no_empty_readingorder():
     pcgts = parseString(to_xml(pcgts, skip_declaration=True))
     assert not pcgts.get_Page().get_ReadingOrder()
 
+def test_page_roundtrip(capsys):
+    page_file = assets.path_to('kant_aufklaerung_1784/data/OCR-D-GT-PAGE/PAGE_0017_PAGE.xml')
+    pcgts = page_from_file(page_file)
+    text = to_xml(pcgts)
+    assert "NoneRegionRefIndexed" not in text
+    pcgts2 = parseString(text.encode('utf8'))
+    stderr = capsys.readouterr().err
+    assert pcgts2 is not None, stderr
+    assert (pcgts.Page.ReadingOrder is not None) == (pcgts2.Page.ReadingOrder is not None)
+    text2 = to_xml(pcgts2)
+    assert text == text2
+    assert len(pcgts.Page.ReadingOrder.OrderedGroup.RegionRefIndexed) == len(pcgts2.Page.ReadingOrder.OrderedGroup.RegionRefIndexed)
 
 def test_hashable():
     """
@@ -460,7 +472,7 @@ def test_id():
 
     # TODO: is this *really* desired?
     # I would expect for a single Page-Element the ID is like from the top-level-Pgts-Container, not like a fileName
-    assert pcgts.get_Page().id == 'OCR-D-IMG/INPUT_0017.tif'
+    assert pcgts.get_Page().id == 'OCR-D-IMG_INPUT_0017.tif'
 
 
 if __name__ == '__main__':

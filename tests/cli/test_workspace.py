@@ -291,6 +291,23 @@ class TestCli(TestCase):
             ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
             self.assertEqual(len(ws2.mets.find_all_files()), 29)
 
+    def test_clean(self):
+        with TemporaryDirectory() as tempdir:
+            copytree(assets.path_to('SBB0000F29300010000/data'), join(tempdir, 'ws'))
+
+            ws1 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
+            self.assertEqual(len(ws1.mets.find_all_files(local_only=True)), 29)
+            wsdir = Path(ws1.directory)
+            (wsdir/'foo').touch()
+            assert len([f for f in wsdir.rglob('*') if f.is_file()]) == 16 # 6 dummy files + 8 non-repeating files + mets_one_file.xml + foo
+
+            result = self.runner.invoke(workspace_cli, ['-d', join(tempdir, 'ws'), 'clean'])
+            self.assertEqual(result.exit_code, 0)
+
+            ws2 = self.resolver.workspace_from_url(join(tempdir, 'ws', 'mets.xml'))
+            self.assertEqual(len(ws2.mets.find_all_files(local_only=True)), 29)
+            self.assertEqual(len([f for f in wsdir.rglob('*') if f.is_file()]), 8) # 8 files
+
     def test_clone_into_nonexisting_dir(self):
         """
         https://github.com/OCR-D/core/issues/330
