@@ -5,6 +5,11 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `ocrd workspace find --undo-download`: Unset `local_filename` only after unlinking, #1324, #1325
+  * METS Server: do not convert `None` to the string `"None"`, #1324, #1325
+
 ## [3.3.2] - 2025-04-17
 
 Fixed:
