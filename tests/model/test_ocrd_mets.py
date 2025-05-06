@@ -88,7 +88,12 @@ def test_find_all_files(sbb_sample_01):
     assert len(mets.find_all_files(local_filename='OCR-D-IMG/FILE_0005_IMAGE.tif')) == 1, '1 FILE xlink:href="OCR-D-IMG/FILE_0005_IMAGE.tif"'
     assert len(mets.find_all_files(url='https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/data/00000001_DESKEW.tif')) == 1, '1 URL xlink:href="https://github.com/OCR-D/assets/raw/master/data/SBB0000F29300010000/00000001_DESKEW.tif"'
     assert len(mets.find_all_files(pageId='PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
-    assert len(mets.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_001 and PHYS_0002'
+    assert len(mets.find_all_files(pageId='~PHYS_0001..PHYS_0002')) == 1, '1 file for page "~PHYS_0001..PHYS_0002"'
+    assert len(mets.find_all_files(pageId='PHYS_0001,~PHYS_0002')) == 17, '17 files for page "PHYS_0001,~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='PHYS_0001..PHYS_0005,~PHYS_0002')) == 18, '18 files for page "PHYS_0001..PHYS_0005,~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='~PHYS_0002')) == 18, '18 files for page "~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='//PHYS_000(1|2)')) == 34, '34 files in PHYS_0001 and PHYS_0002'
+    assert len(mets.find_all_files(pageId='~//PHYS_000(1|2)')) == 1, '1 file in PHYS_0005'
     assert len(mets.find_all_files(pageId='//PHYS_0001,//PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
     assert len(mets.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
     assert len(mets.find_all_files(pageId='//PHYS_0005,PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
@@ -104,6 +109,8 @@ def test_find_all_files(sbb_sample_01):
         mets.find_all_files(pageId='PHYS_0006..PHYS_0029')
     with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
         mets.find_all_files(pageId='PHYS_0001-NOTEXIST')
+    with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+        mets.find_all_files(pageId='~PHYS_0001-NOTEXIST')
     with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
         mets.find_all_files(pageId='1..5,PHYS_0006..PHYS_0029')
     with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
