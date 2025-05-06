@@ -362,7 +362,8 @@ class TestProcessor(TestCase):
             ws.add_file('GRP2', mimetype='application/alto+xml', file_id='foobar2', page_id='phys_0001')
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar4', page_id='phys_0002')
-            for page_id in [None, 'phys_0001,phys_0002']:
+            ws.add_file('GRP3', mimetype=MIMETYPE_PAGE, file_id='foobar5', page_id='phys_0003')
+            for page_id in [None, 'phys_0001,phys_0002', '~phys_0003']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(None)
                     proc.workspace = ws
@@ -440,7 +441,8 @@ class TestProcessor(TestCase):
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id=None)
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0001')
-            for page_id in [None, 'phys_0001']:
+            ws.add_file('GRP3', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
+            for page_id in [None, 'phys_0001', '~phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(None)
                     proc.workspace = ws
