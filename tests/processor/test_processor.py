@@ -232,8 +232,16 @@ class TestProcessor(TestCase):
     def test_run_output0(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
+            file1 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0001_FULLTEXT.xml'))
+            file2 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0002_FULLTEXT.xml'))
+            run_processor(DummyProcessorWithOutput, workspace=ws,
+                          input_file_grp="GRP1",
+                          output_file_grp="OCR-D-OUT")
+            assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 0, "no output because no download"
+            ws.download_file(file1)
+            ws.download_file(file2)
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
@@ -312,8 +320,12 @@ class TestProcessor(TestCase):
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
+            file1 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0001_FULLTEXT.xml'))
+            file2 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0002_FULLTEXT.xml'))
+            ws.download_file(file1)
+            ws.download_file(file2)
             config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, file_id='OCR-D-OUT_phys_0001', page_id='phys_0001')
             config.OCRD_EXISTING_OUTPUT = 'ABORT'
