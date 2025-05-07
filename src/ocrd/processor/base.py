@@ -783,11 +783,16 @@ class Processor():
         page_id = input_files[input_pos].pageId
         self._base_logger.info("processing page %s", page_id)
         for i, input_file in enumerate(input_files):
+            grp = self.input_file_grp.split(',')[i]
             if input_file is None:
-                grp = self.input_file_grp.split(',')[i]
                 self._base_logger.debug(f"ignoring missing file for input fileGrp {grp} for page {page_id}")
                 continue
             assert isinstance(input_file, get_args(OcrdFileType))
+            if not input_file.local_filename:
+                self._base_logger.error(f'No local file exists for page {page_id} in file group {grp}')
+                if config.OCRD_MISSING_INPUT == 'ABORT':
+                    raise MissingInputFile(grp, page_id, input_file.mimetype)
+                continue
             self._base_logger.debug(f"parsing file {input_file.ID} for page {page_id}")
             try:
                 page_ = page_from_file(input_file)
@@ -796,6 +801,9 @@ class Processor():
             except ValueError as err:
                 # not PAGE and not an image to generate PAGE for
                 self._base_logger.error(f"non-PAGE input for page {page_id}: {err}")
+        if not any(input_pcgts):
+            self._base_logger.warning(f'skipping page {page_id}')
+            return
         output_file_id = make_file_id(input_files[input_pos], self.output_file_grp)
         if input_files[input_pos].fileGrp == self.output_file_grp:
             # input=output fileGrp: re-use ID exactly
