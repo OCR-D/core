@@ -16,7 +16,8 @@ from tests.base import (
 
 from ocrd_utils import (
     VERSION,
-    MIMETYPE_PAGE
+    MIMETYPE_PAGE,
+    setOverrideLogLevel
 )
 from ocrd_models import (
     OcrdMets
@@ -41,6 +42,15 @@ def _fixture_sbb(tmp_path, request):
     shutil.copytree(src_path, dst_path)
     mets_path = str(join(dst_path, 'mets.xml'))
     yield OcrdMets(filename=mets_path, cache_flag=request.param)
+
+
+@pytest.fixture(name='pembroke_werke', params=CACHING_ENABLED)
+def _fixture_pembroke(request, pytestconfig):
+    if pytestconfig.getoption('verbose') > 0:
+            setOverrideLogLevel('DEBUG')
+    mets = OcrdMets(filename=assets.url_of(
+        'pembroke_werke_1766/data/mets.xml'), cache_flag=request.param)
+    yield mets
 
 
 def test_unique_identifier():
@@ -122,6 +132,17 @@ def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',
                local_only=True)) == 14, '14 local files for page "PHYS_0001"'
 
+def test_find_all_files_logical_pages(pembroke_werke):
+    mets = pembroke_werke
+    assert len(mets.find_all_files(fileGrp='DEFAULT')) == 195, '195 files total'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='binding,title_page')) == 10, '10 pages of type binding and title_page (PHYS_0001..4,PHYS_0007..8,PHYS_0191..4)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='LOG_0010..LOG_0014')) == 85, '85 pages between LOG_0010 and LOG_0014'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='//(section|chapter)')) == 179, '179 pages for //(section|chapter)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='~binding,~title_page,~colour_checker,~illustration,~table')) == 179, '179 pages for ~binding,~title_page,~colour_checker,~illustration,~table'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='~LOG_0010..LOG_0014')) == 110, '110 pages not between LOG_0010 and LOG_0014'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='~//(binding|title_page|colour_checker|illustration|table)')) == 179, '179 pages for ~//(binding|title_page|colour_checker|illustration|table)'
+    with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+        mets.find_all_files(pageId='LOG_0001-NOTEXIST')
 
 def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
