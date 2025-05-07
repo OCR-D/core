@@ -28,6 +28,7 @@ __all__ = [
     'TAG_PAGE_TEXTEQUIV',
     'TAG_PAGE_TEXTREGION',
     'METS_PAGE_DIV_ATTRIBUTE',
+    'METS_STRUCT_DIV_ATTRIBUTE',
     'PAGE_REGION_TYPES',
     'PAGE_ALTIMG_FEATURES',
 ]
@@ -94,6 +95,15 @@ class METS_PAGE_DIV_ATTRIBUTE(Enum):
     ORDERLABEL = auto()
     LABEL = auto()
     CONTENTIDS = auto()
+
+    @classmethod
+    def names(cls):
+        return [x.name for x in cls]
+
+class METS_STRUCT_DIV_ATTRIBUTE(Enum):
+    ID = auto()
+    DMDID = auto()
+    TYPE = auto()
 
     @classmethod
     def names(cls):
