@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 from io import StringIO
 from contextlib import contextmanager
 import sys
+from packaging.version import Version
 
 from click.testing import CliRunner
 import pytest
@@ -13,7 +14,7 @@ import pytest
 # pylint: disable=import-error, no-name-in-module
 from tests.base import CapturingTestCase as TestCase, assets, copy_of_directory, main
 
-from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel, disableLogging
+from ocrd_utils import initLogging, pushd_popd, setOverrideLogLevel, disableLogging, dist_version
 from ocrd.cli.workspace import workspace_cli
 from ocrd import Resolver
 
@@ -31,7 +32,10 @@ class TestCli(TestCase):
         disableLogging()
         self.maxDiff = None
         self.resolver = Resolver()
-        self.runner = CliRunner(mix_stderr=False)
+        if Version(dist_version('click')) >= Version('8.2'):
+            self.runner = CliRunner()
+        else:
+            self.runner = CliRunner(mix_stderr=False)
 
     def test_add(self):
         """
