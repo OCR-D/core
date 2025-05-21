@@ -1115,7 +1115,11 @@ class Processor():
             self._base_logger.critical(f"Could not find any files for selected pageId {self.page_id}.\n"
                                        f"compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
         ifts = []
-        for page, ifiles in pages.items():
+        # use physical page order
+        for page in self.workspace.mets.physical_pages:
+            if page not in pages:
+                continue
+            ifiles = pages[page]
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:
                     # could be from non-unique with on_error=skip or from true gap
