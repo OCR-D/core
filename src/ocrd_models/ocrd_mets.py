@@ -740,7 +740,9 @@ class OcrdMets(OcrdXmlDocument):
                         attr = next(a for a in list(METS_STRUCT_DIV_ATTRIBUTE)
                                     for x in pat
                                     # @TYPE makes no sense in range expressions
+                                    # @LABEL makes no sense in range expressions
                                     if (a != METS_STRUCT_DIV_ATTRIBUTE.TYPE and
+                                        a != METS_STRUCT_DIV_ATTRIBUTE.LABEL and
                                         x in self._struct_cache[a]))
                         cache_keys = []
                         for x in list(pat):
@@ -774,6 +776,9 @@ class OcrdMets(OcrdXmlDocument):
             struct_cache = {k: {} for k in METS_STRUCT_DIV_ATTRIBUTE}
             for el_div in el_struct_list:
                 for attr in METS_STRUCT_DIV_ATTRIBUTE:
+                    if not el_div.get(attr.name):
+                        # avoid mapping None indiscriminately
+                        continue
                     val = struct_cache[attr].setdefault(str(el_div.get(attr.name)), list())
                     val.extend(smlink_map.get(el_div.get('ID'), []))
             log.debug("found %d smLink entries for %d logical divs", len(el_smlink_list), len(el_struct_list))

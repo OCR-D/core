@@ -104,6 +104,7 @@ class METS_STRUCT_DIV_ATTRIBUTE(Enum):
     ID = auto()
     DMDID = auto()
     TYPE = auto()
+    LABEL = auto()
 
     @classmethod
     def names(cls):

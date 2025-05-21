@@ -143,6 +143,7 @@ def test_find_all_files_logical_pages(pembroke_werke):
     assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='~//(binding|title_page|colour_checker|illustration|table)')) == 179, '179 pages for ~//(binding|title_page|colour_checker|illustration|table)'
     with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
         mets.find_all_files(pageId='LOG_0001-NOTEXIST')
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='//^Einleitung.*')) == 1, '1 pages for //^Einleitung.*'
 
 def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'
