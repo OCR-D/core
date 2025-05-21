@@ -29,8 +29,7 @@ from frozendict import frozendict
 # this is where the fixes came from:
 from loky import Future, ProcessPoolExecutor
 import multiprocessing as mp
-from threading import Timer
-from _thread import interrupt_main
+from multiprocessing.pool import ThreadPool
 
 from click import wrap_text
 from deprecated import deprecated
@@ -1162,18 +1161,15 @@ def _page_worker(timeout, *input_files):
     """
     page_id = next((file.pageId for file in input_files
                     if hasattr(file, 'pageId')), "")
-    if timeout > 0:
-        timer = Timer(timeout, interrupt_main)
-        timer.start()
+    pool = ThreadPool(processes=1)
     try:
-        _page_worker_processor.process_page_file(*input_files)
+        #_page_worker_processor.process_page_file(*input_files)
+        async_result = pool.apply_async(_page_worker_processor.process_page_file, input_files)
+        async_result.get(timeout or None)
         _page_worker_processor.logger.debug("page worker completed for page %s", page_id)
-    except KeyboardInterrupt:
+    except mp.TimeoutError:
         _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
-        raise TimeoutError()
-    finally:
-        if timeout > 0:
-            timer.cancel()
+        raise
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.

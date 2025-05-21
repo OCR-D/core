@@ -3,6 +3,7 @@ import json
 from PIL import Image
 from io import BytesIO
 from contextlib import ExitStack
+import multiprocessing as mp
 
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -311,7 +312,7 @@ class TestProcessor(TestCase):
         assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
-        with pytest.raises(TimeoutError) as exc:
+        with pytest.raises(mp.TimeoutError) as exc:
             run_processor(DummyProcessorWithOutputSleep, workspace=ws,
                           input_file_grp="OCR-D-IMG",
                           output_file_grp="OCR-D-OUT",
