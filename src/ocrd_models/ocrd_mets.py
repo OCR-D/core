@@ -825,8 +825,9 @@ class OcrdMets(OcrdXmlDocument):
                                             patterns_exhausted.append(pat)
                             page_attr_patterns_matched.append(pat)
                             break # no more attributes for this pattern
-                    if page in ret:
-                        break # no more patterns for this page
+                    # keep matching in order to exhaust and consume pattern list
+                    #if page in ret:
+                    #    break # no more patterns for this page
                 for p in patterns_exhausted:
                     page_attr_patterns.remove(p)
             unmatched = [x for x in page_attr_patterns_copy
