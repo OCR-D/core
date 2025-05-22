@@ -106,6 +106,11 @@ class METS_PAGE_DIV_ATTRIBUTE(Enum):
     @classmethod
     def names(cls):
         return [x.name for x in cls]
+    @classmethod
+    def type_prefix(cls):
+        return "physical:"
+    def prefix(self):
+        return self.type_prefix() + self.name.lower() + ":"
 
 class METS_STRUCT_DIV_ATTRIBUTE(Enum):
     ID = auto()
@@ -116,6 +121,11 @@ class METS_STRUCT_DIV_ATTRIBUTE(Enum):
     @classmethod
     def names(cls):
         return [x.name for x in cls]
+    @classmethod
+    def type_prefix(cls):
+        return "logical:"
+    def prefix(self):
+        return self.type_prefix() + self.name.lower() + ":"
 
 @dataclass
 class METS_DIV_ATTRIBUTE_PATTERN(ABC):
@@ -124,6 +134,16 @@ class METS_DIV_ATTRIBUTE_PATTERN(ABC):
     # pre-disambiguated with prefix syntax, or filled upon first match
     attr: List[Union[METS_PAGE_DIV_ATTRIBUTE, METS_STRUCT_DIV_ATTRIBUTE]] = field(
         default_factory=lambda: list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE))
+    def attr_prefix(self):
+        if self.attr == list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE):
+            return ""
+        if self.attr == list(METS_PAGE_DIV_ATTRIBUTE):
+            return METS_PAGE_DIV_ATTRIBUTE.type_prefix()
+        if self.attr == list(METS_STRUCT_DIV_ATTRIBUTE):
+            return METS_STRUCT_DIV_ATTRIBUTE.type_prefix()
+        assert len(self.attr) == 1, "unexpected type ambiguity: %s" % repr(self.attr)
+        return self.attr[0].prefix()
+
     @abstractmethod
     def matches(self, input) -> bool:
         return
@@ -131,6 +151,8 @@ class METS_DIV_ATTRIBUTE_PATTERN(ABC):
 @dataclass
 class METS_DIV_ATTRIBUTE_ATOM_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
     expr: str
+    def __repr__(self):
+        return "%s%s" % (self.attr_prefix(), self.expr)
     def matches(self, input):
         return input == self.expr
 
@@ -142,11 +164,15 @@ class METS_DIV_ATTRIBUTE_RANGE_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
     def __post_init__(self):
         self.start = self.expr[0]
         self.stop = self.expr[-1]
+    def __repr__(self):
+        return "%s%s..%s" % (self.attr_prefix(), self.start, self.stop)
     def matches(self, input):
         return input in self.expr
 
 @dataclass
 class METS_DIV_ATTRIBUTE_REGEX_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
     expr: Pattern
+    def __repr__(self):
+        return "%s//%s" % (self.attr_prefix(), self.expr.pattern)
     def matches(self, input):
         return bool(self.expr.fullmatch(input))

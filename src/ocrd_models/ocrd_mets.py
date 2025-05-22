@@ -655,43 +655,20 @@ class OcrdMets(OcrdXmlDocument):
             page_attr_patterns_raw = re.split(r',', for_pageIds)
             for pageId_token in page_attr_patterns_raw:
                 # prefix for disambiguation of attribute?
-                if pageId_token.startswith('logical:'):
-                    if pageId_token.startswith('logical:id:'):
-                        attr = [METS_STRUCT_DIV_ATTRIBUTE.ID]
-                        pageId_token = pageId_token[len('logical:id:'):]
-                    elif pageId_token.startswith('logical:dmdid:'):
-                        attr = [METS_STRUCT_DIV_ATTRIBUTE.DMDID]
-                        pageId_token = pageId_token[len('logical:dmdid:'):]
-                    elif pageId_token.startswith('logical:type:'):
-                        attr = [METS_STRUCT_DIV_ATTRIBUTE.TYPE]
-                        pageId_token = pageId_token[len('logical:type:'):]
-                    elif pageId_token.startswith('logical:label:'):
-                        attr = [METS_STRUCT_DIV_ATTRIBUTE.LABEL]
-                        pageId_token = pageId_token[len('logical:label:'):]
-                    else:
-                        attr = list(METS_STRUCT_DIV_ATTRIBUTE)
-                        pageId_token = pageId_token[len('logical:'):]
-                elif pageId_token.startswith('physical:'):
-                    if pageId_token.startswith('physical:id:'):
-                        attr = [METS_PAGE_DIV_ATTRIBUTE.ID]
-                        pageId_token = pageId_token[len('physical:id:'):]
-                    elif pageId_token.startswith('physical:order:'):
-                        attr = [METS_PAGE_DIV_ATTRIBUTE.ORDER]
-                        pageId_token = pageId_token[len('physical:order:'):]
-                    elif pageId_token.startswith('physical:orderlabel:'):
-                        attr = [METS_PAGE_DIV_ATTRIBUTE.ORDERLABEL]
-                        pageId_token = pageId_token[len('physical:orderlabel:'):]
-                    elif pageId_token.startswith('physical:label:'):
-                        attr = [METS_PAGE_DIV_ATTRIBUTE.LABEL]
-                        pageId_token = pageId_token[len('physical:label:'):]
-                    elif pageId_token.startswith('physical:contentids:'):
-                        attr = [METS_PAGE_DIV_ATTRIBUTE.CONTENTIDS]
-                        pageId_token = pageId_token[len('physical:contentids:'):]
-                    else:
-                        attr = list(METS_PAGE_DIV_ATTRIBUTE)
-                        pageId_token = pageId_token[len('physical:'):]
-                else:
-                    attr = list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE)
+                attr = list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE)
+                for attr_type in [METS_STRUCT_DIV_ATTRIBUTE, METS_PAGE_DIV_ATTRIBUTE]:
+                    if pageId_token.startswith(attr_type.type_prefix()):
+                        for attr_val in list(attr_type):
+                            if pageId_token.startswith(attr_val.prefix()):
+                                # disambiguated to e.g. "logical:label:"
+                                attr = [attr_val]
+                                pageId_token = pageId_token[len(attr_val.prefix()):]
+                                break
+                        if len(attr) > 1:
+                            # just "logical:" or "physical:"
+                            attr = list(attr_type)
+                            pageId_token = pageId_token[len(attr_type.type_prefix()):]
+                        break
                 # negation prefix
                 if pageId_token.startswith('~'):
                     page_attr_xpatterns = page_attr_antipatterns
