@@ -648,12 +648,12 @@ class OcrdMets(OcrdXmlDocument):
 
             return self.physical_pages
 
-        # log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
+        log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
         if for_pageIds is not None:
             page_attr_patterns = []
             page_attr_antipatterns = []
-            page_attr_patterns_raw = re.split(r',', for_pageIds)
-            for pageId_token in page_attr_patterns_raw:
+            for pageId_token in re.split(r',', for_pageIds):
+                pageId_token_raw = pageId_token
                 # prefix for disambiguation of attribute?
                 attr = list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE)
                 for attr_type in [METS_STRUCT_DIV_ATTRIBUTE, METS_PAGE_DIV_ATTRIBUTE]:
@@ -669,24 +669,37 @@ class OcrdMets(OcrdXmlDocument):
                             attr = list(attr_type)
                             pageId_token = pageId_token[len(attr_type.type_prefix()):]
                         break
+                if not pageId_token:
+                    raise ValueError("invalid pageId syntax '%s': empty after type prefix" % pageId_token_raw)
                 # negation prefix
                 if pageId_token.startswith('~'):
                     page_attr_xpatterns = page_attr_antipatterns
                     pageId_token = pageId_token[1:]
                 else:
                     page_attr_xpatterns = page_attr_patterns
+                if not pageId_token:
+                    raise ValueError("invalid pageId syntax '%s': empty after negator prefix" % pageId_token_raw)
                 # operator prefix
                 if pageId_token.startswith(REGEX_PREFIX):
-                    val_expr = re.compile(pageId_token[REGEX_PREFIX_LEN:])
+                    pageId_token = pageId_token[REGEX_PREFIX_LEN:]
+                    if not pageId_token:
+                        raise ValueError("invalid pageId syntax '%s': empty after regex prefix" % pageId_token_raw)
+                    val_expr = re.compile(pageId_token)
                     page_attr_xpatterns.append(
                         METS_DIV_ATTRIBUTE_REGEX_PATTERN(val_expr, attr))
                 elif '..' in pageId_token:
-                    val_range = generate_range(*pageId_token.split('..', 1))
+                    try:
+                        val_range = generate_range(*pageId_token.split('..', 1))
+                    except ValueError as e:
+                        raise ValueError("invalid pageId syntax '%s': %s" % (pageId_token_raw, str(e))) from None
                     page_attr_xpatterns.append(
                         METS_DIV_ATTRIBUTE_RANGE_PATTERN(val_range, attr))
                 else:
+                    if not pageId_token:
+                        raise ValueError("invalid pageId syntax '%s': empty" % pageId_token_raw)
                     page_attr_xpatterns.append(
                         METS_DIV_ATTRIBUTE_ATOM_PATTERN(pageId_token, attr))
+                log.debug("parsed pattern '%s' to %s", pageId_token_raw, page_attr_xpatterns[-1])
             if not page_attr_patterns and not page_attr_antipatterns:
                 return []
             if page_attr_patterns:
@@ -841,8 +854,8 @@ class OcrdMets(OcrdXmlDocument):
                 # list items get consumed (pat.expr.remove) when matched,
                 # exhausted patterns also get consumed (page_attr_patterns.remove)
                 # (but top-level list copy references the same list objects)
-                log.debug(pat)
                 if pat.start in pat.expr:
+                    log.debug((pat, pat.expr))
                     ranges_without_start_match.append(pat)
                 # if pat.stop in pat.expr:
                 #     ranges_without_stop_match.append(pat)
