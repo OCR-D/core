@@ -732,7 +732,6 @@ class OcrdMets(OcrdXmlDocument):
     def get_physical_page_patterns(self, page_attr_patterns: List[METS_DIV_ATTRIBUTE_PATTERN]) -> List[ET._Element]:
         log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
         ret = []
-        range_patterns_first_last = [(x[0], x[-1]) if isinstance(x, list) else None for x in page_attr_patterns]
         page_attr_patterns_copy = list(page_attr_patterns)
         if self._cache_flag:
             for pat in page_attr_patterns:
@@ -823,15 +822,14 @@ class OcrdMets(OcrdXmlDocument):
                                         pat.expr.remove(cache_key)
                                         if not pat.expr:
                                             patterns_exhausted.append(pat)
-                            page_attr_patterns_matched.append(pat)
                             break # no more attributes for this pattern
                     # keep matching in order to exhaust and consume pattern list
                     #if page in ret:
                     #    break # no more patterns for this page
                 for p in patterns_exhausted:
                     page_attr_patterns.remove(p)
-            unmatched = [x for x in page_attr_patterns_copy
-                         if x not in page_attr_patterns_matched]
+            unmatched = [pat for pat in page_attr_patterns_copy
+                         if not pat.has_matched]
             if unmatched:
                 raise ValueError(f"Patterns {unmatched} match none of the pages")
 
