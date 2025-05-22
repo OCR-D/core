@@ -29,14 +29,18 @@ CACHING_ENABLED = [False, True]
 
 
 @pytest.fixture(name='sbb_sample_01', params=CACHING_ENABLED)
-def _fixture(request):
+def _fixture(request, pytestconfig):
+    if pytestconfig.getoption('verbose') > 0:
+            setOverrideLogLevel('DEBUG')
     mets = OcrdMets(filename=assets.url_of(
         'SBB0000F29300010000/data/mets.xml'), cache_flag=request.param)
     yield mets
 
 
 @pytest.fixture(name='sbb_directory_ocrd_mets', params=CACHING_ENABLED)
-def _fixture_sbb(tmp_path, request):
+def _fixture_sbb(tmp_path, request, pytestconfig):
+    if pytestconfig.getoption('verbose') > 0:
+            setOverrideLogLevel('DEBUG')
     src_path = assets.path_to('SBB0000F29300010000/data')
     dst_path = tmp_path / 'SBB_directory'
     shutil.copytree(src_path, dst_path)

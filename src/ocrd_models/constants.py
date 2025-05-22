@@ -1,7 +1,11 @@
 """
 Constants for ocrd_models.
 """
+from re import Pattern
 from enum import Enum, auto
+from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
+from typing import Any, List, Optional, Union
 from ocrd_utils import resource_string
 
 __all__ = [
@@ -29,6 +33,9 @@ __all__ = [
     'TAG_PAGE_TEXTREGION',
     'METS_PAGE_DIV_ATTRIBUTE',
     'METS_STRUCT_DIV_ATTRIBUTE',
+    'METS_DIV_ATTRIBUTE_ATOM_PATTERN',
+    'METS_DIV_ATTRIBUTE_RANGE_PATTERN',
+    'METS_DIV_ATTRIBUTE_REGEX_PATTERN',
     'PAGE_REGION_TYPES',
     'PAGE_ALTIMG_FEATURES',
 ]
@@ -109,3 +116,36 @@ class METS_STRUCT_DIV_ATTRIBUTE(Enum):
     @classmethod
     def names(cls):
         return [x.name for x in cls]
+
+@dataclass
+class METS_DIV_ATTRIBUTE_PATTERN(ABC):
+    # pattern
+    expr: Any
+    # pre-disambiguated with prefix syntax, or filled upon first match
+    attr: Optional[Union[METS_PAGE_DIV_ATTRIBUTE, METS_STRUCT_DIV_ATTRIBUTE]] = None
+    @abstractmethod
+    def matches(self, input) -> bool:
+        return
+
+@dataclass
+class METS_DIV_ATTRIBUTE_ATOM_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
+    expr: str
+    def matches(self, input):
+        return input == self.expr
+
+@dataclass
+class METS_DIV_ATTRIBUTE_RANGE_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
+    expr: List[str]
+    start: str = field(init=False)
+    stop: str = field(init=False)
+    def __post_init__(self):
+        self.start = self.expr[0]
+        self.stop = self.expr[-1]
+    def matches(self, input):
+        return input in self.expr
+
+@dataclass
+class METS_DIV_ATTRIBUTE_REGEX_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
+    expr: Pattern
+    def matches(self, input):
+        return bool(self.expr.fullmatch(input))

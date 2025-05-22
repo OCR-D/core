@@ -31,6 +31,10 @@ from .constants import (
     METS_XML_EMPTY,
     METS_PAGE_DIV_ATTRIBUTE,
     METS_STRUCT_DIV_ATTRIBUTE,
+    METS_DIV_ATTRIBUTE_PATTERN,
+    METS_DIV_ATTRIBUTE_ATOM_PATTERN,
+    METS_DIV_ATTRIBUTE_RANGE_PATTERN,
+    METS_DIV_ATTRIBUTE_REGEX_PATTERN,
 )
 
 from .ocrd_xml_base import OcrdXmlDocument, ET      # type: ignore
@@ -656,18 +660,18 @@ class OcrdMets(OcrdXmlDocument):
                 else:
                     page_attr_xpatterns = page_attr_patterns
                 if pageId_token.startswith(REGEX_PREFIX):
-                    page_attr_xpatterns.append((None, re.compile(pageId_token[REGEX_PREFIX_LEN:])))
+                    page_attr_xpatterns.append(METS_DIV_ATTRIBUTE_REGEX_PATTERN(re.compile(pageId_token[REGEX_PREFIX_LEN:])))
                 elif '..' in pageId_token:
                     val_range = generate_range(*pageId_token.split('..', 1))
-                    page_attr_xpatterns.append(val_range)
+                    page_attr_xpatterns.append(METS_DIV_ATTRIBUTE_RANGE_PATTERN(val_range))
                 else:
-                    page_attr_xpatterns.append(pageId_token)
+                    page_attr_xpatterns.append(METS_DIV_ATTRIBUTE_ATOM_PATTERN(pageId_token))
             if not page_attr_patterns and not page_attr_antipatterns:
                 return []
             if page_attr_patterns:
                 divs = self.get_physical_page_patterns(page_attr_patterns)
             else:
-                divs = self.get_physical_page_patterns([(None, re.compile(".*"))])
+                divs = self.get_physical_page_patterns([METS_DIV_ATTRIBUTE_REGEX_PATTERN(re.compile(".*"))])
             if page_attr_antipatterns:
                 antidivs = self.get_physical_page_patterns(page_attr_antipatterns)
                 divs = [div for div in divs if div not in antidivs]
@@ -702,68 +706,46 @@ class OcrdMets(OcrdXmlDocument):
                             ret[index] = page.get('ID')
         return ret
 
-    def get_physical_page_patterns(self, page_attr_patterns: List[Union[str, tuple, list]]) -> List[ET._Element]:
+    def get_physical_page_patterns(self, page_attr_patterns: List[METS_DIV_ATTRIBUTE_PATTERN]) -> List[ET._Element]:
         log = getLogger('ocrd.models.ocrd_mets.get_physical_pages')
         ret = []
         range_patterns_first_last = [(x[0], x[-1]) if isinstance(x, list) else None for x in page_attr_patterns]
         page_attr_patterns_copy = list(page_attr_patterns)
         if self._cache_flag:
             for pat in page_attr_patterns:
-                try:
-                    attr : METS_PAGE_DIV_ATTRIBUTE
-                    if isinstance(pat, str):
-                        attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat in self._page_cache[a])
-                        cache_keys = [pat]
-                    elif isinstance(pat, list):
-                        attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if any(x in self._page_cache[a] for x in pat))
-                        cache_keys = [v for v in pat if v in self._page_cache[attr]]
-                        for k in cache_keys:
-                            pat.remove(k)
-                    elif isinstance(pat, tuple):
-                        _, re_pat = pat
-                        attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) for v in self._page_cache[a] if re_pat.fullmatch(v))
-                        cache_keys = [v for v in self._page_cache[attr] if re_pat.fullmatch(v)]
-                    else:
-                        raise ValueError
-                    ret += [self._page_cache[attr][v] for v in cache_keys]
-                    log.debug('physical matches for %s: %s', pat, str(cache_keys))
-                    continue
-                except StopIteration:
-                    pass # try logical...
-                try:
-                    attr : METS_STRUCT_DIV_ATTRIBUTE
-                    if isinstance(pat, str):
-                        cache_keys = next(self._struct_cache[a][pat]
-                                          for a in list(METS_STRUCT_DIV_ATTRIBUTE)
-                                          if pat in self._struct_cache[a])
-                    elif isinstance(pat, list):
-                        attr = next(a for a in list(METS_STRUCT_DIV_ATTRIBUTE)
-                                    for x in pat
-                                    # @TYPE makes no sense in range expressions
-                                    # @LABEL makes no sense in range expressions
-                                    if (a != METS_STRUCT_DIV_ATTRIBUTE.TYPE and
-                                        a != METS_STRUCT_DIV_ATTRIBUTE.LABEL and
-                                        x in self._struct_cache[a]))
-                        cache_keys = []
-                        for x in list(pat):
-                            if x in self._struct_cache[attr]:
-                                cache_keys.extend(self._struct_cache[attr][x])
-                                pat.remove(x)
-                    elif isinstance(pat, tuple):
-                        _, re_pat = pat
-                        attr = next(a for a in list(METS_STRUCT_DIV_ATTRIBUTE)
-                                    for v in self._struct_cache[a]
-                                    if re_pat.fullmatch(v))
-                        cache_keys = [x for v in self._struct_cache[attr]
-                                      for x in self._struct_cache[attr][v]
-                                      if re_pat.fullmatch(v)]
-                    else:
-                        raise ValueError
-                    ret += [self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID][v] for v in cache_keys]
-                    log.debug('logical matches for %s: %s', pat, str(cache_keys))
-                    continue
-                except StopIteration:
-                    raise ValueError(f"{pat} matches none of the keys of any of the _page_caches.")
+                if pat.attr:
+                    attributes = [pat.attr]
+                    caches = [self._page_cache[pat.attr]
+                              if isinstance(pat.attr, METS_PAGE_DIV_ATTRIBUTE) else
+                              self._struct_cache[pat.attr]]
+                else:
+                    attributes = (list(METS_PAGE_DIV_ATTRIBUTE) +
+                                  list(METS_STRUCT_DIV_ATTRIBUTE))
+                    caches = ([self._page_cache[a] for a in METS_PAGE_DIV_ATTRIBUTE] +
+                              [self._struct_cache[a] for a in METS_STRUCT_DIV_ATTRIBUTE])
+                for attr, cache in zip(attributes, caches):
+                    if (isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN) and
+                        # @TYPE makes no sense in range expressions
+                        # @LABEL makes no sense in range expressions
+                        attr in [METS_STRUCT_DIV_ATTRIBUTE.TYPE,
+                                 METS_STRUCT_DIV_ATTRIBUTE.LABEL]):
+                        continue
+                    if cache_keys := [v for v in cache if pat.matches(v)]:
+                        if isinstance(attr, METS_PAGE_DIV_ATTRIBUTE):
+                            ret += [cache[v] for v in cache_keys]
+                            log.debug('physical matches for %s: %s', pat, str(cache_keys))
+                        else:
+                            for v in cache_keys:
+                                ret += [self._page_cache[METS_PAGE_DIV_ATTRIBUTE.ID][p]
+                                        for p in cache[v]]
+                            log.debug('logical matches for %s: %s', pat, str(cache_keys))
+                        if isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN):
+                            # remove matches for final range check
+                            for v in cache_keys:
+                                pat.expr.remove(v)
+                        break
+                if not cache_keys:
+                    raise ValueError(f"{pat} matches none of the keys of any of the _page_caches and _struct_caches.")
         else:
             # cache logical structmap:
             el_struct_list = self._tree.getroot().findall("mets:structMap[@TYPE='LOGICAL']//mets:div", NS)
@@ -787,104 +769,77 @@ class OcrdMets(OcrdXmlDocument):
                     'mets:structMap[@TYPE="PHYSICAL"]/mets:div[@TYPE="physSequence"]/mets:div[@TYPE="page"]',
                     namespaces=NS):
                 patterns_exhausted = []
-                for pat_idx, pat in enumerate(page_attr_patterns):
-                    try:
-                        if isinstance(pat, str):
-                            attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE) if pat == page.get(a.name))
-                            ret.append(page)
-                            patterns_exhausted.append(pat)
-                        elif isinstance(pat, list):
-                            if not isinstance(pat[0], METS_PAGE_DIV_ATTRIBUTE):
-                                attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE)
-                                            if any(x == page.get(a.name) for x in pat))
-                                pat.insert(0, attr)
-                            attr_val = page.get(pat[0].name)
-                            if attr_val in pat:
-                                pat.remove(attr_val)
+                for pat in page_attr_patterns:
+                    if pat.attr:
+                        attributes = [pat.attr]
+                        caches = [[page.get(pat.attr.name) or '']
+                                  if isinstance(pat.attr, METS_PAGE_DIV_ATTRIBUTE) else
+                                  struct_cache[pat.attr]]
+                    else:
+                        attributes = (list(METS_PAGE_DIV_ATTRIBUTE) +
+                                      list(METS_STRUCT_DIV_ATTRIBUTE))
+                        caches = ([[page.get(a.name) or ''] for a in METS_PAGE_DIV_ATTRIBUTE] +
+                                  [struct_cache[a] for a in METS_STRUCT_DIV_ATTRIBUTE])
+                    for attr, cache in zip(attributes, caches):
+                        if (isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN) and
+                            # @TYPE makes no sense in range expressions
+                            # @LABEL makes no sense in range expressions
+                            attr in [METS_STRUCT_DIV_ATTRIBUTE.TYPE,
+                                     METS_STRUCT_DIV_ATTRIBUTE.LABEL]):
+                            continue
+                        if cache_keys := [v for v in cache if pat.matches(v)]:
+                            pat.attr = attr # disambiguate next
+                            if isinstance(attr, METS_PAGE_DIV_ATTRIBUTE):
                                 ret.append(page)
-                            if len(pat) == 1:
-                                patterns_exhausted.append(pat)
-                        elif isinstance(pat, tuple):
-                            attr, re_pat = pat
-                            if not attr:
-                                attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE)
-                                            if re_pat.fullmatch(page.get(a.name) or ''))
-                                page_attr_patterns[pat_idx] = (attr, re_pat)
-                            attr = next(a for a in list(METS_PAGE_DIV_ATTRIBUTE)
-                                        if a == attr)
-                            if re_pat.fullmatch(page.get(attr.name) or ''):
+                                log.debug('physical match for %s on page %s', pat, page.get('ID'))
+                                if isinstance(pat, METS_DIV_ATTRIBUTE_ATOM_PATTERN):
+                                    patterns_exhausted.append(pat)
+                                elif isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN):
+                                    # remove for efficiency and final range check
+                                    pat.expr.remove(cache_keys[0])
+                                    if not pat.expr:
+                                        patterns_exhausted.append(pat)
+                            elif cache_key := next((v for v in cache_keys
+                                                    if page.get('ID') in cache[v]), None):
                                 ret.append(page)
-                        else:
-                            raise ValueError
-                        page_attr_patterns_matched.append(pat)
-                        log.debug('physical match for %s on page %s', pat, page.get('ID'))
-                        continue
-                    except StopIteration:
-                        pass # try logical...
-                    try:
-                        if isinstance(pat, str):
-                            attr = next(a for a in list(METS_STRUCT_DIV_ATTRIBUTE)
-                                        if page.get('ID') in struct_cache[a].get(pat, []))
-                            ret.append(page)
-                            log.debug('logical match for %s on page %s', pat, page.get('ID'))
-                        elif isinstance(pat, list):
-                            if not isinstance(pat[0], METS_STRUCT_DIV_ATTRIBUTE):
-                                attr = next(a for a in list(METS_STRUCT_DIV_ATTRIBUTE)
-                                            for x in pat
-                                            # @TYPE makes no sense in range expressions
-                                            if (a != METS_STRUCT_DIV_ATTRIBUTE.TYPE and
-                                                x in struct_cache[a]))
-                                pat.insert(0, attr)
-                            attr = pat[0]
-                            attr_val = next(x for x in pat[1:]
-                                            if page.get('ID') in struct_cache[attr].get(x, []))
-                            ret.append(page)
-                            log.debug('logical match for %s on page %s', attr_val, page.get('ID'))
-                            struct_cache[attr][attr_val].remove(page.get('ID'))
-                            if not struct_cache[attr][attr_val]:
-                                pat.remove(attr_val)
-                            if len(pat) == 1:
-                                patterns_exhausted.append(pat)
-                        elif isinstance(pat, tuple):
-                            attr, re_pat = pat
-                            if not attr:
-                                attr = next(a for a in list(METS_STRUCT_DIV_ATTRIBUTE)
-                                            if any(re_pat.fullmatch(x) for x in struct_cache[a]))
-                                page_attr_patterns[pat_idx] = (attr, re_pat)
-                            if page.get('ID') in [x for v in struct_cache[attr]
-                                                  for x in struct_cache[attr][v]
-                                                  if re_pat.fullmatch(v)]:
-                                ret.append(page)
-                                log.debug('logical match for %s on page %s', re_pat, page.get('ID'))
-                        else:
-                            raise ValueError
-                        page_attr_patterns_matched.append(pat)
-                        continue
-                    except StopIteration:
-                        pass
+                                log.debug('logical match for %s on page %s', pat, page.get('ID'))
+                                cache[cache_key].remove(page.get('ID'))
+                                # remove for efficiency and final range check
+                                if not cache[cache_key]:
+                                    if isinstance(pat, METS_DIV_ATTRIBUTE_ATOM_PATTERN):
+                                        patterns_exhausted.append(pat)
+                                    elif isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN):
+                                        pat.expr.remove(cache_key)
+                                        if not pat.expr:
+                                            patterns_exhausted.append(pat)
+                            page_attr_patterns_matched.append(pat)
+                            break # no more attributes for this pattern
+                    if page in ret:
+                        break # no more patterns for this page
                 for p in patterns_exhausted:
                     page_attr_patterns.remove(p)
-            unmatched = [x for x in page_attr_patterns_copy if x not in page_attr_patterns_matched]
+            unmatched = [x for x in page_attr_patterns_copy
+                         if x not in page_attr_patterns_matched]
             if unmatched:
                 raise ValueError(f"Patterns {unmatched} match none of the pages")
 
         ranges_without_start_match = []
-        ranges_without_last_match = []
-        for idx, pat in enumerate(page_attr_patterns_copy):
-            if isinstance(pat, list):
+        ranges_without_stop_match = []
+        for pat in page_attr_patterns_copy:
+            if isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN):
                 # range expression, expanded to pattern list
-                # list items get consumed (page_attr_patterns.remove) when matched
-                # (top-level list copy references the same list objects)
-                start, last = range_patterns_first_last[idx]
-                if start in pat:
-                    print(pat, start, last)
-                    ranges_without_start_match.append(f"{start}..{last}")
-                # if last in pat:
-                #     ranges_without_last_match.append(page_attr_patterns_raw[idx])
+                # list items get consumed (pat.expr.remove) when matched,
+                # exhausted patterns also get consumed (page_attr_patterns.remove)
+                # (but top-level list copy references the same list objects)
+                log.debug(pat)
+                if pat.start in pat.expr:
+                    ranges_without_start_match.append(pat)
+                # if pat.stop in pat.expr:
+                #     ranges_without_stop_match.append(pat)
         if ranges_without_start_match:
             raise ValueError(f"Start of range patterns {ranges_without_start_match} not matched - invalid range")
-        # if ranges_without_last_match:
-        #     raise ValueError(f"End of range patterns {ranges_without_last_match} not matched - invalid range")
+        # if ranges_without_stop_match:
+        #     raise ValueError(f"End of range patterns {ranges_without_stop_match} not matched - invalid range")
         return ret
 
     def set_physical_page_for_file(self, pageId : str, ocrd_file : OcrdFile, 
