@@ -132,6 +132,37 @@ def test_find_all_files(sbb_sample_01):
     with pytest.raises(ValueError, match=re.compile(f'Start of range pattern')):
         mets.find_all_files(pageId='PHYS_0000..PHYS_0004')
 
+def test_find_all_files_with_prefix(sbb_sample_01):
+    mets = sbb_sample_01
+    assert len(mets.find_all_files(pageId='physical:PHYS_0001')) == 17, '17 files for page "PHYS_0001"'
+    assert len(mets.find_all_files(pageId='physical:id:PHYS_0001')) == 17, '17 files for page "PHYS_0001"'
+    assert len(mets.find_all_files(pageId='physical:PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
+    assert len(mets.find_all_files(pageId='physical:id:PHYS_0001..PHYS_0005')) == 35, '35 files for page "PHYS_0001..PHYS_0005"'
+    assert len(mets.find_all_files(pageId='physical:~PHYS_0001..PHYS_0002')) == 1, '1 file for page "~PHYS_0001..PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical:id:~PHYS_0001..PHYS_0002')) == 1, '1 file for page "~PHYS_0001..PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical:PHYS_0001,physical:~PHYS_0002')) == 17, '17 files for page "PHYS_0001,~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical:id:PHYS_0001,physical:id:~PHYS_0002')) == 17, '17 files for page "PHYS_0001,~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical:PHYS_0001..PHYS_0005,physical:~PHYS_0002')) == 18, '18 files for page "PHYS_0001..PHYS_0005,~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical:id:PHYS_0001..PHYS_0005,physical:id:~PHYS_0002')) == 18, '18 files for page "PHYS_0001..PHYS_0005,~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical:~PHYS_0002')) == 18, '18 files for page "~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical:id:~PHYS_0002')) == 18, '18 files for page "~PHYS_0002"'
+    assert len(mets.find_all_files(pageId='physical://PHYS_000(1|2)')) == 34, '34 files in PHYS_0001 and PHYS_0002'
+    assert len(mets.find_all_files(pageId='physical:id://PHYS_000(1|2)')) == 34, '34 files in PHYS_0001 and PHYS_0002'
+    assert len(mets.find_all_files(pageId='physical:~//PHYS_000(1|2)')) == 1, '1 file in PHYS_0005'
+    assert len(mets.find_all_files(pageId='physical:id:~//PHYS_000(1|2)')) == 1, '1 file in PHYS_0005'
+    assert len(mets.find_all_files(pageId='physical://PHYS_0001,physical://PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
+    assert len(mets.find_all_files(pageId='physical:id://PHYS_0001,physical:id://PHYS_0005')) == 18, '18 files in PHYS_001 and PHYS_0005 (two regexes)'
+    assert len(mets.find_all_files(pageId='physical://PHYS_0005,physical:PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+    assert len(mets.find_all_files(pageId='physical:id://PHYS_0005,physical:id:PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+    assert len(mets.find_all_files(pageId='physical://PHYS_0005,physical:PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+    assert len(mets.find_all_files(pageId='physical:id://PHYS_0005,physical:id:PHYS_0001..PHYS_0002')) == 35, '35 files in //PHYS_0005,PHYS_0001..PHYS_0002'
+    assert len(mets.find_all_files(pageId='physical:1..10')) == 35, '35 files in @ORDER range 1..10'
+    assert len(mets.find_all_files(pageId='physical:order:1..10')) == 35, '35 files in @ORDER range 1..10'
+    assert len(mets.find_all_files(pageId='physical:1..5')) == 35, '35 files in @ORDER range 1..10'
+    assert len(mets.find_all_files(pageId='physical:order:1..5')) == 35, '35 files in @ORDER range 1..10'
+    assert len(mets.find_all_files(pageId='physical:page 1..page 2,physical:5')) == 35, '35 in PHYS_0001,PHYS_0002,PHYS_0005'
+    assert len(mets.find_all_files(pageId='physical:orderlabel:page 1..page 2,physical:order:5')) == 35, '35 in PHYS_0001,PHYS_0002,PHYS_0005'
+
 def test_find_all_files_local_only(sbb_sample_01):
     assert len(sbb_sample_01.find_all_files(pageId='PHYS_0001',
                local_only=True)) == 14, '14 local files for page "PHYS_0001"'
@@ -148,6 +179,26 @@ def test_find_all_files_logical_pages(pembroke_werke):
     with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
         mets.find_all_files(pageId='LOG_0001-NOTEXIST')
     assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='//^Einleitung.*')) == 1, '1 pages for //^Einleitung.*'
+
+def test_find_all_files_logical_pages_with_prefix(pembroke_werke):
+    mets = pembroke_werke
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:binding,logical:title_page')) == 10, '10 pages of type binding and title_page (PHYS_0001..4,PHYS_0007..8,PHYS_0191..4)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:type:binding,logical:type:title_page')) == 10, '10 pages of type binding and title_page (PHYS_0001..4,PHYS_0007..8,PHYS_0191..4)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:LOG_0010..LOG_0014')) == 85, '85 pages between LOG_0010 and LOG_0014'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:id:LOG_0010..LOG_0014')) == 85, '85 pages between LOG_0010 and LOG_0014'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='//(section|chapter)')) == 179, '179 pages for //(section|chapter)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical://(section|chapter)')) == 179, '179 pages for //(section|chapter)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:type://(section|chapter)')) == 179, '179 pages for //(section|chapter)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:~binding,logical:~title_page,logical:~colour_checker,logical:~illustration,logical:~table')) == 179, '179 pages for ~binding,~title_page,~colour_checker,~illustration,~table'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:type:~binding,logical:type:~title_page,logical:type:~colour_checker,logical:type:~illustration,logical:type:~table')) == 179, '179 pages for ~binding,~title_page,~colour_checker,~illustration,~table'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:~LOG_0010..LOG_0014')) == 110, '110 pages not between LOG_0010 and LOG_0014'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:id:~LOG_0010..LOG_0014')) == 110, '110 pages not between LOG_0010 and LOG_0014'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:~//(binding|title_page|colour_checker|illustration|table)')) == 179, '179 pages for ~//(binding|title_page|colour_checker|illustration|table)'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:type:~//(binding|title_page|colour_checker|illustration|table)')) == 179, '179 pages for ~//(binding|title_page|colour_checker|illustration|table)'
+    with pytest.raises(ValueError, match=re.compile(f'match(es)? none')):
+        mets.find_all_files(pageId='logical:LOG_0001-NOTEXIST')
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical://^Einleitung.*')) == 1, '1 pages for //^Einleitung.*'
+    assert len(mets.find_all_files(fileGrp='DEFAULT',pageId='logical:label://^Einleitung.*')) == 1, '1 pages for //^Einleitung.*'
 
 def test_physical_pages(sbb_sample_01):
     assert len(sbb_sample_01.physical_pages) == 3, '3 physical pages'

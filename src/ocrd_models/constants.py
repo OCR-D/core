@@ -122,7 +122,8 @@ class METS_DIV_ATTRIBUTE_PATTERN(ABC):
     # pattern
     expr: Any
     # pre-disambiguated with prefix syntax, or filled upon first match
-    attr: Optional[Union[METS_PAGE_DIV_ATTRIBUTE, METS_STRUCT_DIV_ATTRIBUTE]] = None
+    attr: List[Union[METS_PAGE_DIV_ATTRIBUTE, METS_STRUCT_DIV_ATTRIBUTE]] = field(
+        default_factory=lambda: list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE))
     @abstractmethod
     def matches(self, input) -> bool:
         return

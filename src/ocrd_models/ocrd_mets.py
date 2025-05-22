@@ -654,24 +654,70 @@ class OcrdMets(OcrdXmlDocument):
             page_attr_antipatterns = []
             page_attr_patterns_raw = re.split(r',', for_pageIds)
             for pageId_token in page_attr_patterns_raw:
+                # prefix for disambiguation of attribute?
+                if pageId_token.startswith('logical:'):
+                    if pageId_token.startswith('logical:id:'):
+                        attr = [METS_STRUCT_DIV_ATTRIBUTE.ID]
+                        pageId_token = pageId_token[len('logical:id:'):]
+                    elif pageId_token.startswith('logical:dmdid:'):
+                        attr = [METS_STRUCT_DIV_ATTRIBUTE.DMDID]
+                        pageId_token = pageId_token[len('logical:dmdid:'):]
+                    elif pageId_token.startswith('logical:type:'):
+                        attr = [METS_STRUCT_DIV_ATTRIBUTE.TYPE]
+                        pageId_token = pageId_token[len('logical:type:'):]
+                    elif pageId_token.startswith('logical:label:'):
+                        attr = [METS_STRUCT_DIV_ATTRIBUTE.LABEL]
+                        pageId_token = pageId_token[len('logical:label:'):]
+                    else:
+                        attr = list(METS_STRUCT_DIV_ATTRIBUTE)
+                        pageId_token = pageId_token[len('logical:'):]
+                elif pageId_token.startswith('physical:'):
+                    if pageId_token.startswith('physical:id:'):
+                        attr = [METS_PAGE_DIV_ATTRIBUTE.ID]
+                        pageId_token = pageId_token[len('physical:id:'):]
+                    elif pageId_token.startswith('physical:order:'):
+                        attr = [METS_PAGE_DIV_ATTRIBUTE.ORDER]
+                        pageId_token = pageId_token[len('physical:order:'):]
+                    elif pageId_token.startswith('physical:orderlabel:'):
+                        attr = [METS_PAGE_DIV_ATTRIBUTE.ORDERLABEL]
+                        pageId_token = pageId_token[len('physical:orderlabel:'):]
+                    elif pageId_token.startswith('physical:label:'):
+                        attr = [METS_PAGE_DIV_ATTRIBUTE.LABEL]
+                        pageId_token = pageId_token[len('physical:label:'):]
+                    elif pageId_token.startswith('physical:contentids:'):
+                        attr = [METS_PAGE_DIV_ATTRIBUTE.CONTENTIDS]
+                        pageId_token = pageId_token[len('physical:contentids:'):]
+                    else:
+                        attr = list(METS_PAGE_DIV_ATTRIBUTE)
+                        pageId_token = pageId_token[len('physical:'):]
+                else:
+                    attr = list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE)
+                # negation prefix
                 if pageId_token.startswith('~'):
                     page_attr_xpatterns = page_attr_antipatterns
                     pageId_token = pageId_token[1:]
                 else:
                     page_attr_xpatterns = page_attr_patterns
+                # operator prefix
                 if pageId_token.startswith(REGEX_PREFIX):
-                    page_attr_xpatterns.append(METS_DIV_ATTRIBUTE_REGEX_PATTERN(re.compile(pageId_token[REGEX_PREFIX_LEN:])))
+                    val_expr = re.compile(pageId_token[REGEX_PREFIX_LEN:])
+                    page_attr_xpatterns.append(
+                        METS_DIV_ATTRIBUTE_REGEX_PATTERN(val_expr, attr))
                 elif '..' in pageId_token:
                     val_range = generate_range(*pageId_token.split('..', 1))
-                    page_attr_xpatterns.append(METS_DIV_ATTRIBUTE_RANGE_PATTERN(val_range))
+                    page_attr_xpatterns.append(
+                        METS_DIV_ATTRIBUTE_RANGE_PATTERN(val_range, attr))
                 else:
-                    page_attr_xpatterns.append(METS_DIV_ATTRIBUTE_ATOM_PATTERN(pageId_token))
+                    page_attr_xpatterns.append(
+                        METS_DIV_ATTRIBUTE_ATOM_PATTERN(pageId_token, attr))
             if not page_attr_patterns and not page_attr_antipatterns:
                 return []
             if page_attr_patterns:
                 divs = self.get_physical_page_patterns(page_attr_patterns)
             else:
-                divs = self.get_physical_page_patterns([METS_DIV_ATTRIBUTE_REGEX_PATTERN(re.compile(".*"))])
+                all_pages = [METS_DIV_ATTRIBUTE_REGEX_PATTERN(
+                    re.compile(".*"), [METS_PAGE_DIV_ATTRIBUTE.ID])]
+                divs = self.get_physical_page_patterns(all_pages)
             if page_attr_antipatterns:
                 antidivs = self.get_physical_page_patterns(page_attr_antipatterns)
                 divs = [div for div in divs if div not in antidivs]
@@ -713,17 +759,11 @@ class OcrdMets(OcrdXmlDocument):
         page_attr_patterns_copy = list(page_attr_patterns)
         if self._cache_flag:
             for pat in page_attr_patterns:
-                if pat.attr:
-                    attributes = [pat.attr]
-                    caches = [self._page_cache[pat.attr]
-                              if isinstance(pat.attr, METS_PAGE_DIV_ATTRIBUTE) else
-                              self._struct_cache[pat.attr]]
-                else:
-                    attributes = (list(METS_PAGE_DIV_ATTRIBUTE) +
-                                  list(METS_STRUCT_DIV_ATTRIBUTE))
-                    caches = ([self._page_cache[a] for a in METS_PAGE_DIV_ATTRIBUTE] +
-                              [self._struct_cache[a] for a in METS_STRUCT_DIV_ATTRIBUTE])
-                for attr, cache in zip(attributes, caches):
+                for attr in pat.attr:
+                    if isinstance(attr, METS_PAGE_DIV_ATTRIBUTE):
+                        cache = self._page_cache[attr]
+                    else:
+                        cache = self._struct_cache[attr]
                     if (isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN) and
                         # @TYPE makes no sense in range expressions
                         # @LABEL makes no sense in range expressions
@@ -770,17 +810,11 @@ class OcrdMets(OcrdXmlDocument):
                     namespaces=NS):
                 patterns_exhausted = []
                 for pat in page_attr_patterns:
-                    if pat.attr:
-                        attributes = [pat.attr]
-                        caches = [[page.get(pat.attr.name) or '']
-                                  if isinstance(pat.attr, METS_PAGE_DIV_ATTRIBUTE) else
-                                  struct_cache[pat.attr]]
-                    else:
-                        attributes = (list(METS_PAGE_DIV_ATTRIBUTE) +
-                                      list(METS_STRUCT_DIV_ATTRIBUTE))
-                        caches = ([[page.get(a.name) or ''] for a in METS_PAGE_DIV_ATTRIBUTE] +
-                                  [struct_cache[a] for a in METS_STRUCT_DIV_ATTRIBUTE])
-                    for attr, cache in zip(attributes, caches):
+                    for attr in pat.attr:
+                        if isinstance(attr, METS_PAGE_DIV_ATTRIBUTE):
+                            cache = [page.get(attr.name) or '']
+                        else:
+                            cache = struct_cache[attr]
                         if (isinstance(pat, METS_DIV_ATTRIBUTE_RANGE_PATTERN) and
                             # @TYPE makes no sense in range expressions
                             # @LABEL makes no sense in range expressions
@@ -788,7 +822,7 @@ class OcrdMets(OcrdXmlDocument):
                                      METS_STRUCT_DIV_ATTRIBUTE.LABEL]):
                             continue
                         if cache_keys := [v for v in cache if pat.matches(v)]:
-                            pat.attr = attr # disambiguate next
+                            pat.attr = [attr] # disambiguate next
                             if isinstance(attr, METS_PAGE_DIV_ATTRIBUTE):
                                 ret.append(page)
                                 log.debug('physical match for %s on page %s', pat, page.get('ID'))
