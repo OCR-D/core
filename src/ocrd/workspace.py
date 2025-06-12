@@ -777,16 +777,14 @@ class Workspace():
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filename="%s" in page "%s"' % (
                                 filename, page_id))
-        if not all(feature in page_coords['features']
-                   for feature in feature_selector.split(',') if feature):
-            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
-                            'selector="%s" in page "%s"' % (
-                                feature_selector, page_id))
-        if any(feature in page_coords['features']
-               for feature in feature_filter.split(',') if feature):
-            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
-                            'filter="%s" in page "%s"' % (
-                                feature_filter, page_id))
+        if (not all(feature in page_coords['features']
+                    for feature in feature_selector.split(',') if feature) or
+            any(feature in page_coords['features']
+                for feature in feature_filter.split(',') if feature)):
+            raise Exception('Found no AlternativeImage that satisfies all requirements' +
+                            ' selector="%s"' % feature_selector +
+                            ' filter="%s"' % feature_filter +
+                            ' in page "%s"' % page_id)
         # ensure DPI will be set in image meta-data again
         if 'DPI' in page_coords:
             dpi = page_coords['DPI']
@@ -1038,16 +1036,14 @@ class Workspace():
             raise Exception('Found no AlternativeImage that satisfies all requirements ' +
                             'filename="%s" in segment "%s"' % (
                                 filename, segment.id))
-        if not all(feature in segment_coords['features']
-                   for feature in feature_selector.split(',') if feature):
+        if (not all(feature in segment_coords['features']
+                    for feature in feature_selector.split(',') if feature) or
+            any(feature in segment_coords['features']
+                for feature in feature_filter.split(',') if feature)):
             raise Exception('Found no AlternativeImage that satisfies all requirements' +
-                            'selector="%s" in segment "%s"' % (
-                                feature_selector, segment.id))
-        if any(feature in segment_coords['features']
-               for feature in feature_filter.split(',') if feature):
-            raise Exception('Found no AlternativeImage that satisfies all requirements ' +
-                            'filter="%s" in segment "%s"' % (
-                                feature_filter, segment.id))
+                            ' selector="%s"' % feature_selector +
+                            ' filter="%s"' % feature_filter +
+                            ' in segment "%s"' % segment.id)
         # ensure DPI will be set in image meta-data again
         if 'DPI' in segment_coords:
             dpi = segment_coords['DPI']
