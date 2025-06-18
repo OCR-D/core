@@ -11,12 +11,16 @@ OCRD_ALL_TOOL_JSON = "ocrd-all-tool.json"
 SERVER_ALL_PAGES_PLACEHOLDER = "all_pages"
 
 
-class AgentType(str, Enum):
+class StrEnum(str, Enum):
+    def __str__(self):
+        return self.value
+
+class AgentType(StrEnum):
     PROCESSING_WORKER = "worker"
     PROCESSOR_SERVER = "server"
 
 
-class DeployType(str, Enum):
+class DeployType(StrEnum):
     # Deployed by the Processing Server config file
     DOCKER = "docker"
     NATIVE = "native"
@@ -26,7 +30,7 @@ class DeployType(str, Enum):
 
 
 # TODO: Make the states uppercase
-class JobState(str, Enum):
+class JobState(StrEnum):
     # The processing job is cached inside the Processing Server requests cache
     cached = "CACHED"
     # The processing job was cancelled due to failed dependencies
@@ -43,7 +47,7 @@ class JobState(str, Enum):
     unset = "UNSET"
 
 
-class NetworkLoggingDirs(str, Enum):
+class NetworkLoggingDirs(StrEnum):
     METS_SERVERS = "mets_servers"
     PROCESSING_JOBS = "processing_jobs"
     PROCESSING_SERVERS = "processing_servers"
@@ -51,7 +55,7 @@ class NetworkLoggingDirs(str, Enum):
     PROCESSOR_SERVERS = "processor_servers"
 
 
-class ServerApiTags(str, Enum):
+class ServerApiTags(StrEnum):
     ADMIN = "admin"
     DISCOVERY = "discovery"
     PROCESSING = "processing"
