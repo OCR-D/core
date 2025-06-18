@@ -56,7 +56,7 @@ def ocrd_cli_options(f):
         # subcommands. So we have to work around that by creating a
         # pseudo-subcommand handled in ocrd_cli_wrap_processor
         argument('subcommand', nargs=1, required=False,
-                 type=click.Choice([AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER])),
+                 type=click.Choice(list(map(str, AgentType)))),
     ]
     for param in params:
         param(f)
