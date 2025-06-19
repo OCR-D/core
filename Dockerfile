@@ -74,5 +74,5 @@ COPY requirements_test.txt .
 RUN pip install -r requirements_test.txt
 RUN mkdir /ocrd-data && chmod 777 /ocrd-data
 
-CMD ["yes"]
+CMD yes > /dev/null
 # CMD ["make", "test", "integration-test"]
