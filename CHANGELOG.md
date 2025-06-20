@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.4.0] - 2025-04-30
+
 Added:
 
   * `make test-cuda-{torch,tf2,tf1}`: ensure CUDA is available and shapely#1598 does not trigger, #1326
