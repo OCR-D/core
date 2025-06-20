@@ -67,6 +67,12 @@ Variables:
 \b
 {config.describe('OCRD_EXISTING_OUTPUT', wrap_text=False)}
 \b
+{config.describe('OCRD_MAX_MISSING_OUTPUTS')}
+\b
+{config.describe('OCRD_MAX_PARALLEL_PAGES')}
+\b
+{config.describe('OCRD_PROCESSING_PAGE_TIMEOUT')}
+\b
 {config.describe('OCRD_METS_CACHING')}
 \b
 {config.describe('OCRD_MAX_PROCESSOR_CACHE')}

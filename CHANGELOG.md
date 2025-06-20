@@ -5,6 +5,17 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.4.1] - 2025-06-20
+
+Fixed:
+
+  * `OCRD_MISSING_INPUT` config variable only checked existence of `mets:file` not the actual file on disk even when set to `ABORT`, #1330
+  * Fix processor CLI subcommand `worker|server` broken due to changed `Enum` handling in click 8.2, #1331
+  * Typo: proper log message if media type could not be detemined, #1330,  bertsky/workflow-configuration#35
+  * `Processor.zip_input_files`: always sort pages in physical order, #1330
+
+## [3.4.0] - 2025-04-30
+
 Added:
 
   * `make test-cuda-{torch,tf2,tf1}`: ensure CUDA is available and shapely#1598 does not trigger, #1326
@@ -2543,6 +2554,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.4.1]: ../../compare/v3.4.1..v3.4.0
 [3.4.0]: ../../compare/v3.4.0..v3.3.2
 [3.3.2]: ../../compare/v3.3.2..v3.3.1
 [3.3.1]: ../../compare/v3.3.1..v3.3.0
