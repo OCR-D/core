@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * Extended syntax for filtering pages with `--page-id` and `OcrdMets.find_files`, #1328, #1328
+    * negation operator `~`, e.g. `~PHYS_0001..PHYS_0004` to **not** match the first 4 pages
+    * filtering by attributes of `mets:div` for both physical (prefix `physical:`) and `logical` (prefix `logical:`) elements, e.g. `~logical:type:binding` to skip all pages that are book bindings
+
 ## [3.4.1] - 2025-06-20
 
 Fixed:
