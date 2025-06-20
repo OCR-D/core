@@ -29,8 +29,7 @@ from frozendict import frozendict
 # this is where the fixes came from:
 from loky import Future, ProcessPoolExecutor
 import multiprocessing as mp
-from threading import Timer
-from _thread import interrupt_main
+from multiprocessing.pool import ThreadPool
 
 from click import wrap_text
 from deprecated import deprecated
@@ -783,11 +782,16 @@ class Processor():
         page_id = input_files[input_pos].pageId
         self._base_logger.info("processing page %s", page_id)
         for i, input_file in enumerate(input_files):
+            grp = self.input_file_grp.split(',')[i]
             if input_file is None:
-                grp = self.input_file_grp.split(',')[i]
                 self._base_logger.debug(f"ignoring missing file for input fileGrp {grp} for page {page_id}")
                 continue
             assert isinstance(input_file, get_args(OcrdFileType))
+            if not input_file.local_filename:
+                self._base_logger.error(f'No local file exists for page {page_id} in file group {grp}')
+                if config.OCRD_MISSING_INPUT == 'ABORT':
+                    raise MissingInputFile(grp, page_id, input_file.mimetype)
+                continue
             self._base_logger.debug(f"parsing file {input_file.ID} for page {page_id}")
             try:
                 page_ = page_from_file(input_file)
@@ -796,6 +800,9 @@ class Processor():
             except ValueError as err:
                 # not PAGE and not an image to generate PAGE for
                 self._base_logger.error(f"non-PAGE input for page {page_id}: {err}")
+        if not any(input_pcgts):
+            self._base_logger.warning(f'skipping page {page_id}')
+            return
         output_file_id = make_file_id(input_files[input_pos], self.output_file_grp)
         if input_files[input_pos].fileGrp == self.output_file_grp:
             # input=output fileGrp: re-use ID exactly
@@ -1107,7 +1114,11 @@ class Processor():
             self._base_logger.critical(f"Could not find any files for selected pageId {self.page_id}.\n"
                                        f"compare '{self.page_id}' with the output of 'orcd workspace list-page'.")
         ifts = []
-        for page, ifiles in pages.items():
+        # use physical page order
+        for page in self.workspace.mets.physical_pages:
+            if page not in pages:
+                continue
+            ifiles = pages[page]
             for i, ifg in enumerate(ifgs):
                 if not ifiles[i]:
                     # could be from non-unique with on_error=skip or from true gap
@@ -1150,18 +1161,15 @@ def _page_worker(timeout, *input_files):
     """
     page_id = next((file.pageId for file in input_files
                     if hasattr(file, 'pageId')), "")
-    if timeout > 0:
-        timer = Timer(timeout, interrupt_main)
-        timer.start()
+    pool = ThreadPool(processes=1)
     try:
-        _page_worker_processor.process_page_file(*input_files)
+        #_page_worker_processor.process_page_file(*input_files)
+        async_result = pool.apply_async(_page_worker_processor.process_page_file, input_files)
+        async_result.get(timeout or None)
         _page_worker_processor.logger.debug("page worker completed for page %s", page_id)
-    except KeyboardInterrupt:
+    except mp.TimeoutError:
         _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
-        raise TimeoutError()
-    finally:
-        if timeout > 0:
-            timer.cancel()
+        raise
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.
