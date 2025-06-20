@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.5.0] - 2025-06-20
+
 Added:
 
   * Extended syntax for filtering pages with `--page-id` and `OcrdMets.find_files`, #1328, #1328
@@ -2560,6 +2562,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.5.0]: ../../compare/v3.5.0..v3.4.1
 [3.4.1]: ../../compare/v3.4.1..v3.4.0
 [3.4.0]: ../../compare/v3.4.0..v3.3.2
 [3.3.2]: ../../compare/v3.3.2..v3.3.1
