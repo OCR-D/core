@@ -5,6 +5,13 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `OCRD_MISSING_INPUT` config variable only checked existence of `mets:file` not the actual file on disk even when set to `ABORT`, #1330
+  * Fix processor CLI subcommand `worker|server` broken due to changed `Enum` handling in click 8.2, #1331
+  * Typo: proper log message if media type could not be detemined, #1330,  bertsky/workflow-configuration#35
+  * `Processor.zip_input_files`: always sort pages in physical order, #1330
+
 ## [3.4.0] - 2025-04-30
 
 Added:
