@@ -32,6 +32,7 @@ python-multipart
 pyyaml
 requests
 requests_unixsocket2
-shapely
+shapely < 2.0.2 ; python_version < '3.9'
+shapely >= 2 ; python_version >= '3.9'
 uvicorn
 uvicorn>=0.17.6
