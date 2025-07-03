@@ -1,8 +1,8 @@
 [build-system]
 requires = [
          "setuptools>=44",
-         "oldest-supported-numpy; python_version!='3.8'",
-         "numpy>=1.19.3; python_version=='3.8'",
+         "oldest-supported-numpy; python_version=='3.8'",
+         "numpy>=1.25; python_version>='3.9'",
          "wheel",
 ]  # PEP 508 specifications.
 build-backend = "setuptools.build_meta"
