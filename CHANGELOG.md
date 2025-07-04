@@ -5,6 +5,12 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.5.1] - 2025-07-04
+
+Fixed:
+
+  * Pin shapely runtime dependency and numpy build dependency for Python <= 3.8, #1332
+
 ## [3.5.0] - 2025-06-20
 
 Added:
@@ -2562,6 +2568,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.5.1]: ../../compare/v3.5.1..v3.5.0
 [3.5.0]: ../../compare/v3.5.0..v3.4.1
 [3.4.1]: ../../compare/v3.4.1..v3.4.0
 [3.4.0]: ../../compare/v3.4.0..v3.3.2
