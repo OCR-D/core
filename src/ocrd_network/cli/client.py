@@ -2,6 +2,7 @@ import click
 from json import dumps
 from typing import List, Optional, Tuple
 from urllib.parse import urlparse
+from tempfile import NamedTemporaryFile
 
 from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
 from ocrd_network.constants import JobState
@@ -184,30 +185,42 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
 
 @workflow_cli.command('run')
 @click.option('--address', type=URL, help=ADDRESS_HELP)
-@click.option('-m', '--path-to-mets', required=True)
-@click.option('-w', '--path-to-workflow', required=True)
+@click.option('-m', '--path-to-mets', required=True, help="path to METS file of workspace to be processed (server-side path)")
+@click.option('-w', '--path-to-workflow', required=False, help="path to workflow file (client-side path)")
 @click.option('--page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
 @click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
 @click.option('-p', '--print-state', default=False, is_flag=True,
               help='If set, the client will print job states by each iteration.')
+@click.argument('tasks', nargs=-1)
 def send_workflow_job_request(
     address: Optional[str],
     path_to_mets: str,
-    path_to_workflow: str,
+    path_to_workflow: Optional[str],
     page_wise: bool,
     block: bool,
-    print_state: bool
+    print_state: bool,
+    tasks: List[str]
 ):
     """
     Submit a workflow job to the processing server.
+
+    Provide workflow either via `tasks` arguments (same syntax
+    as in ``ocrd process`` tasks arguments), or via `-w` file path
+    (same syntax, but newline separated).
     """
+    assert bool(path_to_workflow) != bool(len(tasks)), "requires either --path-to-workflow or task arguments"
+
     client = Client(server_addr_processing=address)
-    workflow_job_id = client.send_workflow_job_request(
-        path_to_wf=path_to_workflow,
-        path_to_mets=path_to_mets,
-        page_wise=page_wise,
-    )
+    with NamedTemporaryFile() as workflow_file:
+        for task in tasks:
+            workflow_file.write((task + '\n').encode('utf-8'))
+        workflow_file.flush()
+        workflow_job_id = client.send_workflow_job_request(
+            path_to_wf=path_to_workflow or workflow_file.name,
+            path_to_mets=path_to_mets,
+            page_wise=page_wise,
+        )
     assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
