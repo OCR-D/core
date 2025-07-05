@@ -1,6 +1,8 @@
 import click
 from json import dumps
 from typing import List, Optional, Tuple
+from urllib.parse import urlparse
+
 from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
 from ocrd_network.constants import JobState
 from ocrd_utils import DEFAULT_METS_BASENAME
@@ -8,6 +10,22 @@ from ocrd_utils.introspect import set_json_key_value_overrides
 from ocrd_utils.str import parse_json_string_or_file
 from ..client import Client
 
+
+ADDRESS_HELP = 'The URL of the Processing Server. If not provided, ' + \
+    'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" environment variable is used by default'
+
+class URLType(click.types.StringParamType):
+    name = "url"
+    def convert(self, value, param, ctx):
+        try:
+            parsed = urlparse(value)
+            if parsed.scheme not in ("http", "https"):
+                self.fail(f"invalid URL scheme ({parsed.scheme}): only HTTP allowed",
+                          param, ctx)
+            return value
+        except ValueError as err:
+            self.fail(err, param, ctx)
+URL = URLType()
 
 @click.group('client')
 def client_cli():
@@ -27,9 +45,7 @@ def discovery_cli():
 
 
 @discovery_cli.command('processors')
-@click.option('--address',
-              help='The address of the Processing Server. If not provided, '
-                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address', type=URL, help=ADDRESS_HELP)
 def check_deployed_processors(address: Optional[str]):
     """
     Get a list of deployed processing workers/processor servers.
@@ -41,9 +57,7 @@ def check_deployed_processors(address: Optional[str]):
 
 
 @discovery_cli.command('processor')
-@click.option('--address',
-              help='The address of the Processing Server. If not provided, '
-                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.argument('processor_name', required=True, type=click.STRING)
 def check_processor_ocrd_tool(address: Optional[str], processor_name: str):
     """
@@ -63,9 +77,7 @@ def processing_cli():
 
 
 @processing_cli.command('check-log')
-@click.option('--address',
-              help='The address of the Processing Server. If not provided, '
-                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.option('-j', '--processing-job-id', required=True)
 def check_processing_job_status(address: Optional[str], processing_job_id: str):
     """
@@ -77,9 +89,7 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 
 
 @processing_cli.command('check-status')
-@click.option('--address',
-              help='The address of the Processing Server. If not provided, '
-                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.option('-j', '--processing-job-id', required=True)
 def check_processing_job_status(address: Optional[str], processing_job_id: str):
     """
@@ -93,9 +103,7 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 
 @processing_cli.command('run')
 @click.argument('processor_name', required=True, type=click.STRING)
-@click.option('--address',
-              help='The address of the Processing Server. If not provided, '
-                   'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.option('-m', '--mets', required=True, default=DEFAULT_METS_BASENAME)
 @click.option('-I', '--input-file-grp', default='OCR-D-INPUT')
 @click.option('-O', '--output-file-grp', default='OCR-D-OUTPUT')
@@ -162,8 +170,7 @@ def workflow_cli():
 
 
 @workflow_cli.command('check-status')
-@click.option('--address', help='The address of the Processing Server. If not provided, '
-                                'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.option('-j', '--workflow-job-id', required=True)
 def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
     """
@@ -176,11 +183,10 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
 
 
 @workflow_cli.command('run')
-@click.option('--address', help='The address of the Processing Server. If not provided, '
-                                'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
+@click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.option('-m', '--path-to-mets', required=True)
 @click.option('-w', '--path-to-workflow', required=True)
-@click.option('--page-wise/--no-page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
+@click.option('--page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
 @click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
 @click.option('-p', '--print-state', default=False, is_flag=True,
