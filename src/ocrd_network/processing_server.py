@@ -736,9 +736,7 @@ class ProcessingServer(FastAPI):
         self.validate_tasks_agents_existence(processing_tasks, agent_type)
 
         page_ids = get_page_ids_list(self.log, mets_path, page_id)
-
-        # TODO: Reconsider this, the compact page range may not always work if the page_ids are hashes!
-        compact_page_range = f"{page_ids[0]}..{page_ids[-1]}"
+        compact_page_range = ','.join(page_ids)
 
         if not page_wise:
             responses = await self.task_sequence_to_processing_jobs(
