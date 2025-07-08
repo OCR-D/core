@@ -186,7 +186,7 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
 @workflow_cli.command('run')
 @click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.option('-m', '--path-to-mets', required=True, help="path to METS file of workspace to be processed (server-side path)")
-@click.option('-w', '--path-to-workflow', required=False, help="path to workflow file (client-side path)")
+@click.option('-w', '--path-to-workflow', required=False, help="path to workflow file (server- or client-side path)")
 @click.option('--page-wise', is_flag=True, default=False, help="Whether to generate per-page jobs")
 @click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')

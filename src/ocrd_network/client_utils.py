@@ -92,7 +92,7 @@ def post_ps_workflow_request(
     response = request_post(
         url=request_url,
         headers={"accept": "application/json; charset=utf-8"},
-        files={"workflow": open(path_to_wf, "rb")}
+        files={"workflow": open(path_to_wf, "rb") if os.path.exists(path_to_wf) else path_to_wf}
     )
     # print(response.json())
     # print(response.__dict__)
