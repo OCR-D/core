@@ -167,7 +167,7 @@ async def forward_job_to_processor_server(
     return job_output
 
 
-async def get_workflow_content(logger: Logger, workflow_id: str, workflow: Union[UploadFile, None]) -> str:
+async def get_workflow_content(logger: Logger, workflow_id: str, workflow: Union[UploadFile, str, None]) -> str:
     if not workflow and not workflow_id:
         message = "Either 'workflow' must be uploaded as a file or 'workflow_id' must be provided. Both are missing."
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
@@ -178,6 +178,9 @@ async def get_workflow_content(logger: Logger, workflow_id: str, workflow: Union
         except ValueError as error:
             message = f"Workflow with id '{workflow_id}' not found"
             raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message, error)
+    if isinstance(workflow, str):
+        with open(workflow) as wf_file:
+            return wf_file.read()
     return await generate_workflow_content(workflow)
 
 
