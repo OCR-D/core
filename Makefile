@@ -313,16 +313,13 @@ network-module-test: assets
 		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
 		$(TESTDIR)/network
 
-INTEGRATION_TEST_IN_DOCKER = docker exec core_test
+network-integration-test: INTEGRATION_TEST_COMPOSE = $(DOCKER_COMPOSE) --file tests/network/docker-compose.yml
+network-integration-test: INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 network-integration-test:
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py"
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
-
-network-integration-test-cicd:
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py"
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
+	{ $(INTEGRATION_TEST_COMPOSE) up --wait --wait-timeout 60 -d && \
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py" && \
+	err=0 || { err=$$?; $(INTEGRATION_TEST_COMPOSE) logs; }; \
+	$(INTEGRATION_TEST_COMPOSE) down --remove-orphans; exit $$err; }
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
