@@ -104,13 +104,15 @@ Variables:
 {config.describe('OCRD_LOGGING_DEBUG')}
 """
 
+
 @click.group(epilog=_epilog)
 @click.version_option(package_name='ocrd')
 @ocrd_loglevel
-def cli(**kwargs): # pylint: disable=unused-argument
+def cli(**kwargs):  # pylint: disable=unused-argument
     """
     Entry-point of multi-purpose CLI for OCR-D
     """
+
 
 cli.add_command(ocrd_tool_cli)
 cli.add_command(workspace_cli)
