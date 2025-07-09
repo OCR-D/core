@@ -37,13 +37,14 @@ def assert_file_grp_cardinality(grps, n, msg=None):
     if isinstance(grps, str):
         grps = grps.split(',')
     assert len(grps) == n, \
-            "Expected exactly %d output file group%s%s, but '%s' has %d" % (
-                n,
-                '' if n == 1 else 's',
-                ' (%s)' % msg if msg else '',
-                grps,
-                len(grps)
-            )
+        "Expected exactly %d output file group%s%s, but '%s' has %d" % (
+            n,
+            '' if n == 1 else 's',
+            ' (%s)' % msg if msg else '',
+            grps,
+            len(grps)
+        )
+
 
 def concat_padded(base, *args):
     """
@@ -54,17 +55,19 @@ def concat_padded(base, *args):
         if is_string(n):
             ret = "%s_%s" % (ret, n)
         else:
-            ret = "%s_%04i"  % (ret, n)
+            ret = "%s_%04i" % (ret, n)
     return ret
+
 
 def remove_non_path_from_url(url):
     """
     Remove everything from URL after path.
     """
-    url = url.split('?', 1)[0]    # query
-    url = url.split('#', 1)[0]    # fragment identifier
-    url = re.sub(r"/+$", "", url) # trailing slashes
+    url = url.split('?', 1)[0]     # query
+    url = url.split('#', 1)[0]     # fragment identifier
+    url = re.sub(r"/+$", "", url)  # trailing slashes
     return url
+
 
 def make_file_id(ocrd_file, output_file_grp):
     """
@@ -101,9 +104,12 @@ def make_file_id(ocrd_file, output_file_grp):
             ret = output_file_grp + '_' + ocrd_file.ID
     return make_xml_id(ret)
 
+
 def make_xml_id(idstr: str) -> str:
     """
-    Turn ``idstr`` into a valid ``xml:id`` literal by replacing ``:`` with ``_``, removing everything non-alphanumeric, ``.`` and ``-`` and prepending `id_` if ``idstr`` starts with a number.
+    Turn ``idstr`` into a valid ``xml:id`` literal by replacing ``:`` with ``_``,
+    removing everything non-alphanumeric, ``.`` and ``-`` and prepending `id_`
+    if ``idstr`` starts with a number.
     """
     ret = idstr
     if not REGEX_FILE_ID.fullmatch(ret):
@@ -112,6 +118,7 @@ def make_xml_id(idstr: str) -> str:
         ret = re.sub(r'^([^a-zA-Z_])', r'id_\1', ret)
         ret = re.sub(r'[^\w.-]', r'', ret)
     return ret
+
 
 def nth_url_segment(url, n=-1):
     """
@@ -126,6 +133,7 @@ def nth_url_segment(url, n=-1):
         return segments[n]
     except IndexError:
         return ''
+
 
 def get_local_filename(url, start=None):
     """
@@ -150,12 +158,14 @@ def get_local_filename(url, start=None):
         url = url[len(start):]
     return url
 
+
 def is_local_filename(url):
     """
     Whether a url is a local filename.
     """
     # deprecation_warning("Deprecated so we spot inconsistent URL/file handling")
-    return url.startswith('file://') or not('://' in url)
+    return url.startswith('file://') or '://' not in url
+
 
 def is_string(val):
     """
@@ -171,12 +181,14 @@ def parse_json_file_with_comments(val):
     with open(val, 'r', encoding='utf-8') as inputf:
         return parse_json_string_with_comments(inputf.read())
 
+
 def parse_json_string_with_comments(val):
     """
     Parse a string of JSON interspersed with #-prefixed full-line comments
     """
     jsonstr = re.sub(r'^\s*#.*$', '', val, flags=re.MULTILINE)
     return json.loads(jsonstr)
+
 
 def parse_json_string_or_file(*values, resolve_preset_file=None):    # pylint: disable=unused-argument
     """
@@ -208,6 +220,7 @@ def parse_json_string_or_file(*values, resolve_preset_file=None):    # pylint: d
         ret = {**ret, **value_parsed}
     return ret
 
+
 def safe_filename(url):
     """
     Sanitize input to be safely used as the basename of a local file.
@@ -218,7 +231,8 @@ def safe_filename(url):
     #  print('safe filename: %s -> %s' % (url, ret))
     return ret
 
-def generate_range(start : str, end : str) -> List[str]:
+
+def generate_range(start: str, end: str) -> List[str]:
     """
     Generate a list of strings by incrementing the number part of ``start`` until including ``end``.
     """
@@ -228,7 +242,8 @@ def generate_range(start : str, end : str) -> List[str]:
     except IndexError:
         raise ValueError("Range '%s..%s': could not find numeric part" % (start, end))
     if start[:-len(start_num)] != end[:-len(end_num)]:
-        raise ValueError(f"Range '{start}..{end}' differ in their non-numeric part: '{start[:-len(start_num)]}' != '{end[:-len(end_num)]}'")
+        raise ValueError(f"Range '{start}..{end}' differ in their non-numeric part: "
+                         f"'{start[:-len(start_num)]}' != '{end[:-len(end_num)]}'")
     if start_num == end_num:
         warn("Range '%s..%s': evaluates to the same number")
     for i in range(int(start_num), int(end_num) + 1):
@@ -261,7 +276,8 @@ def partition_list(lst, chunks, chunk_index=None):
         return [ret[chunk_index]]
     return ret
 
-def sparkline(values : List[int]) -> str:
+
+def sparkline(values: List[int]) -> str:
     """
     Render a list of points with block characters
     """

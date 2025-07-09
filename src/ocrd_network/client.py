@@ -1,5 +1,5 @@
 from typing import Optional
-from ocrd_utils import config, getLogger, LOG_FORMAT
+from ocrd_utils import config, getLogger
 from .client_utils import (
     get_ps_deployed_processors,
     get_ps_deployed_processor_ocrd_tool,
@@ -21,7 +21,7 @@ class Client:
         timeout: int = config.OCRD_NETWORK_CLIENT_POLLING_TIMEOUT,
         wait: int = config.OCRD_NETWORK_CLIENT_POLLING_SLEEP
     ):
-        self.log = getLogger(f"ocrd_network.client")
+        self.log = getLogger("ocrd_network.client")
         if not server_addr_processing:
             server_addr_processing = config.OCRD_NETWORK_SERVER_ADDR_PROCESSING
         self.server_addr_processing = server_addr_processing

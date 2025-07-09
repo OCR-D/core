@@ -6,8 +6,9 @@ from typing import Any, List, Optional, Union
 
 from ocrd_utils import deprecation_warning
 
-from .ocrd_xml_base import ET # type: ignore
+from .ocrd_xml_base import ET  # type: ignore
 from .constants import NAMESPACES as NS, TAG_METS_FLOCAT
+
 
 class OcrdFile():
     """
@@ -62,11 +63,12 @@ class OcrdFile():
         return '<OcrdFile fileGrp=%s %s]/> ' % (fileGrp, props)
 
     def __eq__(self, other):
-        return self.ID == other.ID \
-           and self.url == other.url \
-           and self.local_filename == other.local_filename
-               # EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and \
-               # self.fileGrp == other.fileGrp
+        return (self.ID == other.ID and
+                self.url == other.url and
+                self.local_filename == other.local_filename  # and
+                # EXT_TO_MIME[MIME_TO_EXT[self.mimetype]] == EXT_TO_MIME[MIME_TO_EXT[other.mimetype]] and
+                # self.fileGrp == other.fileGrp
+                )
 
     @property
     def basename(self) -> str:
@@ -100,7 +102,7 @@ class OcrdFile():
         return self._el.get('ID')
 
     @ID.setter
-    def ID(self, ID : Optional[str]) -> None:
+    def ID(self, ID: Optional[str]) -> None:
         """
         Set the ``@ID`` of the ``mets:file`` to :py:attr:`ID`.
         """
@@ -117,16 +119,18 @@ class OcrdFile():
     @property
     def pageId(self) -> str:
         """
-        Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file`` (physical page manifestation).
+        Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
+        (physical page manifestation).
         """
         if self.mets is None:
             raise Exception("OcrdFile %s has no member 'mets' pointing to parent OcrdMets" % self)
         return self.mets.get_physical_page_for_file(self)
 
     @pageId.setter
-    def pageId(self, pageId : Optional[str]) -> None:
+    def pageId(self, pageId: Optional[str]) -> None:
         """
-        Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file`` (physical page manifestation) to :py:attr:`pageId`.
+        Get the ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
+        (physical page manifestation) to :py:attr:`pageId`.
         """
         if pageId is None:
             return
@@ -139,7 +143,7 @@ class OcrdFile():
         """
         Get the ``@LOCTYPE``s of the ``mets:file``.
         """
-        return [x.get('LOCTYPE') for x in  self._el.findall('mets:FLocat', NS)]
+        return [x.get('LOCTYPE') for x in self._el.findall('mets:FLocat', NS)]
 
     @property
     def mimetype(self) -> str:
@@ -149,7 +153,7 @@ class OcrdFile():
         return self._el.get('MIMETYPE')
 
     @mimetype.setter
-    def mimetype(self, mimetype : Optional[str]) -> None:
+    def mimetype(self, mimetype: Optional[str]) -> None:
         """
         Set the ``@MIMETYPE`` of the ``mets:file`` to :py:attr:`mimetype`.
         """
@@ -178,7 +182,7 @@ class OcrdFile():
         return ''
 
     @url.setter
-    def url(self, url : Optional[str]) -> None:
+    def url(self, url: Optional[str]) -> None:
         """
         Set the remote/original URL ``@xlink:href`` of this ``mets:file`` to :py:attr:`url`.
         """
@@ -203,7 +207,7 @@ class OcrdFile():
         return None
 
     @local_filename.setter
-    def local_filename(self, fname : Optional[Union[Path, str]]):
+    def local_filename(self, fname: Optional[Union[Path, str]]):
         """
         Set the local/cached ``@xlink:href`` of this ``mets:file`` to :py:attr:`local_filename`.
         """
@@ -230,12 +234,12 @@ class ClientSideOcrdFile:
 
     def __init__(
         self,
-        el, # pylint: disable=unused-argument
+        el,  # pylint: disable=unused-argument
         mimetype: str = '',
         pageId: str = '',
-        loctype: str ='OTHER',
+        loctype: str = 'OTHER',
         local_filename: Optional[str] = None,
-        mets : Any = None, # pylint: disable=unused-argument
+        mets: Any = None,  # pylint: disable=unused-argument
         url: str = '',
         ID: str = '',
         fileGrp: str = ''
@@ -248,8 +252,8 @@ class ClientSideOcrdFile:
             mimetype (string): ``@MIMETYPE`` of this ``mets:file``
             pageId (string): ``@ID`` of the physical ``mets:structMap`` entry corresponding to this ``mets:file``
             loctype (string): ``@LOCTYPE`` of this ``mets:file``
-            url (string): ignored XXX the remote/original file once we have proper mets:FLocat bookkeeping 
-            local_filename (): ``@xlink:href`` of this ``mets:file`` - XXX the local file once we have proper mets:FLocat bookkeeping
+            url (string):  ``@xlink:href`` of this ``mets:file`` (if ``@LOCTYPE==URL``)
+            local_filename (): ``@xlink:href`` of this ``mets:file`` (if ``@LOCTYPE==FILE @OTHERLOCTYPE==FILE``)
             ID (string): ``@ID`` of this ``mets:file``
         """
         self.ID = ID
@@ -266,5 +270,6 @@ class ClientSideOcrdFile:
             for k in ['fileGrp', 'ID', 'mimetype', 'url', 'local_filename']
         ])
         return '<ClientSideOcrdFile %s]/>' % (props)
+
 
 OcrdFileType = Union[OcrdFile, ClientSideOcrdFile]

@@ -6,6 +6,7 @@ See `specs <https://ocr-d.de/en/spec/cli#processor-resources>`_.
 from .constants import RESOURCE_LIST_SCHEMA
 from .json_validator import DefaultValidatingDraft20199Validator, JsonValidator
 
+
 #
 # -------------------------------------------------
 #
@@ -22,4 +23,5 @@ class OcrdResourceListValidator(JsonValidator):
         """
         if schema is None:
             schema = RESOURCE_LIST_SCHEMA
-        return JsonValidator(schema, validator_class=DefaultValidatingDraft20199Validator)._validate(obj) # pylint: disable=protected-access
+        validator = JsonValidator(schema, validator_class=DefaultValidatingDraft20199Validator)
+        return validator._validate(obj)  # pylint: disable=protected-access

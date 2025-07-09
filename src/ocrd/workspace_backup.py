@@ -10,8 +10,10 @@ from ocrd_utils import getLogger, atomic_write, DEFAULT_METS_BASENAME
 
 from .constants import BACKUP_DIR
 
+
 def _chksum(s):
     return hashlib.sha256(s).hexdigest()
+
 
 class WorkspaceBackup():
 
@@ -36,6 +38,7 @@ class WorkspaceBackup():
             self.size,
             self.mets_xml.file_groups
             )
+
 
 class WorkspaceBackupManager():
     """

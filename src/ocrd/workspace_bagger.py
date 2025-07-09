@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import makedirs, chdir, walk
+from os import makedirs, walk
 from os.path import join, isdir, basename as os_path_basename, exists, relpath
 from pathlib import Path
 from shutil import make_archive, rmtree, copyfile, move, copytree
@@ -7,7 +7,11 @@ from tempfile import mkdtemp, TemporaryDirectory
 import re
 import tempfile
 import sys
-from bagit import Bag, make_manifests, _load_tag_file, _make_tag_file, _make_tagmanifest_file  # pylint: disable=no-name-in-module
+from bagit import (
+    Bag,
+    make_manifests,
+    _load_tag_file, _make_tag_file, _make_tagmanifest_file,  # pylint: disable=no-name-in-module
+)
 
 from ocrd_utils import (
     pushd_popd,
@@ -25,9 +29,10 @@ from ocrd_models.ocrd_page import to_xml
 
 from .workspace import Workspace
 
-tempfile.tempdir = '/tmp' # TODO hard-coded
+tempfile.tempdir = '/tmp'  # TODO hard-coded
 
 BACKUPDIR = join('/tmp', TMP_BAGIT_PREFIX + 'backup')
+
 
 class WorkspaceBagger():
     """
@@ -50,7 +55,7 @@ class WorkspaceBagger():
     def _log_or_raise(self, msg):
         log = getLogger('ocrd.workspace_bagger')
         if self.strict:
-            raise(Exception(msg))
+            raise Exception(msg)
         else:
             log.info(msg)
 
@@ -112,10 +117,11 @@ class WorkspaceBagger():
             log.info("New vs. old: %s" % changed_local_filenames)
         return total_bytes, total_files
 
-    def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_base_version_checksum, ocrd_mets=DEFAULT_METS_BASENAME):
+    def _set_bag_info(self, bag, total_bytes, total_files, ocrd_identifier, ocrd_base_version_checksum,
+                      ocrd_mets=DEFAULT_METS_BASENAME):
         bag.info['BagIt-Profile-Identifier'] = OCRD_BAGIT_PROFILE_URL
         bag.info['Bag-Software-Agent'] = 'ocrd/core %s (bagit.py %s, bagit_profile %s) [cmdline: "%s"]' % (
-            VERSION, # TODO
+            VERSION,  # TODO
             dist_version('ocrd-fork-bagit'),
             dist_version('ocrd-fork-bagit_profile'),
             ' '.join(sys.argv))
@@ -139,7 +145,7 @@ class WorkspaceBagger():
             tag_files=None,
             include_fileGrp=None,
             exclude_fileGrp=None,
-           ):
+    ):
         """
         Bag a workspace
 
@@ -178,7 +184,8 @@ class WorkspaceBagger():
             f.write(BAGIT_TXT.encode('utf-8'))
 
         # create manifests
-        total_bytes, total_files = self._bag_mets_files(workspace, bagdir, ocrd_mets, processes, include_fileGrp, exclude_fileGrp)
+        total_bytes, total_files = self._bag_mets_files(workspace, bagdir, ocrd_mets, processes,
+                                                        include_fileGrp, exclude_fileGrp)
 
         # create bag-info.txt
         bag = Bag(bagdir)

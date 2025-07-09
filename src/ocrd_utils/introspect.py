@@ -23,6 +23,7 @@ else:
 file_manager = ExitStack()
 atexit.register(file_manager.close)
 
+
 # Taken from https://github.com/OCR-D/core/pull/884
 def freeze_args(func):
     """
@@ -41,6 +42,7 @@ def membername(class_, val):
     """Convert a member variable/constant into a member name string."""
     return next((k for k, v in class_.__dict__.items() if v == val), str(val))
 
+
 def set_json_key_value_overrides(obj, *kvpairs):
     for kv in kvpairs:
         k, v = kv
@@ -50,13 +52,16 @@ def set_json_key_value_overrides(obj, *kvpairs):
             obj[k] = v
     return obj
 
-def resource_filename(pkg : str, fname : str) -> Path:
+
+def resource_filename(pkg: str, fname: str) -> Path:
     ref = importlib_resources.files(pkg) / fname
     return file_manager.enter_context(importlib_resources.as_file(ref))
 
-def resource_string(pkg : str, fname : str) -> str:
+
+def resource_string(pkg: str, fname: str) -> str:
     with open(resource_filename(pkg, fname), 'r', encoding='utf-8') as f:
         return f.read()
 
-def dist_version(module : str) -> str:
+
+def dist_version(module: str) -> str:
     return importlib_metadata.version(module)

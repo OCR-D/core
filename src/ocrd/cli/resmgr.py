@@ -18,7 +18,6 @@ from ocrd_utils import (
     getLogger,
     get_moduledir,
     get_ocrd_tool_json,
-    resource_filename,
     initLogging,
     RESOURCE_LOCATIONS,
 )

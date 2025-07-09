@@ -5,7 +5,6 @@ from time import perf_counter, process_time
 from os import times
 from functools import lru_cache
 import json
-import inspect
 from subprocess import run
 from typing import List, Optional
 
@@ -28,6 +27,7 @@ def _get_workspace(workspace=None, resolver=None, mets_url=None, working_dir=Non
         workspace = resolver.workspace_from_url(mets_url, dst_dir=working_dir, mets_server_url=mets_server_url)
     return workspace
 
+
 def run_processor(
         processorClass,
         mets_url=None,
@@ -41,7 +41,7 @@ def run_processor(
         working_dir=None,
         mets_server_url=None,
         instance_caching=False
-): # pylint: disable=too-many-locals
+):  # pylint: disable=too-many-locals
     """
     Instantiate a Pythonic processor, open a workspace, run the processor and save the workspace.
 
@@ -104,7 +104,7 @@ def run_processor(
     t0_os = times()
     if any(x in config.OCRD_PROFILE for x in ['RSS', 'PSS']):
         backend = 'psutil_pss' if 'PSS' in config.OCRD_PROFILE else 'psutil'
-        from memory_profiler import memory_usage # pylint: disable=import-outside-toplevel
+        from memory_profiler import memory_usage  # pylint: disable=import-outside-toplevel
         try:
             mem_usage = memory_usage(proc=(processor.process_workspace, [workspace], {}),
                                      # only run process once
@@ -225,7 +225,6 @@ def run_cli(
     return result.returncode
 
 
-
 # not decorated here but at runtime (on first use)
 #@freeze_args
 #@lru_cache(maxsize=config.OCRD_MAX_PROCESSOR_CACHE)
@@ -244,6 +243,7 @@ def get_cached_processor(parameter: dict, processor_class):
         processor = processor_class(None, parameter=dict(parameter))
         return processor
     return None
+
 
 def get_processor(
         processor_class,

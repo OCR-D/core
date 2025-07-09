@@ -36,6 +36,7 @@ from .config import config
 from .logging import getLogger
 from .introspect import resource_string
 
+
 def abspath(url):
     """
     Get a full path to a file or file URL
@@ -45,6 +46,7 @@ def abspath(url):
     if url.startswith('file://'):
         url = url[len('file://'):]
     return abspath_(url)
+
 
 @contextmanager
 def pushd_popd(newcwd=None, tempdir=False):
@@ -67,6 +69,7 @@ def pushd_popd(newcwd=None, tempdir=False):
     finally:
         chdir(oldcwd)
 
+
 def unzip_file_to_dir(path_to_zip, output_directory):
     """
     Extract a ZIP archive to a directory
@@ -74,13 +77,13 @@ def unzip_file_to_dir(path_to_zip, output_directory):
     with ZipFile(path_to_zip, 'r') as z:
         z.extractall(output_directory)
 
+
 @lru_cache()
 def get_ocrd_tool_json(executable):
     """
     Get the ``ocrd-tool`` description of ``executable``.
     """
     ocrd_tool = {}
-    executable_name = Path(executable).name
     try:
         ocrd_all_tool = loads(resource_string('ocrd', 'ocrd-all-tool.json'))
         ocrd_tool = ocrd_all_tool[executable]
@@ -92,6 +95,7 @@ def get_ocrd_tool_json(executable):
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = ['data', 'cwd', 'system', 'module']
     return ocrd_tool
+
 
 @lru_cache()
 def get_moduledir(executable):
@@ -105,6 +109,7 @@ def get_moduledir(executable):
         except (JSONDecodeError, OSError) as e:
             getLogger('ocrd.utils.get_moduledir').error(f'{executable} --dump-module-dir failed: {e}')
     return moduledir
+
 
 def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_data_home=None):
     """
@@ -122,6 +127,7 @@ def list_resource_candidates(executable, fname, cwd=getcwd(), moduled=None, xdg_
     if moduled:
         candidates.append(join(moduled, fname))
     return candidates
+
 
 def list_all_resources(executable, moduled=None, xdg_data_home=None):
     """
@@ -164,7 +170,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
                    # code and data; `is_resource()` only singles out
                    # files over directories; but we want data files only
                    # todo: more code and cache exclusion patterns!
-                   ['*.py', '*.py[cod]', '*~', 'ocrd-tool.json', 
+                   ['*.py', '*.py[cod]', '*~', 'ocrd-tool.json',
                     'environment.pickle', 'resource_list.yml', 'lib.bash']):
                 continue
             candidates.append(resource)
@@ -173,6 +179,7 @@ def list_all_resources(executable, moduled=None, xdg_data_home=None):
         if parent.is_dir() and parent.name != '.git':
             candidates += parent.iterdir()
     return sorted([str(x) for x in candidates])
+
 
 def get_processor_resource_types(executable, ocrd_tool=None):
     """
@@ -194,6 +201,7 @@ def get_processor_resource_types(executable, ocrd_tool=None):
     return [p['content-type'] for p in ocrd_tool['parameters'].values()
             if 'content-type' in p]
 
+
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42
 class AtomicWriterPerms(AtomicWriter):
@@ -210,6 +218,7 @@ class AtomicWriterPerms(AtomicWriter):
         chmod(fd, mode)
         return f
 
+
 @contextmanager
 def atomic_write(fpath):
     with atomic_write_(fpath, writer_cls=AtomicWriterPerms, overwrite=True) as f:
@@ -224,6 +233,7 @@ def is_file_in_directory(directory, file):
     file = Path(file)
     return list(file.parts)[:len(directory.parts)] == list(directory.parts)
 
+
 def itertree(path):
     """
     Generate a list of paths by recursively enumerating ``path``
@@ -235,6 +245,7 @@ def itertree(path):
             yield from itertree(subpath)
     yield path
 
+
 def directory_size(path):
     """
     Calculates size of all files in directory ``path``
@@ -242,7 +253,8 @@ def directory_size(path):
     path = Path(path)
     return sum(f.stat().st_size for f in path.glob('**/*') if f.is_file())
 
-def guess_media_type(input_file : str, fallback : str = None, application_xml : str = 'application/xml'):
+
+def guess_media_type(input_file: str, fallback: str = None, application_xml: str = 'application/xml'):
     """
     Guess the media type of a file path
     """
@@ -258,6 +270,7 @@ def guess_media_type(input_file : str, fallback : str = None, application_xml : 
     if mimetype == 'application/xml':
         mimetype = application_xml
     return mimetype
+
 
 @contextmanager
 def redirect_stderr_and_stdout_to_file(filename):

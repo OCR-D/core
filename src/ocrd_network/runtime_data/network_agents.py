@@ -80,7 +80,7 @@ class DataProcessingWorker(DataNetworkAgent):
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processing worker in docker here
-            start_cmd = f""
+            start_cmd = ""
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
@@ -104,7 +104,7 @@ class DataProcessorServer(DataNetworkAgent):
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processor server in docker here
-            start_cmd = f""
+            start_cmd = ""
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")

@@ -63,4 +63,4 @@ jobs:
         # stop the build if there are Python syntax errors or undefined names
         flake8 src --count --exit-zero --select=E9,F63,F7,F82 --show-source --statistics --format=github
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 src --count --exit-zero --per-file-ignores=src/ocrd/cli/__init__.py:E402 --extend-exclude=src/ocrd_models/ocrd_page_generateds.py,src/ocrd_page_user_methods/*.py --max-complexity=10 --max-line-length=127 --statistics --format=github
+        flake8 src --count --exit-zero --per-file-ignores=src/ocrd/cli/__init__.py:E402,src/ocrd/__init__.py:F401,src/ocrd/__init__.py:F403,src/ocrd/decorators/__init__.py:F401,src/ocrd/processor/__init__.py:F401,src/ocrd_modelfactory/__init__.py:F401,src/ocrd_models/__init__.py:F401,src/ocrd_network/__init__.py:F401,src/ocrd_utils/__init__.py:F401,src/ocrd_validators/__init__.py:F401,src/ocrd_models/constants.py:E221 --extend-exclude=src/ocrd_models/ocrd_page_generateds.py,src/ocrd_page_user_methods/*.py --max-complexity=10 --max-line-length=127 --statistics --format=github
