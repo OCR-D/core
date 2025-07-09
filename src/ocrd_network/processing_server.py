@@ -735,22 +735,23 @@ class ProcessingServer(FastAPI):
         # for the ocr-d processors referenced inside tasks
         self.validate_tasks_agents_existence(processing_tasks, agent_type)
 
+        # for page_wise mode, we need to expand the list of pages
+        # for the database, it's better to keep a short string
         page_ids = get_page_ids_list(self.log, mets_path, page_id)
-        compact_page_range = ','.join(page_ids)
 
         if not page_wise:
             responses = await self.task_sequence_to_processing_jobs(
                 tasks=processing_tasks,
                 mets_path=mets_path,
-                page_id=compact_page_range,
+                page_id=page_id,
                 agent_type=agent_type
             )
             processing_job_ids = [response.job_id for response in responses]
             db_workflow_job = DBWorkflowJob(
                 job_id=generate_id(),
-                page_id=compact_page_range,
+                page_id=page_id,
                 page_wise=page_wise,
-                processing_job_ids={compact_page_range: processing_job_ids},
+                processing_job_ids={page_id: processing_job_ids},
                 path_to_mets=mets_path,
                 workflow_callback_url=workflow_callback_url
             )
@@ -769,7 +770,7 @@ class ProcessingServer(FastAPI):
             all_pages_job_ids[current_page] = processing_job_ids
         db_workflow_job = DBWorkflowJob(
             job_id=generate_id(),
-            page_id=compact_page_range,
+            page_id=page_id,
             page_wise=page_wise,
             processing_job_ids=all_pages_job_ids,
             path_to_mets=mets_path,
