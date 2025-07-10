@@ -2,6 +2,8 @@ from contextlib import nullcontext
 from json import dumps
 from pathlib import Path
 from typing import List, Optional
+from tempfile import NamedTemporaryFile
+from logging.config import fileConfig
 
 from ocrd.processor.helpers import run_cli, run_processor
 from ocrd_utils import redirect_stderr_and_stdout_to_file, initLogging
@@ -28,23 +30,58 @@ def invoke_processor(
 
     workspace = get_ocrd_workspace_instance(mets_path=abs_path_to_mets, mets_server_url=mets_server_url)
     if processor_class:
-        ctx_mgr = redirect_stderr_and_stdout_to_file(log_filename) if log_filename else nullcontext()
-        with ctx_mgr:
-            initLogging(force_reinit=True)
-            try:
-                run_processor(
-                    processorClass=processor_class,
-                    workspace=workspace,
-                    input_file_grp=input_file_grps_str,
-                    output_file_grp=output_file_grps_str,
-                    page_id=page_id,
-                    parameter=parameters,
-                    instance_caching=True,
-                    mets_server_url=mets_server_url,
-                    log_level=log_level
-                )
-            except Exception as error:
-                raise RuntimeError(f"Python executable '{processor_class.__dict__}', error: {error}")
+        with NamedTemporaryFile(mode='w') as cfgfile:
+            cfgfile.write("""
+[loggers]
+keys=root,ocrd,ocrd_network,tensorflow,shapely_geos
+[handlers]
+keys=fileHandler
+[formatters]
+keys=defaultFormatter
+[logger_root]
+level=WARNING
+handlers=fileHandler
+[logger_ocrd]
+level=INFO
+handlers=
+qualname=ocrd
+[logger_ocrd_network]
+level=INFO
+handlers=
+qualname=ocrd_network
+[logger_tensorflow]
+level=ERROR
+handlers=
+qualname=tensorflow
+[logger_shapely_geos]
+level=ERROR
+handlers=
+qualname=shapely.geos
+[handler_fileHandler]
+class=FileHandler
+formatter=defaultFormatter
+args=('{log_filename}','a+')
+[formatter_defaultFormatter]
+format=%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s
+datefmt=%H:%M:%S
+""".format(log_filename=log_filename))
+            cfgfile.flush()
+            # deletes all existing handlers
+            fileConfig(cfgfile.name)
+        try:
+            run_processor(
+                processorClass=processor_class,
+                workspace=workspace,
+                input_file_grp=input_file_grps_str,
+                output_file_grp=output_file_grps_str,
+                page_id=page_id,
+                parameter=parameters,
+                instance_caching=True,
+                mets_server_url=mets_server_url,
+                log_level=log_level
+            )
+        except Exception as error:
+            raise RuntimeError(f"Python executable '{processor_class.__dict__}', error: {error}")
     else:
         return_code = run_cli(
             executable=executable,
