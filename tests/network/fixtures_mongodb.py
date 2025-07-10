@@ -3,7 +3,7 @@ from src.ocrd_network.database import sync_initiate_database, verify_database_ur
 from tests.network.config import test_config
 
 
-@fixture(scope="package", name="mongo_client")
+@fixture(scope="session", name="mongo_client")
 def fixture_mongo_client():
     verify_database_uri(test_config.DB_URL)
     sync_initiate_database(test_config.DB_URL, test_config.DB_NAME)

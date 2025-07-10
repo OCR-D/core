@@ -134,6 +134,7 @@ class ProcessingWorker:
             self.log.info(f"Starting consuming from queue: {self.processor_name}")
             # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
+            self.log.info(f"Consuming stopped for queue: {self.processor_name}")
         else:
             msg = f"The RMQConsumer is not connected/configured properly."
             self.log.exception(msg)
