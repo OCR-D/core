@@ -315,7 +315,10 @@ network-module-test: assets
 
 network-integration-test: INTEGRATION_TEST_COMPOSE = $(DOCKER_COMPOSE) --file tests/network/docker-compose.yml
 network-integration-test: INTEGRATION_TEST_IN_DOCKER = docker exec core_test
-network-integration-test:
+# do not attempt to update assets submodule during docker (compose) build,
+# but copy the assets from the build context instead:
+network-integration-test: export SKIP_ASSETS = 1
+network-integration-test: assets
 	{ $(INTEGRATION_TEST_COMPOSE) up --wait --wait-timeout 60 -d && \
 	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py" && \
 	err=0 || { err=$$?; $(INTEGRATION_TEST_COMPOSE) logs; }; \

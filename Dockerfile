@@ -66,13 +66,10 @@ FROM ocrd_core_base AS ocrd_core_test
 # Optionally skip make assets with this arg
 ARG SKIP_ASSETS
 WORKDIR /build/core
-COPY Makefile .
-COPY .gitmodules .
 RUN if test -z "$SKIP_ASSETS" || test $SKIP_ASSETS -eq 0 ; then make assets ; fi
 COPY tests ./tests
 COPY requirements_test.txt .
 RUN pip install -r requirements_test.txt
 RUN mkdir /ocrd-data && chmod 777 /ocrd-data
 
-CMD yes > /dev/null
-# CMD ["make", "test", "integration-test"]
+CMD ["make", "test", "network-integration-test"]
