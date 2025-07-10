@@ -737,6 +737,7 @@ class ProcessingServer(FastAPI):
 
         # for page_wise mode, we need to expand the list of pages
         # for the database, it's better to keep a short string
+        page_id = page_id or ''
         page_ids = get_page_ids_list(self.log, mets_path, page_id)
 
         if not page_wise:
