@@ -42,7 +42,7 @@ def __connect_rabbitmq_client(
 
 def connect_rabbitmq_consumer(logger: Logger, rmq_data: Dict) -> RMQConsumer:
     rmq_consumer = __connect_rabbitmq_client(logger=logger, client_type="consumer", rmq_data=rmq_data)
-    logger.info(f"Successfully connected RMQConsumer")
+    logger.info("Successfully connected RMQConsumer")
     return rmq_consumer
 
 

@@ -9,6 +9,7 @@ from ocrd.resolver import Resolver
 from ocrd_validators import ParameterValidator, WorkspaceValidator
 from ocrd_models import ValidationReport
 
+
 class ProcessorTask():
 
     @classmethod
@@ -85,6 +86,7 @@ class ProcessorTask():
             ret += " -p '%s'" % json.dumps(self.parameters)
         return ret
 
+
 def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     report = ValidationReport()
     prev_output_file_grps = workspace.mets.file_groups
@@ -93,14 +95,18 @@ def validate_tasks(tasks, workspace, page_id=None, overwrite=False):
     first_task.validate()
 
     # first task: check input/output file groups from METS
-    WorkspaceValidator.check_file_grp(workspace, first_task.input_file_grps, '' if overwrite else first_task.output_file_grps, page_id, report)
+    WorkspaceValidator.check_file_grp(workspace,
+                                      first_task.input_file_grps,
+                                      '' if overwrite else first_task.output_file_grps,
+                                      page_id,
+                                      report)
 
     prev_output_file_grps += first_task.output_file_grps
     for task in tasks[1:]:
         task.validate()
         # check either existing fileGrp or output-file group of previous task matches current input_file_group
         for input_file_grp in task.input_file_grps:
-            if not input_file_grp in prev_output_file_grps:
+            if input_file_grp not in prev_output_file_grps:
                 report.add_error("Input file group not contained in METS or produced by previous steps: %s" % input_file_grp)
         if not overwrite:
             WorkspaceValidator.check_file_grp(workspace, [], task.output_file_grps, page_id, report)
@@ -157,5 +163,6 @@ def run_tasks(mets, log_level, page_id, task_strs, overwrite=False, mets_server_
 
         # check output file groups are in mets
         for output_file_grp in task.output_file_grps:
-            if not output_file_grp in workspace.mets.file_groups:
-                raise Exception("Invalid state: expected output file group '%s' not in METS (despite processor success)" % output_file_grp)
+            if output_file_grp not in workspace.mets.file_groups:
+                raise Exception("Invalid state: expected output file group '%s' not in METS "
+                                "(despite processor success)" % output_file_grp)

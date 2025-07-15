@@ -23,6 +23,7 @@ from ocrd_utils import (
 )
 from ocrd_validators import ParameterValidator, OcrdToolValidator
 
+
 class OcrdToolCtx():
 
     def __init__(self, filename):
@@ -36,24 +37,30 @@ class OcrdToolCtx():
 
         class BashProcessor(Processor):
             @property
-            def metadata(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+            def metadata(inner_self):  # pylint: disable=no-self-argument,arguments-renamed
                 return self.json
+
             @property
-            def executable(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+            def executable(inner_self):  # pylint: disable=no-self-argument,arguments-renamed
                 return self.tool_name
+
             @property
-            def moduledir(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+            def moduledir(inner_self):  # pylint: disable=no-self-argument,arguments-renamed
                 return os.path.dirname(self.filename)
+
             # set docstrings to empty
             __doc__ = None
             # HACK: override the module-level docstring, too
             getmodule(OcrdToolCtx).__doc__ = None
-            def process(inner_self): # pylint: disable=no-self-argument,arguments-renamed
+
+            def process(inner_self):  # pylint: disable=no-self-argument,arguments-renamed
                 return super()
 
         self.processor = BashProcessor
 
+
 pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
+
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool
@@ -65,6 +72,7 @@ pass_ocrd_tool = click.make_pass_decorator(OcrdToolCtx)
 def ocrd_tool_cli(ctx, json_file):
     ctx.obj = OcrdToolCtx(json_file)
 
+
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool version
 # ----------------------------------------------------------------------
@@ -73,6 +81,7 @@ def ocrd_tool_cli(ctx, json_file):
 @pass_ocrd_tool
 def ocrd_tool_version(ctx):
     print(ctx.json['version'])
+
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool validate
@@ -86,6 +95,7 @@ def ocrd_tool_validate(ctx):
     if not report.is_valid:
         return 128
 
+
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool list-tools
 # ----------------------------------------------------------------------
@@ -96,6 +106,7 @@ def ocrd_tool_list(ctx):
     for tool in ctx.json['tools']:
         print(tool)
 
+
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool dump-tools
 # ----------------------------------------------------------------------
@@ -105,12 +116,14 @@ def ocrd_tool_list(ctx):
 def ocrd_tool_dump(ctx):
     print(dumps(ctx.json['tools'], indent=True))
 
+
 @ocrd_tool_cli.command('dump-module-dirs', help="Dump module directory of each tool")
 @pass_ocrd_tool
 def ocrd_tool_dump_module_dirs(ctx):
     print(dumps({tool_name: get_moduledir(tool_name)
                  for tool_name in ctx.json['tools']},
                 indent=True))
+
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool
@@ -124,6 +137,7 @@ def ocrd_tool_tool(ctx, tool_name):
         raise Exception("No such tool: %s" % tool_name)
     ctx.tool_name = tool_name
 
+
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool description
 # ----------------------------------------------------------------------
@@ -133,10 +147,12 @@ def ocrd_tool_tool(ctx, tool_name):
 def ocrd_tool_tool_description(ctx):
     print(ctx.json['tools'][ctx.tool_name]['description'])
 
+
 @ocrd_tool_tool.command('list-resources', help="List tool's file resources")
 @pass_ocrd_tool
 def ocrd_tool_tool_list_resources(ctx):
     ctx.processor(None).list_resources()
+
 
 @ocrd_tool_tool.command('resolve-resource', help="Get a tool's file resource full path name")
 @click.argument('res_name')
@@ -144,17 +160,20 @@ def ocrd_tool_tool_list_resources(ctx):
 def ocrd_tool_tool_resolve_resource(ctx, res_name):
     print(ctx.processor(None).resolve_resource(res_name))
 
+
 @ocrd_tool_tool.command('show-resource', help="Dump a tool's file resource")
 @click.argument('res_name')
 @pass_ocrd_tool
 def ocrd_tool_tool_show_resource(ctx, res_name):
     ctx.processor(None).show_resource(res_name)
 
+
 @ocrd_tool_tool.command('help', help="Generate help for processors")
 @click.argument('subcommand', required=False)
 @pass_ocrd_tool
 def ocrd_tool_tool_params_help(ctx, subcommand):
     ctx.processor(None).show_help(subcommand=subcommand)
+
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool categories
@@ -165,6 +184,7 @@ def ocrd_tool_tool_params_help(ctx, subcommand):
 def ocrd_tool_tool_categories(ctx):
     print('\n'.join(ctx.json['tools'][ctx.tool_name]['categories']))
 
+
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool steps
 # ----------------------------------------------------------------------
@@ -174,6 +194,7 @@ def ocrd_tool_tool_categories(ctx):
 def ocrd_tool_tool_steps(ctx):
     print('\n'.join(ctx.json['tools'][ctx.tool_name]['steps']))
 
+
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool dump
 # ----------------------------------------------------------------------
@@ -182,6 +203,7 @@ def ocrd_tool_tool_steps(ctx):
 @pass_ocrd_tool
 def ocrd_tool_tool_dump(ctx):
     print(dumps(ctx.json['tools'][ctx.tool_name], indent=True))
+
 
 # ----------------------------------------------------------------------
 # ocrd ocrd-tool tool parse-params

@@ -16,6 +16,7 @@ from ocrd_utils import (
 )
 from ocrd_modelfactory import page_from_file
 
+
 class DummyProcessor(Processor):
     """
     Bare-bones processor creates PAGE-XML and optionally copies file from input group to output group
@@ -57,13 +58,14 @@ class DummyProcessor(Processor):
                                     page_id=input_file.pageId,
                                     local_filename=join(self.output_file_grp, file_id + '.xml'),
                                     mimetype=MIMETYPE_PAGE,
-                                    content=to_xml(pcgts),
-            )
+                                    content=to_xml(pcgts))
         else:
             if self.parameter['copy_files']:
-                self.logger.info("Not copying %s because it is a PAGE-XML file, which gets identity-transformed", input_file.local_filename)
+                self.logger.info("Not copying %s because it is a PAGE-XML file, which gets identity-transformed",
+                                 input_file.local_filename)
             else:
-                self.logger.info("Not copying %s because it is not a PAGE-XML file and copy_files was false", input_file.local_filename)
+                self.logger.info("Not copying %s because it is not a PAGE-XML file and copy_files was false",
+                                 input_file.local_filename)
             # we can rely on base implementation verbatim
             super().process_page_file(input_file)
 
@@ -74,6 +76,7 @@ class DummyProcessor(Processor):
     @property
     def executable(self):
         return 'ocrd-dummy'
+
 
 @click.command()
 @ocrd_cli_options

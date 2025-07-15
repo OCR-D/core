@@ -15,6 +15,7 @@ class StrEnum(str, Enum):
     def __str__(self):
         return self.value
 
+
 class AgentType(StrEnum):
     PROCESSING_WORKER = "worker"
     PROCESSOR_SERVER = "server"

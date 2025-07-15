@@ -16,7 +16,7 @@ import json
 import os
 from os import getcwd
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union, get_args
+from typing import Dict, List, Optional, Tuple, Union, get_args
 import sys
 import logging
 import logging.handlers
@@ -68,7 +68,7 @@ from ocrd_modelfactory import page_from_file
 from ocrd_validators.ocrd_tool_validator import OcrdToolValidator
 
 # XXX imports must remain for backwards-compatibility
-from .helpers import run_cli, run_processor # pylint: disable=unused-import
+from .helpers import run_cli, run_processor  # pylint: disable=unused-import
 
 
 class ResourceNotFoundError(FileNotFoundError):
@@ -82,6 +82,7 @@ class ResourceNotFoundError(FileNotFoundError):
         self.message = (f"Could not find resource '{name}' for executable '{executable}'. "
                         f"Try 'ocrd resmgr download {executable} {name}' to download this resource.")
         super().__init__(self.message)
+
 
 class NonUniqueInputFile(ValueError):
     """
@@ -97,6 +98,7 @@ class NonUniqueInputFile(ValueError):
                         f"and pageId {pageId} under mimetype {mimetype or 'PAGE+image(s)'}")
         super().__init__(self.message)
 
+
 class MissingInputFile(ValueError):
     """
     An exception signifying the specified fileGrp / pageId / mimetype
@@ -111,6 +113,7 @@ class MissingInputFile(ValueError):
                         f"and pageId {pageId} under mimetype {mimetype or 'PAGE+image(s)'}")
         super().__init__(self.message)
 
+
 class DummyFuture:
     """
     Mimics some of `concurrent.futures.Future` but runs immediately.
@@ -119,8 +122,11 @@ class DummyFuture:
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
+
     def result(self):
         return self.fn(*self.args, **self.kwargs)
+
+
 class DummyExecutor:
     """
     Mimics some of `concurrent.futures.ProcessPoolExecutor` but runs
@@ -128,14 +134,18 @@ class DummyExecutor:
     """
     def __init__(self, initializer=None, initargs=(), **kwargs):
         initializer(*initargs)
+
     def shutdown(self, **kwargs):
         # allow gc to catch processor instance (unless cached)
         _page_worker_set_ctxt(None, None)
+
     def submit(self, fn, *args, **kwargs) -> DummyFuture:
         return DummyFuture(fn, *args, **kwargs)
 
+
 TFuture = Union[DummyFuture, Future]
 TExecutor = Union[DummyExecutor, ProcessPoolExecutor]
+
 
 class Processor():
     """
@@ -149,7 +159,7 @@ class Processor():
     parameters.
     """
 
-    max_instances : int = -1
+    max_instances: int = -1
     """
     maximum number of cached instances (ignored if negative), to be applied on top of
     :py:data:`~ocrd_utils.config.OCRD_MAX_PROCESSOR_CACHE` (i.e. whatever is smaller).
@@ -157,7 +167,7 @@ class Processor():
     (Override this if you know how many instances fit into memory - GPU / CPU RAM - at once.)
     """
 
-    max_workers : int = -1
+    max_workers: int = -1
     """
     maximum number of processor forks for page-parallel processing (ignored if negative),
     to be applied on top of :py:data:`~ocrd_utils.config.OCRD_MAX_PARALLEL_PAGES` (i.e.
@@ -167,7 +177,7 @@ class Processor():
     - at once, or if your class already creates threads prior to forking, e.g. during ``setup``.)
     """
 
-    max_page_seconds : int = -1
+    max_page_seconds: int = -1
     """
     maximum number of seconds may be spent processing a single page (ignored if negative),
     to be applied on top of :py:data:`~ocrd_utils.config.OCRD_PROCESSING_PAGE_TIMEOUT`
@@ -284,7 +294,7 @@ class Processor():
         return None
 
     @parameter.setter
-    def parameter(self, parameter : dict) -> None:
+    def parameter(self, parameter: dict) -> None:
         if self.parameter is not None:
             self.shutdown()
         parameterValidator = ParameterValidator(self.ocrd_tool)
@@ -299,7 +309,7 @@ class Processor():
     def __init__(
             self,
             # FIXME: remove in favor of process_workspace(workspace)
-            workspace : Optional[Workspace],
+            workspace: Optional[Workspace],
             ocrd_tool=None,
             parameter=None,
             input_file_grp=None,
@@ -365,8 +375,10 @@ class Processor():
         if parameter is not None:
             self.parameter = parameter
         # workaround for deprecated#72 (@deprecated decorator does not work for subclasses):
-        setattr(self, 'process',
-                deprecated(version='3.0', reason='process() should be replaced with process_page_pcgts() or process_page_file() or process_workspace()')(getattr(self, 'process')))
+        setattr(self, 'process', deprecated(
+            version='3.0', reason='process() should be replaced '
+            'with process_page_pcgts() or process_page_file() or process_workspace()')(
+                getattr(self, 'process')))
 
     def __del__(self):
         self._base_logger.debug("shutting down %s in %s", repr(self), mp.current_process().name)
@@ -394,7 +406,8 @@ class Processor():
         assert self.output_file_grp is not None
         input_file_grps = self.input_file_grp.split(',')
         output_file_grps = self.output_file_grp.split(',')
-        def assert_file_grp_cardinality(grps : List[str], spec : Union[int, List[int]], msg):
+
+        def assert_file_grp_cardinality(grps: List[str], spec: Union[int, List[int]], msg):
             if isinstance(spec, int):
                 if spec > 0:
                     assert len(grps) == spec, msg % (len(grps), str(spec))
@@ -418,10 +431,10 @@ class Processor():
             assert input_file_grp in self.workspace.mets.file_groups, \
                 f"input fileGrp {input_file_grp} does not exist in workspace {self.workspace}"
         for output_file_grp in output_file_grps:
-            assert output_file_grp not in self.workspace.mets.file_groups \
-                or config.OCRD_EXISTING_OUTPUT in ['OVERWRITE', 'SKIP'] \
-                or not any(self.workspace.mets.find_files(
-                    pageId=self.page_id, fileGrp=output_file_grp)), \
+            assert (output_file_grp not in self.workspace.mets.file_groups
+                    or config.OCRD_EXISTING_OUTPUT in ['OVERWRITE', 'SKIP']
+                    or not any(self.workspace.mets.find_files(
+                        pageId=self.page_id, fileGrp=output_file_grp))), \
                     f"output fileGrp {output_file_grp} already exists in workspace {self.workspace}"
         # keep this for backwards compatibility:
         return True
@@ -465,7 +478,8 @@ class Processor():
         """
         pass
 
-    @deprecated(version='3.0', reason='process() should be replaced with process_page_pcgts() or process_page_file() or process_workspace()')
+    @deprecated(version='3.0', reason='process() should be replaced '
+                'with process_page_pcgts() or process_page_file() or process_workspace()')
     def process(self) -> None:
         """
         Process all files of the :py:data:`workspace`
@@ -528,7 +542,8 @@ class Processor():
                 )
                 if max_workers > 1:
                     # forward messages from log queue (in subprocesses) to all root handlers
-                    log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers, respect_handler_level=True)
+                    log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers,
+                                                                  respect_handler_level=True)
                     log_listener.start()
                 tasks = None
                 try:
@@ -553,7 +568,8 @@ class Processor():
                     # suppress the NotImplementedError context
                     raise err from None
 
-    def process_workspace_submit_tasks(self, executor : TExecutor, max_seconds : int) -> Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]:
+    def process_workspace_submit_tasks(self, executor: TExecutor, max_seconds: int) -> Dict[
+            TFuture, Tuple[str, List[Optional[OcrdFileType]]]]:
         """
         Look up all input files of the given ``workspace``
         from the given :py:data:`input_file_grp`
@@ -571,7 +587,7 @@ class Processor():
         Otherwise, tasks are run sequentially in the
         current process.
 
-        Delegates to :py:meth:`.zip_input_files` to get 
+        Delegates to :py:meth:`.zip_input_files` to get
         the input files for each page, and then calls
         :py:meth:`.process_workspace_submit_page_task`.
 
@@ -586,7 +602,9 @@ class Processor():
         self._base_logger.debug("submitted %d processing tasks", len(tasks))
         return tasks
 
-    def process_workspace_submit_page_task(self, executor : TExecutor, max_seconds : int, input_file_tuple : List[Optional[OcrdFileType]]) -> Tuple[TFuture, str, List[Optional[OcrdFileType]]]:
+    def process_workspace_submit_page_task(self, executor: TExecutor, max_seconds: int,
+                                           input_file_tuple: List[Optional[OcrdFileType]]) -> Tuple[
+                                               TFuture, str, List[Optional[OcrdFileType]]]:
         """
         Ensure all input files for a single page are
         downloaded to the workspace, then schedule
@@ -604,7 +622,7 @@ class Processor():
         - the corresponding pageId,
         - the corresponding input files.
         """
-        input_files : List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
+        input_files: List[Optional[OcrdFileType]] = [None] * len(input_file_tuple)
         page_id = next(input_file.pageId
                        for input_file in input_file_tuple
                        if input_file)
@@ -625,7 +643,8 @@ class Processor():
         #executor.submit(self.process_page_file, *input_files)
         return executor.submit(_page_worker, max_seconds, *input_files), page_id, input_files
 
-    def process_workspace_handle_tasks(self, tasks : Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]) -> Tuple[int, int, Dict[str, int], int]:
+    def process_workspace_handle_tasks(self, tasks: Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]) -> Tuple[
+            int, int, Dict[str, int], int]:
         """
         Look up scheduled per-page futures one by one,
         handle errors (exceptions) and gather results.
@@ -650,7 +669,7 @@ class Processor():
         # aggregate info for logging:
         nr_succeeded = 0
         nr_failed = 0
-        nr_errors = defaultdict(int) # count causes
+        nr_errors = defaultdict(int)  # count causes
         if config.OCRD_MISSING_OUTPUT == 'SKIP':
             reason = "skipped"
         elif config.OCRD_MISSING_OUTPUT == 'COPY':
@@ -666,7 +685,8 @@ class Processor():
                 if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / len(tasks) > config.OCRD_MAX_MISSING_OUTPUTS:
                     # already irredeemably many failures, stop short
                     nr_errors = dict(nr_errors)
-                    raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_failed+nr_succeeded}, {str(nr_errors)})")
+                    raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_failed+nr_succeeded}, "
+                                    f"{str(nr_errors)})")
             elif result:
                 nr_succeeded += 1
             # else skipped - already exists
@@ -676,13 +696,15 @@ class Processor():
             if config.OCRD_MAX_MISSING_OUTPUTS > 0 and nr_failed / nr_all > config.OCRD_MAX_MISSING_OUTPUTS:
                 raise Exception(f"too many failures with {reason} output ({nr_failed} of {nr_all}, {str(nr_errors)})")
             self._base_logger.warning("%s %d of %d pages due to %s", reason, nr_failed, nr_all, str(nr_errors))
-        self._base_logger.debug("succeeded %d, missed %d of %d pages due to %s", nr_succeeded, nr_failed, nr_all, str(nr_errors))
+        self._base_logger.debug("succeeded %d, missed %d of %d pages due to %s",
+                                nr_succeeded, nr_failed, nr_all, str(nr_errors))
         return nr_succeeded, nr_failed, nr_errors, len(tasks)
 
-    def process_workspace_handle_page_task(self, page_id : str, input_files : List[Optional[OcrdFileType]], task : TFuture) -> Union[bool, Exception]:
+    def process_workspace_handle_page_task(self, page_id: str, input_files: List[Optional[OcrdFileType]],
+                                           task: TFuture) -> Union[bool, Exception]:
         """
         \b
-        Await a single page result and handle errors (exceptions), 
+        Await a single page result and handle errors (exceptions),
         enforcing policies configured by the following
         environment variables:
         - `OCRD_EXISTING_OUTPUT` (abort/skip/overwrite)
@@ -738,14 +760,14 @@ class Processor():
                 raise ValueError(f"unknown configuration value {config.OCRD_MISSING_OUTPUT} - {desc}")
             return err
 
-    def _copy_page_file(self, input_file : OcrdFileType) -> None:
+    def _copy_page_file(self, input_file: OcrdFileType) -> None:
         """
         Copy the given ``input_file`` of the :py:data:`workspace`,
         representing one physical page (passed as one opened
         :py:class:`~ocrd_models.OcrdFile` per input fileGrp)
         and add it as if it was a processing result.
         """
-        input_pcgts : OcrdPage
+        input_pcgts: OcrdPage
         assert isinstance(input_file, get_args(OcrdFileType))
         self._base_logger.debug(f"parsing file {input_file.ID} for page {input_file.pageId}")
         try:
@@ -766,7 +788,7 @@ class Processor():
             content=to_xml(input_pcgts),
         )
 
-    def process_page_file(self, *input_files : Optional[OcrdFileType]) -> None:
+    def process_page_file(self, *input_files: Optional[OcrdFileType]) -> None:
         """
         Process the given ``input_files`` of the :py:data:`workspace`,
         representing one physical page (passed as one opened
@@ -777,7 +799,7 @@ class Processor():
         (This uses :py:meth:`.process_page_pcgts`, but should be overridden by subclasses
         to handle cases like multiple output fileGrps, non-PAGE input etc.)
         """
-        input_pcgts : List[Optional[OcrdPage]] = [None] * len(input_files)
+        input_pcgts: List[Optional[OcrdPage]] = [None] * len(input_files)
         input_pos = next(i for i, input_file in enumerate(input_files) if input_file is not None)
         page_id = input_files[input_pos].pageId
         self._base_logger.info("processing page %s", page_id)
@@ -827,7 +849,7 @@ class Processor():
             elif isinstance(image_result.alternative_image, AlternativeImageType):
                 image_result.alternative_image.set_filename(image_file_path)
             elif image_result.alternative_image is None:
-                pass # do not reference in PAGE result
+                pass  # do not reference in PAGE result
             else:
                 raise ValueError(f"process_page_pcgts returned an OcrdPageResultImage of unknown type "
                                  f"{type(image_result.alternative_image)}")
@@ -849,7 +871,7 @@ class Processor():
             content=to_xml(result.pcgts),
         )
 
-    def process_page_pcgts(self, *input_pcgts : Optional[OcrdPage], page_id : Optional[str] = None) -> OcrdPageResult:
+    def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """
         Process the given ``input_pcgts`` of the :py:data:`.workspace`,
         representing one physical page (passed as one parsed
@@ -876,24 +898,25 @@ class Processor():
         """
         metadata_obj = pcgts.get_Metadata()
         assert metadata_obj is not None
-        metadata_obj.add_MetadataItem(
-                MetadataItemType(type_="processingStep",
-                    name=self.ocrd_tool['steps'][0],
-                    value=self.ocrd_tool['executable'],
-                    Labels=[LabelsType(
-                        externalModel="ocrd-tool",
-                        externalId="parameters",
-                        Label=[LabelType(type_=name,
-                                         value=self.parameter[name])
-                               for name in self.parameter.keys()]),
-                            LabelsType(
+        metadata_item = MetadataItemType(
+            type_="processingStep",
+            name=self.ocrd_tool['steps'][0],
+            value=self.ocrd_tool['executable'],
+            Labels=[LabelsType(
+                externalModel="ocrd-tool",
+                externalId="parameters",
+                Label=[LabelType(type_=name,
+                                 value=self.parameter[name])
+                       for name in self.parameter.keys()]),
+                    LabelsType(
                         externalModel="ocrd-tool",
                         externalId="version",
                         Label=[LabelType(type_=self.ocrd_tool['executable'],
                                          value=self.version),
                                LabelType(type_='ocrd/core',
                                          value=OCRD_VERSION)])
-                    ]))
+            ])
+        metadata_obj.add_MetadataItem(metadata_item)
 
     def resolve_resource(self, val):
         """
@@ -948,8 +971,8 @@ class Processor():
         mimetypes = get_processor_resource_types(None, self.ocrd_tool)
         for res in list_all_resources(self.ocrd_tool['executable'], moduled=self.moduledir):
             res = Path(res)
-            if not '*/*' in mimetypes:
-                if res.is_dir() and not 'text/directory' in mimetypes:
+            if '*/*' not in mimetypes:
+                if res.is_dir() and 'text/directory' not in mimetypes:
                     continue
                 # if we do not know all MIME types, then keep the file, otherwise require suffix match
                 if res.is_file() and not any(res.suffix == MIME_TO_EXT.get(mime, res.suffix)
@@ -1070,16 +1093,18 @@ class Processor():
                     continue
                 ift = pages.setdefault(file_.pageId, [None]*len(ifgs))
                 if ift[i]:
-                    self._base_logger.debug(f"another file {file_.ID} for page {file_.pageId} in input file group {ifg}")
+                    self._base_logger.debug(
+                        f"another file {file_.ID} for page {file_.pageId} in input file group {ifg}")
                     # fileGrp has multiple files for this page ID
                     if mimetype:
                         # filter was active, this must not happen
-                        self._base_logger.warning(f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
-                                                  f"conflicts with file {ift[i].ID} of same MIME type {mimetype} - on_error={on_error}")
+                        self._base_logger.warning(
+                            f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
+                            f"conflicts with file {ift[i].ID} of same MIME type {mimetype} - on_error={on_error}")
                         if on_error == 'skip':
                             ift[i] = None
                         elif on_error == 'first':
-                            pass # keep first match
+                            pass  # keep first match
                         elif on_error == 'last':
                             ift[i] = file_
                         elif on_error == 'abort':
@@ -1088,18 +1113,19 @@ class Processor():
                             raise Exception("Unknown 'on_error' strategy '%s'" % on_error)
                     elif (ift[i].mimetype == MIMETYPE_PAGE and
                           file_.mimetype != MIMETYPE_PAGE):
-                        pass # keep PAGE match
+                        pass  # keep PAGE match
                     elif (ift[i].mimetype == MIMETYPE_PAGE and
                           file_.mimetype == MIMETYPE_PAGE):
                         raise NonUniqueInputFile(ifg, file_.pageId, None)
                     else:
                         # filter was inactive but no PAGE is in control, this must not happen
-                        self._base_logger.warning(f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
-                                                  f"conflicts with file {ift[i].ID} but no PAGE available - on_error={on_error}")
+                        self._base_logger.warning(
+                            f"added file {file_.ID} for page {file_.pageId} in input file group {ifg} "
+                            f"conflicts with file {ift[i].ID} but no PAGE available - on_error={on_error}")
                         if on_error == 'skip':
                             ift[i] = None
                         elif on_error == 'first':
-                            pass # keep first match
+                            pass  # keep first match
                         elif on_error == 'last':
                             ift[i] = file_
                         elif on_error == 'abort':
@@ -1133,6 +1159,7 @@ class Processor():
                 ifts.append(tuple(ifiles))
         return ifts
 
+
 _page_worker_processor = None
 """
 This global binding for the processor is required to avoid
@@ -1143,6 +1170,8 @@ in Processor.process_workspace. Forking allows inheriting global
 objects, and with the METS Server we do not mutate the local
 processor instance anyway.
 """
+
+
 def _page_worker_set_ctxt(processor, log_queue):
     """
     Overwrites `ocrd.processor.base._page_worker_processor` instance
@@ -1153,6 +1182,7 @@ def _page_worker_set_ctxt(processor, log_queue):
     if log_queue:
         # replace all log handlers with just one queue handler
         logging.root.handlers = [logging.handlers.QueueHandler(log_queue)]
+
 
 def _page_worker(timeout, *input_files):
     """
@@ -1170,6 +1200,7 @@ def _page_worker(timeout, *input_files):
     except mp.TimeoutError:
         _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
         raise
+
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
     """Generate a string describing the full CLI of this processor including params.

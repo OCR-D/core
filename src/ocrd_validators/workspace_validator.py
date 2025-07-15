@@ -15,6 +15,7 @@ from .page_validator import PageValidator
 from .xsd_page_validator import XsdPageValidator
 from .xsd_mets_validator import XsdMetsValidator
 
+
 #
 # -------------------------------------------------
 #
@@ -57,7 +58,8 @@ class WorkspaceValidator():
                     if page_id:
                         for one_page_id in page_id:
                             if next(workspace.mets.find_files(fileGrp=grp, pageId=one_page_id), None):
-                                report.add_error("Output fileGrp[@USE='%s'] already contains output for page %s" % (grp, one_page_id))
+                                report.add_error("Output fileGrp[@USE='%s'] already contains output for page %s" % (
+                                    grp, one_page_id))
                     else:
                         report.add_error("Output fileGrp[@USE='%s'] already in METS!" % grp)
         return report
@@ -121,10 +123,10 @@ class WorkspaceValidator():
             resolver (:class:`ocrd.Resolver`): Resolver
             mets_url (string): URL of the METS file
             src_dir (string, None): Directory containing mets file
-            skip (list): Validation checks to omit. One or more of 
+            skip (list): Validation checks to omit. One or more of
                 'mets_unique_identifier',
                 'mets_files', 'pixel_density', 'dimension', 'url',
-                'multipage', 'page', 'page_xsd', 'mets_xsd', 
+                'multipage', 'page', 'page_xsd', 'mets_xsd',
                 'mets_fileid_page_pcgtsid'
             download (boolean): Whether to download remote file references
                 temporarily during validation (like a processor would)
@@ -133,7 +135,7 @@ class WorkspaceValidator():
             report (:class:`ValidationReport`) Report on the validity
         """
         validator = WorkspaceValidator(*args, **kwargs)
-        return validator._validate() # pylint: disable=protected-access
+        return validator._validate()  # pylint: disable=protected-access
 
     def _validate(self):
         """
@@ -141,7 +143,7 @@ class WorkspaceValidator():
         """
         try:
             self._resolve_workspace()
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             self.log.warning("Failed to instantiate workspace: %s", e)
             self.report.add_error(f"Failed to instantiate workspace: {e}")
             return self.report
@@ -159,7 +161,7 @@ class WorkspaceValidator():
                     self._validate_mets_xsd()
                 if self.page_checks:
                     self._validate_page()
-            except Exception: # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except
                 self.report.add_error(f"Validation aborted with exception: {format_exc()}")
         return self.report
 
@@ -216,9 +218,11 @@ class WorkspaceValidator():
             page = page_from_file(f).get_Page()
             _, _, exif = self.workspace.image_from_page(page, f.pageId)
             if page.imageHeight != exif.height:
-                self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height ({page.imageHeight} != {exif.height})")
+                self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height "
+                                      f"({page.imageHeight} != {exif.height})")
             if page.imageWidth != exif.width:
-                self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width ({page.imageWidth} != {exif.width})")
+                self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width "
+                                      f"({page.imageWidth} != {exif.width})")
 
     def _validate_multipage(self):
         """
@@ -237,7 +241,8 @@ class WorkspaceValidator():
                 if exif.n_frames > 1:
                     self.report.add_error(f"Image '{f.ID}': More than 1 frame: {exif.n_frames}")
             except FileNotFoundError:
-                self.report.add_error(f"Image '{f.ID}': Could not retrieve (local_filename='{f.local_filename}', url='{f.url}')")
+                self.report.add_error(f"Image '{f.ID}': Could not retrieve "
+                                      f"(local_filename='{f.local_filename}', url='{f.url}')")
                 return
 
     def _validate_pixel_density(self):
@@ -293,10 +298,11 @@ class WorkspaceValidator():
         except StopIteration:
             self.report.add_error("No files")
         for f in self.mets.find_files(**self.find_kwargs):
-            if f._el.get('GROUPID'): # pylint: disable=protected-access
+            if f._el.get('GROUPID'):  # pylint: disable=protected-access
                 self.report.add_notice(f"File '{f.ID}' has GROUPID attribute - document might need an update")
             if not (f.url or f.local_filename):
-                self.report.add_error(f"File '{f.ID}' has neither mets:Flocat[@LOCTYPE='URL']/@xlink:href nor mets:FLocat[@LOCTYPE='OTHER'][@OTHERLOCTYPE='FILE']/xlink:href")
+                self.report.add_error(f"File '{f.ID}' has neither mets:Flocat[@LOCTYPE='URL']/@xlink:href "
+                                      "nor mets:FLocat[@LOCTYPE='OTHER'][@OTHERLOCTYPE='FILE']/xlink:href")
                 continue
             if f.url and 'url' not in self.skip:
                 if re.match(r'^file:/[^/]', f.url):
@@ -322,19 +328,22 @@ class WorkspaceValidator():
                 for err in XsdPageValidator.validate(Path(f.local_filename)).errors:
                     self.report.add_error("%s: %s" % (f.ID, err))
             if 'page' in self.page_checks:
-                page_report = PageValidator.validate(ocrd_file=f,
-                                                     page_textequiv_consistency=self.page_strictness,
-                                                     check_coords=self.page_coordinate_consistency in ['poly', 'both'],
-                                                     check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
+                page_report = PageValidator.validate(
+                    ocrd_file=f,
+                    page_textequiv_consistency=self.page_strictness,
+                    check_coords=self.page_coordinate_consistency in ['poly', 'both'],
+                    check_baseline=self.page_coordinate_consistency in ['baseline', 'both'])
                 self.report.merge_report(page_report)
             pcgts = page_from_file(f)
             page = pcgts.get_Page()
             if 'dimension' in self.page_checks:
                 img = self.workspace._resolve_image_as_pil(page.imageFilename)
                 if page.imageHeight != img.height:
-                    self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height ({page.imageHeight} != {img.height})")
+                    self.report.add_error(f"PAGE '{f.ID}': @imageHeight != image's actual height "
+                                          f"({page.imageHeight} != {img.height})")
                 if page.imageWidth != img.width:
-                    self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width ({page.imageWidth} != {img.width})")
+                    self.report.add_error(f"PAGE '{f.ID}': @imageWidth != image's actual width "
+                                          f"({page.imageWidth} != {img.width})")
             if 'imagefilename' in self.page_checks:
                 imageFilename = page.imageFilename
                 if is_local_filename(imageFilename):
@@ -344,7 +353,8 @@ class WorkspaceValidator():
                 if not self.mets.find_files(**kwargs):
                     self.report.add_error(f"PAGE '{f.ID}': imageFilename '{imageFilename}' not found in METS")
                 if is_local_filename(imageFilename) and not Path(imageFilename).exists():
-                    self.report.add_warning(f"PAGE '{f.ID}': imageFilename '{imageFilename}' points to non-existent local file")
+                    self.report.add_warning(f"PAGE '{f.ID}': imageFilename '{imageFilename}' "
+                                            "points to non-existent local file")
             if 'alternativeimage_filename' in self.page_checks:
                 for altimg in page.get_AllAlternativeImages():
                     if is_local_filename(altimg.filename):
@@ -368,8 +378,8 @@ class WorkspaceValidator():
                                 self.report.add_error(f"PAGE '{f.ID}': {altimg.parent_object_.id} AlternativeImage "
                                                       f"'{altimg.filename}' feature '{feature}' not standardized for PAGE")
             if 'mets_fileid_page_pcgtsid' in self.page_checks and pcgts.pcGtsId != f.ID:
-                self.report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (pcgts.pcGtsId or '', f.ID or ''))
-
+                self.report.add_warning('pc:PcGts/@pcGtsId differs from mets:file/@ID: "%s" !== "%s"' % (
+                    pcgts.pcGtsId or '', f.ID or ''))
 
     def _validate_page_xsd(self):
         """

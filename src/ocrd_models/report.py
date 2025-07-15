@@ -7,7 +7,8 @@ __all__ = ['ValidationReport']
 # -------------------------------------------------
 #
 
-class ValidationReport(object):
+
+class ValidationReport():
     """
     Container of notices, warnings and errors about a workspace.
     """

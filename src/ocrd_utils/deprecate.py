@@ -1,8 +1,10 @@
 import functools
 import warnings
 
+
 def deprecation_warning(msg, stacklevel=2):
     warnings.warn(msg, DeprecationWarning, stacklevel)
+
 
 def deprecated_alias(**aliases):
     """
@@ -15,6 +17,7 @@ def deprecated_alias(**aliases):
             return f(*args, **kwargs)
         return wrapper
     return deco
+
 
 def rename_kwargs(func_name, kwargs, aliases):
     """

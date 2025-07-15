@@ -28,6 +28,7 @@ services:
     image: "rabbitmq:3.12-management"
     hostname: ${RABBITMQ_HOST}
     container_name: ocrd_network_rabbit_mq
+    user: rabbitmq
     networks:
       - ${DOCKER_OCRD_NETWORK_NAME}
     ports:
@@ -51,6 +52,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASE_IMAGE: 'ubuntu:22.04'
+        SKIP_ASSETS: ${SKIP_ASSETS}
       target: ocrd_core_test
     pull_policy: build
     hostname: ${OCRD_PS_HOST}
@@ -90,6 +92,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASE_IMAGE: 'ubuntu:22.04'
+        SKIP_ASSETS: ${SKIP_ASSETS}
       target: ocrd_core_test
     pull_policy: build
     depends_on:
@@ -113,6 +116,7 @@ services:
       dockerfile: Dockerfile
       args:
         BASE_IMAGE: 'ubuntu:22.04'
+        SKIP_ASSETS: ${SKIP_ASSETS}
       target: ocrd_core_test
     pull_policy: build
     container_name: core_test
@@ -133,3 +137,4 @@ services:
       - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
       - "./dummy-workflow.txt:/ocrd-data/assets/dummy-workflow.txt"
       - "./ocrd_logging.conf:/etc/ocrd_logging.conf"
+    command: sleep infinity

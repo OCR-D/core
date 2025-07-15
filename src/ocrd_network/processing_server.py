@@ -91,7 +91,7 @@ class ProcessingServer(FastAPI):
         log_file = get_processing_server_logging_file_path(pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
-        self.log.info(f"Loading ocrd all tool json")
+        self.log.info("Loading ocrd-all-tool.json")
         self.ocrd_all_tool_json = load_ocrd_all_tool_json()
         self.hostname = host
         self.port = port
@@ -208,7 +208,8 @@ class ProcessingServer(FastAPI):
             methods=["DELETE"],
             tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary="!! Workaround Do Not Use Unless You Have A Reason !! Kill all METS servers on this machine that have been created more than 60 minutes ago."
+            summary="!! Workaround Do Not Use Unless You Have A Reason "
+            "!! Kill all METS servers on this machine that have been created more than 60 minutes ago."
         )
         self.include_router(others_router)
 
@@ -735,24 +736,24 @@ class ProcessingServer(FastAPI):
         # for the ocr-d processors referenced inside tasks
         self.validate_tasks_agents_existence(processing_tasks, agent_type)
 
+        # for page_wise mode, we need to expand the list of pages
+        # for the database, it's better to keep a short string
+        page_id = page_id or ''
         page_ids = get_page_ids_list(self.log, mets_path, page_id)
-
-        # TODO: Reconsider this, the compact page range may not always work if the page_ids are hashes!
-        compact_page_range = f"{page_ids[0]}..{page_ids[-1]}"
 
         if not page_wise:
             responses = await self.task_sequence_to_processing_jobs(
                 tasks=processing_tasks,
                 mets_path=mets_path,
-                page_id=compact_page_range,
+                page_id=page_id,
                 agent_type=agent_type
             )
             processing_job_ids = [response.job_id for response in responses]
             db_workflow_job = DBWorkflowJob(
                 job_id=generate_id(),
-                page_id=compact_page_range,
+                page_id=page_id,
                 page_wise=page_wise,
-                processing_job_ids={compact_page_range: processing_job_ids},
+                processing_job_ids={page_id: processing_job_ids},
                 path_to_mets=mets_path,
                 workflow_callback_url=workflow_callback_url
             )
@@ -771,7 +772,7 @@ class ProcessingServer(FastAPI):
             all_pages_job_ids[current_page] = processing_job_ids
         db_workflow_job = DBWorkflowJob(
             job_id=generate_id(),
-            page_id=compact_page_range,
+            page_id=page_id,
             page_wise=page_wise,
             processing_job_ids=all_pages_job_ids,
             path_to_mets=mets_path,
@@ -825,7 +826,7 @@ class ProcessingServer(FastAPI):
         response = self._produce_workflow_status_response(processing_jobs=jobs)
         return response
 
-    async def kill_mets_server_zombies(self, minutes_ago : Optional[int] = None, dry_run : Optional[bool] = None) -> List[int]:
+    async def kill_mets_server_zombies(self, minutes_ago: Optional[int] = None, dry_run: Optional[bool] = None) -> List[int]:
         pids_killed = kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)
         return pids_killed
 

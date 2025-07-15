@@ -9,7 +9,7 @@ is a single OCR-D Processor instance.
 """
 
 from datetime import datetime
-from os import getpid, getppid
+from os import getpid
 from pika import BasicProperties
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import Basic
@@ -36,7 +36,7 @@ from .utils import calculate_execution_time, post_to_callback_url
 class ProcessingWorker:
     def __init__(self, rabbitmq_addr, mongodb_addr, processor_name, ocrd_tool: dict, processor_class=None) -> None:
         initLogging()
-        self.log = getLogger(f'ocrd_network.processing_worker')
+        self.log = getLogger('ocrd_network.processing_worker')
         log_file = get_processing_worker_logging_file_path(processor_name=processor_name, pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
@@ -120,7 +120,7 @@ class ProcessingWorker:
             channel.basic_nack(delivery_tag=delivery_tag, multiple=False, requeue=False)
             raise Exception(message)
 
-        self.log.info(f"Successfully processed RabbitMQ message")
+        self.log.info("Successfully processed RabbitMQ message")
         self.log.debug(ack_message)
         channel.basic_ack(delivery_tag=delivery_tag, multiple=False)
 
@@ -134,8 +134,9 @@ class ProcessingWorker:
             self.log.info(f"Starting consuming from queue: {self.processor_name}")
             # Starting consuming is a blocking action
             self.rmq_consumer.start_consuming()
+            self.log.info(f"Consuming stopped for queue: {self.processor_name}")
         else:
-            msg = f"The RMQConsumer is not connected/configured properly."
+            msg = "The RMQConsumer is not connected/configured properly."
             self.log.exception(msg)
             raise Exception(msg)
 
@@ -165,7 +166,7 @@ class ProcessingWorker:
         parameters = processing_message.parameters if processing_message.parameters else {}
 
         if not path_to_mets and not workspace_id:
-            msg = f"Both 'path_to_mets' and 'workspace_id' are missing in the OcrdProcessingMessage."
+            msg = "Both 'path_to_mets' and 'workspace_id' are missing in the OcrdProcessingMessage."
             self.log.exception(msg)
             raise ValueError(msg)
 

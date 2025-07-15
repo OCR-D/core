@@ -33,7 +33,7 @@ class CacheLockedPages:
         if not self.locked_pages.get(workspace_key, None):
             self.log.info(f"No entry found in the locked pages cache for workspace key: {workspace_key}")
             return False
-        debug_message = f"Caching the received request due to locked output file grp pages."
+        debug_message = "Caching the received request due to locked output file grp pages."
         for file_group in output_file_grps:
             if file_group in self.locked_pages[workspace_key]:
                 if self.placeholder_all_pages in self.locked_pages[workspace_key][file_group]:

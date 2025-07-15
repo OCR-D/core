@@ -3,7 +3,7 @@ from src.ocrd_network.constants import AgentType
 from src.ocrd_network.models import PYJobInput
 
 
-@fixture(scope="package", name="processing_request_1")
+@fixture(scope="session", name="processing_request_1")
 def fixture_processing_request_1() -> PYJobInput:
     workspace_key = "/path/to/mets.xml"
     processing_request1 = PYJobInput(

@@ -1,7 +1,6 @@
 # pylint: disable=missing-module-docstring,invalid-name
 from typing import Optional
 
-from lxml import etree
 import click
 
 from ocrd import Processor, OcrdPageResult, OcrdPageResultImage
@@ -28,6 +27,7 @@ _SEGTYPES = [
     "Word",
     "Glyph"
 ]
+
 
 class FilterProcessor(Processor):
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
@@ -57,7 +57,7 @@ class FilterProcessor(Processor):
         # but allow only hierarchy segments
         segments = [segment for segment in map(pcgts.revmap.get, nodes)
                     if segment.__class__.__name__.replace('Type', '') in _SEGTYPES]
-        if not(len(segments)):
+        if not len(segments):
             self.logger.info("no matches")
             return result
         rodict = pcgts.get_Page().get_ReadingOrderGroups()
@@ -101,6 +101,7 @@ class FilterProcessor(Processor):
     @property
     def executable(self):
         return 'ocrd-filter'
+
 
 @click.command()
 @ocrd_cli_options

@@ -1,7 +1,9 @@
 import click
 from ocrd_utils.logging import setOverrideLogLevel
 
+
 __all__ = ['ocrd_loglevel']
+
 
 def _setOverrideLogLevel(ctx, param, value):    # pylint: disable=unused-argument
     if value is None:   # Explicitly test for None because logging.DEBUG == 0
@@ -9,12 +11,14 @@ def _setOverrideLogLevel(ctx, param, value):    # pylint: disable=unused-argumen
     setOverrideLogLevel(value)
     return value
 
+
 loglevel_option = click.option('-l', '--log-level', help="Log level",
                                type=click.Choice([
                                    'OFF', 'ERROR', 'WARN',
                                    'INFO', 'DEBUG', 'TRACE'
                                ]),
                                default=None, callback=_setOverrideLogLevel)
+
 
 def ocrd_loglevel(f):
     """

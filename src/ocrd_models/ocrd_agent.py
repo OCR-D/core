@@ -5,6 +5,7 @@ API to ``mets:agent``
 from .constants import NAMESPACES as NS, TAG_METS_AGENT, TAG_METS_NAME, TAG_METS_NOTE
 from .ocrd_xml_base import ET
 
+
 class OcrdAgent():
     """
     Represents a <mets:agent>
@@ -195,4 +196,3 @@ class ClientSideOcrdAgent():
             for k in ['type', 'othertype', 'role', 'otherrole', 'name']
         ])
         return '<ClientSideOcrdAgent [' + props + ']/>'
-

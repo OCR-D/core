@@ -30,7 +30,7 @@ def ocrd_cli_wrap_processor(
     working_dir=None,
     dump_json=False,
     dump_module_dir=False,
-    help=False, # pylint: disable=redefined-builtin
+    help=False,  # pylint: disable=redefined-builtin
     profile=False,
     profile_file=None,
     version=False,
@@ -110,10 +110,10 @@ def ocrd_cli_wrap_processor(
     if not kwargs.get('input_file_grp', None):
         raise ValueError('-I/--input-file-grp is required')
     if 'output_file_grp' not in kwargs:
-        raise ValueError('-O/--output-file-grp is required') # actually, it may be None
+        raise ValueError('-O/--output-file-grp is required')  # actually, it may be None
     resolver = Resolver()
     working_dir, mets, _, mets_server_url = \
-            resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_url)
+        resolver.resolve_mets_arguments(working_dir, mets, None, mets_server_url)
     workspace = resolver.workspace_from_url(mets, working_dir, mets_server_url=mets_server_url)
     page_id = kwargs.get('page_id')
     if debug:
@@ -122,7 +122,10 @@ def ocrd_cli_wrap_processor(
         config.OCRD_EXISTING_OUTPUT = 'ABORT'
     if overwrite:
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
-    report = WorkspaceValidator.check_file_grp(workspace, kwargs['input_file_grp'], '' if overwrite else kwargs['output_file_grp'], page_id)
+    report = WorkspaceValidator.check_file_grp(workspace,
+                                               kwargs['input_file_grp'],
+                                               '' if overwrite else kwargs['output_file_grp'],
+                                               page_id)
     if not report.is_valid:
         raise Exception("Invalid input/output file grps:\n\t%s" % '\n\t'.join(report.errors))
     # Set up profiling behavior from environment variables/flags
@@ -138,6 +141,7 @@ def ocrd_cli_wrap_processor(
         print("Profiling...")
         pr = cProfile.Profile()
         pr.enable()
+
         def goexit():
             pr.disable()
             print("Profiling completed")
@@ -146,6 +150,7 @@ def ocrd_cli_wrap_processor(
             s = io.StringIO()
             pstats.Stats(pr, stream=s).sort_stats("cumulative").print_stats()
             print(s.getvalue())
+
         atexit.register(goexit)
     if log_filename:
         log_ctx = redirect_stderr_and_stdout_to_file(log_filename)
@@ -162,7 +167,8 @@ def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, d
     SUBCOMMANDS = [AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER]
 
     if not subcommand:
-        raise ValueError(f"Subcommand options --address --queue and --database are only valid for subcommands: {SUBCOMMANDS}")
+        raise ValueError("Subcommand options --address --queue and --database "
+                         f"are only valid for subcommands: {SUBCOMMANDS}")
     if subcommand not in SUBCOMMANDS:
         raise ValueError(f"SUBCOMMAND can only be one of {SUBCOMMANDS}")
 

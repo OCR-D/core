@@ -8,11 +8,12 @@ from shutil import rmtree
 
 from ocrd_utils import getLogger, unzip_file_to_dir
 
-from bagit import Bag, BagValidationError # pylint: disable=no-name-in-module
-from bagit_profile import Profile, ProfileValidationError # pylint: disable=no-name-in-module
+from bagit import Bag, BagValidationError  # pylint: disable=no-name-in-module
+from bagit_profile import Profile, ProfileValidationError  # pylint: disable=no-name-in-module
 
 from .constants import OCRD_BAGIT_PROFILE, OCRD_BAGIT_PROFILE_URL, TMP_BAGIT_PREFIX
 from ocrd_models import ValidationReport
+
 
 #
 # -------------------------------------------------
@@ -58,7 +59,8 @@ class OcrdZipValidator():
             #  for d in e.details:
             #      log = getLogger('ocrd.ocrd_zip_validator')
             #      if isinstance(d, ChecksumMismatch):
-            #          log.error("Validation Error: expected %s to have %s checksum of %s but found %s", d.path, d.algorithm, d.expected, d.found)
+            #          log.error("Validation Error: expected %s to have %s checksum of %s but found %s",
+            #                    d.path, d.algorithm, d.expected, d.found)
             #      else:
             #          log.error("Validation Error: %s", d)
         if failed:
@@ -88,7 +90,6 @@ class OcrdZipValidator():
             #      self.report.add_error(err.value)
             bagdir = mkdtemp(prefix=TMP_BAGIT_PREFIX)
             unzip_file_to_dir(self.path_to_zip, bagdir)
-
 
         try:
             bag = Bag(bagdir)

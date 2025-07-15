@@ -3,12 +3,12 @@
 """
 import os
 import re
-from os import _exit, chmod
+from os import chmod
 import signal
 from typing import Dict, Optional, Union, List, Tuple
 from time import sleep
 from pathlib import Path
-from subprocess import Popen, run as subprocess_run
+from subprocess import Popen
 from urllib.parse import urlparse
 import socket
 import atexit
@@ -424,7 +424,7 @@ class OcrdMetsServer:
         # Wait for the mets server to start
         sleep(2)
         if sub_process.poll():
-            raise RuntimeError(f"Mets server starting failed. See {log_file} for errors")
+            raise RuntimeError(f"Starting METS Server failed. See {log_file} for errors")
         return sub_process.pid
 
     @staticmethod
@@ -433,12 +433,12 @@ class OcrdMetsServer:
         sleep(3)
         try:
             os.kill(mets_server_pid, signal.SIGKILL)
-        except ProcessLookupError as e:
+        except ProcessLookupError:
             pass
 
     def shutdown(self):
         pid = os.getpid()
-        self.log.info(f"Shutdown method of mets server[{pid}] invoked, sending SIGTERM signal.")
+        self.log.info(f"Shutdown method of METS Server[{pid}] invoked, sending SIGTERM signal.")
         os.kill(pid, signal.SIGTERM)
         if self.is_uds:
             if Path(self.url).exists():
@@ -446,7 +446,7 @@ class OcrdMetsServer:
                 Path(self.url).unlink()
 
     def startup(self):
-        self.log.info(f"Configuring the Mets Server")
+        self.log.info("Configuring the METS Server")
 
         workspace = self.workspace
 
@@ -515,10 +515,6 @@ class OcrdMetsServer:
             response = {'physical_pages': workspace.mets.physical_pages}
             self.log.debug(f"GET /physical_pages -> {response}")
             return response
-
-        @app.get(path='/physical_pages', response_model=OcrdPageListModel)
-        async def physical_pages():
-            return {'physical_pages': workspace.mets.physical_pages}
 
         @app.get(path='/file_groups', response_model=OcrdFileGroupListModel)
         async def file_groups():

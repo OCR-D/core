@@ -8,6 +8,7 @@ from subprocess import run, PIPE
 from shutil import which
 from ocrd_utils import getLogger
 
+
 class OcrdExif():
     """Represents technical image metadata.
 
@@ -42,18 +43,21 @@ class OcrdExif():
         if which('identify'):
             self.run_identify(img)
         else:
-            getLogger('ocrd.exif').warning("ImageMagick 'identify' not available, Consider installing ImageMagick for more robust pixel density estimation")
+            getLogger('ocrd.exif').warning("ImageMagick 'identify' not available, "
+                                           "Consider installing ImageMagick for more robust pixel density estimation")
             self.run_pil(img)
 
     def run_identify(self, img):
         for prop in ['compression', 'photometric_interpretation']:
             setattr(self, prop, img.info[prop] if prop in img.info else None)
         if img.filename:
-            ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U ', img.filename], check=False, stderr=PIPE, stdout=PIPE)
+            ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U ', img.filename],
+                      check=False, stderr=PIPE, stdout=PIPE)
         else:
             with BytesIO() as bio:
                 img.save(bio, format=img.format)
-                ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U ', '/dev/stdin'], check=False, stderr=PIPE, stdout=PIPE, input=bio.getvalue())
+                ret = run(['identify', '-format', r'%[resolution.x] %[resolution.y] %U ', '/dev/stdin'],
+                          check=False, stderr=PIPE, stdout=PIPE, input=bio.getvalue())
         if ret.returncode:
             stderr = ret.stderr.decode('utf-8')
             if 'no decode delegate for this image format' in stderr:

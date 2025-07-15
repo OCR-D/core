@@ -9,11 +9,10 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from pathlib import Path
 import psutil
-from time import sleep
 from typing import Dict, List, Union
 
 from ocrd import OcrdMetsServer
-from ocrd_utils import config, getLogger, safe_filename
+from ocrd_utils import getLogger
 from ..logging_utils import get_mets_server_logging_file_path
 from ..utils import get_uds_path, is_mets_server_running, stop_mets_server
 from .config_parser import parse_hosts_data, parse_mongodb_data, parse_rabbitmq_data, validate_and_load_config
@@ -56,19 +55,19 @@ class Deployer:
         """
 
         if worker_only and server_only:
-            msg = f"Only 'worker_only' or 'server_only' is allowed, not both."
+            msg = "Only 'worker_only' or 'server_only' is allowed, not both."
             self.log.exception(msg)
             raise ValueError(msg)
         if docker_only and native_only:
-            msg = f"Only 'docker_only' or 'native_only' is allowed, not both."
+            msg = "Only 'docker_only' or 'native_only' is allowed, not both."
             self.log.exception(msg)
             raise ValueError(msg)
         if not str_names_only and unique_only:
-            msg = f"Value 'unique_only' is allowed only together with 'str_names_only'"
+            msg = "Value 'unique_only' is allowed only together with 'str_names_only'"
             self.log.exception(msg)
             raise ValueError(msg)
         if sort and not str_names_only:
-            msg = f"Value 'sort' is allowed only together with 'str_names_only'"
+            msg = "Value 'sort' is allowed only together with 'str_names_only'"
             self.log.exception(msg)
             raise ValueError(msg)
 
@@ -154,7 +153,9 @@ class Deployer:
                 "Removing to avoid any weird behavior before starting the server.")
             Path(mets_server_url).unlink()
         self.log.info(f"Starting UDS mets server: {mets_server_url}")
-        pid = OcrdMetsServer.create_process(mets_server_url=str(mets_server_url), ws_dir_path=str(ws_dir_path), log_file=str(log_file))
+        pid = OcrdMetsServer.create_process(mets_server_url=str(mets_server_url),
+                                            ws_dir_path=str(ws_dir_path),
+                                            log_file=str(log_file))
         self.mets_servers[str(mets_server_url)] = pid
         self.mets_servers_paths[str(ws_dir_path)] = str(mets_server_url)
         return mets_server_url

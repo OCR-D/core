@@ -129,7 +129,7 @@ class DataRabbitMQ(DataNetworkService):
         rmq_host, rmq_port, rmq_vhost = self.host, int(self.port), self.vhost
         rmq_user, rmq_password = self.cred_username, self.cred_password
         if self.skip_deployment:
-            logger.debug(f"RabbitMQ is managed externally. Skipping deployment.")
+            logger.debug("RabbitMQ is managed externally. Skipping deployment.")
             verify_rabbitmq_available(logger=logger, rabbitmq_address=self.service_url)
             return self.service_url
         if not env:

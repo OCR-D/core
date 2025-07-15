@@ -119,6 +119,7 @@ class ConsistencyError(Exception):
             f"INCONSISTENCY in {tag} ID '{ID}' of file '{file_id}': "
             f"text results '{actual}' != concatenated '{expected}'")
 
+
 class CoordinateConsistencyError(Exception):
     """
     Exception representing a consistency error in coordinate confinement across levels of a PAGE-XML.
@@ -145,6 +146,7 @@ class CoordinateConsistencyError(Exception):
             f"INCONSISTENCY in {tag} ID '{ID}' of '{file_id}': "
             f"coords '{inner}' not within parent coords '{outer}'")
 
+
 class CoordinateValidityError(Exception):
     """
     Exception representing a validity error of an element's coordinates in PAGE-XML.
@@ -169,11 +171,13 @@ class CoordinateValidityError(Exception):
         super().__init__(
             f"INVALIDITY in {tag} ID '{ID}' of '{file_id}': coords '{points}' - {reason}")
 
+
 def compare_without_whitespace(a, b):
     """
     Compare two strings, ignoring all whitespace.
     """
     return re.sub('\\s+', '', a) == re.sub('\\s+', '', b)
+
 
 def page_get_reading_order(ro, rogroup):
     """
@@ -197,6 +201,7 @@ def page_get_reading_order(ro, rogroup):
         if not isinstance(elem, (RegionRefType, RegionRefIndexedType)):
             page_get_reading_order(ro, elem)
 
+
 def make_poly(polygon_points):
     """Instantiate a Polygon from a list of point pairs, or return an error string"""
     if len(polygon_points) < 4:
@@ -212,6 +217,7 @@ def make_poly(polygon_points):
         return 'is negative'
     return poly
 
+
 def make_line(line_points):
     """Instantiate a LineString from a list of point pairs, or return an error string"""
     if len(line_points) < 2:
@@ -224,6 +230,7 @@ def make_line(line_points):
     elif line.bounds[0] < 0 or line.bounds[1] < 0:
         return 'is negative'
     return line
+
 
 @deprecated_alias(strictness='page_textequiv_consistency')
 @deprecated_alias(strategy='page_textequiv_strategy')
@@ -239,7 +246,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
     if isinstance(node, (PcGtsType, OcrdPage)):
         # top-level (start recursion)
         node_id = node.get_pcGtsId()
-        node = node.get_Page() # has no .id
+        node = node.get_Page()  # has no .id
         if not readingOrder:
             readingOrder = {}
         ro = node.get_ReadingOrder()
@@ -247,13 +254,13 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
             page_get_reading_order(readingOrder, ro.get_OrderedGroup() or ro.get_UnorderedGroup())
         if not joinRelations:
             joinRelations = []
-        relations = node.get_Relations() # get RelationsType
+        relations = node.get_Relations()  # get RelationsType
         if relations:
-            relations = relations.get_Relation() # get list of RelationType
+            relations = relations.get_Relation()  # get list of RelationType
         else:
             relations = []
         for relation in relations:
-            if relation.get_type() == 'join': # ignore 'link' type here
+            if relation.get_type() == 'join':  # ignore 'link' type here
                 joinRelations.append((relation.get_SourceRegionRef().get_regionRef(),
                                       relation.get_TargetRegionRef().get_regionRef()))
     elif isinstance(node, GlyphType):
@@ -277,7 +284,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                                                          parent_points, node_poly))
                 log.debug("Invalid coords of %s %s", tag, node_id)
                 consistent = False
-                node_poly = None # don't use in further comparisons
+                node_poly = None  # don't use in further comparisons
         else:
             node_poly = None
     for class_, getterLO, getterRD in _ORDER[1:]:
@@ -314,7 +321,7 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                     # report.add_error(CoordinateValidityError(child_tag, child.id, file_id, child_points))
                     # log.debug("Invalid coords of %s %s", child_tag, child.id)
                     # consistent = False
-                    pass # already reported in recursive call above
+                    pass  # already reported in recursive call above
                 elif not child_poly.within(node_poly.buffer(PARENT_SLACK)):
                     # TODO: automatic repair?
                     report.add_error(CoordinateConsistencyError(child_tag, child.id, file_id,
@@ -344,12 +351,13 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
                 if page_textequiv_consistency == 'fix':
                     log.debug("Repaired text of %s %s", tag, node_id)
                     set_text(node, concatenated, page_textequiv_strategy)
-                elif (page_textequiv_consistency == 'strict' # or 'lax' but...
+                elif (page_textequiv_consistency == 'strict'  # or 'lax' but...
                       or not compare_without_whitespace(concatenated, text_results)):
                     log.debug("Inconsistent text of %s %s", tag, node_id)
                     report.add_error(ConsistencyError(tag, node_id, file_id,
                                                       text_results, concatenated))
     return consistent
+
 
 def concatenate(nodes, concatenate_with, page_textequiv_strategy, joins=None):
     """
@@ -366,6 +374,7 @@ def concatenate(nodes, concatenate_with, page_textequiv_strategy, joins=None):
             result += concatenate_with
         result += get_text(next_node, page_textequiv_strategy)
     return result.strip()
+
 
 def get_text(node, page_textequiv_strategy='first'):
     """
@@ -399,6 +408,7 @@ def get_text(node, page_textequiv_strategy='first'):
         # fall back to first element
         return textEquivs[0].get_Unicode().strip()
 
+
 def set_text(node, text, page_textequiv_strategy):
     """
     Set the first or most confident among text results (depending on ``page_textequiv_strategy``).
@@ -410,7 +420,7 @@ def set_text(node, text, page_textequiv_strategy):
     text = text.strip()
     textEquivs = node.get_TextEquiv()
     if not textEquivs:
-        node.add_TextEquiv(TextEquivType(Unicode=text)) # or index=0 ?
+        node.add_TextEquiv(TextEquivType(Unicode=text))  # or index=0 ?
     elif page_textequiv_strategy == 'best':
         if len(textEquivs) > 1:
             textEquivsSorted = sorted([x for x in textEquivs if x.conf],
@@ -431,6 +441,7 @@ def set_text(node, text, page_textequiv_strategy):
                 return
         # fall back to first element
         textEquivs[0].set_Unicode(text)
+
 
 class PageValidator():
     """
@@ -477,5 +488,6 @@ class PageValidator():
             raise ValueError("page_textequiv_consistency level %s not implemented" % page_textequiv_consistency)
         report = ValidationReport()
         log.info("Validating input file '%s'", file_id)
-        validate_consistency(page, page_textequiv_consistency, page_textequiv_strategy, check_baseline, check_coords, report, file_id)
+        validate_consistency(page, page_textequiv_consistency, page_textequiv_strategy, check_baseline, check_coords,
+                             report, file_id)
         return report

@@ -55,7 +55,7 @@ def create_processing_message(logger: Logger, job: DBProcessorJob) -> OcrdProces
         )
         return processing_message
     except ValueError as error:
-        message = f"Failed to create OcrdProcessingMessage from DBProcessorJob"
+        message = "Failed to create OcrdProcessingMessage from DBProcessorJob"
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message, error)
 
 
@@ -139,6 +139,7 @@ def request_processor_server_tool_json(logger: Logger, processor_server_base_url
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
     return response.json()
 
+
 async def forward_job_to_processor_server(
     logger: Logger, job_input: PYJobInput, processor_server_base_url: str
 ) -> PYJobOutput:
@@ -193,14 +194,14 @@ def parse_workflow_tasks(logger: Logger, workflow_content: str) -> List[Processo
         tasks_list = workflow_content.splitlines()
         return [ProcessorTask.parse(task_str) for task_str in tasks_list if task_str.strip()]
     except ValueError as error:
-        message = f"Failed parsing processing tasks from a workflow."
+        message = "Failed parsing processing tasks from a workflow."
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message, error)
 
 
 def raise_http_exception(logger: Logger, status_code: int, message: str, error: Exception = None) -> None:
     if error:
         message = f"{message} {error}"
-    logger.exception(f"{message}")
+    logger.exception(message)
     raise HTTPException(status_code=status_code, detail=message)
 
 
@@ -214,7 +215,7 @@ def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job
         )
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
     if not ocrd_tool:
-        message = f"Failed parsing processing tasks from a workflow."
+        message = "Failed parsing processing tasks from a workflow."
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
     try:
         report = ParameterValidator(ocrd_tool).validate(dict(job_input.parameters))
@@ -249,10 +250,10 @@ def validate_first_task_input_file_groups_existence(logger: Logger, mets_path: s
             raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
 
-def kill_mets_server_zombies(minutes_ago : Optional[int], dry_run : Optional[bool]) -> List[int]:
-    if minutes_ago == None:
+def kill_mets_server_zombies(minutes_ago: Optional[int], dry_run: Optional[bool]) -> List[int]:
+    if minutes_ago is None:
         minutes_ago = 90
-    if dry_run == None:
+    if dry_run is None:
         dry_run = False
 
     now = time()
@@ -271,7 +272,8 @@ def kill_mets_server_zombies(minutes_ago : Optional[int], dry_run : Optional[boo
         if re.match(cmdline_pat, cmdline):
             pid = int(procdir.name)
             ret.append(pid)
-            print(f'METS Server with PID {pid} was created {ctime_ago} minutes ago, more than {minutes_ago}, so killing (cmdline="{cmdline})', file=sys.stderr)
+            print(f'METS Server with PID {pid} was created {ctime_ago} minutes ago, more than {minutes_ago}, '
+                  f'so killing (cmdline="{cmdline})', file=sys.stderr)
             if dry_run:
                 print(f'[dry_run is active] kill {pid}')
             else:
