@@ -6,13 +6,14 @@ import re
 import codecs
 from os.path import dirname, join
 
+
 #
 # You must include the following class definition at the top of
 #   your method specification file.
 #
 class MethodSpec():
     def __init__(self, name='', source='', class_names='',
-            class_names_compiled=None):
+                 class_names_compiled=None):
         """MethodSpec -- A specification of a method.
         Member variables:
             name -- The method name
@@ -33,23 +34,32 @@ class MethodSpec():
             self.class_names_compiled = re.compile(self.class_names)
         else:
             self.class_names_compiled = class_names_compiled
+
     def get_name(self):
         return self.name
+
     def set_name(self, name):
         self.name = name
+
     def get_source(self):
         return self.source
+
     def set_source(self, source):
         self.source = source
+
     def get_class_names(self):
         return self.class_names
+
     def set_class_names(self, class_names):
         self.class_names = class_names
         self.class_names_compiled = re.compile(class_names)
+
     def get_class_names_compiled(self):
         return self.class_names_compiled
+
     def set_class_names_compiled(self, class_names_compiled):
         self.class_names_compiled = class_names_compiled
+
     def match_name(self, class_name):
         """Match against the name of the class currently being generated.
         If this method returns True, the method will be inserted in
@@ -58,6 +68,7 @@ class MethodSpec():
         if self.class_names_compiled.search(class_name):
             return True
         return False
+
     def get_interpolated_source(self, values_dict):
         """Get the method source code, interpolating values from values_dict
         into it.  The source returned by this method is inserted into
@@ -65,6 +76,7 @@ class MethodSpec():
         """
         source = self.source % values_dict
         return source
+
     def show(self):
         print('specification:')
         print('    name: %s' % (self.name, ))
@@ -94,6 +106,7 @@ def _add_method(class_re, method_name, file_name=None):
             source.append('    %s' % line.replace('%', '%%') if line else line)
     return MethodSpec(name=method_name, class_names=class_re, source=''.join(source))
 
+
 #
 # Provide a list of your method specifications.
 #   This list of specifications must be named METHOD_SPECS.
@@ -118,13 +131,16 @@ METHOD_SPECS = (
     _add_method(r'^(PageType)$', 'get_AllTextLines'),
     _add_method(r'^(PageType)$', 'get_ReadingOrderGroups'),
     # for some reason, pagecontent.xsd does not declare @orientation at the abstract/base RegionType:
-    _add_method(r'^(PageType|AdvertRegionType|MusicRegionType|MapRegionType|ChemRegionType|MathsRegionType|SeparatorRegionType|ChartRegionType|TableRegionType|GraphicRegionType|LineDrawingRegionType|ImageRegionType|TextRegionType)$', 'set_orientation'),
+    _add_method(r'^(PageType|AdvertRegionType|MusicRegionType|MapRegionType|ChemRegionType|MathsRegionType'
+                r'|SeparatorRegionType|ChartRegionType|TableRegionType|GraphicRegionType|LineDrawingRegionType'
+                r'|ImageRegionType|TextRegionType)$', 'set_orientation'),
     )
 
 
 def test():
     for spec in METHOD_SPECS:
         spec.show()
+
 
 def main():
     test()

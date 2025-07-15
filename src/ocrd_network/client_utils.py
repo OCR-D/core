@@ -4,7 +4,8 @@ from time import sleep
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
-def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int, print_state: bool = False) -> JobState:
+def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int,
+                          print_state: bool = False) -> JobState:
     if job_type not in ["workflow", "processor"]:
         raise ValueError(f"Unknown job type '{job_type}', expected 'workflow' or 'processor'")
     job_state = JobState.unset
@@ -59,6 +60,7 @@ def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) ->
     job_state = response.json()["state"]
     assert job_state
     return getattr(JobState, job_state.lower())
+
 
 def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> JobState:
     request_url = f"{ps_server_host}/workflow/job-simple/{workflow_job_id}"

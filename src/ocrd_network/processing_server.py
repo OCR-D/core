@@ -91,7 +91,7 @@ class ProcessingServer(FastAPI):
         log_file = get_processing_server_logging_file_path(pid=getpid())
         configure_file_handler_with_formatter(self.log, log_file=log_file, mode="a")
 
-        self.log.info(f"Loading ocrd all tool json")
+        self.log.info("Loading ocrd-all-tool.json")
         self.ocrd_all_tool_json = load_ocrd_all_tool_json()
         self.hostname = host
         self.port = port
@@ -208,7 +208,8 @@ class ProcessingServer(FastAPI):
             methods=["DELETE"],
             tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary="!! Workaround Do Not Use Unless You Have A Reason !! Kill all METS servers on this machine that have been created more than 60 minutes ago."
+            summary="!! Workaround Do Not Use Unless You Have A Reason "
+            "!! Kill all METS servers on this machine that have been created more than 60 minutes ago."
         )
         self.include_router(others_router)
 
@@ -825,7 +826,7 @@ class ProcessingServer(FastAPI):
         response = self._produce_workflow_status_response(processing_jobs=jobs)
         return response
 
-    async def kill_mets_server_zombies(self, minutes_ago : Optional[int] = None, dry_run : Optional[bool] = None) -> List[int]:
+    async def kill_mets_server_zombies(self, minutes_ago: Optional[int] = None, dry_run: Optional[bool] = None) -> List[int]:
         pids_killed = kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)
         return pids_killed
 

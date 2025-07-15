@@ -1,6 +1,7 @@
 from .xsd_validator import XsdValidator
 from .constants import XSD_PAGE_URL
 
+
 class XsdPageValidator(XsdValidator):
     """
     XML Schema validator.
@@ -14,4 +15,4 @@ class XsdPageValidator(XsdValidator):
         Args:
             doc (etree.ElementTree|str|bytes):
         """
-        return cls.instance(XSD_PAGE_URL)._validate(doc) # pylint: disable=protected-access
+        return cls.instance(XSD_PAGE_URL)._validate(doc)  # pylint: disable=protected-access

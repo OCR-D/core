@@ -67,7 +67,7 @@ def processing_cli():
               help='The address of the Processing Server. If not provided, '
                    'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" env variable is used by default')
 @click.option('-j', '--processing-job-id', required=True)
-def check_processing_job_status(address: Optional[str], processing_job_id: str):
+def check_processing_job_log(address: Optional[str], processing_job_id: str):
     """
     Check the log of a previously submitted processing job.
     """
@@ -211,8 +211,9 @@ def send_workflow_job_request(
             print(f"Workflow failed with {state}")
             exit(1)
         else:
-            print(f"Workflow succeeded")
+            print("Workflow succeeded")
             exit(0)
+
 
 @client_cli.group('workspace')
 def workspace_cli():

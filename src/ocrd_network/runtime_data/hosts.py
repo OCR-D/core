@@ -109,10 +109,10 @@ class DataHost:
 
         connection_client = None
         if deploy_type == DeployType.NATIVE:
-            assert self.ssh_client, f"SSH client connection missing."
+            assert self.ssh_client, "SSH client connection missing."
             connection_client = self.ssh_client
         if deploy_type == DeployType.DOCKER:
-            assert self.docker_client, f"Docker client connection missing."
+            assert self.docker_client, "Docker client connection missing."
             connection_client = self.docker_client
 
         if agent_type == AgentType.PROCESSING_WORKER:
@@ -126,7 +126,7 @@ class DataHost:
         logger.info(f"Deploying processing workers on host: {self.host}")
         amount_workers = len(self.network_agents_worker_native) + len(self.network_agents_worker_docker)
         if not amount_workers:
-            logger.info(f"No processing workers found to be deployed")
+            logger.info("No processing workers found to be deployed")
         for data_worker in self.network_agents_worker_native:
             self.__deploy_network_agent(logger, data_worker, mongodb_url, rabbitmq_url)
         for data_worker in self.network_agents_worker_docker:
@@ -136,7 +136,7 @@ class DataHost:
         logger.info(f"Deploying processor servers on host: {self.host}")
         amount_servers = len(self.network_agents_server_native) + len(self.network_agents_server_docker)
         if not amount_servers:
-            logger.info(f"No processor servers found to be deployed")
+            logger.info("No processor servers found to be deployed")
         for data_server in self.network_agents_server_native:
             self.__deploy_network_agent(logger, data_server, mongodb_url, rabbitmq_url)
             self.__add_deployed_agent_server_port_to_cache(data_server.processor_name, data_server.port)
@@ -168,17 +168,17 @@ class DataHost:
         agent_info += f", pid: {pid}"
         logger.info(f"Stopping {agent_info}")
         if deploy_type == DeployType.NATIVE:
-            assert self.ssh_client, f"SSH client connection missing"
+            assert self.ssh_client, "SSH client connection missing"
             self.ssh_client.exec_command(f"kill {pid}")
         if deploy_type == DeployType.DOCKER:
-            assert self.docker_client, f"Docker client connection missing"
+            assert self.docker_client, "Docker client connection missing"
             self.docker_client.containers.get(pid).stop()
 
     def __stop_network_agents_workers(self, logger: Logger):
         logger.info(f"Stopping processing workers on host: {self.host}")
         amount_workers = len(self.network_agents_worker_native) + len(self.network_agents_worker_docker)
         if not amount_workers:
-            logger.warning(f"No active processing workers to be stopped.")
+            logger.warning("No active processing workers to be stopped.")
         for worker in self.network_agents_worker_native:
             self.__stop_network_agent(logger, worker.processor_name, worker.deploy_type, worker.agent_type, worker.pid)
         self.network_agents_worker_native = []
@@ -190,7 +190,7 @@ class DataHost:
         logger.info(f"Stopping processor servers on host: {self.host}")
         amount_servers = len(self.network_agents_server_native) + len(self.network_agents_server_docker)
         if not amount_servers:
-            logger.warning(f"No active processor servers to be stopped.")
+            logger.warning("No active processor servers to be stopped.")
         for server in self.network_agents_server_native:
             self.__stop_network_agent(logger, server.processor_name, server.deploy_type, server.agent_type, server.pid)
         self.network_agents_server_native = []

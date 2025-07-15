@@ -3,6 +3,7 @@ Validate parameters against ocrd-tool.json.
 """
 from .json_validator import DefaultValidatingDraft20199Validator, JsonValidator
 
+
 #
 # -------------------------------------------------
 #
@@ -12,7 +13,7 @@ class ParameterValidator(JsonValidator):
     JsonValidator validating parametersagains ocrd-tool.json.
     """
 
-    def validate(self, *args, **kwargs): # pylint: disable=arguments-differ
+    def validate(self, *args, **kwargs):  # pylint: disable=arguments-differ
         """
         Validate a parameter dict against a parameter schema from an ocrd-tool.json
 
@@ -39,7 +40,7 @@ class ParameterValidator(JsonValidator):
             if 'required' in p[n]:
                 if p[n]['required']:
                     required.append(n)
-                del(p[n]['required'])
+                del p[n]['required']
         super().__init__({
             "type": "object",
             "required": required,

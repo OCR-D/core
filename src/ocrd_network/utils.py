@@ -172,5 +172,6 @@ def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str) -> 
     else:
         ValueError(f"Unexpected protocol type: {protocol}")
 
+
 def get_uds_path(ws_dir_path: str) -> Path:
     return Path(config.OCRD_NETWORK_SOCKETS_ROOT_DIR, f"{safe_filename(ws_dir_path)}.sock")

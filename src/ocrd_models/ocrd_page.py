@@ -179,6 +179,7 @@ parseString.__doc__ = (
     """
 )
 
+
 class OcrdPage():
     """
     Proxy object for :py:class:`ocrd_models.PcGtsType` (i.e. PRImA PAGE-XML
@@ -188,10 +189,10 @@ class OcrdPage():
     """
     def __init__(
         self,
-        pcgts : PcGtsType,
-        etree : ET._Element,
-        mapping : Dict[str, ET._Element],
-        revmap : Dict[ET._Element, Any],
+        pcgts: PcGtsType,
+        etree: ET._Element,
+        mapping: Dict[str, ET._Element],
+        revmap: Dict[ET._Element, Any],
     ):
         self._pcgts = pcgts
         self.etree = etree
@@ -214,7 +215,9 @@ class OcrdPage():
     def __getattr__(self, name):
         return getattr(self._pcgts, name)
 
+
 OcrdPageType = Union[OcrdPage, PcGtsType]
+
 
 def to_xml(el, skip_declaration=False) -> str:
     """
@@ -229,15 +232,16 @@ def to_xml(el, skip_declaration=False) -> str:
         name = 'PcGts'
     sio = StringIO()
     el.export(
-            outfile=sio,
-            level=0,
-            name_=name,
-            namespaceprefix_='pc:',
-            namespacedef_='xmlns:pc="%s" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
-                NAMESPACES['page'],
-                NAMESPACES['page'],
-                NAMESPACES['page']
-            ))
+        outfile=sio,
+        level=0,
+        name_=name,
+        namespaceprefix_='pc:',
+        namespacedef_='xmlns:pc="%s" ' % NAMESPACES['page'] +
+        'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
+        'xsi:schemaLocation="%s %s/pagecontent.xsd"' % (
+            NAMESPACES['page'],
+            NAMESPACES['page']
+        ))
     ret = sio.getvalue()
     if not skip_declaration:
         ret = '<?xml version="1.0" encoding="UTF-8"?>\n' + ret

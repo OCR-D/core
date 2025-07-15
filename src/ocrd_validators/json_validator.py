@@ -7,8 +7,10 @@ from jsonschema import Draft201909Validator, ValidationError, validators # pylin
 
 from ocrd_models import ValidationReport
 
+
 class JsonSchemaDeprecationWarning(ValidationError):
     pass
+
 
 # http://python-jsonschema.readthedocs.io/en/latest/faq/
 def extend_with_default(validator_class):
@@ -34,6 +36,7 @@ def extend_with_default(validator_class):
 
 DefaultValidatingDraft20199Validator = extend_with_default(Draft201909Validator)
 
+
 #
 # -------------------------------------------------
 #
@@ -54,7 +57,7 @@ class JsonValidator():
         """
         if isinstance(obj, str):
             obj = json.loads(obj)
-        return JsonValidator(schema)._validate(obj) # pylint: disable=protected-access
+        return JsonValidator(schema)._validate(obj)  # pylint: disable=protected-access
 
     def __init__(self, schema, validator_class=Draft201909Validator):
         """

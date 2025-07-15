@@ -10,19 +10,21 @@ import click
 
 from ocrd_utils import config
 
+
 # pylint: disable=wrong-import-position
 
 def command_with_replaced_help(*replacements):
 
     class CommandWithReplacedHelp(click.Command):
         def get_help(self, ctx):
-            newhelp : str = super().get_help(ctx)
+            newhelp: str = super().get_help(ctx)
             for replacement in replacements:
                 newhelp = re.sub(*replacement, newhelp)
             # print(newhelp)
             return newhelp
 
     return CommandWithReplacedHelp
+
 
 # pylint: enable=wrong-import-position
 
@@ -102,13 +104,15 @@ Variables:
 {config.describe('OCRD_LOGGING_DEBUG')}
 """
 
+
 @click.group(epilog=_epilog)
 @click.version_option(package_name='ocrd')
 @ocrd_loglevel
-def cli(**kwargs): # pylint: disable=unused-argument
+def cli(**kwargs):  # pylint: disable=unused-argument
     """
     Entry-point of multi-purpose CLI for OCR-D
     """
+
 
 cli.add_command(ocrd_tool_cli)
 cli.add_command(workspace_cli)

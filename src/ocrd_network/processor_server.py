@@ -45,7 +45,7 @@ class ProcessorServer(FastAPI):
         super().__init__(
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
-            title=f"Network agent - Processor Server",
+            title="Network agent - Processor Server",
             description="Network agent - Processor Server"
         )
         initLogging()
@@ -63,7 +63,7 @@ class ProcessorServer(FastAPI):
         self.ocrd_tool = self.get_ocrd_tool()
 
         if not self.ocrd_tool:
-            raise Exception(f"The ocrd_tool is empty or missing")
+            raise Exception("The ocrd_tool is empty or missing")
 
         if not self.processor_name:
             self.processor_name = self.ocrd_tool["executable"]

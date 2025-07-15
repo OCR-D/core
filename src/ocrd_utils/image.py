@@ -39,14 +39,15 @@ __all__ = [
     'xywh_from_polygon',
 ]
 
+
 def adjust_canvas_to_rotation(size, angle):
     """Calculate the enlarged image size after rotation.
-    
+
     Given a numpy array ``size`` of an original canvas (width and height),
     and a rotation angle in degrees counter-clockwise ``angle``,
     calculate the new size which is necessary to encompass the full
     image after rotation.
-    
+
     Return a numpy array of the enlarged width and height.
     """
     angle = np.deg2rad(angle)
@@ -56,13 +57,14 @@ def adjust_canvas_to_rotation(size, angle):
                             [sin, cos]]),
                   np.array(size))
 
+
 def adjust_canvas_to_transposition(size, method):
     """Calculate the flipped image size after transposition.
-    
+
     Given a numpy array ``size`` of an original canvas (width and height),
     and a transposition mode ``method`` (see ``transpose_image``),
     calculate the new size after transposition.
-    
+
     Return a numpy array of the enlarged width and height.
     """
     if method in [Image.Transpose.ROTATE_90,
@@ -72,10 +74,12 @@ def adjust_canvas_to_transposition(size, method):
         size = size[::-1]
     return size
 
+
 def bbox_from_points(points):
     """Construct a numeric list representing a bounding box from polygon coordinates in page representation."""
     xys = [[int(p) for p in pair.split(',')] for pair in points.split(' ')]
     return bbox_from_polygon(xys)
+
 
 def bbox_from_polygon(polygon):
     """Construct a numeric list representing a bounding box from polygon coordinates in numeric list representation."""
@@ -94,6 +98,7 @@ def bbox_from_polygon(polygon):
             maxy = xy[1]
     return minx, miny, maxx, maxy
 
+
 def bbox_from_xywh(xywh):
     """Convert a bounding box from a numeric dict to a numeric list representation."""
     return (
@@ -103,23 +108,24 @@ def bbox_from_xywh(xywh):
         xywh['y'] + xywh['h']
     )
 
+
 def coordinates_of_segment(segment, parent_image, parent_coords):
     """Extract the coordinates of a PAGE segment element relative to its parent.
 
+    \b
     Given...
-
     - ``segment``, a PAGE segment object in absolute coordinates
       (i.e. RegionType / TextLineType / WordType / GlyphType), and
     - ``parent_image``, the PIL.Image of its corresponding parent object
       (i.e. PageType / RegionType / TextLineType / WordType), (not used),
       along with
     - ``parent_coords``, its corresponding affine transformation,
-
     ...calculate the relative coordinates of the segment within the image.
 
     That is, apply the given transform to the points annotated in ``segment``.
     The transform encodes (recursively):
 
+    \b
     1. Whenever ``parent_image`` or any of its parents was cropped,
        all points must be shifted by the offset
        (i.e. coordinate system gets translated by the upper left).
@@ -138,6 +144,7 @@ def coordinates_of_segment(segment, parent_image, parent_coords):
     polygon = transform_coordinates(polygon, parent_coords['transform'])
     return np.round(polygon).astype(np.int32)
 
+
 def polygon_from_points(points):
     """
     Convert polygon coordinates in page representation to polygon coordinates in numeric list representation.
@@ -152,17 +159,17 @@ def polygon_from_points(points):
 def coordinates_for_segment(polygon, parent_image, parent_coords):
     """Convert relative coordinates to absolute.
 
+    \b
     Given...
-
     - ``polygon``, a numpy array of points relative to
     - ``parent_image``, a PIL.Image (not used), along with
     - ``parent_coords``, its corresponding affine transformation,
-
     ...calculate the absolute coordinates within the page.
-    
+
     That is, apply the given transform inversely to ``polygon``
     The transform encodes (recursively):
 
+    \b
     1. Whenever ``parent_image`` or any of its parents was cropped,
        all points must be shifted by the offset in opposite direction
        (i.e. coordinate system gets translated by the upper left).
@@ -176,11 +183,12 @@ def coordinates_for_segment(polygon, parent_image, parent_coords):
 
     Return the rounded numpy array of the resulting polygon.
     """
-    polygon = np.array(polygon, dtype=np.float32) # avoid implicit type cast problems
+    polygon = np.array(polygon, dtype=np.float32)  # avoid implicit type cast problems
     # apply inverse of affine transform:
     inv_transform = np.linalg.inv(parent_coords['transform'])
     polygon = transform_coordinates(polygon, inv_transform)
     return np.round(polygon).astype(np.int32)
+
 
 def polygon_mask(image, coordinates):
     """"Create a mask image of a polygon.
@@ -197,6 +205,7 @@ def polygon_mask(image, coordinates):
     ImageDraw.Draw(mask).polygon(coordinates, outline=0, fill=255)
     return mask
 
+
 def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     """Compose an affine coordinate transformation with a passive rotation.
 
@@ -209,7 +218,7 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
     by pure rotation, and subsequent translation back. However, since
     rotation necessarily increases the bounding box, and thus image size,
     do not translate back the same amount, but to the enlarged offset.)
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG = getLogger('ocrd.utils.coords.rotate_coordinates')
@@ -234,6 +243,7 @@ def rotate_coordinates(transform, angle, orig=np.array([0, 0])):
         adjust_canvas_to_rotation(orig, angle))
     return transform
 
+
 def rotate_image(image, angle, fill='background', transparency=False):
     """"Rotate an image, enlarging and filling with background.
 
@@ -242,6 +252,7 @@ def rotate_image(image, angle, fill='background', transparency=False):
     size at the margins accordingly, and filling everything outside
     the original image according to ``fill``:
 
+    \b
     - if ``background`` (the default),
       then use the median color of the image;
     - otherwise use the given color, e.g. ``'white'`` or (255,255,255).
@@ -267,7 +278,7 @@ def rotate_image(image, angle, fill='background', transparency=False):
         if len(background.bands) > 1:
             background = background.median
             if image.mode in ['RGBA', 'LA']:
-                background[-1] = 0 # fully transparent
+                background[-1] = 0  # fully transparent
             background = tuple(background)
         else:
             background = background.median[0]
@@ -295,7 +306,7 @@ def shift_coordinates(transform, offset):
     ``offset`` of the translation vector, calculate the affine
     coordinate transform corresponding to the composition of both
     transformations.
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG = getLogger('ocrd.utils.coords.shift_coordinates')
@@ -305,6 +316,7 @@ def shift_coordinates(transform, offset):
     shift[1, 2] = offset[1]
     return np.dot(shift, transform)
 
+
 def scale_coordinates(transform, factors):
     """Compose an affine coordinate transformation with a proportional scaling.
     Given a numpy array ``transform`` of an existing transformation
@@ -312,7 +324,7 @@ def scale_coordinates(transform, factors):
     ``factors`` of the scaling factors, calculate the affine
     coordinate transform corresponding to the composition of both
     transformations.
-    
+
     Return a numpy array of the resulting affine transformation matrix.
     """
     LOG = getLogger('ocrd.utils.coords.scale_coordinates')
@@ -321,6 +333,7 @@ def scale_coordinates(transform, factors):
     scale[0, 0] = factors[0]
     scale[1, 1] = factors[1]
     return np.dot(scale, transform)
+
 
 def transform_coordinates(polygon, transform=None):
     """Apply an affine transformation to a set of points.
@@ -331,23 +344,24 @@ def transform_coordinates(polygon, transform=None):
     """
     if transform is None:
         transform = np.eye(3)
-    polygon = np.insert(polygon, 2, 1, axis=1) # make 3d homogeneous coordinates
+    polygon = np.insert(polygon, 2, 1, axis=1)  # make 3d homogeneous coordinates
     polygon = np.dot(transform, polygon.T).T
     # ones = polygon[:,2]
     # assert np.all(np.array_equal(ones, np.clip(ones, 1 - 1e-2, 1 + 1e-2))), \
     #     'affine transform failed' # should never happen
-    polygon = np.delete(polygon, 2, axis=1) # remove z coordinate again
+    polygon = np.delete(polygon, 2, axis=1)  # remove z coordinate again
     return polygon
+
 
 def transpose_coordinates(transform, method, orig=np.array([0, 0])):
     """"Compose an affine coordinate transformation with a transposition (i.e. flip or rotate in 90° multiples).
 
+    \b
     Given a numpy array ``transform`` of an existing transformation
     matrix in homogeneous (3d) coordinates, a transposition mode ``method``,
     as well as a numpy array ``orig`` of the center of the image,
     calculate the affine coordinate transform corresponding to the composition
     of both transformations, which is respectively:
-
     - ``PIL.Image.Transpose.FLIP_LEFT_RIGHT``:
       entails translation to the center, followed by pure reflection
       about the y-axis, and subsequent translation back
@@ -395,7 +409,7 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
         Image.Transpose.ROTATE_270: [rot90, reflx, refly],
         Image.Transpose.TRANSPOSE: [rot90, reflx],
         Image.Transpose.TRANSVERSE: [rot90, refly]
-    }.get(method) # no default
+    }.get(method)  # no default
     for operation in operations:
         transform = np.dot(operation, transform)
     transform = shift_coordinates(
@@ -405,12 +419,13 @@ def transpose_coordinates(transform, method, orig=np.array([0, 0])):
         adjust_canvas_to_transposition(orig, method))
     return transform
 
+
 def transpose_image(image, method):
     """"Transpose (i.e. flip or rotate in 90° multiples) an image.
 
+    \b
     Given a PIL.Image ``image`` and a transposition mode ``method``,
     apply the respective operation:
-
     - ``PIL.Image.Transpose.FLIP_LEFT_RIGHT``:
       all pixels get mirrored at half the width of the image
     - ``PIL.Image.Transpose.FLIP_TOP_BOTTOM``:
@@ -438,12 +453,13 @@ def transpose_image(image, method):
       columns become rows (but counted from the bottom),
       i.e. all pixels get mirrored at the opposite diagonal;
       width becomes height and vice versa
-    
+
     Return a new PIL.Image.
     """
     LOG = getLogger('ocrd.utils.transpose_image')
     LOG.debug('transposing image with %s', membername(Image, method))
     return image.transpose(method)
+
 
 def crop_image(image, box=None):
     """"Crop an image to a rectangle, filling with background.
@@ -475,9 +491,10 @@ def crop_image(image, box=None):
     else:
         background = background.median[0]
     new_image = Image.new(image.mode, (xywh['w'], xywh['h']),
-                          background) # or 'white'
+                          background)  # or 'white'
     new_image.paste(image, (-xywh['x'], -xywh['y']))
     return new_image
+
 
 def image_from_polygon(image, polygon, fill='background', transparency=False):
     """"Mask an image with a polygon.
@@ -497,7 +514,7 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     Images which already have an alpha channel will have it shrunk
     from the polygon mask (i.e. everything outside the polygon will
     be transparent, in addition to existing transparent pixels).
-    
+
     Return a new PIL.Image.
     """
     if fill == 'none' or fill is None:
@@ -521,21 +538,24 @@ def image_from_polygon(image, polygon, fill='background', transparency=False):
     #  which can be inconsistent on unbinarized images):
     if image.mode in ['RGBA', 'LA']:
         # ensure transparency maximizes (i.e. parent mask AND mask):
-        mask = ImageChops.darker(mask, image.getchannel('A')) # min opaque
+        mask = ImageChops.darker(mask, image.getchannel('A'))  # min opaque
         new_image.putalpha(mask)
     elif transparency and image.mode in ['RGB', 'L']:
         # introduce transparency:
         new_image.putalpha(mask)
     return new_image
 
+
 def points_from_bbox(minx, miny, maxx, maxy):
     """Construct polygon coordinates in page representation from a numeric list representing a bounding box."""
     return "%i,%i %i,%i %i,%i %i,%i" % (
         minx, miny, maxx, miny, maxx, maxy, minx, maxy)
 
+
 def points_from_polygon(polygon):
     """Convert polygon coordinates from a numeric list representation to a page representation."""
     return " ".join("%i,%i" % (x, y) for x, y in polygon)
+
 
 def points_from_xywh(box):
     """
@@ -549,6 +569,8 @@ def points_from_xywh(box):
         x + w, y + h,
         x, y + h
     )
+
+
 def points_from_y0x0y1x1(yxyx):
     """
     Construct a polygon representation from a rectangle described as a list [y0, x0, y1, x1]
@@ -563,6 +585,7 @@ def points_from_y0x0y1x1(yxyx):
         x1, y1,
         x0, y1
     )
+
 
 def points_from_x0y0x1y1(xyxy):
     """
@@ -579,9 +602,11 @@ def points_from_x0y0x1y1(xyxy):
         x0, y1
     )
 
+
 def polygon_from_bbox(minx, miny, maxx, maxy):
     """Construct polygon coordinates in numeric list representation from a numeric list representing a bounding box."""
     return [[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy]]
+
 
 def polygon_from_x0y0x1y1(x0y0x1y1):
     """Construct polygon coordinates in numeric list representation from a string list representing a bounding box."""
@@ -591,9 +616,11 @@ def polygon_from_x0y0x1y1(x0y0x1y1):
     maxy = int(x0y0x1y1[3])
     return [[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy]]
 
+
 def polygon_from_xywh(xywh):
     """Construct polygon coordinates in numeric list representation from numeric dict representing a bounding box."""
     return polygon_from_bbox(*bbox_from_xywh(xywh))
+
 
 def xywh_from_bbox(minx, miny, maxx, maxy):
     """Convert a bounding box from a numeric list to a numeric dict representation."""
@@ -603,6 +630,7 @@ def xywh_from_bbox(minx, miny, maxx, maxy):
         'w': maxx - minx,
         'h': maxy - miny,
     }
+
 
 def xywh_from_points(points):
     """

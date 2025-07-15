@@ -13,6 +13,7 @@ from ocrd.task_sequence import run_tasks
 
 from ..decorators import ocrd_loglevel
 
+
 # ----------------------------------------------------------------------
 # ocrd process
 # ----------------------------------------------------------------------

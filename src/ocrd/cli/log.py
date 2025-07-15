@@ -7,7 +7,7 @@ OCR-D CLI: Logging
 """
 import click
 from ocrd_utils import initLogging, getLogger, getLevelName
-import logging
+
 
 class LogCtx():
 
@@ -18,10 +18,13 @@ class LogCtx():
         logger = getLogger(self.name)
         logger.log(getLevelName(lvl), *args, **kwargs)
 
+
 pass_log = click.make_pass_decorator(LogCtx)
 
+
 @click.group("log")
-@click.option('-n', '--name', envvar='OCRD_TOOL_NAME', default='log_cli', metavar='LOGGER_NAME', help='Name of the logger', show_default=True)
+@click.option('-n', '--name', envvar='OCRD_TOOL_NAME', default='log_cli', metavar='LOGGER_NAME',
+              help='Name of the logger', show_default=True)
 @click.pass_context
 def log_cli(ctx, name, *args, **kwargs):
     """
@@ -32,6 +35,7 @@ def log_cli(ctx, name, *args, **kwargs):
     """
     initLogging()
     ctx.obj = LogCtx('ocrd.' + name)
+
 
 def _bind_log_command(lvl):
     @click.argument('msgs', nargs=-1)
@@ -46,6 +50,7 @@ def _bind_log_command(lvl):
             msg = list(msgs) if '%s' in msgs[0] else ' '.join([x.replace('%', '%%') for x in msgs])
             ctx.log(lvl.upper(), msg)
     return _log_wrapper
+
 
 for _lvl in ['trace', 'debug', 'info', 'warning', 'error', 'critical']:
     log_cli.command(_lvl, help="Log a %s message" % _lvl.upper())(_bind_log_command(_lvl))

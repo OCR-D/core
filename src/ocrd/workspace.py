@@ -28,16 +28,13 @@ from ocrd_utils import (
     scale_coordinates,
     shift_coordinates,
     rotate_coordinates,
-    transform_coordinates,
     transpose_coordinates,
     crop_image,
     rotate_image,
     transpose_image,
     bbox_from_polygon,
-    polygon_from_points,
     xywh_from_bbox,
     pushd_popd,
-    is_local_filename,
     deprecated_alias,
     DEFAULT_METS_BASENAME,
     MIME_TO_EXT,
@@ -50,6 +47,7 @@ from .workspace_backup import WorkspaceBackupManager
 from .mets_server import ClientSideOcrdMets
 
 __all__ = ['Workspace']
+
 
 @contextmanager
 def download_temporary_file(url):
@@ -82,7 +80,7 @@ class Workspace():
         self,
         resolver,
         directory,
-        mets : Optional[Union[OcrdMets, ClientSideOcrdMets]] = None,
+        mets: Optional[Union[OcrdMets, ClientSideOcrdMets]] = None,
         mets_basename=DEFAULT_METS_BASENAME,
         automatic_backup=False,
         baseurl=None,
@@ -96,8 +94,9 @@ class Workspace():
             if self.is_remote:
                 mets = ClientSideOcrdMets(mets_server_url, self.directory)
                 if mets.workspace_path != self.directory:
-                    raise ValueError(f"METS server {mets_server_url} workspace directory '{mets.workspace_path}' differs "
-                            f"from local workspace directory '{self.directory}'. These are not the same workspaces.")
+                    raise ValueError(
+                        f"METS server {mets_server_url} workspace directory '{mets.workspace_path}' differs "
+                        f"from local workspace directory '{self.directory}'. These are not the same workspaces.")
             else:
                 mets = OcrdMets(filename=self.mets_target)
         self.mets = mets
@@ -148,7 +147,7 @@ class Workspace():
             if not copy_files:
                 fpath_src = Path(other_workspace.directory).resolve()
                 fpath_dst = Path(self.directory).resolve()
-                dstprefix = fpath_src.relative_to(fpath_dst) # raises ValueError if not a subpath
+                dstprefix = fpath_src.relative_to(fpath_dst)  # raises ValueError if not a subpath
                 f.local_filename = dstprefix / f.local_filename
                 return
             fpath_src = Path(other_workspace.directory, f.local_filename)
@@ -170,7 +169,6 @@ class Workspace():
             kwargs['fileGrp_mapping'] = kwargs.pop('filegrp_mapping')
 
         self.mets.merge(other_workspace.mets, after_add_cb=after_add_cb, **kwargs)
-
 
     @deprecated(version='1.0.0', reason="Use workspace.download_file")
     def download_url(self, url, **kwargs):
@@ -199,19 +197,23 @@ class Workspace():
                 file_path = Path(f.local_filename).absolute()
                 if file_path.exists():
                     try:
-                        file_path.relative_to(Path(self.directory).resolve()) # raises ValueError if not relative
+                        file_path.relative_to(Path(self.directory).resolve())  # raises ValueError if not relative
                         # If the f.local_filename exists and is within self.directory, nothing to do
                         log.debug(f"'local_filename' {f.local_filename} already within {self.directory} - nothing to do")
                     except ValueError:
                         # f.local_filename exists, but not within self.directory, copy it
-                        log.debug("Copying 'local_filename' %s to workspace directory %s" % (f.local_filename, self.directory))
-                        f.local_filename = self.resolver.download_to_directory(self.directory, f.local_filename, subdir=f.fileGrp)
+                        log.debug("Copying 'local_filename' %s to workspace directory %s" % (
+                            f.local_filename, self.directory))
+                        f.local_filename = self.resolver.download_to_directory(self.directory, f.local_filename,
+                                                                               subdir=f.fileGrp)
                     return f
                 if f.url:
-                    log.debug("OcrdFile has 'local_filename' but it doesn't resolve - trying to download from 'url' %s", f.url)
+                    log.debug("OcrdFile has 'local_filename' but it doesn't resolve - "
+                              "trying to download from 'url' %s", f.url)
                     url = f.url
                 elif self.baseurl:
-                    log.debug("OcrdFile has 'local_filename' but it doesn't resolve, and no 'url' - trying 'baseurl' %s with 'local_filename' %s",
+                    log.debug("OcrdFile has 'local_filename' but it doesn't resolve, and no 'url' - "
+                              "trying 'baseurl' %s with 'local_filename' %s",
                               self.baseurl, f.local_filename)
                     url = '%s/%s' % (self.baseurl, f.local_filename)
                 else:
@@ -223,7 +225,8 @@ class Workspace():
             if f.url:
                 # If f.url is set, download the file to the workspace
                 basename = '%s%s' % (f.ID, MIME_TO_EXT.get(f.mimetype, '')) if f.ID else f.basename
-                f.local_filename = self.resolver.download_to_directory(self.directory, f.url, subdir=f.fileGrp, basename=basename)
+                f.local_filename = self.resolver.download_to_directory(self.directory, f.url,
+                                                                       subdir=f.fileGrp, basename=basename)
                 return f
             # If neither f.local_filename nor f.url is set, fail
             raise ValueError(f"OcrdFile {f} has neither 'url' nor 'local_filename', so cannot be downloaded")
@@ -281,7 +284,8 @@ class Workspace():
             if not force:
                 raise e
 
-    def remove_file_group(self, USE, recursive=False, force=False, keep_files=False, page_recursive=False, page_same_group=False):
+    def remove_file_group(self, USE, recursive=False, force=False, keep_files=False,
+                          page_recursive=False, page_same_group=False):
         """
         Remove a METS `fileGrp`.
 
@@ -302,7 +306,8 @@ class Workspace():
         file_dirs = []
         if recursive:
             for f in self.mets.find_files(fileGrp=USE):
-                self.remove_file(f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
+                self.remove_file(
+                    f, force=force, keep_file=keep_files, page_recursive=page_recursive, page_same_group=page_same_group)
                 if f.local_filename:
                     f_dir = path.dirname(f.local_filename)
                     if f_dir:
@@ -319,7 +324,6 @@ class Workspace():
                 for file_dir in set(file_dirs):
                     if Path(file_dir).is_dir() and not listdir(file_dir):
                         Path(file_dir).rmdir()
-
 
     def rename_file_group(self, old, new):
         """
@@ -361,7 +365,8 @@ class Workspace():
                 new_id = sub(r'^%s' % old, r'%s' % new, mets_file.ID)
                 try:
                     next(self.mets.find_files(ID=new_id))
-                    log.warning("ID %s already exists, not changing ID while renaming %s -> %s" % (new_id, old_local_filename, new_local_filename))
+                    log.warning("ID %s already exists, not changing ID while renaming %s -> %s" % (
+                        new_id, old_local_filename, new_local_filename))
                 except StopIteration:
                     mets_file.ID = new_id
             # change file paths in PAGE-XML imageFilename and filename attributes
@@ -378,7 +383,8 @@ class Workspace():
                     for old_local_filename, new_local_filename in local_filename_replacements.items():
                         if ai.filename == old_local_filename:
                             changed = True
-                            log.debug("Rename pc:Page/../AlternativeImage: %s -> %s" % (old_local_filename, new_local_filename))
+                            log.debug("Rename pc:Page/../AlternativeImage: %s -> %s" % (
+                                old_local_filename, new_local_filename))
                             ai.filename = new_local_filename
                 if changed:
                     log.debug("PAGE-XML changed, writing %s" % (page_file.local_filename))
@@ -502,7 +508,7 @@ class Workspace():
     def _resolve_image_as_pil(self, image_url, coords=None):
         log = getLogger('ocrd.workspace._resolve_image_as_pil')
         pil_image = self._apply_mets_file(image_url, Image.open)
-        pil_image.load() # alloc and give up the FD
+        pil_image.load()  # alloc and give up the FD
 
         # Pillow does not properly support higher color depths
         # (e.g. 16-bit or 32-bit or floating point grayscale),
@@ -544,7 +550,7 @@ class Workspace():
 
         # FIXME: remove or replace this by (image_from_polygon+) crop_image ...
         log.debug("Converting PIL to OpenCV: %s", image_url)
-        color_conversion = COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else  COLOR_RGB2BGR
+        color_conversion = COLOR_GRAY2BGR if pil_image.mode in ('1', 'L') else COLOR_RGB2BGR
         pil_as_np_array = np.array(pil_image).astype('uint8') if pil_image.mode == '1' else np.array(pil_image)
         cv2_image = cvtColor(pil_as_np_array, color_conversion)
 
@@ -659,8 +665,8 @@ class Workspace():
         orientation = (page_coords['angle'] + 45) % 360
         orientation = orientation - (orientation % 90)
         skew = (page_coords['angle'] % 360) - orientation
-        skew = 180 - (180 - skew) % 360 # map to [-45,45]
-        page_coords['angle'] = 0 # nothing applied yet (depends on filters)
+        skew = 180 - (180 - skew) % 360  # map to [-45,45]
+        page_coords['angle'] = 0  # nothing applied yet (depends on filters)
         log.debug("page '%s' has %s orientation=%d skew=%.2f",
                   page_id, "border," if border else "", orientation, skew)
         if page_image_info.resolution != 1:
@@ -696,7 +702,7 @@ class Workspace():
                         for feature in feature_selector.split(',') if feature) and
                     not any(feature in featureset
                             for feature in feature_filter.split(',') if feature) and
-                    len(featureset.difference(auto_features)) >= \
+                    len(featureset.difference(auto_features)) >=
                     len(best_features.difference(auto_features))):
                     best_features = featureset
                     best_image = alternative_image
@@ -705,7 +711,7 @@ class Workspace():
                           alternative_images.index(best_image) + 1,
                           best_features, page_id)
                 page_image = self._resolve_image_as_pil(best_image.get_filename())
-                page_coords['features'] = best_image.get_comments() # including duplicates
+                page_coords['features'] = best_image.get_comments()  # including duplicates
 
         # adjust the coord transformation to the steps applied on the image,
         # and apply steps on the existing image in case it is missing there,
@@ -727,18 +733,18 @@ class Workspace():
         for i, feature in enumerate(alternative_image_features +
                                     (['cropped']
                                      if (border and
-                                         not 'cropped' in alternative_image_features and
-                                         not 'cropped' in feature_filter.split(','))
+                                         'cropped' not in alternative_image_features and
+                                         'cropped' not in feature_filter.split(','))
                                      else []) +
                                     (['rotated-%d' % orientation]
                                      if (orientation and
-                                         not 'rotated-%d' % orientation in alternative_image_features and
-                                         not 'rotated-%d' % orientation in feature_filter.split(','))
+                                         'rotated-%d' % orientation not in alternative_image_features and
+                                         'rotated-%d' % orientation not in feature_filter.split(','))
                                      else []) +
                                     (['deskewed']
                                      if (skew and
-                                         not 'deskewed' in alternative_image_features and
-                                         not 'deskewed' in feature_filter.split(','))
+                                         'deskewed' not in alternative_image_features and
+                                         'deskewed' not in feature_filter.split(','))
                                      else []) +
                                     # not a feature to be added, but merely as a fallback position
                                     # to always enter loop at i == len(alternative_image_features)
@@ -931,15 +937,15 @@ class Workspace():
             orientation = (angle + 45) % 360
             orientation = orientation - (orientation % 90)
             skew = (angle % 360) - orientation
-            skew = 180 - (180 - skew) % 360 # map to [-45,45]
+            skew = 180 - (180 - skew) % 360  # map to [-45,45]
             log.debug("segment '%s' has orientation=%d skew=%.2f",
                       segment.id, orientation, skew)
         else:
             orientation = 0
             skew = 0
-        segment_coords['angle'] = parent_coords['angle'] # nothing applied yet (depends on filters)
+        segment_coords['angle'] = parent_coords['angle']  # nothing applied yet (depends on filters)
         if 'DPI' in parent_coords:
-            segment_coords['DPI'] = parent_coords['DPI'] # not rescaled yet
+            segment_coords['DPI'] = parent_coords['DPI']  # not rescaled yet
 
         # initialize AlternativeImage@comments classes from parent, except
         # for those operations that can apply on multiple hierarchy levels:
@@ -971,7 +977,7 @@ class Workspace():
                         for feature in feature_selector.split(',') if feature) and
                     not any(feature in featureset
                             for feature in feature_filter.split(',') if feature) and
-                    len(featureset.difference(auto_features)) >= \
+                    len(featureset.difference(auto_features)) >=
                     len(best_features.difference(auto_features))):
                     best_features = featureset
                     best_image = alternative_image
@@ -980,7 +986,7 @@ class Workspace():
                           alternative_images.index(best_image) + 1,
                           best_features, segment.id)
                 segment_image = self._resolve_image_as_pil(alternative_image.get_filename())
-                segment_coords['features'] = best_image.get_comments() # including duplicates
+                segment_coords['features'] = best_image.get_comments()  # including duplicates
 
         alternative_image_features = segment_coords['features'].split(',')
         for duplicate_feature in set([feature for feature in alternative_image_features
@@ -993,13 +999,13 @@ class Workspace():
         for i, feature in enumerate(alternative_image_features +
                                     (['rotated-%d' % orientation]
                                      if (orientation and
-                                         not 'rotated-%d' % orientation in alternative_image_features and
-                                         not 'rotated-%d' % orientation in feature_filter.split(','))
+                                         'rotated-%d' % orientation not in alternative_image_features and
+                                         'rotated-%d' % orientation not in feature_filter.split(','))
                                      else []) +
                                     (['deskewed']
                                      if (skew and
-                                         not 'deskewed' in alternative_image_features and
-                                         not 'deskewed' in feature_filter.split(','))
+                                         'deskewed' not in alternative_image_features and
+                                         'deskewed' not in feature_filter.split(','))
                                      else []) +
                                     # not a feature to be added, but merely as a fallback position
                                     # to always enter loop at i == len(alternative_image_features)
@@ -1052,13 +1058,13 @@ class Workspace():
         return segment_image, segment_coords
 
     # pylint: disable=redefined-builtin
-    def save_image_file(self, image : Image.Image,
-                        file_id : str,
-                        file_grp : str,
-                        file_path : Optional[str] = None,
-                        page_id : Optional[str] = None,
-                        mimetype : str = 'image/png',
-                        force : bool = False) -> str:
+    def save_image_file(self, image: Image.Image,
+                        file_id: str,
+                        file_grp: str,
+                        file_path: Optional[str] = None,
+                        page_id: Optional[str] = None,
+                        mimetype: str = 'image/png',
+                        force: bool = False) -> str:
         """Store an image in the filesystem and reference it as new file in the METS.
 
         Args:
@@ -1120,6 +1126,7 @@ class Workspace():
         with pushd_popd(self.directory):
             return self.mets.find_files(*args, **kwargs)
 
+
 def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwargs):
     segment_coords = parent_coords.copy()
     # get polygon outline of segment relative to parent image:
@@ -1131,8 +1138,8 @@ def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwarg
     #  also possibly different from size after rotation below/AlternativeImage):
     segment_xywh = xywh_from_bbox(*segment_bbox)
     # crop, if (still) necessary:
-    if (not isinstance(segment, BorderType) or # always crop below page level
-        not op in parent_coords['features']):
+    if (not isinstance(segment, BorderType) or  # always crop below page level
+        op not in parent_coords['features']):
         if op == 'recropped':
             log.debug("Recropping %s", name)
         elif isinstance(segment, BorderType):
@@ -1152,6 +1159,7 @@ def _crop(log, name, segment, parent_image, parent_coords, op='cropped', **kwarg
                   -segment_bbox[1]]))
     return segment_image, segment_coords, segment_xywh
 
+
 def _reflect(log, name, orientation, segment_image, segment_coords, segment_xywh):
     # Transpose in affine coordinate transform:
     # (consistent with image transposition or AlternativeImage below)
@@ -1159,7 +1167,7 @@ def _reflect(log, name, orientation, segment_image, segment_coords, segment_xywh
         90: Image.Transpose.ROTATE_90,
         180: Image.Transpose.ROTATE_180,
         270: Image.Transpose.ROTATE_270
-    }.get(orientation) # no default
+    }.get(orientation)  # no default
     segment_coords['transform'] = transpose_coordinates(
         segment_coords['transform'], transposition,
         np.array([0.5 * segment_xywh['w'],
@@ -1174,6 +1182,7 @@ def _reflect(log, name, orientation, segment_image, segment_coords, segment_xywh
         segment_coords['features'] += ',rotated-%d' % orientation
     return segment_image, segment_coords, segment_xywh
 
+
 def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xywh, **kwargs):
     # Rotate around center in affine coordinate transform:
     # (consistent with image rotation or AlternativeImage below)
@@ -1185,12 +1194,12 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
         [segment_xywh['w'], segment_xywh['h']], skew)
     segment_coords['angle'] += skew
     # deskew, if (still) necessary:
-    if not 'deskewed' in segment_coords['features']:
+    if 'deskewed' not in segment_coords['features']:
         log.debug("Rotating %s by %.2f°", name, skew)
         segment_image = rotate_image(segment_image, skew, **kwargs)
         segment_coords['features'] += ',deskewed'
         if (segment and
-            (not isinstance(segment, BorderType) or # always crop below page level
+            (not isinstance(segment, BorderType) or  # always crop below page level
              'cropped' in segment_coords['features'])):
             # re-crop to new bbox (which may deviate
             # if segment polygon was not a rectangle)
@@ -1198,7 +1207,7 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
                 log, name, segment, segment_image, segment_coords,
                 op='recropped', **kwargs)
     elif (segment and
-          (not isinstance(segment, BorderType) or # always crop below page level
+          (not isinstance(segment, BorderType) or  # always crop below page level
            'cropped' in segment_coords['features'])):
         # only shift coordinates as if re-cropping
         segment_polygon = coordinates_of_segment(segment, segment_image, segment_coords)
@@ -1210,6 +1219,7 @@ def _rotate(log, name, skew, segment, segment_image, segment_coords, segment_xyw
                       -segment_bbox[1]]))
     return segment_image, segment_coords, segment_xywh
 
+
 def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwargs):
     # Resize linearly
     segment_coords['transform'] = scale_coordinates(
@@ -1218,7 +1228,7 @@ def _scale(log, name, factor, segment_image, segment_coords, segment_xywh, **kwa
     segment_xywh['w'] *= factor
     segment_xywh['h'] *= factor
     # resize, if (still) necessary
-    if not 'scaled' in segment_coords['features']:
+    if 'scaled' not in segment_coords['features']:
         log.debug("Scaling %s by %.2f", name, factor)
         segment_coords['features'] += ',scaled'
         # FIXME: validate factor against PAGE-XML attributes

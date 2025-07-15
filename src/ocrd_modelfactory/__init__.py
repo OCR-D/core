@@ -40,7 +40,8 @@ def exif_from_filename(image_filename):
         ocrd_exif = OcrdExif(pil_img)
     return ocrd_exif
 
-def page_from_image(input_file : Union[OcrdFile, ClientSideOcrdFile], **kwargs) -> OcrdPage:
+
+def page_from_image(input_file: Union[OcrdFile, ClientSideOcrdFile], **kwargs) -> OcrdPage:
     """
     Create :py:class:`~ocrd_models.ocrd_page.OcrdPage`
     from an :py:class:`~ocrd_models.ocrd_file.OcrdFile`
@@ -73,9 +74,10 @@ def page_from_image(input_file : Union[OcrdFile, ClientSideOcrdFile], **kwargs) 
         pcGtsId=input_file.ID
     )
     mapping = {}
-    etree : ET._Element = pcgts.to_etree(mapping_=mapping)
+    etree: ET._Element = pcgts.to_etree(mapping_=mapping)
     revmap = dict(((node, element) for element, node in mapping.items()))
     return OcrdPage(pcgts, etree, mapping, revmap)
+
 
 def page_from_file(input_file, **kwargs) -> OcrdPage:
     """

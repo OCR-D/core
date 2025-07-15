@@ -11,6 +11,7 @@ from .utils import xmllint_format
 for curie, url in NAMESPACES.items():
     ET.register_namespace(curie, url)
 
+
 class OcrdXmlDocument():
     """
     Base class for XML documents loaded from either content or filename.
