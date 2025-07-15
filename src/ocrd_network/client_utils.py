@@ -1,4 +1,5 @@
 import json
+import os
 from requests import get as request_get, post as request_post
 from time import sleep
 from .constants import JobState, NETWORK_PROTOCOLS
