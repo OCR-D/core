@@ -718,7 +718,7 @@ class ProcessingServer(FastAPI):
     async def run_workflow(
         self,
         mets_path: str,
-        workflow: Union[UploadFile, None] = File(None),
+        workflow: Union[UploadFile, str, None] = File(None),
         workflow_id: str = None,
         agent_type: AgentType = AgentType.PROCESSING_WORKER,
         page_id: str = None,
@@ -844,10 +844,14 @@ class ProcessingServer(FastAPI):
         workflow_job_state = self._produce_workflow_status_simple_response(processing_jobs=jobs)
         return {"state": workflow_job_state}
 
-    async def upload_workflow(self, workflow: UploadFile) -> Dict[str, str]:
+    async def upload_workflow(self, workflow: Union[UploadFile, str]) -> Dict[str, str]:
         """ Store a script for a workflow in the database
         """
-        workflow_content = await generate_workflow_content(workflow)
+        if isinstance(workflow, str):
+            with open(workflow) as wf_file:
+                workflow_content = wf_file.read()
+        else:
+            workflow_content = await generate_workflow_content(workflow)
         validate_workflow(self.log, workflow_content)
         content_hash = generate_workflow_content_hash(workflow_content)
         try:
@@ -866,12 +870,16 @@ class ProcessingServer(FastAPI):
         await db_workflow_script.insert()
         return {"workflow_id": workflow_id}
 
-    async def replace_workflow(self, workflow_id, workflow: UploadFile) -> Dict[str, str]:
+    async def replace_workflow(self, workflow_id, workflow: Union[UploadFile, str]) -> Dict[str, str]:
         """ Update a workflow script file in the database
         """
         try:
             db_workflow_script = await db_get_workflow_script(workflow_id)
-            workflow_content = await generate_workflow_content(workflow)
+            if isinstance(workflow, str):
+                with open(workflow) as wf_file:
+                    workflow_content = wf_file.read()
+            else:
+                workflow_content = await generate_workflow_content(workflow)
             validate_workflow(self.log, workflow_content)
             db_workflow_script.content = workflow_content
             content_hash = generate_workflow_content_hash(workflow_content)
