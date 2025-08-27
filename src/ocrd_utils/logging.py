@@ -32,6 +32,7 @@ import logging
 import logging.config
 from pathlib import Path
 import sys
+from os import chmod
 
 from .constants import LOG_FORMAT, LOG_TIMEFMT
 from .config import config
@@ -72,18 +73,20 @@ _ocrdLevel2pythonLevel = {
     'FATAL': 'ERROR',
 }
 
+
 def tf_disable_interactive_logs():
     try:
-        from os import environ # pylint: disable=import-outside-toplevel
+        from os import environ  # pylint: disable=import-outside-toplevel
         # This env variable must be set before importing from Keras
         environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-        from tensorflow.keras.utils import disable_interactive_logging # pylint: disable=import-outside-toplevel
+        from tensorflow.keras.utils import disable_interactive_logging  # pylint: disable=import-outside-toplevel
         # Enabled interactive logging throws an exception
         # due to a call of sys.stdout.flush()
         disable_interactive_logging()
     except ImportError:
         # Nothing should be handled here if TF is not available
         pass
+
 
 def getLevelName(lvl):
     """
@@ -92,6 +95,7 @@ def getLevelName(lvl):
     lvl = _ocrdLevel2pythonLevel.get(lvl, lvl)
     return logging.getLevelName(lvl)
 
+
 def getLogger(*args, **kwargs):
     """
     Wrapper around ``logging.getLogger`` that calls :py:func:`initLogging` if
@@ -99,6 +103,7 @@ def getLogger(*args, **kwargs):
     """
     logger = logging.getLogger(*args, **kwargs)
     return logger
+
 
 def setOverrideLogLevel(lvl, silent=not config.OCRD_LOGGING_DEBUG):
     """
@@ -118,6 +123,7 @@ def setOverrideLogLevel(lvl, silent=not config.OCRD_LOGGING_DEBUG):
                 print(f'[LOGGING] Overriding {logger_name} log level to {lvl}', file=sys.stderr)
             logging.getLogger(logger_name).setLevel(lvl)
 
+
 def get_logging_config_files():
     """
     Return a list of all ``ocrd_logging.conf`` files found in CWD, HOME or /etc.
@@ -127,9 +133,9 @@ def get_logging_config_files():
         Path.home(),
         Path('/etc'),
     ]
-    return [f for f \
-            in [p / 'ocrd_logging.conf' for p in CONFIG_PATHS] \
-            if f.exists()]
+    return [file for file in [path / 'ocrd_logging.conf' for path in CONFIG_PATHS]
+            if file.exists()]
+
 
 def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_LOGGING_DEBUG):
     """
@@ -166,6 +172,15 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
         if not silent:
             print(f"[LOGGING] Picked up logging config at {config_file}", file=sys.stderr)
         logging.config.fileConfig(config_file)
+        # Set permission of processing-server logfile to 666 to prevent possible permission erros while logging
+        try:
+            network_logger = logging.getLogger("ocrd_network")
+            for handler in network_logger.handlers:
+                if isinstance(handler, logging.FileHandler):
+                    chmod(handler.baseFilename, 0o666)
+        except PermissionError:
+            # if the file exists the permissions are supposed to already fit
+            pass
     else:
         if not silent:
             print("[LOGGING] Initializing logging with built-in defaults", file=sys.stderr)
@@ -179,6 +194,7 @@ def initLogging(builtin_only=False, force_reinit=False, silent=not config.OCRD_L
             logging.getLogger(logger_name).setLevel(logger_level)
     _initialized_flag = True
 
+
 def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     """
     Disables all logging of the ``ocrd`` logger and descendants
@@ -186,7 +202,7 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
     Keyword Args:
         - silent (bool, True): Whether to log logging behavior by printing to stderr
     """
-    global _initialized_flag # pylint: disable=global-statement
+    global _initialized_flag  # pylint: disable=global-statement
     if _initialized_flag and not silent:
         print("[LOGGING] Disabling logging", file=sys.stderr)
     _initialized_flag = False
@@ -202,4 +218,3 @@ def disableLogging(silent=not config.OCRD_LOGGING_DEBUG):
         logging.root.removeHandler(handler)
     # Python default log level is WARNING
     logging.root.setLevel(logging.WARNING)
-

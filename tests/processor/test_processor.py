@@ -3,6 +3,7 @@ import json
 from PIL import Image
 from io import BytesIO
 from contextlib import ExitStack
+import multiprocessing as mp
 
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -232,8 +233,16 @@ class TestProcessor(TestCase):
     def test_run_output0(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
+            file1 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0001_FULLTEXT.xml'))
+            file2 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0002_FULLTEXT.xml'))
+            run_processor(DummyProcessorWithOutput, workspace=ws,
+                          input_file_grp="GRP1",
+                          output_file_grp="OCR-D-OUT")
+            assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 0, "no output because no download"
+            ws.download_file(file1)
+            ws.download_file(file2)
             run_processor(DummyProcessorWithOutput, workspace=ws,
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
@@ -303,7 +312,7 @@ class TestProcessor(TestCase):
         assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
-        with pytest.raises(TimeoutError) as exc:
+        with pytest.raises(mp.TimeoutError) as exc:
             run_processor(DummyProcessorWithOutputSleep, workspace=ws,
                           input_file_grp="OCR-D-IMG",
                           output_file_grp="OCR-D-OUT",
@@ -312,8 +321,12 @@ class TestProcessor(TestCase):
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001')
-            ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002')
+            file1 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id='phys_0001',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0001_FULLTEXT.xml'))
+            file2 = ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0002',
+                                url=assets.path_to('SBB0000F29300010000/data/OCR-D-GT-PAGE/FILE_0002_FULLTEXT.xml'))
+            ws.download_file(file1)
+            ws.download_file(file2)
             config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
             ws.add_file('OCR-D-OUT', mimetype=MIMETYPE_PAGE, file_id='OCR-D-OUT_phys_0001', page_id='phys_0001')
             config.OCRD_EXISTING_OUTPUT = 'ABORT'
@@ -362,7 +375,8 @@ class TestProcessor(TestCase):
             ws.add_file('GRP2', mimetype='application/alto+xml', file_id='foobar2', page_id='phys_0001')
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar4', page_id='phys_0002')
-            for page_id in [None, 'phys_0001,phys_0002']:
+            ws.add_file('GRP3', mimetype=MIMETYPE_PAGE, file_id='foobar5', page_id='phys_0003')
+            for page_id in [None, 'phys_0001,phys_0002', '~phys_0003']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(None)
                     proc.workspace = ws
@@ -440,7 +454,8 @@ class TestProcessor(TestCase):
             ws = self.resolver.workspace_from_nothing(directory=tempdir)
             ws.add_file('GRP1', mimetype=MIMETYPE_PAGE, file_id='foobar1', page_id=None)
             ws.add_file('GRP2', mimetype=MIMETYPE_PAGE, file_id='foobar2', page_id='phys_0001')
-            for page_id in [None, 'phys_0001']:
+            ws.add_file('GRP3', mimetype=MIMETYPE_PAGE, file_id='foobar3', page_id='phys_0002')
+            for page_id in [None, 'phys_0001', '~phys_0002']:
                 with self.subTest(page_id=page_id):
                     proc = ZipTestProcessor(None)
                     proc.workspace = ws

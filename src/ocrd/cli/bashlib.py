@@ -29,6 +29,7 @@ from ocrd.processor import Processor
 # ocrd bashlib
 # ----------------------------------------------------------------------
 
+
 @click.group('bashlib')
 def bashlib_cli():
     """
@@ -39,6 +40,7 @@ def bashlib_cli():
 # ocrd bashlib filename
 # ----------------------------------------------------------------------
 
+
 @bashlib_cli.command('filename')
 def bashlib_filename():
     """
@@ -47,6 +49,7 @@ def bashlib_filename():
     For functions exported by bashlib, see `<../../README.md>`_
     """
     print(BASHLIB_FILENAME)
+
 
 @bashlib_cli.command('constants')
 @click.argument('name')
@@ -71,6 +74,7 @@ def bashlib_constants(name):
             print("[%s]=%s" % (key, val[key]), end=' ')
     else:
         print(val)
+
 
 @bashlib_cli.command('input-files')
 @click.option('--ocrd-tool', help="path to ocrd-tool.json of processor to feed", default=None)
@@ -122,6 +126,7 @@ def bashlib_input_files(ocrd_tool, executable, **kwargs):
             def metadata_location(self):
                 # needed for metadata loading and validation mechanism
                 return ocrd_tool
+
             @property
             def executable(self):
                 # needed for ocrd_tool lookup
@@ -137,8 +142,8 @@ def bashlib_input_files(ocrd_tool, executable, **kwargs):
                         # required now
                         'input_file_grp_cardinality': 1,
                         'output_file_grp_cardinality': 1,
-                        'steps': ['']
-                }
+                        'steps': ['']}
+
             @property
             def version(self):
                 # needed to satisfy the validator and wrapper

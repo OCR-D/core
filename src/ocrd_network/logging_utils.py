@@ -9,11 +9,22 @@ def configure_file_handler_with_formatter(logger: Logger, log_file: Path, mode: 
     file_handler = FileHandler(filename=log_file, mode=mode)
     file_handler.setFormatter(Formatter(LOG_FORMAT))
     logger.addHandler(file_handler)
+    try:
+        log_file.chmod(0o666)
+    except PermissionError:
+        # if the file exists the permissions are supposed to already fit
+        pass
 
 
 def get_root_logging_dir(module_name: NetworkLoggingDirs) -> Path:
     module_log_dir = Path(config.OCRD_NETWORK_LOGS_ROOT_DIR, module_name.value)
-    module_log_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        module_log_dir.mkdir(parents=True, exist_ok=True)
+        module_log_dir.chmod(0o777)
+    except PermissionError:
+        # if the folder exists the permissions are supposed to already fit
+        pass
+
     return module_log_dir
 
 

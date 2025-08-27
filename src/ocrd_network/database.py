@@ -65,7 +65,7 @@ async def sync_db_create_workspace(mets_path: str) -> DBWorkspace:
 async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = None) -> DBWorkspace:
     workspace = None
     if not workspace_id and not workspace_mets_path:
-        raise ValueError(f'Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
+        raise ValueError('Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
     if workspace_id:
         workspace = await DBWorkspace.find_one(
             DBWorkspace.workspace_id == workspace_id
@@ -89,7 +89,7 @@ async def sync_db_get_workspace(workspace_id: str = None, workspace_mets_path: s
 async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs) -> DBWorkspace:
     workspace = None
     if not workspace_id and not workspace_mets_path:
-        raise ValueError(f'Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
+        raise ValueError('Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
     if workspace_id:
         workspace = await DBWorkspace.find_one(DBWorkspace.workspace_id == workspace_id)
         if not workspace:

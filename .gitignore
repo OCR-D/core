@@ -127,3 +127,4 @@ ws1
 *.doctrees
 .vscode
 *.BAK
+/params.json

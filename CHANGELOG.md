@@ -23,6 +23,67 @@ Fixed:
   * `ocrd_utils.list_all_resources`: no subpaths except for `cwd` location, OCR-D/spec#263, #1315
   * `ocrd_utils.list_all_resources`: filter resources via media (MIME) type, if specified, #1315
 
+Changed:
+
+  * `ocrd network client workflow run`: Allow passing workflow as `ocrd process` tasks as alternative to a workflow file, #1264, #1335
+  * Processing Server: Store page ranges as comma-separated page IDs instead of relying on `..` numeric range operator, #1333, #1334
+
+## [3.5.1] - 2025-07-04
+
+Fixed:
+
+  * Pin shapely runtime dependency and numpy build dependency for Python <= 3.8, #1332
+
+## [3.5.0] - 2025-06-20
+
+Added:
+
+  * Extended syntax for filtering pages with `--page-id` and `OcrdMets.find_files`, #1328, #1328
+    * negation operator `~`, e.g. `~PHYS_0001..PHYS_0004` to **not** match the first 4 pages
+    * filtering by attributes of `mets:div` for both physical (prefix `physical:`) and `logical` (prefix `logical:`) elements, e.g. `~logical:type:binding` to skip all pages that are book bindings
+
+## [3.4.1] - 2025-06-20
+
+Fixed:
+
+  * `OCRD_MISSING_INPUT` config variable only checked existence of `mets:file` not the actual file on disk even when set to `ABORT`, #1330
+  * Fix processor CLI subcommand `worker|server` broken due to changed `Enum` handling in click 8.2, #1331
+  * Typo: proper log message if media type could not be detemined, #1330,  bertsky/workflow-configuration#35
+  * `Processor.zip_input_files`: always sort pages in physical order, #1330
+
+## [3.4.0] - 2025-04-30
+
+Added:
+
+  * `make test-cuda-{torch,tf2,tf1}`: ensure CUDA is available and shapely#1598 does not trigger, #1326
+  * `ocrd ocrd-tool dump-module-dirs` to dump `moduledir` of every tool in an `ocrd-tool.json`, #1326
+
+Fixed:
+
+  * `ocrd workspace find --undo-download`: Unset `local_filename` only after unlinking, #1324, #1325
+  * METS Server: do not convert `None` to the string `"None"`, #1324, #1325
+
+Changed:
+
+  * Ensure logging files and directories are writeable for non-root users, #1214
+
+## [3.3.2] - 2025-04-17
+
+Fixed:
+
+  * METS Server: properly escape `.` for UDS variant, #1323
+  * METS Server: resolve workspace path to absolute, #1323
+
+## [3.3.1] - 2025-04-16
+
+Changed:
+
+  - Allow not setting a `-O` output `fileGrp` for processors that work only on METS or don't produce output, #1321
+
+Fixed:
+
+  - Typo in `config.OCRD_MISSING_OUTPUT` behavior: `abort` -> `ABORT`, #1321
+
 ## [3.3.0] - 2025-03-28
 
 Fixed:
@@ -2530,6 +2591,12 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.5.1]: ../../compare/v3.5.1..v3.5.0
+[3.5.0]: ../../compare/v3.5.0..v3.4.1
+[3.4.1]: ../../compare/v3.4.1..v3.4.0
+[3.4.0]: ../../compare/v3.4.0..v3.3.2
+[3.3.2]: ../../compare/v3.3.2..v3.3.1
+[3.3.1]: ../../compare/v3.3.1..v3.3.0
 [3.3.0]: ../../compare/v3.3.0..v3.2.0
 [3.2.0]: ../../compare/v3.2.0..v3.1.0
 [3.1.2]: ../../compare/v3.1.2..v3.1.1

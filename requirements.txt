@@ -8,7 +8,7 @@ elementpath
 fastapi>=0.78.0
 filetype
 Flask
-frozendict>=2.3.4
+frozendict>=2.4.0
 gdown
 httpx>=0.22.0
 importlib_metadata ; python_version < '3.8'
@@ -32,6 +32,7 @@ python-multipart
 pyyaml
 requests
 requests_unixsocket2
-shapely
+shapely < 2.0.2 ; python_version < '3.9'
+shapely >= 2 ; python_version >= '3.9'
 uvicorn
 uvicorn>=0.17.6

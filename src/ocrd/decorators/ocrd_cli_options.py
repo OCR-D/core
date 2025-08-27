@@ -1,5 +1,5 @@
 import click
-from click import option, Path, group, command, argument
+from click import option, Path, argument
 from ocrd_utils import DEFAULT_METS_BASENAME
 from ocrd_network import AgentType
 from .parameter_option import parameter_option, parameter_override_option
@@ -56,7 +56,7 @@ def ocrd_cli_options(f):
         # subcommands. So we have to work around that by creating a
         # pseudo-subcommand handled in ocrd_cli_wrap_processor
         argument('subcommand', nargs=1, required=False,
-                 type=click.Choice([AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER])),
+                 type=click.Choice(list(map(str, AgentType)))),
     ]
     for param in params:
         param(f)

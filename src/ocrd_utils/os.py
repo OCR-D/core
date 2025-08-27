@@ -49,6 +49,7 @@ def abspath(url : str) -> str:
         url = url[len('file://'):]
     return abspath_(url)
 
+
 @contextmanager
 def pushd_popd(newcwd : Union[str, PathLike] = None, tempdir : bool = False) -> Iterator[PathLike]:
     if newcwd and tempdir:
@@ -77,13 +78,13 @@ def unzip_file_to_dir(path_to_zip : Union[str, PathLike], output_directory : str
     with ZipFile(path_to_zip, 'r') as z:
         z.extractall(output_directory)
 
+
 @lru_cache()
 def get_ocrd_tool_json(executable : str) -> Dict[str, Any]:
     """
     Get the ``ocrd-tool`` description of ``executable``.
     """
     ocrd_tool = {}
-    executable_name = Path(executable).name
     try:
         ocrd_all_tool = loads(resource_string('ocrd', 'ocrd-all-tool.json'))
         ocrd_tool = ocrd_all_tool[executable]
@@ -95,6 +96,7 @@ def get_ocrd_tool_json(executable : str) -> Dict[str, Any]:
     if 'resource_locations' not in ocrd_tool:
         ocrd_tool['resource_locations'] = RESOURCE_LOCATIONS
     return ocrd_tool
+
 
 @lru_cache()
 def get_moduledir(executable : str) -> str:
@@ -272,6 +274,7 @@ def get_processor_resource_types(executable : str, ocrd_tool : Optional[Dict[str
         return ['*/*']
     return mime_types
 
+
 # ht @pabs3
 # https://github.com/untitaker/python-atomicwrites/issues/42
 class AtomicWriterPerms(AtomicWriter):
@@ -287,6 +290,7 @@ class AtomicWriterPerms(AtomicWriter):
         fd = f.fileno()
         chmod(fd, mode)
         return f
+
 
 @contextmanager
 def atomic_write(fpath : str) -> Iterator[str]:
@@ -336,6 +340,7 @@ def guess_media_type(input_file : str, fallback : Optional[str] = None, applicat
     if mimetype == 'application/xml':
         mimetype = application_xml
     return mimetype
+
 
 @contextmanager
 def redirect_stderr_and_stdout_to_file(filename):

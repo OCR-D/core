@@ -1,7 +1,11 @@
 """
 Constants for ocrd_models.
 """
+from re import Pattern
 from enum import Enum, auto
+from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
+from typing import Any, List, Union
 from ocrd_utils import resource_string
 
 __all__ = [
@@ -28,6 +32,10 @@ __all__ = [
     'TAG_PAGE_TEXTEQUIV',
     'TAG_PAGE_TEXTREGION',
     'METS_PAGE_DIV_ATTRIBUTE',
+    'METS_STRUCT_DIV_ATTRIBUTE',
+    'METS_DIV_ATTRIBUTE_ATOM_PATTERN',
+    'METS_DIV_ATTRIBUTE_RANGE_PATTERN',
+    'METS_DIV_ATTRIBUTE_REGEX_PATTERN',
     'PAGE_REGION_TYPES',
     'PAGE_ALTIMG_FEATURES',
 ]
@@ -89,6 +97,7 @@ PAGE_ALTIMG_FEATURES = [
 
 
 class METS_PAGE_DIV_ATTRIBUTE(Enum):
+    """page selection attributes of PHYSICAL mets:structMap//mets:div"""
     ID = auto()
     ORDER = auto()
     ORDERLABEL = auto()
@@ -98,3 +107,116 @@ class METS_PAGE_DIV_ATTRIBUTE(Enum):
     @classmethod
     def names(cls):
         return [x.name for x in cls]
+
+    @classmethod
+    def type_prefix(cls):
+        """disambiguation prefix to use for all subtypes"""
+        return "physical:"
+
+    def prefix(self):
+        """disambiguation prefix to use for this attribute type"""
+        return self.type_prefix() + self.name.lower() + ":"
+
+
+class METS_STRUCT_DIV_ATTRIBUTE(Enum):
+    """page selection attributes of LOGICAL mets:structMap//mets:div"""
+    ID = auto()
+    DMDID = auto()
+    TYPE = auto()
+    LABEL = auto()
+
+    @classmethod
+    def names(cls):
+        return [x.name for x in cls]
+
+    @classmethod
+    def type_prefix(cls):
+        """disambiguation prefix to use for all subtypes"""
+        return "logical:"
+
+    def prefix(self):
+        """disambiguation prefix to use for this attribute type"""
+        return self.type_prefix() + self.name.lower() + ":"
+
+
+@dataclass
+class METS_DIV_ATTRIBUTE_PATTERN(ABC):
+    """page selection pattern (abstract supertype)"""
+
+    expr: Any
+    """pattern value to match a mets:div against"""
+    attr: List[Union[METS_PAGE_DIV_ATTRIBUTE, METS_STRUCT_DIV_ATTRIBUTE]] = field(
+        default_factory=lambda: list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE))
+    """attribute type(s) to match a mets:div for
+    (pre-disambiguated with prefix syntax, or filled upon first match)
+    """
+    has_matched: bool = field(init=False, default=False)
+    """whether this pattern has already been matched"""
+
+    def attr_prefix(self):
+        """attribute type disambiguation prefix corresponding to the current state of disambiguation"""
+        if self.attr == list(METS_PAGE_DIV_ATTRIBUTE) + list(METS_STRUCT_DIV_ATTRIBUTE):
+            return ""
+        if self.attr == list(METS_PAGE_DIV_ATTRIBUTE):
+            return METS_PAGE_DIV_ATTRIBUTE.type_prefix()
+        if self.attr == list(METS_STRUCT_DIV_ATTRIBUTE):
+            return METS_STRUCT_DIV_ATTRIBUTE.type_prefix()
+        assert len(self.attr) == 1, "unexpected type ambiguity: %s" % repr(self.attr)
+        return self.attr[0].prefix()
+
+    @abstractmethod
+    def _matches(self, input) -> bool:
+        return
+
+    def matches(self, input) -> bool:
+        """does the selection pattern match on the given attribute value?"""
+        if (matched := self._matches(input)):
+            self.has_matched = True
+        return matched
+
+
+@dataclass
+class METS_DIV_ATTRIBUTE_ATOM_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
+    """page selection pattern for literal (single value) matching"""
+
+    expr: str
+
+    def __repr__(self):
+        return "%s%s" % (self.attr_prefix(), self.expr)
+
+    def _matches(self, input):
+        return input == self.expr
+
+
+@dataclass
+class METS_DIV_ATTRIBUTE_RANGE_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
+    """page selection pattern for interval (list expansion) matching"""
+
+    expr: List[str]
+    start: str = field(init=False)
+    """first value of the range after expansion, before matching-exhausting"""
+    stop: str = field(init=False)
+    """last value of the range after expansion, before matching-exhausting"""
+
+    def __post_init__(self):
+        self.start = self.expr[0]
+        self.stop = self.expr[-1]
+
+    def __repr__(self):
+        return "%s%s..%s" % (self.attr_prefix(), self.start, self.stop)
+
+    def _matches(self, input):
+        return input in self.expr
+
+
+@dataclass
+class METS_DIV_ATTRIBUTE_REGEX_PATTERN(METS_DIV_ATTRIBUTE_PATTERN):
+    """page selection pattern for regular expression matching"""
+
+    expr: Pattern
+
+    def __repr__(self):
+        return "%s//%s" % (self.attr_prefix(), self.expr.pattern)
+
+    def _matches(self, input):
+        return bool(self.expr.fullmatch(input))

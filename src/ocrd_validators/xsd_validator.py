@@ -9,6 +9,7 @@ from ocrd_models import ValidationReport
 
 from .constants import XSD_PATHS
 
+
 #
 # -------------------------------------------------
 #
@@ -35,7 +36,7 @@ class XsdValidator():
             doc (etree.ElementTree|str|bytes):
             schema_url (str): URI of XML schema to validate against.
         """
-        return cls.instance(schema_url)._validate(doc) # pylint: disable=protected-access
+        return cls.instance(schema_url)._validate(doc)  # pylint: disable=protected-access
 
     def __init__(self, schema_url):
         """
@@ -55,7 +56,8 @@ class XsdValidator():
         Do the actual validation.
 
         Arguments:
-            doc (etree.ElementTree|str|bytes|pathlib.Path): the document. if etree: us as-is. if str/bytes: parse as XML string. If Path: read_text on it
+            doc (etree.ElementTree|str|bytes|pathlib.Path): the document.
+                (If etree: us as-is. If str/bytes: parse as XML string. If Path: read_text on it.)
 
         Returns: ValidationReport
         """

@@ -181,7 +181,7 @@ def test_mets_server_str(start_mets_server):
     assert str(f) == '<ClientSideOcrdFile fileGrp=OCR-D-IMG, ID=FILE_0001_IMAGE, mimetype=image/tiff, url=---, local_filename=OCR-D-IMG/FILE_0001_IMAGE.tif]/>'
     a = workspace_server.mets.agents[0]
     assert str(a) == '<ClientSideOcrdAgent [type=OTHER, othertype=SOFTWARE, role=CREATOR, otherrole=---, name=DFG-Koordinierungsprojekt zur Weiterentwicklung von Verfahren der Optical Character Recognition (OCR-D)]/>'
-    assert str(workspace_server.mets) == '<ClientSideOcrdMets[url=%s]>' % ('http+unix://%2Ftmp%2Focrd-mets-server.sock' if mets_server_url == TRANSPORTS[0] else TRANSPORTS[1])
+    assert str(workspace_server.mets) == '<ClientSideOcrdMets[url=%s]>' % ('http+unix://%2Ftmp%2Focrd-mets-server%2Esock' if mets_server_url == TRANSPORTS[0] else TRANSPORTS[1])
 
 def test_mets_test_unimplemented(start_mets_server):
     _, workspace_server = start_mets_server

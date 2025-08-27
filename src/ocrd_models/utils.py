@@ -13,6 +13,7 @@ __all__ = [
     'extract_mets_from_oai_content'
 ]
 
+
 def xmllint_format(xml):
     """
     Pretty-print XML like ``xmllint`` does.
@@ -24,6 +25,7 @@ def xmllint_format(xml):
     document = ET.fromstring(xml, parser)
     return ('%s\n%s' % ('<?xml version="1.0" encoding="UTF-8"?>',
                         ET.tostring(document, pretty_print=True, encoding='UTF-8').decode('utf-8'))).encode('utf-8')
+
 
 def handle_oai_response(response):
     """
@@ -62,9 +64,8 @@ def extract_mets_from_oai_content(data, preamble='<?xml version="1.0" encoding="
     mets_root_el = xml_root.find('.//{%s}mets' % NS['mets'])
     if mets_root_el is not None:
         new_tree = ET.ElementTree(mets_root_el)
-        xml_formatted = ET.tostring(new_tree,
-                                pretty_print=True,
-                                encoding='UTF-8').decode('UTF-8')
+        xml_formatted = ET.tostring(
+            new_tree, pretty_print=True, encoding='UTF-8').decode('UTF-8')
         formatted_content = '{}\n{}'.format(preamble, xml_formatted)
         return formatted_content.encode('UTF-8').replace(b'\n', b'\r\n')
 

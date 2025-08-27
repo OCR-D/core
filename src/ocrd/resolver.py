@@ -20,6 +20,7 @@ from ocrd.workspace import Workspace
 from ocrd_models import OcrdMets
 from ocrd_models.utils import handle_oai_response
 
+
 class Resolver():
     """
     Handle uploads, downloads, repository access, and manage temporary directories
@@ -31,11 +32,13 @@ class Resolver():
 
         If ``url`` looks like a file path, check whether that exists.
         If it does exist and is within ``directory` already, return early.
-        If it does exist but is outside of ``directory``. copy it.
-        If ``url` does not appear to be a file path, try downloading via HTTP, retrying ``retries`` times with timeout ``timeout`` between calls.
+        If it does exist but is outside of ``directory``, copy it.
+        If ``url` does not appear to be a file path, try downloading via HTTP,
+        retrying ``retries`` times with timeout ``timeout`` between calls.
 
         If ``basename`` is not given but ``subdir`` is, set ``basename`` to the last path segment of ``url``.
 
+        \b
         If the target file already exists within ``directory``, behavior depends on ``if_exists``:
             - ``skip`` (default): do nothing and return early. Note that this
             - ``overwrite``: overwrite the existing file
@@ -56,11 +59,12 @@ class Resolver():
         Returns:
             Local filename string, *relative* to directory
         """
-        log = getLogger('ocrd.resolver.download_to_directory') # pylint: disable=redefined-outer-name
-        log.debug("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|", directory, url, basename, if_exists, subdir)
+        log = getLogger('ocrd.resolver.download_to_directory')  # pylint: disable=redefined-outer-name
+        log.debug("directory=|%s| url=|%s| basename=|%s| if_exists=|%s| subdir=|%s|",
+                  directory, url, basename, if_exists, subdir)
 
         if not url:
-            raise ValueError(f"'url' must be a non-empty string, not '{url}'") # actually Path also ok
+            raise ValueError(f"'url' must be a non-empty string, not '{url}'")  # actually Path also ok
         if not directory:
             raise ValueError(f"'directory' must be a non-empty string, not '{url}'")  # actually Path would also work
 
@@ -123,25 +127,25 @@ class Resolver():
             retries = Retry(total=retries or 0,
                             status_forcelist=[
                                 # probably too wide (only transient failures):
-                                408, # Request Timeout
-                                409, # Conflict
-                                412, # Precondition Failed
-                                417, # Expectation Failed
-                                423, # Locked
-                                424, # Fail
-                                425, # Too Early
-                                426, # Upgrade Required
-                                428, # Precondition Required
-                                429, # Too Many Requests
-                                440, # Login Timeout
-                                500, # Internal Server Error
-                                503, # Service Unavailable
-                                504, # Gateway Timeout
-                                509, # Bandwidth Limit Exceeded
-                                529, # Site Overloaded
-                                598, # Proxy Read Timeout
-                                599, # Proxy Connect Timeout
-                    ])
+                                408,  # Request Timeout
+                                409,  # Conflict
+                                412,  # Precondition Failed
+                                417,  # Expectation Failed
+                                423,  # Locked
+                                424,  # Fail
+                                425,  # Too Early
+                                426,  # Upgrade Required
+                                428,  # Precondition Required
+                                429,  # Too Many Requests
+                                440,  # Login Timeout
+                                500,  # Internal Server Error
+                                503,  # Service Unavailable
+                                504,  # Gateway Timeout
+                                509,  # Bandwidth Limit Exceeded
+                                529,  # Site Overloaded
+                                598,  # Proxy Read Timeout
+                                599,  # Proxy Connect Timeout
+                            ])
             adapter = HTTPAdapter(max_retries=retries)
             session.mount('http://', adapter)
             session.mount('https://', adapter)
@@ -181,7 +185,7 @@ class Resolver():
                 the filesystem directly.
             **kwargs (): Passed on to ``OcrdMets.find_files`` if download == True
 
-        Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless 
+        Download (clone) :py:attr:`mets_url` to ``mets.xml`` in :py:attr:`dst_dir`, unless
         the former is already local and the latter is ``none`` or already identical to its directory name.
 
         Returns:
@@ -218,11 +222,13 @@ class Resolver():
             Path(dst_dir).mkdir(parents=True, exist_ok=False)
         dst_dir = str(Path(dst_dir).resolve())
 
-        log.debug("workspace_from_url\nmets_basename='%s'\nmets_url='%s'\nsrc_baseurl='%s'\ndst_dir='%s'",
-            mets_basename, mets_url, src_baseurl, dst_dir)
-        self.download_to_directory(dst_dir, mets_url, basename=mets_basename, if_exists='overwrite' if clobber_mets else 'raise')
+        log.debug("mets_basename='%s' mets_url='%s' src_baseurl='%s' dst_dir='%s'",
+                  mets_basename, mets_url, src_baseurl, dst_dir)
+        self.download_to_directory(dst_dir, mets_url, basename=mets_basename,
+                                   if_exists='overwrite' if clobber_mets else 'raise')
 
-        workspace = Workspace(self, dst_dir, mets_basename=mets_basename, baseurl=src_baseurl, mets_server_url=mets_server_url)
+        workspace = Workspace(self, dst_dir,
+                              mets_basename=mets_basename, baseurl=src_baseurl, mets_server_url=mets_server_url)
 
         if download:
             for f in workspace.mets.find_files(**kwargs):
@@ -273,7 +279,8 @@ class Resolver():
         # if directory and mets_url and not mets_is_remote:
         #     raise ValueError("Use either --mets or --directory, not both")
 
-        # If --mets is a URL, a directory must be explicitly provided (not strictly necessary, but retained for legacy behavior)
+        # If --mets is a URL, a directory must be explicitly provided
+        # (not strictly necessary, but retained for legacy behavior)
         if not directory and mets_is_remote:
             raise ValueError("--mets is an http(s) URL but no --directory was given")
 
@@ -297,7 +304,7 @@ class Resolver():
         elif not directory and mets_url:
             mets_url = Path(mets_url).resolve()
             directory = mets_url.parent
-        else: # == directory and mets_url:
+        else:  # == directory and mets_url:
             directory = Path(directory).resolve()
             if not mets_is_remote:
                 # --mets is just a basename and --directory is set, so treat --mets as --mets-basename
@@ -306,6 +313,13 @@ class Resolver():
                 else:
                     mets_url = Path(mets_url).resolve()
                     if not is_file_in_directory(directory, mets_url):
-                        raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (mets_url, directory))
+                        raise ValueError("--mets '%s' has a directory part inconsistent with --directory '%s'" % (
+                            mets_url, directory))
 
+        if mets_server_url and not mets_server_url.startswith('http://'):
+            # UDS socket
+            mets_server_url = str(Path(mets_server_url).resolve())
+
+        log.debug("directory='%s' mets_url='%s', mets_basename='%s', mets_server_url='%s'" % (
+            directory, str(mets_url), str(mets_basename), mets_server_url))
         return str(Path(directory).resolve()), str(mets_url), str(mets_basename), mets_server_url

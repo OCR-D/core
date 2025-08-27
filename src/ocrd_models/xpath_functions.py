@@ -2,9 +2,11 @@ from ocrd_utils import xywh_from_points
 
 pc_functions = []
 
+
 def _export(func):
     pc_functions.append(func)
     return func
+
 
 @_export
 def pc_pixelarea(nodes):
@@ -23,6 +25,7 @@ def pc_pixelarea(nodes):
         xywh = xywh_from_points(points)
         area += xywh['w'] * xywh['h']
     return area
+
 
 @_export
 def pc_textequiv(nodes):
@@ -48,4 +51,3 @@ def pc_textequiv(nodes):
             continue
         text += str(string.text)
     return text
-

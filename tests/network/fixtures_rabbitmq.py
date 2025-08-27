@@ -15,7 +15,7 @@ DEFAULT_EXCHANGER_NAME = test_config.DEFAULT_EXCHANGER_NAME
 DEFAULT_QUEUE = test_config.DEFAULT_QUEUE
 
 
-@fixture(scope="package", name="rabbitmq_defaults")
+@fixture(scope="session", name="rabbitmq_defaults")
 def fixture_rabbitmq_defaults():
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     rmq_username = rmq_data["username"]
@@ -49,14 +49,14 @@ def fixture_rabbitmq_defaults():
     RMQConnector.queue_purge(channel=test_channel, queue_name=DEFAULT_QUEUE)
 
 
-@fixture(scope="package", name="rabbitmq_publisher")
+@fixture(scope="session", name="rabbitmq_publisher")
 def fixture_rabbitmq_publisher(rabbitmq_defaults):
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     logger = getLogger(name="ocrd_network_testing")
     yield connect_rabbitmq_publisher(logger=logger, rmq_data=rmq_data)
 
 
-@fixture(scope="package", name="rabbitmq_consumer")
+@fixture(scope="session", name="rabbitmq_consumer")
 def fixture_rabbitmq_consumer(rabbitmq_defaults):
     rmq_data = verify_and_parse_mq_uri(RABBITMQ_URL)
     logger = getLogger(name="ocrd_network_testing")

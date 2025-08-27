@@ -34,6 +34,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Remove Docker images (to save space)
+        run: |
+             df -h
+             docker rmi $(docker images -q)
+             df -h
+      - name: Remove Android and .NET (to save space)
+        run: |
+             sudo rm -rf /usr/local/lib/android # will release about 10 GB if you don't need Android
+             sudo rm -rf /usr/share/dotnet # will release about 20GB if you don't need .NET
+             sudo rm -rf /opt/ghc
+             sudo rm -rf /usr/local/share/boost
+             sudo du -mscx /* 2>/dev/null || true
+             df -h /
       - name: Install dependencies
         run: |
           if [[ "${{ matrix.os }}" == "ubuntu"* ]];then
@@ -55,7 +68,7 @@ jobs:
       - name: Run network integration tests with pytest
         run: |
           if [[ "${{ matrix.os }}" == "macos"* ]];then
-            make network-integration-test-cicd DOCKER_COMPOSE=docker-compose
+            make network-integration-test DOCKER_COMPOSE=docker-compose
           else
-            make network-integration-test-cicd
+            make network-integration-test
           fi

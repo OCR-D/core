@@ -179,6 +179,7 @@ deps-torch:
 
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
+	apt-get update
 	apt-get install -y python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev
 
 # Dependencies for deployment via Conda
@@ -298,22 +299,30 @@ test-logging: assets
 	rm -rf $$tempdir/.coverage; \
 	rmdir $$tempdir
 
+# ensure shapely#1598 does not hit
+# ensure CUDA works for Torch or TF
+test-cuda-torch:
+	$(PYTHON) -c "from shapely.geometry import Polygon; import torch; torch.randn(10).cuda()"
+	$(PYTHON) -c "import torch, sys; sys.exit(0 if torch.cuda.is_available() else 1)"
+test-cuda-tf2 test-cuda-tf1:
+	$(PYTHON) -c "import tensorflow as tf, sys; sys.exit(0 if tf.test.is_gpu_available() else 1)"
+
 network-module-test: assets
 	$(PYTHON) \
 		-m pytest $(PYTEST_ARGS) -k 'test_modules_' -s -v --durations=10\
 		--ignore-glob="$(TESTDIR)/network/test_integration_*.py" \
 		$(TESTDIR)/network
 
-INTEGRATION_TEST_IN_DOCKER = docker exec core_test
-network-integration-test:
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	-$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py"
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
-
-network-integration-test-cicd:
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml up -d
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py"
-	$(DOCKER_COMPOSE) --file tests/network/docker-compose.yml down --remove-orphans
+network-integration-test: INTEGRATION_TEST_COMPOSE = $(DOCKER_COMPOSE) --file tests/network/docker-compose.yml
+network-integration-test: INTEGRATION_TEST_IN_DOCKER = docker exec core_test
+# do not attempt to update assets submodule during docker (compose) build,
+# but copy the assets from the build context instead:
+network-integration-test: export SKIP_ASSETS = 1
+network-integration-test: assets
+	{ $(INTEGRATION_TEST_COMPOSE) up --wait --wait-timeout 60 -d && \
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py" && \
+	err=0 || { err=$$?; $(INTEGRATION_TEST_COMPOSE) logs; }; \
+	$(INTEGRATION_TEST_COMPOSE) down --remove-orphans; exit $$err; }
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py

@@ -1,6 +1,7 @@
 {
   "version": "1.0.0",
   "git_url": "https://github.com/OCR-D/core",
+  "dockerhub": "ocrd/core",
   "tools": {
     "ocrd-dummy": {
       "executable": "ocrd-dummy",
