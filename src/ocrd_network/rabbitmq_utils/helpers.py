@@ -68,12 +68,6 @@ def check_if_queue_exists(logger: Logger, rmq_data: Dict, processor_name: str) -
 
 
 def create_message_queues(logger: Logger, rmq_publisher: RMQPublisher, queue_names: List[str]) -> None:
-    # TODO: Reconsider and refactor this.
-    #  Added ocrd-dummy by default if not available for the integration tests.
-    #  A proper Processing Worker / Processor Server registration endpoint is needed on the Processing Server side
-    if "ocrd-dummy" not in queue_names:
-        queue_names.append("ocrd-dummy")
-
     for queue_name in queue_names:
         # The existence/validity of the worker.name is not tested.
         # Even if an ocr-d processor does not exist, the queue is created

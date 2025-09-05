@@ -3,7 +3,7 @@ from requests import get as request_get
 from src.ocrd_network.client_utils import (
     poll_job_status_till_timeout_fail_or_success, poll_wf_status_till_timeout_fail_or_success,
     post_ps_processing_request, post_ps_workflow_request)
-from src.ocrd_network.constants import AgentType, JobState
+from src.ocrd_network.constants import JobState
 from src.ocrd_network.logging_utils import get_processing_job_logging_file_path
 from tests.base import assets
 from tests.network.config import test_config
@@ -39,7 +39,6 @@ def test_processing_server_processing_request():
         "path_to_mets": path_to_mets,
         "input_file_grps": [input_file_grp],
         "output_file_grps": [output_file_grp],
-        "agent_type": AgentType.PROCESSING_WORKER,
         "parameters": {}
     }
     test_processor = "ocrd-dummy"

@@ -9,7 +9,7 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from pathlib import Path
 import psutil
-from typing import Dict, List, Union
+from typing import Dict, List
 
 from ocrd import OcrdMetsServer
 from ocrd_utils import getLogger
@@ -33,89 +33,15 @@ class Deployer:
         self.mets_servers_paths: Dict = {}  # {"ws_dir_path": "mets_server_url"}
         self.use_tcp_mets = ps_config.get("use_tcp_mets", False)
 
-    # TODO: Reconsider this.
-    def find_matching_network_agents(
-        self, worker_only: bool = False, server_only: bool = False, docker_only: bool = False,
-        native_only: bool = False, str_names_only: bool = False, unique_only: bool = False, sort: bool = False
-    ) -> Union[List[str], List[object]]:
-        """Finds and returns a list of matching data objects of type:
-        `DataProcessingWorker` and `DataProcessorServer`.
-
-        :py:attr:`worker_only` match only worker network agents (DataProcessingWorker)
-        :py:attr:`server_only` match only server network agents (DataProcessorServer)
-        :py:attr:`docker_only` match only docker network agents (DataProcessingWorker and DataProcessorServer)
-        :py:attr:`native_only` match only native network agents (DataProcessingWorker and DataProcessorServer)
-        :py:attr:`str_names_only` returns the processor_name filed instead of the Data* object
-        :py:attr:`unique_only` remove duplicate names from the matches
-        :py:attr:`sort` sort the result
-
-        `worker_only` and `server_only` are mutually exclusive to each other
-        `docker_only` and `native_only` are mutually exclusive to each other
-        `unique_only` is allowed only together with `str_names_only`
-        """
-
-        if worker_only and server_only:
-            msg = "Only 'worker_only' or 'server_only' is allowed, not both."
-            self.log.exception(msg)
-            raise ValueError(msg)
-        if docker_only and native_only:
-            msg = "Only 'docker_only' or 'native_only' is allowed, not both."
-            self.log.exception(msg)
-            raise ValueError(msg)
-        if not str_names_only and unique_only:
-            msg = "Value 'unique_only' is allowed only together with 'str_names_only'"
-            self.log.exception(msg)
-            raise ValueError(msg)
-        if sort and not str_names_only:
-            msg = "Value 'sort' is allowed only together with 'str_names_only'"
-            self.log.exception(msg)
-            raise ValueError(msg)
-
-        # Find all matching objects of type DataProcessingWorker or DataProcessorServer
-        matched_objects = []
-        for data_host in self.data_hosts:
-            if not server_only:
-                if not docker_only:
-                    for data_worker in data_host.network_agents_worker_native:
-                        matched_objects.append(data_worker)
-                if not native_only:
-                    for data_worker in data_host.network_agents_worker_docker:
-                        matched_objects.append(data_worker)
-            if not worker_only:
-                if not docker_only:
-                    for data_server in data_host.network_agents_server_native:
-                        matched_objects.append(data_server)
-                if not native_only:
-                    for data_server in data_host.network_agents_server_docker:
-                        matched_objects.append(data_server)
-        if not str_names_only:
-            return matched_objects
-        # Gets only the processor names of the matched objects
-        matched_names = [match.processor_name for match in matched_objects]
-        if not unique_only:
-            return matched_names
-        list_matched = list(dict.fromkeys(matched_names))
-        if not sort:
-            # Removes any duplicate entries from matched names
-            return list_matched
-        list_matched.sort()
-        return list_matched
-
-    def resolve_processor_server_url(self, processor_name) -> str:
-        processor_server_url = ''
-        for data_host in self.data_hosts:
-            processor_server_url = data_host.resolve_processor_server_url(processor_name=processor_name)
-        return processor_server_url
-
-    def deploy_network_agents(self, mongodb_url: str, rabbitmq_url: str) -> None:
-        self.log.debug("Deploying processing workers/processor servers...")
+    def deploy_workers(self, mongodb_url: str, rabbitmq_url: str) -> None:
+        self.log.debug("Deploying processing workers...")
         for host_data in self.data_hosts:
-            host_data.deploy_network_agents(logger=self.log, mongodb_url=mongodb_url, rabbitmq_url=rabbitmq_url)
+            host_data.deploy_workers(logger=self.log, mongodb_url=mongodb_url, rabbitmq_url=rabbitmq_url)
 
-    def stop_network_agents(self) -> None:
-        self.log.debug("Stopping processing workers/processor servers...")
+    def stop_workers(self) -> None:
+        self.log.debug("Stopping processing workers...")
         for host_data in self.data_hosts:
-            host_data.stop_network_agents(logger=self.log)
+            host_data.stop_workers(logger=self.log)
 
     def deploy_rabbitmq(self) -> str:
         self.data_queue.deploy_rabbitmq(self.log)
@@ -137,7 +63,7 @@ class Deployer:
         If RabbitMQ server is stopped before stopping Processing Workers that may have
         a bad outcome and leave Processing Workers in an unpredictable state.
         """
-        self.stop_network_agents()
+        self.stop_workers()
         self.stop_mongodb()
         self.stop_rabbitmq()
 

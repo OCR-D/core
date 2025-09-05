@@ -2,7 +2,7 @@ from logging import FileHandler, Formatter, Logger
 from pathlib import Path
 
 from ocrd_utils import config, LOG_FORMAT, safe_filename
-from .constants import AgentType, NetworkLoggingDirs
+from .constants import NetworkLoggingDirs
 
 
 def configure_file_handler_with_formatter(logger: Logger, log_file: Path, mode: str = "a") -> None:
@@ -54,10 +54,5 @@ def get_processing_server_logging_file_path(pid: int) -> Path:
 
 
 def get_processing_worker_logging_file_path(processor_name: str, pid: int) -> Path:
-    log_file: str = f"{AgentType.PROCESSING_WORKER}.{pid}.{processor_name}.log"
+    log_file: str = f"worker.{pid}.{processor_name}.log"
     return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSING_WORKERS), log_file)
-
-
-def get_processor_server_logging_file_path(processor_name: str, pid: int) -> Path:
-    log_file: str = f"{AgentType.PROCESSOR_SERVER}.{pid}.{processor_name}.log"
-    return Path(get_root_logging_dir(NetworkLoggingDirs.PROCESSOR_SERVERS), log_file)

@@ -2,14 +2,15 @@ from logging import Logger
 from typing import Any
 
 from re import search as re_search
-from ..constants import AgentType, DeployType
+from ..constants import DeployType
 
 
 # TODO: Find appropriate replacement for the hack
 def deploy_agent_native_get_pid_hack(logger: Logger, ssh_client, start_cmd: str):
     channel = ssh_client.invoke_shell()
     stdin, stdout = channel.makefile("wb"), channel.makefile("rb")
-    logger.debug(f"Executing command: {start_cmd}")
+    # TODO: set back to debug
+    logger.info(f"Executing command: {start_cmd}")
 
     # TODO: This hack should still be fixed
     #   Note left from @joschrew
@@ -40,14 +41,13 @@ def deploy_agent_docker_template(logger: Logger, docker_client, start_cmd: str):
 
 class DataNetworkAgent:
     def __init__(
-        self, processor_name: str, deploy_type: DeployType, agent_type: AgentType,
+        self, processor_name: str, deploy_type: DeployType,
         host: str, init_by_config: bool, pid: Any = None
     ) -> None:
         self.processor_name = processor_name
         self.deploy_type = deploy_type
         self.host = host
         self.deployed_by_config = init_by_config
-        self.agent_type = agent_type
         # The id is assigned when the agent is deployed
         self.pid = pid
 
@@ -69,41 +69,17 @@ class DataProcessingWorker(DataNetworkAgent):
         self, processor_name: str, deploy_type: DeployType, host: str, init_by_config: bool, pid: Any = None
     ) -> None:
         super().__init__(
-            processor_name=processor_name, host=host, deploy_type=deploy_type, agent_type=AgentType.PROCESSING_WORKER,
+            processor_name=processor_name, host=host, deploy_type=deploy_type,
             init_by_config=init_by_config, pid=pid
         )
 
     def deploy_network_agent(self, logger: Logger, connector_client, database_url: str, queue_url: str):
         if self.deploy_type == DeployType.NATIVE:
-            start_cmd = f"{self.processor_name} {self.agent_type} --database {database_url} --queue {queue_url} &"
+            start_cmd = f"{self.processor_name} --database {database_url} --queue {queue_url} &"
             self.pid = self._start_native_instance(logger, connector_client, start_cmd)
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processing worker in docker here
-            start_cmd = ""
-            self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
-            return self.pid
-        raise RuntimeError(f"Unknown deploy type of {self.__dict__}")
-
-
-class DataProcessorServer(DataNetworkAgent):
-    def __init__(
-        self, processor_name: str, deploy_type: DeployType, host: str, port: int, init_by_config: bool, pid: Any = None
-    ) -> None:
-        super().__init__(
-            processor_name=processor_name, host=host, deploy_type=deploy_type, agent_type=AgentType.PROCESSOR_SERVER,
-            init_by_config=init_by_config, pid=pid
-        )
-        self.port = port
-
-    def deploy_network_agent(self, logger: Logger, connector_client, database_url: str):
-        agent_address = f"{self.host}:{self.port}"
-        if self.deploy_type == DeployType.NATIVE:
-            start_cmd = f"{self.processor_name} {self.agent_type} --address {agent_address} --database {database_url} &"
-            self.pid = self._start_native_instance(logger, connector_client, start_cmd)
-            return self.pid
-        if self.deploy_type == DeployType.DOCKER:
-            # TODO: add real command to start processor server in docker here
             start_cmd = ""
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
             return self.pid

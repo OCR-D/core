@@ -68,16 +68,12 @@ properties:
       required:
         - address
         - username
+        - workers
       oneOf:
         - required:
             - password
         - required:
             - path_to_privkey
-      anyOf:
-        - required:
-            - workers
-        - required:
-            - servers
       properties:
         address:
           description: The IP address or domain name of the target machine
@@ -118,34 +114,6 @@ properties:
                   - native
                   - docker
                 default: native
-        servers:
-          description: List of processor servers that will be deployed
-          type: array
-          minItems: 1
-          items:
-            type: object
-            additionalProperties: false
-            required:
-              - name
-              - port
-            properties:
-              name:
-                description: Name of the processor
-                type: string
-                pattern: "^ocrd-.*$"
-                examples:
-                  - ocrd-cis-ocropy-binarize
-                  - ocrd-olena-binarize
-              deploy_type:
-                description: Should the processor server be deployed natively or with Docker
-                type: string
-                enum:
-                  - native
-                  - docker
-                default: native
-              port:
-                description: The port number to be deployed on the host
-                $ref: "#/$defs/port"
 
 $defs:
   address:

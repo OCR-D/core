@@ -183,30 +183,23 @@ ocrd__parse_argv () {
             -V|--version) ocrd ocrd-tool "$OCRD_TOOL_JSON" version; exit ;;
             --queue) ocrd__worker_queue="$2" ; shift ;;
             --database) ocrd__worker_database="$2" ; shift ;;
-            --address) ocrd__worker_address="$2" ; shift ;;
             *) ocrd__raise "Unknown option '$1'" ;;
         esac
         shift
     done
 
-    if [ -v ocrd__worker_queue -o -v ocrd__worker_database -o -v ocrd__subcommand -o -v ocrd__worker_address ]; then
+    if [ -v ocrd__worker_queue -o -v ocrd__worker_database -o -v ocrd__subcommand ]; then
         if ! [ -v ocrd__subcommand ] ; then
-            ocrd__raise "Provide subcommand 'worker' or 'server' for Processing Worker / Processor Server"
+            ocrd__raise "Provide subcommand 'worker' for Processing Worker"
         elif ! [ -v ocrd__worker_database ]; then
-            ocrd__raise "For the Processing Worker / Processor Server --database is required"
+            ocrd__raise "For the Processing Worker --database is required"
+        elif ! [ -v ocrd__worker_queue ]; then
+            ocrd__raise "For the Processing Worker --queue is required"
         fi
         if [ ${ocrd__subcommand} = "worker" ]; then
-            if ! [ -v ocrd__worker_queue ]; then
-                ocrd__raise "For the Processing Worker --queue is required"
-            fi
             ocrd network processing-worker $OCRD_TOOL_NAME --queue "${ocrd__worker_queue}" --database "${ocrd__worker_database}"
-        elif [ ${ocrd__subcommand} = "server" ]; then
-            if ! [ -v ocrd__worker_address ]; then
-                ocrd__raise "For the Processor Server --address is required"
-            fi
-            ocrd network processor-server $OCRD_TOOL_NAME --database "${ocrd__worker_database}" --address "${ocrd__worker_address}"
         else
-            ocrd__raise "subcommand must be either 'worker' or 'server' not '${ocrd__subcommand}'"
+            ocrd__raise "subcommand must be 'worker' not '${ocrd__subcommand}'"
         fi
         exit
     fi
