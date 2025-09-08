@@ -34,6 +34,7 @@ from .models import (
 from .rabbitmq_utils import (
     check_if_queue_exists,
     connect_rabbitmq_publisher,
+    get_message_queues,
     OcrdProcessingMessage
 )
 from .server_cache import CacheLockedPages, CacheProcessingRequests
@@ -606,10 +607,7 @@ class ProcessingServer(FastAPI):
         await self.push_cached_jobs_to_workers(processing_jobs=consumed_cached_jobs)
 
     async def list_processors(self) -> List[str]:
-        # There is no caching on the Processing Server side
-        # TODO: Implement: Get all existing queues (every time new request to get them) and derive
-        # correct ProcessorNames
-        return []
+        return get_message_queues(self.log, self.rmq_data)
 
     async def task_sequence_to_processing_jobs(
         self,
