@@ -52,8 +52,8 @@ class DataHost:
     def __parse_workers(self, processing_workers: List[Dict]):
         for worker in processing_workers:
             worker_data = DataProcessingWorker(
-                processor_name=worker["name"], deploy_type=worker["deploy_type"], host=self.host,
-                init_by_config=True, pid=None
+                processor_name=worker["name"], deploy_type=worker.get("deploy_type", "native"),
+                host=self.host, init_by_config=True, pid=None
             )
             for _ in range(int(worker["number_of_instance"])):
                 self.__append_workers_to_lists(worker_data=worker_data)
