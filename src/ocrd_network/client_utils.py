@@ -84,7 +84,7 @@ def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) ->
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
     _raise_if_error(response)
     job_state = response.json()["state"]
-    assert job_state
+    assert job_state, "Propery 'state' is expected to always have a value"
     return getattr(JobState, job_state.lower())
 
 
@@ -93,7 +93,7 @@ def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> Job
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
     _raise_if_error(response)
     job_state = response.json()["state"]
-    assert job_state
+    assert job_state, "Property 'state' is expected to always have a value"
     return getattr(JobState, job_state.lower())
 
 
@@ -106,7 +106,7 @@ def post_ps_processing_request(ps_server_host: str, processor: str, job_input: d
     )
     _raise_if_error(response)
     processing_job_id = response.json()["job_id"]
-    assert processing_job_id
+    assert processing_job_id, "Property 'job_id' is expected to always have a value"
     return processing_job_id
 
 
@@ -129,7 +129,7 @@ def post_ps_workflow_request(
     # print(f'post_ps_workflow_request >> {json_resp_raw}')
     _raise_if_error(response)
     wf_job_id = json.loads(json_resp_raw)["job_id"]
-    assert wf_job_id
+    assert wf_job_id, "Property 'job_id' is expected to always have a value"
     return wf_job_id
 
 

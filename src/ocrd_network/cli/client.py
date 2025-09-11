@@ -57,10 +57,10 @@ def check_deployed_processors(address: Optional[str]):
     client = Client(server_addr_processing=address)
     try:
         processors_list = client.check_deployed_processors()
-        print(dumps(processors_list, indent=4))
     except OcrdNetworkClientError as e:
         print(f"{e.message}")
         sys.exit(1)
+    print(dumps(processors_list, indent=4))
 
 
 @discovery_cli.command('processor')
@@ -73,10 +73,10 @@ def check_processor_ocrd_tool(address: Optional[str], processor_name: str):
     client = Client(server_addr_processing=address)
     try:
         ocrd_tool = client.check_deployed_processor_ocrd_tool(processor_name=processor_name)
-        print(dumps(ocrd_tool, indent=4))
     except OcrdNetworkClientError as e:
         print(f"{e.message}")
         sys.exit(1)
+    print(dumps(ocrd_tool, indent=4))
 
 
 @client_cli.group('processing')
@@ -97,10 +97,10 @@ def check_processing_job_log(address: Optional[str], processing_job_id: str):
     client = Client(server_addr_processing=address)
     try:
         response = client.check_job_log(job_id=processing_job_id)
-        print(response._content.decode(encoding='utf-8'))
     except OcrdNetworkClientError as e:
         print(f"{e.message}")
         sys.exit(1)
+    print(response._content.decode(encoding='utf-8'))
 
 
 @processing_cli.command('check-status')
@@ -113,11 +113,10 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
     client = Client(server_addr_processing=address)
     try:
         job_status = client.check_job_status(processing_job_id)
-        assert job_status
-        print(f"Processing job status: {job_status}")
     except OcrdNetworkClientError as e:
         print(f"{e.message}")
         sys.exit(1)
+    print(f"Processing job status: {job_status}")
 
 
 @processing_cli.command('run')
@@ -175,13 +174,17 @@ def send_processing_job_request(
     try:
         processing_job_id = client.send_processing_job_request(
             processor_name=processor_name, req_params=req_params)
-        assert processing_job_id
-        print(f"Processing job id: {processing_job_id}")
-        if block:
-            client.poll_job_status(job_id=processing_job_id, print_state=print_state)
     except OcrdNetworkClientError as e:
         print(f"{e.message}")
         sys.exit(1)
+    print(f"Processing job id: {processing_job_id}")
+
+    if block:
+        try:
+            client.poll_job_status(job_id=processing_job_id, print_state=print_state)
+        except OcrdNetworkClientError as e:
+            print(f"{e.message}")
+            sys.exit(1)
 
 
 @client_cli.group('workflow')
@@ -202,11 +205,10 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
     client = Client(server_addr_processing=address)
     try:
         job_status = client.check_workflow_status(workflow_job_id)
-        assert job_status
-        print(f"Workflow job status: {job_status}")
     except OcrdNetworkClientError as e:
         print(f"{e.message}")
         sys.exit(1)
+    print(f"Workflow job status: {job_status}")
 
 
 @workflow_cli.command('run')
@@ -235,7 +237,8 @@ def send_workflow_job_request(
     as in ``ocrd process`` tasks arguments), or via `-w` file path
     (same syntax, but newline separated).
     """
-    assert bool(path_to_workflow) != bool(len(tasks)), "requires either --path-to-workflow or task arguments"
+    if (path_to_workflow) != bool(len(tasks)):
+        raise ValueError("either -w/path-to-workflow or task argument(s) is required")
 
     client = Client(server_addr_processing=address)
     with NamedTemporaryFile() as workflow_file:
@@ -247,13 +250,12 @@ def send_workflow_job_request(
             path_to_mets=path_to_mets,
             page_wise=page_wise,
         )
-    assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
         print(f"Polling state of workflow job {workflow_job_id}")
         try:
             state = client.poll_workflow_status(job_id=workflow_job_id, print_state=print_state)
-        except OcrdNetworkError as e:
+        except OcrdNetworkClientError as e:
             print(f"{e.message}")
             sys.exit(1)
         if state != JobState.success:
