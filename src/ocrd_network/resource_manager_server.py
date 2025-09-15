@@ -1,14 +1,12 @@
 from datetime import datetime
 from os import getpid
-from pathlib import Path
-import requests
 from shutil import which
 from typing import Any
 from uvicorn import run as uvicorn_run
 from fastapi import APIRouter, FastAPI, HTTPException, status
 
 from ocrd import OcrdResourceManager
-from ocrd_utils import directory_size, getLogger, get_moduledir, get_ocrd_tool_json, initLogging
+from ocrd_utils import getLogger, get_ocrd_tool_json, initLogging
 from .logging_utils import configure_file_handler_with_formatter, get_resource_manager_server_logging_file_path
 
 
@@ -85,12 +83,16 @@ class ResourceManagerServer(FastAPI):
 
     async def list_available_resources(
         self,
-        executable: Any = None,
+        executable: Any = "ocrd-dummy",
         dynamic: bool = True,
         name: Any = None,
         database: Any = None,
         url: Any = None
     ):
+        if executable == '*':
+            message = f"'*' is not an acceptable executable name! Try with a specific executable."
+            self.log.error(message)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
         result = self.resmgr_instance.list_available(executable, dynamic, name, database, url)
         json_message = {
             "result": result
@@ -98,6 +100,10 @@ class ResourceManagerServer(FastAPI):
         return json_message
 
     async def list_installed_resources(self, executable: Any = None):
+        if executable == '*':
+            message = f"'*' is not an acceptable executable name! Try with a specific executable."
+            self.log.error(message)
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
         result = self.resmgr_instance.list_available(executable)
         json_message = {
             "result": result
@@ -106,7 +112,7 @@ class ResourceManagerServer(FastAPI):
 
     async def download_resource(
         self,
-        executable: str,
+        executable: str = "ocrd-dummy",
         name: Any = None,
         location: Any = None,
         any_url: str = '',
@@ -118,12 +124,10 @@ class ResourceManagerServer(FastAPI):
     ):
         resmgr = OcrdResourceManager()
         response = []
-        if executable != '*' and not name:
-            message = f"Unless EXECUTABLE ('{executable}') is the '*' wildcard, NAME is required"
+        if executable == '*':
+            message = f"'*' is not an acceptable executable name! Try with a specific executable."
             self.log.error(message)
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=message)
-        elif executable == '*':
-            executable = None
         if name == '*':
             name = None
         if executable and not which(executable):
