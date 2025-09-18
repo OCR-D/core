@@ -11,7 +11,7 @@ from ocrd_utils import DEFAULT_METS_BASENAME
 from ocrd_utils.introspect import set_json_key_value_overrides
 from ocrd_utils.str import parse_json_string_or_file
 from ..client import Client
-from ..client_utils import OcrdNetworkClientError
+from requests import RequestException
 
 
 ADDRESS_HELP = 'The URL of the Processing Server. If not provided, ' + \
@@ -57,8 +57,8 @@ def check_deployed_processors(address: Optional[str]):
     client = Client(server_addr_processing=address)
     try:
         processors_list = client.check_deployed_processors()
-    except OcrdNetworkClientError as e:
-        print(f"{e.message}")
+    except RequestException as e:
+        print(f"{getattr(e, 'detail_message', str(e))}")
         sys.exit(1)
     print(dumps(processors_list, indent=4))
 
@@ -73,8 +73,8 @@ def check_processor_ocrd_tool(address: Optional[str], processor_name: str):
     client = Client(server_addr_processing=address)
     try:
         ocrd_tool = client.check_deployed_processor_ocrd_tool(processor_name=processor_name)
-    except OcrdNetworkClientError as e:
-        print(f"{e.message}")
+    except RequestException as e:
+        print(f"{getattr(e, 'detail_message', str(e))}")
         sys.exit(1)
     print(dumps(ocrd_tool, indent=4))
 
@@ -97,8 +97,8 @@ def check_processing_job_log(address: Optional[str], processing_job_id: str):
     client = Client(server_addr_processing=address)
     try:
         response = client.check_job_log(job_id=processing_job_id)
-    except OcrdNetworkClientError as e:
-        print(f"{e.message}")
+    except RequestException as e:
+        print(f"{getattr(e, 'detail_message', str(e))}")
         sys.exit(1)
     print(response._content.decode(encoding='utf-8'))
 
@@ -113,8 +113,8 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
     client = Client(server_addr_processing=address)
     try:
         job_status = client.check_job_status(processing_job_id)
-    except OcrdNetworkClientError as e:
-        print(f"{e.message}")
+    except RequestException as e:
+        print(f"{getattr(e, 'detail_message', str(e))}")
         sys.exit(1)
     print(f"Processing job status: {job_status}")
 
@@ -174,16 +174,16 @@ def send_processing_job_request(
     try:
         processing_job_id = client.send_processing_job_request(
             processor_name=processor_name, req_params=req_params)
-    except OcrdNetworkClientError as e:
-        print(f"{e.message}")
+    except RequestException as e:
+        print(f"{getattr(e, 'detail_message', str(e))}")
         sys.exit(1)
     print(f"Processing job id: {processing_job_id}")
 
     if block:
         try:
             client.poll_job_status(job_id=processing_job_id, print_state=print_state)
-        except OcrdNetworkClientError as e:
-            print(f"{e.message}")
+        except RequestException as e:
+            print(f"{getattr(e, 'detail_message', str(e))}")
             sys.exit(1)
 
 
@@ -205,8 +205,8 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
     client = Client(server_addr_processing=address)
     try:
         job_status = client.check_workflow_status(workflow_job_id)
-    except OcrdNetworkClientError as e:
-        print(f"{e.message}")
+    except RequestException as e:
+        print(f"{getattr(e, 'detail_message', str(e))}")
         sys.exit(1)
     print(f"Workflow job status: {job_status}")
 
@@ -255,8 +255,8 @@ def send_workflow_job_request(
         print(f"Polling state of workflow job {workflow_job_id}")
         try:
             state = client.poll_workflow_status(job_id=workflow_job_id, print_state=print_state)
-        except OcrdNetworkClientError as e:
-            print(f"{e.message}")
+        except RequestException as e:
+            print(f"{getattr(e, 'detail_message', str(e))}")
             sys.exit(1)
         if state != JobState.success:
             print(f"Workflow failed with {state}")

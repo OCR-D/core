@@ -6,18 +6,6 @@ from time import sleep
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
-class OcrdNetworkClientError(Exception):
-    """Used when requests to the processing-server fail
-
-    Requests are executed through http. If 400 or 500 status codes are returned this exception is
-    raised
-    """
-
-    def __init__(self, status_code: int, message: str) -> None:
-        self.status_code = status_code
-        self.message = message
-
-
 def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries: int, wait: int,
                           print_state: bool = False) -> JobState:
     if job_type not in ["workflow", "processor"]:
@@ -44,9 +32,10 @@ def _raise_if_error(response: Response) -> None:
     except RequestException as e:
         try:
             message = response.json()["detail"]
-            raise OcrdNetworkClientError(response.status_code, message) from e
         except JSONDecodeError:
-            raise OcrdNetworkClientError(response.status_code, response.text) from e
+            message = response.text
+        e.detail_message = message
+        raise e
 
 
 def poll_job_status_till_timeout_fail_or_success(
