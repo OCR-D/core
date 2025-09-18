@@ -58,7 +58,7 @@ def check_deployed_processors(address: Optional[str]):
     try:
         processors_list = client.check_deployed_processors()
     except RequestException as e:
-        print(f"{getattr(e, 'detail_message', str(e))}")
+        print(getattr(e, 'detail_message', str(e)))
         sys.exit(1)
     print(dumps(processors_list, indent=4))
 
