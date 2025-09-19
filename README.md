@@ -170,12 +170,6 @@ Also contains the command line tool `ocrd`.
 
 See [README for `ocrd`](./README_ocrd.md) for further information.
 
-## bash library
-
-Builds a bash script that can be sourced by other bash scripts to create OCRD-compliant CLI.
-
-See [README for `bashlib`](./README_bashlib.md) for further information.
-
 ## Testing
 
 Download assets (`make assets`)
