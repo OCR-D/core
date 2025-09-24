@@ -5,6 +5,7 @@ __all__ = [
     'abspath',
     'directory_size',
     'is_file_in_directory',
+    'is_git_url',
     'get_ocrd_tool_json',
     'get_moduledir',
     'get_processor_resource_types',
@@ -24,8 +25,9 @@ from json.decoder import JSONDecodeError
 from os import getcwd, chdir, stat, chmod, umask, environ
 from pathlib import Path
 from os.path import abspath as abspath_, join
+from typing import Any, Dict
 from zipfile import ZipFile
-from subprocess import run, PIPE
+from subprocess import run, PIPE, CalledProcessError
 from mimetypes import guess_type as mimetypes_guess
 from filetype import guess as filetype_guess
 
@@ -79,7 +81,16 @@ def unzip_file_to_dir(path_to_zip, output_directory):
 
 
 @lru_cache()
-def get_ocrd_tool_json(executable):
+def is_git_url(url: str) -> bool:
+    try:
+        run(['git', 'ls-remote', '--exit-code', '-q', '-h', url], check=True)
+    except CalledProcessError:
+        return False
+    return True
+
+
+@lru_cache()
+def get_ocrd_tool_json(executable : str) -> Dict[str, Any]:
     """
     Get the ``ocrd-tool`` description of ``executable``.
     """
