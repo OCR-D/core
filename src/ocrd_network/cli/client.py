@@ -17,6 +17,7 @@ from requests import RequestException
 ADDRESS_HELP = 'The URL of the Processing Server. If not provided, ' + \
     'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" environment variable is used by default'
 
+
 class URLType(click.types.StringParamType):
     name = "url"
     def convert(self, value, param, ctx):
@@ -58,7 +59,10 @@ def check_deployed_processors(address: Optional[str]):
     try:
         processors_list = client.check_deployed_processors()
     except RequestException as e:
-        print(getattr(e, 'detail_message', str(e)))
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
         sys.exit(1)
     print(dumps(processors_list, indent=4))
 
@@ -74,7 +78,10 @@ def check_processor_ocrd_tool(address: Optional[str], processor_name: str):
     try:
         ocrd_tool = client.check_deployed_processor_ocrd_tool(processor_name=processor_name)
     except RequestException as e:
-        print(f"{getattr(e, 'detail_message', str(e))}")
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
         sys.exit(1)
     print(dumps(ocrd_tool, indent=4))
 
@@ -98,7 +105,10 @@ def check_processing_job_log(address: Optional[str], processing_job_id: str):
     try:
         response = client.check_job_log(job_id=processing_job_id)
     except RequestException as e:
-        print(f"{getattr(e, 'detail_message', str(e))}")
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
         sys.exit(1)
     print(response._content.decode(encoding='utf-8'))
 
@@ -114,7 +124,10 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
     try:
         job_status = client.check_job_status(processing_job_id)
     except RequestException as e:
-        print(f"{getattr(e, 'detail_message', str(e))}")
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
         sys.exit(1)
     print(f"Processing job status: {job_status}")
 
@@ -175,7 +188,10 @@ def send_processing_job_request(
         processing_job_id = client.send_processing_job_request(
             processor_name=processor_name, req_params=req_params)
     except RequestException as e:
-        print(f"{getattr(e, 'detail_message', str(e))}")
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
         sys.exit(1)
     print(f"Processing job id: {processing_job_id}")
 
@@ -183,7 +199,10 @@ def send_processing_job_request(
         try:
             client.poll_job_status(job_id=processing_job_id, print_state=print_state)
         except RequestException as e:
-            print(f"{getattr(e, 'detail_message', str(e))}")
+            print(
+                getattr(e, 'detail_message', str(e)),
+                f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+            )
             sys.exit(1)
 
 
@@ -206,7 +225,10 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
     try:
         job_status = client.check_workflow_status(workflow_job_id)
     except RequestException as e:
-        print(f"{getattr(e, 'detail_message', str(e))}")
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
         sys.exit(1)
     print(f"Workflow job status: {job_status}")
 
@@ -256,7 +278,10 @@ def send_workflow_job_request(
         try:
             state = client.poll_workflow_status(job_id=workflow_job_id, print_state=print_state)
         except RequestException as e:
-            print(f"{getattr(e, 'detail_message', str(e))}")
+            print(
+                getattr(e, 'detail_message', str(e)),
+                f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+            )
             sys.exit(1)
         if state != JobState.success:
             print(f"Workflow failed with {state}")
