@@ -9,6 +9,7 @@ Changed:
 
   * `ocrd network client workflow run`: Allow passing workflow as `ocrd process` tasks as alternative to a workflow file, #1264, #1335
   * Processing Server: Store page ranges as comma-separated page IDs instead of relying on `..` numeric range operator, #1333, #1334
+  * `ocrd network`: More verbose error messages instead of plain assertions, #1337
 
 ## [3.5.1] - 2025-07-04
 
