@@ -5,6 +5,7 @@ __all__ = [
     'abspath',
     'directory_size',
     'is_file_in_directory',
+    'is_git_url',
     'get_ocrd_tool_json',
     'get_moduledir',
     'get_processor_resource_types',
@@ -27,7 +28,7 @@ from os import getcwd, chdir, stat, chmod, umask, environ, PathLike
 from pathlib import Path
 from os.path import abspath as abspath_, join
 from zipfile import ZipFile
-from subprocess import run, PIPE
+from subprocess import run, PIPE, CalledProcessError
 from mimetypes import guess_type as mimetypes_guess
 from filetype import guess as filetype_guess
 from fnmatch import filter as apply_glob
@@ -77,6 +78,15 @@ def unzip_file_to_dir(path_to_zip : Union[str, PathLike], output_directory : str
     """
     with ZipFile(path_to_zip, 'r') as z:
         z.extractall(output_directory)
+
+
+@lru_cache()
+def is_git_url(url: str) -> bool:
+    try:
+        run(['git', 'ls-remote', '--exit-code', '-q', '-h', url], check=True)
+    except CalledProcessError:
+        return False
+    return True
 
 
 @lru_cache()
