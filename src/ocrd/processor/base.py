@@ -1209,7 +1209,7 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
          ocrd_tool (dict): this processor's ``tools`` section of the module's ``ocrd-tool.json``
          processor_instance (object, optional): the processor implementation
              (for adding any module/class/function docstrings)
-        subcommand (string): 'worker' or 'server'
+        subcommand (string, optional): 'worker'
     """
     doc_help = ''
     if processor_instance:
@@ -1235,7 +1235,6 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
                                           preserve_paragraphs=True)
     subcommands = '''\
     worker      Start a processing worker rather than do local processing
-    server      Start a processor server rather than do local processing
 '''
 
     processing_worker_options = '''\
@@ -1250,8 +1249,6 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
 '''
 
     processing_server_options = '''\
-  --address                       The Processor server address in format
-                                  "{host}:{port}"
   --database                      The MongoDB server address in format
                                   "mongodb://{host}:{port}"
                                   [mongodb://localhost:27018]
@@ -1296,8 +1293,8 @@ def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None)
         parameter_help = '  NONE\n'
     else:
         def wrap(s):
-            return wrap_text(s, initial_indent=' '*3,
-                             subsequent_indent=' '*4,
+            return wrap_text(s, initial_indent=' ' * 3,
+                             subsequent_indent=' ' * 4,
                              width=72, preserve_paragraphs=True)
         for param_name, param in ocrd_tool['parameters'].items():
             parameter_help += wrap('"%s" [%s%s]' % (
@@ -1335,17 +1332,6 @@ Usage: {ocrd_tool['executable']} worker [OPTIONS]
 
 Options:
 {processing_worker_options}
-'''
-    elif subcommand == 'server':
-        return f'''\
-Usage: {ocrd_tool['executable']} server [OPTIONS]
-
-  Run {ocrd_tool['executable']} as a processor sever.
-
-  {ocrd_tool['description']}{doc_help}
-
-Options:
-{processing_server_options}
 '''
     else:
         pass

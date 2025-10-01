@@ -4,6 +4,9 @@ from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker
 from re import match as re_match
 from time import sleep
 from typing import Dict, List, Union
+from requests import get
+from requests.auth import HTTPBasicAuth
+from requests.exceptions import RequestException, HTTPError
 
 from .constants import RABBITMQ_URI_PATTERN, RECONNECT_TRIES, RECONNECT_WAIT
 from .consumer import RMQConsumer
@@ -68,17 +71,31 @@ def check_if_queue_exists(logger: Logger, rmq_data: Dict, processor_name: str) -
 
 
 def create_message_queues(logger: Logger, rmq_publisher: RMQPublisher, queue_names: List[str]) -> None:
-    # TODO: Reconsider and refactor this.
-    #  Added ocrd-dummy by default if not available for the integration tests.
-    #  A proper Processing Worker / Processor Server registration endpoint is needed on the Processing Server side
-    if "ocrd-dummy" not in queue_names:
-        queue_names.append("ocrd-dummy")
-
     for queue_name in queue_names:
         # The existence/validity of the worker.name is not tested.
         # Even if an ocr-d processor does not exist, the queue is created
         logger.info(f"Creating a message queue with id: {queue_name}")
         rmq_publisher.create_queue(queue_name=queue_name)
+
+
+def get_message_queues(logger: Logger, rmq_data: Dict) -> List:
+    try:
+        response = get(
+            f"http://{rmq_data['host']}:{15672}/api/queues",
+            auth=HTTPBasicAuth(rmq_data["username"], rmq_data["password"])
+        )
+        response.raise_for_status()
+        queues = response.json()
+        return [queue['name'] for queue in queues]
+    except HTTPError:
+        logger.warn(
+            f"Error requesting all queue-names from rabbitmq. Status code: {response.status_code}. "
+            f"Response-Text: {response.text}"
+        )
+        return []
+    except RequestException as e:
+        logger.warn(f"Error querying RabbitMQ API: {e}")
+        return []
 
 
 def verify_and_parse_mq_uri(rabbitmq_address: str):

@@ -12,8 +12,7 @@ from ocrd_network import ProcessingServer, ServerAddressParamType
 def processing_server_cli(path_to_config, address: str):
     """
     Start the Processing Server
-    (proxy between the user and the
-    Processing Worker(s) / Processor Server(s))
+    (proxy between the user and the Processing Worker(s))
     """
 
     # Note, the address is already validated with the type field

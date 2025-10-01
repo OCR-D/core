@@ -52,7 +52,7 @@ def discovery_cli():
 @click.option('--address', type=URL, help=ADDRESS_HELP)
 def check_deployed_processors(address: Optional[str]):
     """
-    Get a list of deployed processing workers/processor servers.
+    Get a list of deployed processing workers.
     Each processor is shown only once regardless of the amount of deployed instances.
     """
     client = Client(server_addr_processing=address)
@@ -143,7 +143,6 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
 @parameter_override_option
 @click.option('--result-queue-name')
 @click.option('--callback-url')
-@click.option('--agent-type', default='worker')
 @click.option('-b', '--block', default=False, is_flag=True,
               help='If set, the client will block till job timeout, fail or success.')
 @click.option('-p', '--print-state', default=False, is_flag=True,
@@ -159,9 +158,6 @@ def send_processing_job_request(
     parameter_override: List[Tuple[str, str]],
     result_queue_name: Optional[str],
     callback_url: Optional[str],
-    # TODO: This is temporally available to toggle
-    #  between the ProcessingWorker/ProcessorServer
-    agent_type: Optional[str],
     block: Optional[bool],
     print_state: Optional[bool]
 ):
@@ -172,7 +168,6 @@ def send_processing_job_request(
         "path_to_mets": mets,
         "description": "OCR-D Network client request",
         "input_file_grps": input_file_grp.split(','),
-        "agent_type": agent_type
     }
     if output_file_grp:
         req_params["output_file_grps"] = output_file_grp.split(',')
