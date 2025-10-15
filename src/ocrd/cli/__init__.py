@@ -32,12 +32,11 @@ from ..decorators import ocrd_loglevel
 from .ocrd_tool import ocrd_tool_cli
 from .workspace import workspace_cli
 from .process import process_cli
-from .bashlib import bashlib_cli
 from .validate import validate_cli
 from .resmgr import resmgr_cli
 from .zip import zip_cli
-from .log import log_cli
 from .network import network_cli
+from .bashlib import bashlib_cli
 
 
 __all__ = ['cli']
@@ -117,9 +116,8 @@ def cli(**kwargs):  # pylint: disable=unused-argument
 cli.add_command(ocrd_tool_cli)
 cli.add_command(workspace_cli)
 cli.add_command(process_cli)
-cli.add_command(bashlib_cli)
 cli.add_command(zip_cli)
 cli.add_command(validate_cli)
-cli.add_command(log_cli)
 cli.add_command(resmgr_cli)
 cli.add_command(network_cli)
+cli.add_command(bashlib_cli)
