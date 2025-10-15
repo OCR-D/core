@@ -142,15 +142,14 @@ config.add('OCRD_METS_CACHING',
 
 config.add('OCRD_MAX_PROCESSOR_CACHE',
            description="Maximum number of processor instances (for each set of parameters) to be kept in memory "
-           "(including loaded models) for processing workers or processor servers.",
+           "(including loaded models) for processing workers.",
            parser=int,
            default=(True, 128))
 
 config.add('OCRD_MAX_PARALLEL_PAGES',
-           description="Maximum number of processor workers for page-parallel processing "
-           "(within each Processor's selected page range, independent of the number "
-           "of Processing Workers or Processor Servers). If set >1, then a METS Server "
-           "must be used for METS synchronisation.",
+           description="Maximum number of processor workers for page-parallel processing (within "
+           "each Processor's selected page range, independent of the number of Processing "
+           "Workers). If set >1, then a METS Server must be used for METS synchronisation.",
            parser=int,
            default=(True, 1))
 

@@ -15,8 +15,8 @@ test_config.add(
 test_config.add(
     name='OCRD_MAX_PROCESSOR_CACHE',
     description="""
-    Maximum number of processor instances (for each set of parameters) to be kept in memory (including loaded models) 
-    for processing workers or processor servers.
+    Maximum number of processor instances (for each set of parameters) to be kept in memory (including loaded models)
+    for processing workers
     """,
     parser=int,
     default=(True, 128)
@@ -97,7 +97,7 @@ test_config.add(
 test_config.add(
     name="OCRD_NETWORK_RABBITMQ_HEARTBEAT",
     description="""
-    Controls AMQP heartbeat timeout (in seconds) negotiation during connection tuning. An integer value always overrides the value 
+    Controls AMQP heartbeat timeout (in seconds) negotiation during connection tuning. An integer value always overrides the value
     proposed by broker. Use 0 to deactivate heartbeat.
     """,
     parser=int,

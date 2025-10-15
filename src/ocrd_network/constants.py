@@ -16,11 +16,6 @@ class StrEnum(str, Enum):
         return self.value
 
 
-class AgentType(StrEnum):
-    PROCESSING_WORKER = "worker"
-    PROCESSOR_SERVER = "server"
-
-
 class DeployType(StrEnum):
     # Deployed by the Processing Server config file
     DOCKER = "docker"
@@ -40,7 +35,7 @@ class JobState(StrEnum):
     failed = "FAILED"
     # The processing job is queued inside the RabbitMQ
     queued = "QUEUED"
-    # Processing job is currently running in a Worker or Processor Server
+    # Processing job is currently running on a Worker
     running = "RUNNING"
     # Processing job finished successfully
     success = "SUCCESS"
@@ -53,7 +48,6 @@ class NetworkLoggingDirs(StrEnum):
     PROCESSING_JOBS = "processing_jobs"
     PROCESSING_SERVERS = "processing_servers"
     PROCESSING_WORKERS = "processing_workers"
-    PROCESSOR_SERVERS = "processor_servers"
 
 
 class ServerApiTags(StrEnum):

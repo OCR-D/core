@@ -18,10 +18,6 @@ def test_root_logging_dir_mets_servers():
     root_logging_dir(module_name=NetworkLoggingDirs.METS_SERVERS)
 
 
-def test_root_logging_dir_processor_servers():
-    root_logging_dir(module_name=NetworkLoggingDirs.PROCESSOR_SERVERS)
-
-
 def test_root_logging_dir_processing_workers():
     root_logging_dir(module_name=NetworkLoggingDirs.PROCESSING_WORKERS)
 

@@ -66,8 +66,7 @@ def run_processor(
     when a match occurs - as long as the program is being run. They only get deleted (and
     their resources freed) when as many as :py:data:`~ocrd_utils.config.OCRD_MAX_PROCESSOR_CACHE`
     instances have already been cached while this particular parameter set was re-used
-    least frequently. (See :py:class:`~ocrd_network.ProcessingWorker` and
-    :py:class:`~ocrd_network.ProcessorServer` for use-cases.)
+    least frequently. (See :py:class:`~ocrd_network.ProcessingWorker` for use-cases.)
 
     Args:
         processorClass (object): Python class of the module processor.
