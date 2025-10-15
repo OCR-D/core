@@ -36,6 +36,7 @@ from .validate import validate_cli
 from .resmgr import resmgr_cli
 from .zip import zip_cli
 from .network import network_cli
+from .bashlib import bashlib_cli
 
 
 __all__ = ['cli']
@@ -119,3 +120,4 @@ cli.add_command(zip_cli)
 cli.add_command(validate_cli)
 cli.add_command(resmgr_cli)
 cli.add_command(network_cli)
+cli.add_command(bashlib_cli)
