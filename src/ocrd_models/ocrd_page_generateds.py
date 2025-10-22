@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #
-# Generated Mon Feb 17 10:32:54 2025 by generateDS.py version 2.44.1.
-# Python 3.8.17+ (heads/3.8-dirty:1663f8ba84, Aug 15 2023, 18:13:01)  [GCC 8.3.0]
+# Generated Wed Oct 22 14:02:59 2025 by generateDS.py version 2.44.1.
+# Python 3.8.19 (default, Mar 26 2024, 20:08:11)  [GCC 8.5.0]
 #
 # Command line options:
 #   ('-f', '')
@@ -6337,9 +6337,16 @@ class PrintSpaceType(GeneratedsSuper):
 class ReadingOrderType(GeneratedsSuper):
     """ReadingOrderType --
     Definition of the reading order within the page.
-    To express a reading order between elements
-    they have to be included in an OrderedGroup.
-    Groups may contain further groups.
+    To express a reading order between regions,
+    they have to be referenced by an OrderedGroup.
+    To express a non-sequential relationship (while still
+    referencing them as part of the overall structural tree),
+    they have to be referenced by an UnorderedGroup.
+    Groups may contain further groups, just as regions may
+    contain further regions.
+    Regions may be referenced only once by any ReadingOrder
+    element. (That is, the @regionRef define an injective
+    mapping from the ReadingOrder tree to the Region tree.)
       
     * conf -- Confidence value (between 0 and 1)
     
@@ -6504,8 +6511,961 @@ class ReadingOrderType(GeneratedsSuper):
 # end class ReadingOrderType
 
 
+class RegionRefType(GeneratedsSuper):
+    """RegionRefType -- Region reference in an UnorderedGroup(Indexed)
+    
+    """
+    __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required', 'name': 'regionRef'}),
+    ]
+    subclass = None
+    superclass = None
+    def __init__(self, regionRef=None, gds_collector_=None, **kwargs_):
+        self.gds_collector_ = gds_collector_
+        self.gds_elementtree_node_ = None
+        self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
+        self.ns_prefix_ = "pc"
+        self.regionRef = _cast(None, regionRef)
+        self.regionRef_nsprefix_ = "pc"
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, RegionRefType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if RegionRefType.subclass:
+            return RegionRefType.subclass(*args_, **kwargs_)
+        else:
+            return RegionRefType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_ns_prefix_(self):
+        return self.ns_prefix_
+    def set_ns_prefix_(self, ns_prefix):
+        self.ns_prefix_ = ns_prefix
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
+    def has__content(self):
+        if (
+
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None and name_ == 'RegionRefType':
+            name_ = self.original_tagname_
+        if UseCapturedNS_ and self.ns_prefix_:
+            namespaceprefix_ = self.ns_prefix_ + ':'
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefType')
+        if self.has__content():
+            outfile.write('>%s' % (eol_, ))
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefType', pretty_print=pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefType'):
+        if self.regionRef is not None and 'regionRef' not in already_processed:
+            already_processed.add('regionRef')
+            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
+        pass
+    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
+        return element
+    def build(self, node, gds_collector_=None):
+        self.gds_collector_ = gds_collector_
+        if SaveElementTreeNode:
+            self.gds_elementtree_node_ = node
+        already_processed = set()
+        self.ns_prefix_ = node.prefix
+        self._buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+        return self
+    def _buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('regionRef', node)
+        if value is not None and 'regionRef' not in already_processed:
+            already_processed.add('regionRef')
+            self.regionRef = value
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        pass
+    def __hash__(self):
+        return hash(self.id)
+# end class RegionRefType
+
+
+class OrderedGroupType(GeneratedsSuper):
+    """OrderedGroupType --
+    Group containing index-ordered elements within an UnorderedGroup(Indexed)
+    Elements must be sorted ascending strictly monotonically according to their
+    @index, regardless of their type. (That is, the index of each two consecutive
+    OrderedGroupIndexed, UnorderedGroupIndexed or RegionRefIndexed elements
+    must increase by at least one.)
+      
+    * regionRef --
+      Optional link to a parent region of nested regions.
+      The parent region doubles as reading order group.
+      Only the nested regions should be allowed as group members.
+      
+    * continuation --
+      Is this group a continuation of another group
+      (from previous column or page, for example)?
+      
+    * custom -- For generic use
+    * Labels -- Semantic labels / tags
+    
+    """
+    __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 3),
+        MemberSpec_('OrderedGroupIndexed', 'OrderedGroupIndexedType', 1, 0, {'name': 'OrderedGroupIndexed', 'type': 'OrderedGroupIndexedType'}, 3),
+        MemberSpec_('UnorderedGroupIndexed', 'UnorderedGroupIndexedType', 1, 0, {'name': 'UnorderedGroupIndexed', 'type': 'UnorderedGroupIndexedType'}, 3),
+    ]
+    subclass = None
+    superclass = None
+    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None, gds_collector_=None, **kwargs_):
+        self.gds_collector_ = gds_collector_
+        self.gds_elementtree_node_ = None
+        self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
+        self.ns_prefix_ = "pc"
+        self.id = _cast(None, id)
+        self.id_nsprefix_ = "pc"
+        self.regionRef = _cast(None, regionRef)
+        self.regionRef_nsprefix_ = "pc"
+        self.caption = _cast(None, caption)
+        self.caption_nsprefix_ = "pc"
+        self.type_ = _cast(None, type_)
+        self.type__nsprefix_ = "pc"
+        self.continuation = _cast(bool, continuation)
+        self.continuation_nsprefix_ = "pc"
+        self.custom = _cast(None, custom)
+        self.custom_nsprefix_ = "pc"
+        self.comments = _cast(None, comments)
+        self.comments_nsprefix_ = "pc"
+        self.UserDefined = UserDefined
+        self.UserDefined_nsprefix_ = "pc"
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
+        self.Labels_nsprefix_ = "pc"
+        if RegionRefIndexed is None:
+            self.RegionRefIndexed = []
+        else:
+            self.RegionRefIndexed = RegionRefIndexed
+        self.RegionRefIndexed_nsprefix_ = "pc"
+        if OrderedGroupIndexed is None:
+            self.OrderedGroupIndexed = []
+        else:
+            self.OrderedGroupIndexed = OrderedGroupIndexed
+        self.OrderedGroupIndexed_nsprefix_ = "pc"
+        if UnorderedGroupIndexed is None:
+            self.UnorderedGroupIndexed = []
+        else:
+            self.UnorderedGroupIndexed = UnorderedGroupIndexed
+        self.UnorderedGroupIndexed_nsprefix_ = "pc"
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, OrderedGroupType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if OrderedGroupType.subclass:
+            return OrderedGroupType.subclass(*args_, **kwargs_)
+        else:
+            return OrderedGroupType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_ns_prefix_(self):
+        return self.ns_prefix_
+    def set_ns_prefix_(self, ns_prefix):
+        self.ns_prefix_ = ns_prefix
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_RegionRefIndexed(self):
+        return self.RegionRefIndexed
+    def set_RegionRefIndexed(self, RegionRefIndexed):
+        self.RegionRefIndexed = RegionRefIndexed
+    def add_RegionRefIndexed(self, value):
+        self.RegionRefIndexed.append(value)
+    def insert_RegionRefIndexed_at(self, index, value):
+        self.RegionRefIndexed.insert(index, value)
+    def replace_RegionRefIndexed_at(self, index, value):
+        self.RegionRefIndexed[index] = value
+    def get_OrderedGroupIndexed(self):
+        return self.OrderedGroupIndexed
+    def set_OrderedGroupIndexed(self, OrderedGroupIndexed):
+        self.OrderedGroupIndexed = OrderedGroupIndexed
+    def add_OrderedGroupIndexed(self, value):
+        self.OrderedGroupIndexed.append(value)
+    def insert_OrderedGroupIndexed_at(self, index, value):
+        self.OrderedGroupIndexed.insert(index, value)
+    def replace_OrderedGroupIndexed_at(self, index, value):
+        self.OrderedGroupIndexed[index] = value
+    def get_UnorderedGroupIndexed(self):
+        return self.UnorderedGroupIndexed
+    def set_UnorderedGroupIndexed(self, UnorderedGroupIndexed):
+        self.UnorderedGroupIndexed = UnorderedGroupIndexed
+    def add_UnorderedGroupIndexed(self, value):
+        self.UnorderedGroupIndexed.append(value)
+    def insert_UnorderedGroupIndexed_at(self, index, value):
+        self.UnorderedGroupIndexed.insert(index, value)
+    def replace_UnorderedGroupIndexed_at(self, index, value):
+        self.UnorderedGroupIndexed[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
+    def get_caption(self):
+        return self.caption
+    def set_caption(self, caption):
+        self.caption = caption
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_continuation(self):
+        return self.continuation
+    def set_continuation(self, continuation):
+        self.continuation = continuation
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
+    def validate_GroupTypeSimpleType(self, value):
+        # Validate type pc:GroupTypeSimpleType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['paragraph', 'list', 'list-item', 'figure', 'article', 'div', 'other']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
+    def has__content(self):
+        if (
+            self.UserDefined is not None or
+            self.Labels or
+            self.RegionRefIndexed or
+            self.OrderedGroupIndexed or
+            self.UnorderedGroupIndexed
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None and name_ == 'OrderedGroupType':
+            name_ = self.original_tagname_
+        if UseCapturedNS_ and self.ns_prefix_:
+            namespaceprefix_ = self.ns_prefix_ + ':'
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupType')
+        if self.has__content():
+            outfile.write('>%s' % (eol_, ))
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupType', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupType'):
+        if self.id is not None and 'id' not in already_processed:
+            already_processed.add('id')
+            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
+        if self.regionRef is not None and 'regionRef' not in already_processed:
+            already_processed.add('regionRef')
+            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
+        if self.caption is not None and 'caption' not in already_processed:
+            already_processed.add('caption')
+            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
+        if self.continuation is not None and 'continuation' not in already_processed:
+            already_processed.add('continuation')
+            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
+        if self.custom is not None and 'custom' not in already_processed:
+            already_processed.add('custom')
+            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
+        if self.comments is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
+            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
+            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
+            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for RegionRefIndexed_ in self.RegionRefIndexed:
+            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
+            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
+            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
+        return element
+    def build(self, node, gds_collector_=None):
+        self.gds_collector_ = gds_collector_
+        if SaveElementTreeNode:
+            self.gds_elementtree_node_ = node
+        already_processed = set()
+        self.ns_prefix_ = node.prefix
+        self._buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+        return self
+    def _buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('id', node)
+        if value is not None and 'id' not in already_processed:
+            already_processed.add('id')
+            self.id = value
+        value = find_attr_value_('regionRef', node)
+        if value is not None and 'regionRef' not in already_processed:
+            already_processed.add('regionRef')
+            self.regionRef = value
+        value = find_attr_value_('caption', node)
+        if value is not None and 'caption' not in already_processed:
+            already_processed.add('caption')
+            self.caption = value
+        value = find_attr_value_('type', node)
+        if value is not None and 'type' not in already_processed:
+            already_processed.add('type')
+            self.type_ = value
+            self.validate_GroupTypeSimpleType(self.type_)    # validate type GroupTypeSimpleType
+        value = find_attr_value_('continuation', node)
+        if value is not None and 'continuation' not in already_processed:
+            already_processed.add('continuation')
+            if value in ('true', '1'):
+                self.continuation = True
+            elif value in ('false', '0'):
+                self.continuation = False
+            else:
+                raise_parse_error(node, 'Bad boolean attribute')
+        value = find_attr_value_('custom', node)
+        if value is not None and 'custom' not in already_processed:
+            already_processed.add('custom')
+            self.custom = value
+        value = find_attr_value_('comments', node)
+        if value is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            self.comments = value
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        if nodeName_ == 'UserDefined':
+            obj_ = UserDefinedType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.UserDefined = obj_
+            obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
+        elif nodeName_ == 'RegionRefIndexed':
+            obj_ = RegionRefIndexedType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.RegionRefIndexed.append(obj_)
+            obj_.original_tagname_ = 'RegionRefIndexed'
+        elif nodeName_ == 'OrderedGroupIndexed':
+            obj_ = OrderedGroupIndexedType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.OrderedGroupIndexed.append(obj_)
+            obj_.original_tagname_ = 'OrderedGroupIndexed'
+        elif nodeName_ == 'UnorderedGroupIndexed':
+            obj_ = UnorderedGroupIndexedType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.UnorderedGroupIndexed.append(obj_)
+            obj_.original_tagname_ = 'UnorderedGroupIndexed'
+    def __hash__(self):
+        return hash(self.id)
+    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
+    def get_AllIndexed(self, classes=None, index_sort=True):
+        """
+        Get all indexed children sorted by their ``@index``.
+    
+        Arguments:
+            classes (list): Type of children (sans ``Indexed``) to return. \
+                Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
+            index_sort (boolean): Whether to sort by ``@index``
+    
+        Returns:
+            a list of :py:class:`RegionRefIndexedType`, \
+                :py:class:`OrderedGroupIndexedType`, and \
+                :py:class:`UnorderedGroupIndexedType`
+        """
+        if not classes:
+            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
+        ret = []
+        for class_ in classes:
+            ret += getattr(self, 'get_{}Indexed'.format(class_))()
+        if index_sort:
+            return sorted(ret, key=lambda x: x.index)
+        return ret
+    def clear_AllIndexed(self):
+        ret = self.get_AllIndexed()
+        self.set_RegionRefIndexed([])
+        self.set_OrderedGroupIndexed([])
+        self.set_UnorderedGroupIndexed([])
+        return ret
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def extend_AllIndexed(self, elements, validate_continuity=False):
+        """
+        Add all elements in list `elements`, respecting ``@index`` order.
+        With `validate_continuity`, check that all new elements come after all old elements
+        (or raise an exception). 
+        Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
+        """
+        if not isinstance(elements, list):
+            elements = [elements]
+        siblings = self.get_AllIndexed()
+        highest_sibling_index = siblings[-1].index if siblings else -1
+        if validate_continuity:
+            elements = sorted(elements, key=lambda x: x.index)
+            lowest_element_index = elements[0].index
+            if lowest_element_index <= highest_sibling_index:
+                raise Exception("@index already used: {}".format(lowest_element_index))
+        else:
+            for element in elements:
+                highest_sibling_index += 1
+                element.index = highest_sibling_index
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
+    def sort_AllIndexed(self, validate_uniqueness=True):
+        """
+        Sort all indexed children in-place.
+        """
+        elements = self.get_AllIndexed(index_sort=True)
+        self.clear_AllIndexed()
+        for element in elements:
+            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
+                self.add_RegionRefIndexed(element)
+            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_OrderedGroupIndexed(element)
+            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
+                self.add_UnorderedGroupIndexed(element)
+        return self.get_AllIndexed()
+    
+    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        cleaned = []
+        def replaceWithRRI(group):
+            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
+            rri.index = group.index
+            rri.regionRef = group.regionRef
+            cleaned.append(rri)
+        # remove empty groups and replace with RegionRefIndexedType
+        for entry in self.get_AllIndexed():
+            # pylint: disable=undefined-variable
+            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
+                replaceWithRRI(entry)
+            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
+                replaceWithRRI(entry)
+            else:
+                cleaned.append(entry)
+        for entry in cleaned:
+            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
+# end class OrderedGroupType
+
+
+class UnorderedGroupType(GeneratedsSuper):
+    """UnorderedGroupType --
+    Group containing unordered elements within an UnorderedGroup(Indexed)
+    Elements need not be sorted, and may be mixed by type. (That is,
+    the sequence of	OrderedGroup, UnorderedGroup or RegionRef elements
+    may be ordered arbitrarily.)
+      
+    * regionRef --
+      Optional link to a parent region of nested regions.
+      The parent region doubles as reading order group.
+      Only the nested regions should be allowed as group members.
+      
+    * continuation --
+      Is this group a continuation of another group
+      (from previous column or page, for example)?
+      
+    * custom -- For generic use
+    * Labels -- Semantic labels / tags
+    
+    """
+    __hash__ = GeneratedsSuper.__hash__
+    member_data_items_ = [
+        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
+        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
+        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
+        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
+        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
+        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
+        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
+        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
+        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
+        MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 4),
+        MemberSpec_('OrderedGroup', 'OrderedGroupType', 1, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 4),
+        MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 1, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 4),
+    ]
+    subclass = None
+    superclass = None
+    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None, gds_collector_=None, **kwargs_):
+        self.gds_collector_ = gds_collector_
+        self.gds_elementtree_node_ = None
+        self.original_tagname_ = None
+        self.parent_object_ = kwargs_.get('parent_object_')
+        self.ns_prefix_ = "pc"
+        self.id = _cast(None, id)
+        self.id_nsprefix_ = "pc"
+        self.regionRef = _cast(None, regionRef)
+        self.regionRef_nsprefix_ = "pc"
+        self.caption = _cast(None, caption)
+        self.caption_nsprefix_ = "pc"
+        self.type_ = _cast(None, type_)
+        self.type__nsprefix_ = "pc"
+        self.continuation = _cast(bool, continuation)
+        self.continuation_nsprefix_ = "pc"
+        self.custom = _cast(None, custom)
+        self.custom_nsprefix_ = "pc"
+        self.comments = _cast(None, comments)
+        self.comments_nsprefix_ = "pc"
+        self.UserDefined = UserDefined
+        self.UserDefined_nsprefix_ = "pc"
+        if Labels is None:
+            self.Labels = []
+        else:
+            self.Labels = Labels
+        self.Labels_nsprefix_ = "pc"
+        if RegionRef is None:
+            self.RegionRef = []
+        else:
+            self.RegionRef = RegionRef
+        self.RegionRef_nsprefix_ = "pc"
+        if OrderedGroup is None:
+            self.OrderedGroup = []
+        else:
+            self.OrderedGroup = OrderedGroup
+        self.OrderedGroup_nsprefix_ = "pc"
+        if UnorderedGroup is None:
+            self.UnorderedGroup = []
+        else:
+            self.UnorderedGroup = UnorderedGroup
+        self.UnorderedGroup_nsprefix_ = "pc"
+    def factory(*args_, **kwargs_):
+        if CurrentSubclassModule_ is not None:
+            subclass = getSubclassFromModule_(
+                CurrentSubclassModule_, UnorderedGroupType)
+            if subclass is not None:
+                return subclass(*args_, **kwargs_)
+        if UnorderedGroupType.subclass:
+            return UnorderedGroupType.subclass(*args_, **kwargs_)
+        else:
+            return UnorderedGroupType(*args_, **kwargs_)
+    factory = staticmethod(factory)
+    def get_ns_prefix_(self):
+        return self.ns_prefix_
+    def set_ns_prefix_(self, ns_prefix):
+        self.ns_prefix_ = ns_prefix
+    def get_UserDefined(self):
+        return self.UserDefined
+    def set_UserDefined(self, UserDefined):
+        self.UserDefined = UserDefined
+    def get_Labels(self):
+        return self.Labels
+    def set_Labels(self, Labels):
+        self.Labels = Labels
+    def add_Labels(self, value):
+        self.Labels.append(value)
+    def insert_Labels_at(self, index, value):
+        self.Labels.insert(index, value)
+    def replace_Labels_at(self, index, value):
+        self.Labels[index] = value
+    def get_RegionRef(self):
+        return self.RegionRef
+    def set_RegionRef(self, RegionRef):
+        self.RegionRef = RegionRef
+    def add_RegionRef(self, value):
+        self.RegionRef.append(value)
+    def insert_RegionRef_at(self, index, value):
+        self.RegionRef.insert(index, value)
+    def replace_RegionRef_at(self, index, value):
+        self.RegionRef[index] = value
+    def get_OrderedGroup(self):
+        return self.OrderedGroup
+    def set_OrderedGroup(self, OrderedGroup):
+        self.OrderedGroup = OrderedGroup
+    def add_OrderedGroup(self, value):
+        self.OrderedGroup.append(value)
+    def insert_OrderedGroup_at(self, index, value):
+        self.OrderedGroup.insert(index, value)
+    def replace_OrderedGroup_at(self, index, value):
+        self.OrderedGroup[index] = value
+    def get_UnorderedGroup(self):
+        return self.UnorderedGroup
+    def set_UnorderedGroup(self, UnorderedGroup):
+        self.UnorderedGroup = UnorderedGroup
+    def add_UnorderedGroup(self, value):
+        self.UnorderedGroup.append(value)
+    def insert_UnorderedGroup_at(self, index, value):
+        self.UnorderedGroup.insert(index, value)
+    def replace_UnorderedGroup_at(self, index, value):
+        self.UnorderedGroup[index] = value
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
+    def get_regionRef(self):
+        return self.regionRef
+    def set_regionRef(self, regionRef):
+        self.regionRef = regionRef
+    def get_caption(self):
+        return self.caption
+    def set_caption(self, caption):
+        self.caption = caption
+    def get_type(self):
+        return self.type_
+    def set_type(self, type_):
+        self.type_ = type_
+    def get_continuation(self):
+        return self.continuation
+    def set_continuation(self, continuation):
+        self.continuation = continuation
+    def get_custom(self):
+        return self.custom
+    def set_custom(self, custom):
+        self.custom = custom
+    def get_comments(self):
+        return self.comments
+    def set_comments(self, comments):
+        self.comments = comments
+    def validate_GroupTypeSimpleType(self, value):
+        # Validate type pc:GroupTypeSimpleType, a restriction on string.
+        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
+            if not isinstance(value, str):
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
+                return False
+            value = value
+            enumerations = ['paragraph', 'list', 'list-item', 'figure', 'article', 'div', 'other']
+            if value not in enumerations:
+                lineno = self.gds_get_node_lineno_()
+                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
+                result = False
+    def has__content(self):
+        if (
+            self.UserDefined is not None or
+            self.Labels or
+            self.RegionRef or
+            self.OrderedGroup or
+            self.UnorderedGroup
+        ):
+            return True
+        else:
+            return False
+    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', pretty_print=True):
+        imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupType')
+        if imported_ns_def_ is not None:
+            namespacedef_ = imported_ns_def_
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.original_tagname_ is not None and name_ == 'UnorderedGroupType':
+            name_ = self.original_tagname_
+        if UseCapturedNS_ and self.ns_prefix_:
+            namespaceprefix_ = self.ns_prefix_ + ':'
+        showIndent(outfile, level, pretty_print)
+        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
+        already_processed = set()
+        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupType')
+        if self.has__content():
+            outfile.write('>%s' % (eol_, ))
+            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupType', pretty_print=pretty_print)
+            showIndent(outfile, level, pretty_print)
+            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
+        else:
+            outfile.write('/>%s' % (eol_, ))
+    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupType'):
+        if self.id is not None and 'id' not in already_processed:
+            already_processed.add('id')
+            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
+        if self.regionRef is not None and 'regionRef' not in already_processed:
+            already_processed.add('regionRef')
+            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
+        if self.caption is not None and 'caption' not in already_processed:
+            already_processed.add('caption')
+            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
+        if self.type_ is not None and 'type_' not in already_processed:
+            already_processed.add('type_')
+            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
+        if self.continuation is not None and 'continuation' not in already_processed:
+            already_processed.add('continuation')
+            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
+        if self.custom is not None and 'custom' not in already_processed:
+            already_processed.add('custom')
+            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
+        if self.comments is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
+    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
+        if pretty_print:
+            eol_ = '\n'
+        else:
+            eol_ = ''
+        if self.UserDefined is not None:
+            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
+            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
+        for Labels_ in self.Labels:
+            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
+            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
+        for RegionRef_ in self.RegionRef:
+            namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
+            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
+        for OrderedGroup_ in self.OrderedGroup:
+            namespaceprefix_ = self.OrderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroup_nsprefix_) else ''
+            OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
+            UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
+    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None, reverse_mapping_=None, nsmap_=None):
+        if parent_element is None:
+            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        else:
+            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
+        if self.id is not None:
+            element.set('id', self.gds_format_string(self.id))
+        if self.regionRef is not None:
+            element.set('regionRef', self.gds_format_string(self.regionRef))
+        if self.caption is not None:
+            element.set('caption', self.gds_format_string(self.caption))
+        if self.type_ is not None:
+            element.set('type', self.gds_format_string(self.type_))
+        if self.continuation is not None:
+            element.set('continuation', self.gds_format_boolean(self.continuation))
+        if self.custom is not None:
+            element.set('custom', self.gds_format_string(self.custom))
+        if self.comments is not None:
+            element.set('comments', self.gds_format_string(self.comments))
+        if self.UserDefined is not None:
+            UserDefined_ = self.UserDefined
+            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for Labels_ in self.Labels:
+            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for RegionRef_ in self.RegionRef:
+            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for OrderedGroup_ in self.OrderedGroup:
+            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for UnorderedGroup_ in self.UnorderedGroup:
+            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        if mapping_ is not None:
+            mapping_[id(self)] = element
+        if reverse_mapping_ is not None:
+            reverse_mapping_[element] = self
+        return element
+    def build(self, node, gds_collector_=None):
+        self.gds_collector_ = gds_collector_
+        if SaveElementTreeNode:
+            self.gds_elementtree_node_ = node
+        already_processed = set()
+        self.ns_prefix_ = node.prefix
+        self._buildAttributes(node, node.attrib, already_processed)
+        for child in node:
+            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
+            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
+        return self
+    def _buildAttributes(self, node, attrs, already_processed):
+        value = find_attr_value_('id', node)
+        if value is not None and 'id' not in already_processed:
+            already_processed.add('id')
+            self.id = value
+        value = find_attr_value_('regionRef', node)
+        if value is not None and 'regionRef' not in already_processed:
+            already_processed.add('regionRef')
+            self.regionRef = value
+        value = find_attr_value_('caption', node)
+        if value is not None and 'caption' not in already_processed:
+            already_processed.add('caption')
+            self.caption = value
+        value = find_attr_value_('type', node)
+        if value is not None and 'type' not in already_processed:
+            already_processed.add('type')
+            self.type_ = value
+            self.validate_GroupTypeSimpleType(self.type_)    # validate type GroupTypeSimpleType
+        value = find_attr_value_('continuation', node)
+        if value is not None and 'continuation' not in already_processed:
+            already_processed.add('continuation')
+            if value in ('true', '1'):
+                self.continuation = True
+            elif value in ('false', '0'):
+                self.continuation = False
+            else:
+                raise_parse_error(node, 'Bad boolean attribute')
+        value = find_attr_value_('custom', node)
+        if value is not None and 'custom' not in already_processed:
+            already_processed.add('custom')
+            self.custom = value
+        value = find_attr_value_('comments', node)
+        if value is not None and 'comments' not in already_processed:
+            already_processed.add('comments')
+            self.comments = value
+    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
+        if nodeName_ == 'UserDefined':
+            obj_ = UserDefinedType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.UserDefined = obj_
+            obj_.original_tagname_ = 'UserDefined'
+        elif nodeName_ == 'Labels':
+            obj_ = LabelsType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.Labels.append(obj_)
+            obj_.original_tagname_ = 'Labels'
+        elif nodeName_ == 'RegionRef':
+            obj_ = RegionRefType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.RegionRef.append(obj_)
+            obj_.original_tagname_ = 'RegionRef'
+        elif nodeName_ == 'OrderedGroup':
+            obj_ = OrderedGroupType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.OrderedGroup.append(obj_)
+            obj_.original_tagname_ = 'OrderedGroup'
+        elif nodeName_ == 'UnorderedGroup':
+            obj_ = UnorderedGroupType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.UnorderedGroup.append(obj_)
+            obj_.original_tagname_ = 'UnorderedGroup'
+    def __hash__(self):
+        return hash(self.id)
+    def get_UnorderedGroupChildren(self):
+        """
+        List all non-metadata children of an :py:class:`UnorderedGroupType`
+        """
+        # TODO: should not change order
+        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
+    
+# end class UnorderedGroupType
+
+
 class RegionRefIndexedType(GeneratedsSuper):
-    """RegionRefIndexedType -- Numbered region
+    """RegionRefIndexedType -- Region reference within an OrderedGroup(Indexed)
     index -- Position (order number) of this item within the current hierarchy level.
     
     """
@@ -6630,7 +7590,11 @@ class RegionRefIndexedType(GeneratedsSuper):
 
 class OrderedGroupIndexedType(GeneratedsSuper):
     """OrderedGroupIndexedType --
-    Indexed group containing ordered elements
+    Group containing index-ordered elements within an OrderedGroup(Indexed).
+    Elements must be sorted ascending strictly monotonically according to their
+    @index, regardless of their type. (That is, the index of each two consecutive
+    OrderedGroupIndexed, UnorderedGroupIndexed or RegionRefIndexed elements
+    must increase by at least one.)
       
     * regionRef --
       Optional link to a parent region of nested regions.
@@ -6661,9 +7625,9 @@ class OrderedGroupIndexedType(GeneratedsSuper):
         MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
-        MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 3),
-        MemberSpec_('OrderedGroupIndexed', 'OrderedGroupIndexedType', 1, 0, {'name': 'OrderedGroupIndexed', 'type': 'OrderedGroupIndexedType'}, 3),
-        MemberSpec_('UnorderedGroupIndexed', 'UnorderedGroupIndexedType', 1, 0, {'name': 'UnorderedGroupIndexed', 'type': 'UnorderedGroupIndexedType'}, 3),
+        MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 5),
+        MemberSpec_('OrderedGroupIndexed', 'OrderedGroupIndexedType', 1, 0, {'name': 'OrderedGroupIndexed', 'type': 'OrderedGroupIndexedType'}, 5),
+        MemberSpec_('UnorderedGroupIndexed', 'UnorderedGroupIndexedType', 1, 0, {'name': 'UnorderedGroupIndexed', 'type': 'UnorderedGroupIndexedType'}, 5),
     ]
     subclass = None
     superclass = None
@@ -7118,7 +8082,10 @@ class OrderedGroupIndexedType(GeneratedsSuper):
 
 class UnorderedGroupIndexedType(GeneratedsSuper):
     """UnorderedGroupIndexedType --
-    Indexed group containing unordered elements
+    Group containing unordered elements within an OrderedGroup(Indexed)
+    Elements need not be sorted, and may be mixed by type. (That is,
+    the sequence of	OrderedGroup, UnorderedGroup or RegionRef elements
+    may be ordered arbitrarily.)
       
     * regionRef --
       Optional link to a parent region of nested regions.
@@ -7149,9 +8116,9 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
         MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
         MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
-        MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 4),
-        MemberSpec_('OrderedGroup', 'OrderedGroupType', 1, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 4),
-        MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 1, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 4),
+        MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 6),
+        MemberSpec_('OrderedGroup', 'OrderedGroupType', 1, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 6),
+        MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 1, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 6),
     ]
     subclass = None
     superclass = None
@@ -7505,949 +8472,6 @@ class UnorderedGroupIndexedType(GeneratedsSuper):
         return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
     
 # end class UnorderedGroupIndexedType
-
-
-class RegionRefType(GeneratedsSuper):
-    __hash__ = GeneratedsSuper.__hash__
-    member_data_items_ = [
-        MemberSpec_('regionRef', 'string', 0, 0, {'use': 'required', 'name': 'regionRef'}),
-    ]
-    subclass = None
-    superclass = None
-    def __init__(self, regionRef=None, gds_collector_=None, **kwargs_):
-        self.gds_collector_ = gds_collector_
-        self.gds_elementtree_node_ = None
-        self.original_tagname_ = None
-        self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = "pc"
-        self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = "pc"
-    def factory(*args_, **kwargs_):
-        if CurrentSubclassModule_ is not None:
-            subclass = getSubclassFromModule_(
-                CurrentSubclassModule_, RegionRefType)
-            if subclass is not None:
-                return subclass(*args_, **kwargs_)
-        if RegionRefType.subclass:
-            return RegionRefType.subclass(*args_, **kwargs_)
-        else:
-            return RegionRefType(*args_, **kwargs_)
-    factory = staticmethod(factory)
-    def get_ns_prefix_(self):
-        return self.ns_prefix_
-    def set_ns_prefix_(self, ns_prefix):
-        self.ns_prefix_ = ns_prefix
-    def get_regionRef(self):
-        return self.regionRef
-    def set_regionRef(self, regionRef):
-        self.regionRef = regionRef
-    def has__content(self):
-        if (
-
-        ):
-            return True
-        else:
-            return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('RegionRefType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'RegionRefType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='RegionRefType')
-        if self.has__content():
-            outfile.write('>%s' % (eol_, ))
-            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='RegionRefType', pretty_print=pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='RegionRefType'):
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='RegionRefType', fromsubclass_=False, pretty_print=True):
-        pass
-    def to_etree(self, parent_element=None, name_='RegionRefType', mapping_=None, reverse_mapping_=None, nsmap_=None):
-        if parent_element is None:
-            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
-        else:
-            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
-        if self.regionRef is not None:
-            element.set('regionRef', self.gds_format_string(self.regionRef))
-        if mapping_ is not None:
-            mapping_[id(self)] = element
-        if reverse_mapping_ is not None:
-            reverse_mapping_[element] = self
-        return element
-    def build(self, node, gds_collector_=None):
-        self.gds_collector_ = gds_collector_
-        if SaveElementTreeNode:
-            self.gds_elementtree_node_ = node
-        already_processed = set()
-        self.ns_prefix_ = node.prefix
-        self._buildAttributes(node, node.attrib, already_processed)
-        for child in node:
-            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
-        return self
-    def _buildAttributes(self, node, attrs, already_processed):
-        value = find_attr_value_('regionRef', node)
-        if value is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            self.regionRef = value
-    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        pass
-    def __hash__(self):
-        return hash(self.id)
-# end class RegionRefType
-
-
-class OrderedGroupType(GeneratedsSuper):
-    """OrderedGroupType --
-    Numbered group (contains ordered elements)
-      
-    * regionRef --
-      Optional link to a parent region of nested regions.
-      The parent region doubles as reading order group.
-      Only the nested regions should be allowed as group members.
-      
-    * continuation --
-      Is this group a continuation of another group
-      (from previous column or page, for example)?
-      
-    * custom -- For generic use
-    * Labels -- Semantic labels / tags
-    
-    """
-    __hash__ = GeneratedsSuper.__hash__
-    member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
-        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
-        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
-        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
-        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
-        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
-        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
-        MemberSpec_('RegionRefIndexed', 'RegionRefIndexedType', 1, 0, {'name': 'RegionRefIndexed', 'type': 'RegionRefIndexedType'}, 5),
-        MemberSpec_('OrderedGroupIndexed', 'OrderedGroupIndexedType', 1, 0, {'name': 'OrderedGroupIndexed', 'type': 'OrderedGroupIndexedType'}, 5),
-        MemberSpec_('UnorderedGroupIndexed', 'UnorderedGroupIndexedType', 1, 0, {'name': 'UnorderedGroupIndexed', 'type': 'UnorderedGroupIndexedType'}, 5),
-    ]
-    subclass = None
-    superclass = None
-    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRefIndexed=None, OrderedGroupIndexed=None, UnorderedGroupIndexed=None, gds_collector_=None, **kwargs_):
-        self.gds_collector_ = gds_collector_
-        self.gds_elementtree_node_ = None
-        self.original_tagname_ = None
-        self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = "pc"
-        self.id = _cast(None, id)
-        self.id_nsprefix_ = "pc"
-        self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = "pc"
-        self.caption = _cast(None, caption)
-        self.caption_nsprefix_ = "pc"
-        self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = "pc"
-        self.continuation = _cast(bool, continuation)
-        self.continuation_nsprefix_ = "pc"
-        self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = "pc"
-        self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = "pc"
-        self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = "pc"
-        if Labels is None:
-            self.Labels = []
-        else:
-            self.Labels = Labels
-        self.Labels_nsprefix_ = "pc"
-        if RegionRefIndexed is None:
-            self.RegionRefIndexed = []
-        else:
-            self.RegionRefIndexed = RegionRefIndexed
-        self.RegionRefIndexed_nsprefix_ = "pc"
-        if OrderedGroupIndexed is None:
-            self.OrderedGroupIndexed = []
-        else:
-            self.OrderedGroupIndexed = OrderedGroupIndexed
-        self.OrderedGroupIndexed_nsprefix_ = "pc"
-        if UnorderedGroupIndexed is None:
-            self.UnorderedGroupIndexed = []
-        else:
-            self.UnorderedGroupIndexed = UnorderedGroupIndexed
-        self.UnorderedGroupIndexed_nsprefix_ = "pc"
-    def factory(*args_, **kwargs_):
-        if CurrentSubclassModule_ is not None:
-            subclass = getSubclassFromModule_(
-                CurrentSubclassModule_, OrderedGroupType)
-            if subclass is not None:
-                return subclass(*args_, **kwargs_)
-        if OrderedGroupType.subclass:
-            return OrderedGroupType.subclass(*args_, **kwargs_)
-        else:
-            return OrderedGroupType(*args_, **kwargs_)
-    factory = staticmethod(factory)
-    def get_ns_prefix_(self):
-        return self.ns_prefix_
-    def set_ns_prefix_(self, ns_prefix):
-        self.ns_prefix_ = ns_prefix
-    def get_UserDefined(self):
-        return self.UserDefined
-    def set_UserDefined(self, UserDefined):
-        self.UserDefined = UserDefined
-    def get_Labels(self):
-        return self.Labels
-    def set_Labels(self, Labels):
-        self.Labels = Labels
-    def add_Labels(self, value):
-        self.Labels.append(value)
-    def insert_Labels_at(self, index, value):
-        self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value):
-        self.Labels[index] = value
-    def get_RegionRefIndexed(self):
-        return self.RegionRefIndexed
-    def set_RegionRefIndexed(self, RegionRefIndexed):
-        self.RegionRefIndexed = RegionRefIndexed
-    def add_RegionRefIndexed(self, value):
-        self.RegionRefIndexed.append(value)
-    def insert_RegionRefIndexed_at(self, index, value):
-        self.RegionRefIndexed.insert(index, value)
-    def replace_RegionRefIndexed_at(self, index, value):
-        self.RegionRefIndexed[index] = value
-    def get_OrderedGroupIndexed(self):
-        return self.OrderedGroupIndexed
-    def set_OrderedGroupIndexed(self, OrderedGroupIndexed):
-        self.OrderedGroupIndexed = OrderedGroupIndexed
-    def add_OrderedGroupIndexed(self, value):
-        self.OrderedGroupIndexed.append(value)
-    def insert_OrderedGroupIndexed_at(self, index, value):
-        self.OrderedGroupIndexed.insert(index, value)
-    def replace_OrderedGroupIndexed_at(self, index, value):
-        self.OrderedGroupIndexed[index] = value
-    def get_UnorderedGroupIndexed(self):
-        return self.UnorderedGroupIndexed
-    def set_UnorderedGroupIndexed(self, UnorderedGroupIndexed):
-        self.UnorderedGroupIndexed = UnorderedGroupIndexed
-    def add_UnorderedGroupIndexed(self, value):
-        self.UnorderedGroupIndexed.append(value)
-    def insert_UnorderedGroupIndexed_at(self, index, value):
-        self.UnorderedGroupIndexed.insert(index, value)
-    def replace_UnorderedGroupIndexed_at(self, index, value):
-        self.UnorderedGroupIndexed[index] = value
-    def get_id(self):
-        return self.id
-    def set_id(self, id):
-        self.id = id
-    def get_regionRef(self):
-        return self.regionRef
-    def set_regionRef(self, regionRef):
-        self.regionRef = regionRef
-    def get_caption(self):
-        return self.caption
-    def set_caption(self, caption):
-        self.caption = caption
-    def get_type(self):
-        return self.type_
-    def set_type(self, type_):
-        self.type_ = type_
-    def get_continuation(self):
-        return self.continuation
-    def set_continuation(self, continuation):
-        self.continuation = continuation
-    def get_custom(self):
-        return self.custom
-    def set_custom(self, custom):
-        self.custom = custom
-    def get_comments(self):
-        return self.comments
-    def set_comments(self, comments):
-        self.comments = comments
-    def validate_GroupTypeSimpleType(self, value):
-        # Validate type pc:GroupTypeSimpleType, a restriction on string.
-        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
-            if not isinstance(value, str):
-                lineno = self.gds_get_node_lineno_()
-                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
-                return False
-            value = value
-            enumerations = ['paragraph', 'list', 'list-item', 'figure', 'article', 'div', 'other']
-            if value not in enumerations:
-                lineno = self.gds_get_node_lineno_()
-                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
-                result = False
-    def has__content(self):
-        if (
-            self.UserDefined is not None or
-            self.Labels or
-            self.RegionRefIndexed or
-            self.OrderedGroupIndexed or
-            self.UnorderedGroupIndexed
-        ):
-            return True
-        else:
-            return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('OrderedGroupType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'OrderedGroupType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='OrderedGroupType')
-        if self.has__content():
-            outfile.write('>%s' % (eol_, ))
-            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='OrderedGroupType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='OrderedGroupType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-        if self.caption is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.continuation is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
-        for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        for RegionRefIndexed_ in self.RegionRefIndexed:
-            namespaceprefix_ = self.RegionRefIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRefIndexed_nsprefix_) else ''
-            RegionRefIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRefIndexed', pretty_print=pretty_print)
-        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            namespaceprefix_ = self.OrderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroupIndexed_nsprefix_) else ''
-            OrderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroupIndexed', pretty_print=pretty_print)
-        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            namespaceprefix_ = self.UnorderedGroupIndexed_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroupIndexed_nsprefix_) else ''
-            UnorderedGroupIndexed_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroupIndexed', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='OrderedGroupType', mapping_=None, reverse_mapping_=None, nsmap_=None):
-        if parent_element is None:
-            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
-        else:
-            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
-        if self.id is not None:
-            element.set('id', self.gds_format_string(self.id))
-        if self.regionRef is not None:
-            element.set('regionRef', self.gds_format_string(self.regionRef))
-        if self.caption is not None:
-            element.set('caption', self.gds_format_string(self.caption))
-        if self.type_ is not None:
-            element.set('type', self.gds_format_string(self.type_))
-        if self.continuation is not None:
-            element.set('continuation', self.gds_format_boolean(self.continuation))
-        if self.custom is not None:
-            element.set('custom', self.gds_format_string(self.custom))
-        if self.comments is not None:
-            element.set('comments', self.gds_format_string(self.comments))
-        if self.UserDefined is not None:
-            UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for RegionRefIndexed_ in self.RegionRefIndexed:
-            RegionRefIndexed_.to_etree(element, name_='RegionRefIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for OrderedGroupIndexed_ in self.OrderedGroupIndexed:
-            OrderedGroupIndexed_.to_etree(element, name_='OrderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for UnorderedGroupIndexed_ in self.UnorderedGroupIndexed:
-            UnorderedGroupIndexed_.to_etree(element, name_='UnorderedGroupIndexed', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        if mapping_ is not None:
-            mapping_[id(self)] = element
-        if reverse_mapping_ is not None:
-            reverse_mapping_[element] = self
-        return element
-    def build(self, node, gds_collector_=None):
-        self.gds_collector_ = gds_collector_
-        if SaveElementTreeNode:
-            self.gds_elementtree_node_ = node
-        already_processed = set()
-        self.ns_prefix_ = node.prefix
-        self._buildAttributes(node, node.attrib, already_processed)
-        for child in node:
-            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
-        return self
-    def _buildAttributes(self, node, attrs, already_processed):
-        value = find_attr_value_('id', node)
-        if value is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            self.id = value
-        value = find_attr_value_('regionRef', node)
-        if value is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            self.regionRef = value
-        value = find_attr_value_('caption', node)
-        if value is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            self.caption = value
-        value = find_attr_value_('type', node)
-        if value is not None and 'type' not in already_processed:
-            already_processed.add('type')
-            self.type_ = value
-            self.validate_GroupTypeSimpleType(self.type_)    # validate type GroupTypeSimpleType
-        value = find_attr_value_('continuation', node)
-        if value is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            if value in ('true', '1'):
-                self.continuation = True
-            elif value in ('false', '0'):
-                self.continuation = False
-            else:
-                raise_parse_error(node, 'Bad boolean attribute')
-        value = find_attr_value_('custom', node)
-        if value is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            self.custom = value
-        value = find_attr_value_('comments', node)
-        if value is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            self.comments = value
-    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        if nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.UserDefined = obj_
-            obj_.original_tagname_ = 'UserDefined'
-        elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.Labels.append(obj_)
-            obj_.original_tagname_ = 'Labels'
-        elif nodeName_ == 'RegionRefIndexed':
-            obj_ = RegionRefIndexedType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.RegionRefIndexed.append(obj_)
-            obj_.original_tagname_ = 'RegionRefIndexed'
-        elif nodeName_ == 'OrderedGroupIndexed':
-            obj_ = OrderedGroupIndexedType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.OrderedGroupIndexed.append(obj_)
-            obj_.original_tagname_ = 'OrderedGroupIndexed'
-        elif nodeName_ == 'UnorderedGroupIndexed':
-            obj_ = UnorderedGroupIndexedType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.UnorderedGroupIndexed.append(obj_)
-            obj_.original_tagname_ = 'UnorderedGroupIndexed'
-    def __hash__(self):
-        return hash(self.id)
-    # pylint: disable=invalid-name,missing-module-docstring,line-too-long
-    def get_AllIndexed(self, classes=None, index_sort=True):
-        """
-        Get all indexed children sorted by their ``@index``.
-    
-        Arguments:
-            classes (list): Type of children (sans ``Indexed``) to return. \
-                Default: ``['RegionRef', 'OrderedGroup', 'UnorderedGroup']``
-            index_sort (boolean): Whether to sort by ``@index``
-    
-        Returns:
-            a list of :py:class:`RegionRefIndexedType`, \
-                :py:class:`OrderedGroupIndexedType`, and \
-                :py:class:`UnorderedGroupIndexedType`
-        """
-        if not classes:
-            classes = ['RegionRef', 'OrderedGroup', 'UnorderedGroup']
-        ret = []
-        for class_ in classes:
-            ret += getattr(self, 'get_{}Indexed'.format(class_))()
-        if index_sort:
-            return sorted(ret, key=lambda x: x.index)
-        return ret
-    def clear_AllIndexed(self):
-        ret = self.get_AllIndexed()
-        self.set_RegionRefIndexed([])
-        self.set_OrderedGroupIndexed([])
-        self.set_UnorderedGroupIndexed([])
-        return ret
-    
-    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
-    def extend_AllIndexed(self, elements, validate_continuity=False):
-        """
-        Add all elements in list `elements`, respecting ``@index`` order.
-        With `validate_continuity`, check that all new elements come after all old elements
-        (or raise an exception). 
-        Otherwise, ensure this condition silently (by increasing ``@index`` accordingly).
-        """
-        if not isinstance(elements, list):
-            elements = [elements]
-        siblings = self.get_AllIndexed()
-        highest_sibling_index = siblings[-1].index if siblings else -1
-        if validate_continuity:
-            elements = sorted(elements, key=lambda x: x.index)
-            lowest_element_index = elements[0].index
-            if lowest_element_index <= highest_sibling_index:
-                raise Exception("@index already used: {}".format(lowest_element_index))
-        else:
-            for element in elements:
-                highest_sibling_index += 1
-                element.index = highest_sibling_index
-        for element in elements:
-            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
-                self.add_RegionRefIndexed(element)
-            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
-                self.add_OrderedGroupIndexed(element)
-            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
-                self.add_UnorderedGroupIndexed(element)
-        return self.get_AllIndexed()
-    # pylint: disable=line-too-long,invalid-name,missing-module-docstring
-    def sort_AllIndexed(self, validate_uniqueness=True):
-        """
-        Sort all indexed children in-place.
-        """
-        elements = self.get_AllIndexed(index_sort=True)
-        self.clear_AllIndexed()
-        for element in elements:
-            if isinstance(element, RegionRefIndexedType): # pylint: disable=undefined-variable
-                self.add_RegionRefIndexed(element)
-            elif isinstance(element, OrderedGroupIndexedType): # pylint: disable=undefined-variable
-                self.add_OrderedGroupIndexed(element)
-            elif isinstance(element, UnorderedGroupIndexedType): # pylint: disable=undefined-variable
-                self.add_UnorderedGroupIndexed(element)
-        return self.get_AllIndexed()
-    
-    # pylint: disable=line-too-long,invalid-name,missing-module-docstring,missing-function-docstring
-    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='OrderedGroupType', fromsubclass_=False, pretty_print=True): # pylint: disable=unused-argument,too-many-arguments
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
-        for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        cleaned = []
-        def replaceWithRRI(group):
-            rri = RegionRefIndexedType.factory(parent_object_=self) # pylint: disable=undefined-variable
-            rri.index = group.index
-            rri.regionRef = group.regionRef
-            cleaned.append(rri)
-        # remove empty groups and replace with RegionRefIndexedType
-        for entry in self.get_AllIndexed():
-            # pylint: disable=undefined-variable
-            if isinstance(entry, (OrderedGroupIndexedType)) and not entry.get_AllIndexed():
-                replaceWithRRI(entry)
-            elif isinstance(entry, UnorderedGroupIndexedType) and not entry.get_UnorderedGroupChildren():
-                replaceWithRRI(entry)
-            else:
-                cleaned.append(entry)
-        for entry in cleaned:
-            entry.export(outfile, level, namespaceprefix_, namespacedef_='', name_=entry.__class__.__name__[:-4], pretty_print=pretty_print)
-# end class OrderedGroupType
-
-
-class UnorderedGroupType(GeneratedsSuper):
-    """UnorderedGroupType --
-    Numbered group (contains unordered elements)
-      
-    * regionRef --
-      Optional link to a parent region of nested regions.
-      The parent region doubles as reading order group.
-      Only the nested regions should be allowed as group members.
-      
-    * continuation --
-      Is this group a continuation of another group
-      (from previous column or page, for example)?
-      
-    * custom -- For generic use
-    * Labels -- Semantic labels / tags
-    
-    """
-    __hash__ = GeneratedsSuper.__hash__
-    member_data_items_ = [
-        MemberSpec_('id', 'string', 0, 0, {'use': 'required', 'name': 'id'}),
-        MemberSpec_('regionRef', 'string', 0, 1, {'use': 'optional', 'name': 'regionRef'}),
-        MemberSpec_('caption', 'string', 0, 1, {'use': 'optional', 'name': 'caption'}),
-        MemberSpec_('type_', 'pc:GroupTypeSimpleType', 0, 1, {'use': 'optional', 'name': 'type_'}),
-        MemberSpec_('continuation', 'boolean', 0, 1, {'use': 'optional', 'name': 'continuation'}),
-        MemberSpec_('custom', 'string', 0, 1, {'use': 'optional', 'name': 'custom'}),
-        MemberSpec_('comments', 'string', 0, 1, {'use': 'optional', 'name': 'comments'}),
-        MemberSpec_('UserDefined', 'UserDefinedType', 0, 1, {'maxOccurs': '1', 'minOccurs': '0', 'name': 'UserDefined', 'type': 'UserDefinedType'}, None),
-        MemberSpec_('Labels', 'LabelsType', 1, 1, {'maxOccurs': 'unbounded', 'minOccurs': '0', 'name': 'Labels', 'type': 'LabelsType'}, None),
-        MemberSpec_('RegionRef', 'RegionRefType', 1, 0, {'name': 'RegionRef', 'type': 'RegionRefType'}, 6),
-        MemberSpec_('OrderedGroup', 'OrderedGroupType', 1, 0, {'name': 'OrderedGroup', 'type': 'OrderedGroupType'}, 6),
-        MemberSpec_('UnorderedGroup', 'UnorderedGroupType', 1, 0, {'name': 'UnorderedGroup', 'type': 'UnorderedGroupType'}, 6),
-    ]
-    subclass = None
-    superclass = None
-    def __init__(self, id=None, regionRef=None, caption=None, type_=None, continuation=None, custom=None, comments=None, UserDefined=None, Labels=None, RegionRef=None, OrderedGroup=None, UnorderedGroup=None, gds_collector_=None, **kwargs_):
-        self.gds_collector_ = gds_collector_
-        self.gds_elementtree_node_ = None
-        self.original_tagname_ = None
-        self.parent_object_ = kwargs_.get('parent_object_')
-        self.ns_prefix_ = "pc"
-        self.id = _cast(None, id)
-        self.id_nsprefix_ = "pc"
-        self.regionRef = _cast(None, regionRef)
-        self.regionRef_nsprefix_ = "pc"
-        self.caption = _cast(None, caption)
-        self.caption_nsprefix_ = "pc"
-        self.type_ = _cast(None, type_)
-        self.type__nsprefix_ = "pc"
-        self.continuation = _cast(bool, continuation)
-        self.continuation_nsprefix_ = "pc"
-        self.custom = _cast(None, custom)
-        self.custom_nsprefix_ = "pc"
-        self.comments = _cast(None, comments)
-        self.comments_nsprefix_ = "pc"
-        self.UserDefined = UserDefined
-        self.UserDefined_nsprefix_ = "pc"
-        if Labels is None:
-            self.Labels = []
-        else:
-            self.Labels = Labels
-        self.Labels_nsprefix_ = "pc"
-        if RegionRef is None:
-            self.RegionRef = []
-        else:
-            self.RegionRef = RegionRef
-        self.RegionRef_nsprefix_ = "pc"
-        if OrderedGroup is None:
-            self.OrderedGroup = []
-        else:
-            self.OrderedGroup = OrderedGroup
-        self.OrderedGroup_nsprefix_ = "pc"
-        if UnorderedGroup is None:
-            self.UnorderedGroup = []
-        else:
-            self.UnorderedGroup = UnorderedGroup
-        self.UnorderedGroup_nsprefix_ = "pc"
-    def factory(*args_, **kwargs_):
-        if CurrentSubclassModule_ is not None:
-            subclass = getSubclassFromModule_(
-                CurrentSubclassModule_, UnorderedGroupType)
-            if subclass is not None:
-                return subclass(*args_, **kwargs_)
-        if UnorderedGroupType.subclass:
-            return UnorderedGroupType.subclass(*args_, **kwargs_)
-        else:
-            return UnorderedGroupType(*args_, **kwargs_)
-    factory = staticmethod(factory)
-    def get_ns_prefix_(self):
-        return self.ns_prefix_
-    def set_ns_prefix_(self, ns_prefix):
-        self.ns_prefix_ = ns_prefix
-    def get_UserDefined(self):
-        return self.UserDefined
-    def set_UserDefined(self, UserDefined):
-        self.UserDefined = UserDefined
-    def get_Labels(self):
-        return self.Labels
-    def set_Labels(self, Labels):
-        self.Labels = Labels
-    def add_Labels(self, value):
-        self.Labels.append(value)
-    def insert_Labels_at(self, index, value):
-        self.Labels.insert(index, value)
-    def replace_Labels_at(self, index, value):
-        self.Labels[index] = value
-    def get_RegionRef(self):
-        return self.RegionRef
-    def set_RegionRef(self, RegionRef):
-        self.RegionRef = RegionRef
-    def add_RegionRef(self, value):
-        self.RegionRef.append(value)
-    def insert_RegionRef_at(self, index, value):
-        self.RegionRef.insert(index, value)
-    def replace_RegionRef_at(self, index, value):
-        self.RegionRef[index] = value
-    def get_OrderedGroup(self):
-        return self.OrderedGroup
-    def set_OrderedGroup(self, OrderedGroup):
-        self.OrderedGroup = OrderedGroup
-    def add_OrderedGroup(self, value):
-        self.OrderedGroup.append(value)
-    def insert_OrderedGroup_at(self, index, value):
-        self.OrderedGroup.insert(index, value)
-    def replace_OrderedGroup_at(self, index, value):
-        self.OrderedGroup[index] = value
-    def get_UnorderedGroup(self):
-        return self.UnorderedGroup
-    def set_UnorderedGroup(self, UnorderedGroup):
-        self.UnorderedGroup = UnorderedGroup
-    def add_UnorderedGroup(self, value):
-        self.UnorderedGroup.append(value)
-    def insert_UnorderedGroup_at(self, index, value):
-        self.UnorderedGroup.insert(index, value)
-    def replace_UnorderedGroup_at(self, index, value):
-        self.UnorderedGroup[index] = value
-    def get_id(self):
-        return self.id
-    def set_id(self, id):
-        self.id = id
-    def get_regionRef(self):
-        return self.regionRef
-    def set_regionRef(self, regionRef):
-        self.regionRef = regionRef
-    def get_caption(self):
-        return self.caption
-    def set_caption(self, caption):
-        self.caption = caption
-    def get_type(self):
-        return self.type_
-    def set_type(self, type_):
-        self.type_ = type_
-    def get_continuation(self):
-        return self.continuation
-    def set_continuation(self, continuation):
-        self.continuation = continuation
-    def get_custom(self):
-        return self.custom
-    def set_custom(self, custom):
-        self.custom = custom
-    def get_comments(self):
-        return self.comments
-    def set_comments(self, comments):
-        self.comments = comments
-    def validate_GroupTypeSimpleType(self, value):
-        # Validate type pc:GroupTypeSimpleType, a restriction on string.
-        if value is not None and Validate_simpletypes_ and self.gds_collector_ is not None:
-            if not isinstance(value, str):
-                lineno = self.gds_get_node_lineno_()
-                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s is not of the correct base simple type (str)' % {"value": value, "lineno": lineno, })
-                return False
-            value = value
-            enumerations = ['paragraph', 'list', 'list-item', 'figure', 'article', 'div', 'other']
-            if value not in enumerations:
-                lineno = self.gds_get_node_lineno_()
-                self.gds_collector_.add_message('Value "%(value)s"%(lineno)s does not match xsd enumeration restriction on GroupTypeSimpleType' % {"value" : encode_str_2_3(value), "lineno": lineno} )
-                result = False
-    def has__content(self):
-        if (
-            self.UserDefined is not None or
-            self.Labels or
-            self.RegionRef or
-            self.OrderedGroup or
-            self.UnorderedGroup
-        ):
-            return True
-        else:
-            return False
-    def export(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', pretty_print=True):
-        imported_ns_def_ = GenerateDSNamespaceDefs_.get('UnorderedGroupType')
-        if imported_ns_def_ is not None:
-            namespacedef_ = imported_ns_def_
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.original_tagname_ is not None and name_ == 'UnorderedGroupType':
-            name_ = self.original_tagname_
-        if UseCapturedNS_ and self.ns_prefix_:
-            namespaceprefix_ = self.ns_prefix_ + ':'
-        showIndent(outfile, level, pretty_print)
-        outfile.write('<%s%s%s' % (namespaceprefix_, name_, namespacedef_ and ' ' + namespacedef_ or '', ))
-        already_processed = set()
-        self._exportAttributes(outfile, level, already_processed, namespaceprefix_, name_='UnorderedGroupType')
-        if self.has__content():
-            outfile.write('>%s' % (eol_, ))
-            self._exportChildren(outfile, level + 1, namespaceprefix_, namespacedef_, name_='UnorderedGroupType', pretty_print=pretty_print)
-            showIndent(outfile, level, pretty_print)
-            outfile.write('</%s%s>%s' % (namespaceprefix_, name_, eol_))
-        else:
-            outfile.write('/>%s' % (eol_, ))
-    def _exportAttributes(self, outfile, level, already_processed, namespaceprefix_='', name_='UnorderedGroupType'):
-        if self.id is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            outfile.write(' id=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.id), input_name='id')), ))
-        if self.regionRef is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            outfile.write(' regionRef=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.regionRef), input_name='regionRef')), ))
-        if self.caption is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            outfile.write(' caption=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.caption), input_name='caption')), ))
-        if self.type_ is not None and 'type_' not in already_processed:
-            already_processed.add('type_')
-            outfile.write(' type=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.type_), input_name='type')), ))
-        if self.continuation is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            outfile.write(' continuation="%s"' % self.gds_format_boolean(self.continuation, input_name='continuation'))
-        if self.custom is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            outfile.write(' custom=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.custom), input_name='custom')), ))
-        if self.comments is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            outfile.write(' comments=%s' % (self.gds_encode(self.gds_format_string(quote_attrib(self.comments), input_name='comments')), ))
-    def _exportChildren(self, outfile, level, namespaceprefix_='', namespacedef_='xmlns:pc="http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15"', name_='UnorderedGroupType', fromsubclass_=False, pretty_print=True):
-        if pretty_print:
-            eol_ = '\n'
-        else:
-            eol_ = ''
-        if self.UserDefined is not None:
-            namespaceprefix_ = self.UserDefined_nsprefix_ + ':' if (UseCapturedNS_ and self.UserDefined_nsprefix_) else ''
-            self.UserDefined.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UserDefined', pretty_print=pretty_print)
-        for Labels_ in self.Labels:
-            namespaceprefix_ = self.Labels_nsprefix_ + ':' if (UseCapturedNS_ and self.Labels_nsprefix_) else ''
-            Labels_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='Labels', pretty_print=pretty_print)
-        for RegionRef_ in self.RegionRef:
-            namespaceprefix_ = self.RegionRef_nsprefix_ + ':' if (UseCapturedNS_ and self.RegionRef_nsprefix_) else ''
-            RegionRef_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='RegionRef', pretty_print=pretty_print)
-        for OrderedGroup_ in self.OrderedGroup:
-            namespaceprefix_ = self.OrderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.OrderedGroup_nsprefix_) else ''
-            OrderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='OrderedGroup', pretty_print=pretty_print)
-        for UnorderedGroup_ in self.UnorderedGroup:
-            namespaceprefix_ = self.UnorderedGroup_nsprefix_ + ':' if (UseCapturedNS_ and self.UnorderedGroup_nsprefix_) else ''
-            UnorderedGroup_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='UnorderedGroup', pretty_print=pretty_print)
-    def to_etree(self, parent_element=None, name_='UnorderedGroupType', mapping_=None, reverse_mapping_=None, nsmap_=None):
-        if parent_element is None:
-            element = etree_.Element('{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
-        else:
-            element = etree_.SubElement(parent_element, '{http://schema.primaresearch.org/PAGE/gts/pagecontent/2019-07-15}' + name_, nsmap=nsmap_)
-        if self.id is not None:
-            element.set('id', self.gds_format_string(self.id))
-        if self.regionRef is not None:
-            element.set('regionRef', self.gds_format_string(self.regionRef))
-        if self.caption is not None:
-            element.set('caption', self.gds_format_string(self.caption))
-        if self.type_ is not None:
-            element.set('type', self.gds_format_string(self.type_))
-        if self.continuation is not None:
-            element.set('continuation', self.gds_format_boolean(self.continuation))
-        if self.custom is not None:
-            element.set('custom', self.gds_format_string(self.custom))
-        if self.comments is not None:
-            element.set('comments', self.gds_format_string(self.comments))
-        if self.UserDefined is not None:
-            UserDefined_ = self.UserDefined
-            UserDefined_.to_etree(element, name_='UserDefined', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for Labels_ in self.Labels:
-            Labels_.to_etree(element, name_='Labels', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for RegionRef_ in self.RegionRef:
-            RegionRef_.to_etree(element, name_='RegionRef', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for OrderedGroup_ in self.OrderedGroup:
-            OrderedGroup_.to_etree(element, name_='OrderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        for UnorderedGroup_ in self.UnorderedGroup:
-            UnorderedGroup_.to_etree(element, name_='UnorderedGroup', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
-        if mapping_ is not None:
-            mapping_[id(self)] = element
-        if reverse_mapping_ is not None:
-            reverse_mapping_[element] = self
-        return element
-    def build(self, node, gds_collector_=None):
-        self.gds_collector_ = gds_collector_
-        if SaveElementTreeNode:
-            self.gds_elementtree_node_ = node
-        already_processed = set()
-        self.ns_prefix_ = node.prefix
-        self._buildAttributes(node, node.attrib, already_processed)
-        for child in node:
-            nodeName_ = Tag_pattern_.match(child.tag).groups()[-1]
-            self._buildChildren(child, node, nodeName_, gds_collector_=gds_collector_)
-        return self
-    def _buildAttributes(self, node, attrs, already_processed):
-        value = find_attr_value_('id', node)
-        if value is not None and 'id' not in already_processed:
-            already_processed.add('id')
-            self.id = value
-        value = find_attr_value_('regionRef', node)
-        if value is not None and 'regionRef' not in already_processed:
-            already_processed.add('regionRef')
-            self.regionRef = value
-        value = find_attr_value_('caption', node)
-        if value is not None and 'caption' not in already_processed:
-            already_processed.add('caption')
-            self.caption = value
-        value = find_attr_value_('type', node)
-        if value is not None and 'type' not in already_processed:
-            already_processed.add('type')
-            self.type_ = value
-            self.validate_GroupTypeSimpleType(self.type_)    # validate type GroupTypeSimpleType
-        value = find_attr_value_('continuation', node)
-        if value is not None and 'continuation' not in already_processed:
-            already_processed.add('continuation')
-            if value in ('true', '1'):
-                self.continuation = True
-            elif value in ('false', '0'):
-                self.continuation = False
-            else:
-                raise_parse_error(node, 'Bad boolean attribute')
-        value = find_attr_value_('custom', node)
-        if value is not None and 'custom' not in already_processed:
-            already_processed.add('custom')
-            self.custom = value
-        value = find_attr_value_('comments', node)
-        if value is not None and 'comments' not in already_processed:
-            already_processed.add('comments')
-            self.comments = value
-    def _buildChildren(self, child_, node, nodeName_, fromsubclass_=False, gds_collector_=None):
-        if nodeName_ == 'UserDefined':
-            obj_ = UserDefinedType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.UserDefined = obj_
-            obj_.original_tagname_ = 'UserDefined'
-        elif nodeName_ == 'Labels':
-            obj_ = LabelsType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.Labels.append(obj_)
-            obj_.original_tagname_ = 'Labels'
-        elif nodeName_ == 'RegionRef':
-            obj_ = RegionRefType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.RegionRef.append(obj_)
-            obj_.original_tagname_ = 'RegionRef'
-        elif nodeName_ == 'OrderedGroup':
-            obj_ = OrderedGroupType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.OrderedGroup.append(obj_)
-            obj_.original_tagname_ = 'OrderedGroup'
-        elif nodeName_ == 'UnorderedGroup':
-            obj_ = UnorderedGroupType.factory(parent_object_=self)
-            obj_.build(child_, gds_collector_=gds_collector_)
-            self.UnorderedGroup.append(obj_)
-            obj_.original_tagname_ = 'UnorderedGroup'
-    def __hash__(self):
-        return hash(self.id)
-    def get_UnorderedGroupChildren(self):
-        """
-        List all non-metadata children of an :py:class:`UnorderedGroupType`
-        """
-        # TODO: should not change order
-        return self.get_RegionRef() + self.get_OrderedGroup() + self.get_UnorderedGroup()
-    
-# end class UnorderedGroupType
 
 
 class BorderType(GeneratedsSuper):
@@ -9968,6 +9992,7 @@ class RegionType(GeneratedsSuper):
         MemberSpec_('TableRegion', 'TableRegionType', 1, 1, {'name': 'TableRegion', 'type': 'TableRegionType'}, 7),
         MemberSpec_('ChartRegion', 'ChartRegionType', 1, 1, {'name': 'ChartRegion', 'type': 'ChartRegionType'}, 7),
         MemberSpec_('SeparatorRegion', 'SeparatorRegionType', 1, 1, {'name': 'SeparatorRegion', 'type': 'SeparatorRegionType'}, 7),
+        MemberSpec_('MapRegion', 'MapRegionType', 1, 1, {'name': 'MapRegion', 'type': 'MapRegionType'}, 7),
         MemberSpec_('MathsRegion', 'MathsRegionType', 1, 1, {'name': 'MathsRegion', 'type': 'MathsRegionType'}, 7),
         MemberSpec_('ChemRegion', 'ChemRegionType', 1, 1, {'name': 'ChemRegion', 'type': 'ChemRegionType'}, 7),
         MemberSpec_('MusicRegion', 'MusicRegionType', 1, 1, {'name': 'MusicRegion', 'type': 'MusicRegionType'}, 7),
@@ -9978,7 +10003,7 @@ class RegionType(GeneratedsSuper):
     ]
     subclass = None
     superclass = None
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, extensiontype_=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, extensiontype_=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
@@ -10043,6 +10068,11 @@ class RegionType(GeneratedsSuper):
         else:
             self.SeparatorRegion = SeparatorRegion
         self.SeparatorRegion_nsprefix_ = "pc"
+        if MapRegion is None:
+            self.MapRegion = []
+        else:
+            self.MapRegion = MapRegion
+        self.MapRegion_nsprefix_ = "pc"
         if MathsRegion is None:
             self.MathsRegion = []
         else:
@@ -10196,6 +10226,16 @@ class RegionType(GeneratedsSuper):
         self.SeparatorRegion.insert(index, value)
     def replace_SeparatorRegion_at(self, index, value):
         self.SeparatorRegion[index] = value
+    def get_MapRegion(self):
+        return self.MapRegion
+    def set_MapRegion(self, MapRegion):
+        self.MapRegion = MapRegion
+    def add_MapRegion(self, value):
+        self.MapRegion.append(value)
+    def insert_MapRegion_at(self, index, value):
+        self.MapRegion.insert(index, value)
+    def replace_MapRegion_at(self, index, value):
+        self.MapRegion[index] = value
     def get_MathsRegion(self):
         return self.MathsRegion
     def set_MathsRegion(self, MathsRegion):
@@ -10298,6 +10338,7 @@ class RegionType(GeneratedsSuper):
             self.TableRegion or
             self.ChartRegion or
             self.SeparatorRegion or
+            self.MapRegion or
             self.MathsRegion or
             self.ChemRegion or
             self.MusicRegion or
@@ -10394,6 +10435,9 @@ class RegionType(GeneratedsSuper):
         for SeparatorRegion_ in self.SeparatorRegion:
             namespaceprefix_ = self.SeparatorRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.SeparatorRegion_nsprefix_) else ''
             SeparatorRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='SeparatorRegion', pretty_print=pretty_print)
+        for MapRegion_ in self.MapRegion:
+            namespaceprefix_ = self.MapRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.MapRegion_nsprefix_) else ''
+            MapRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MapRegion', pretty_print=pretty_print)
         for MathsRegion_ in self.MathsRegion:
             namespaceprefix_ = self.MathsRegion_nsprefix_ + ':' if (UseCapturedNS_ and self.MathsRegion_nsprefix_) else ''
             MathsRegion_.export(outfile, level, namespaceprefix_, namespacedef_='', name_='MathsRegion', pretty_print=pretty_print)
@@ -10457,6 +10501,8 @@ class RegionType(GeneratedsSuper):
             ChartRegion_.to_etree(element, name_='ChartRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for SeparatorRegion_ in self.SeparatorRegion:
             SeparatorRegion_.to_etree(element, name_='SeparatorRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
+        for MapRegion_ in self.MapRegion:
+            MapRegion_.to_etree(element, name_='MapRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for MathsRegion_ in self.MathsRegion:
             MathsRegion_.to_etree(element, name_='MathsRegion', mapping_=mapping_, reverse_mapping_=reverse_mapping_, nsmap_=nsmap_)
         for ChemRegion_ in self.ChemRegion:
@@ -10574,6 +10620,11 @@ class RegionType(GeneratedsSuper):
             obj_.build(child_, gds_collector_=gds_collector_)
             self.SeparatorRegion.append(obj_)
             obj_.original_tagname_ = 'SeparatorRegion'
+        elif nodeName_ == 'MapRegion':
+            obj_ = MapRegionType.factory(parent_object_=self)
+            obj_.build(child_, gds_collector_=gds_collector_)
+            self.MapRegion.append(obj_)
+            obj_.original_tagname_ = 'MapRegion'
         elif nodeName_ == 'MathsRegion':
             obj_ = MathsRegionType.factory(parent_object_=self)
             obj_.build(child_, gds_collector_=gds_collector_)
@@ -12236,13 +12287,13 @@ class CustomRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, type_=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, type_=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("CustomRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("CustomRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.type_ = _cast(None, type_)
         self.type__nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -12345,13 +12396,13 @@ class UnknownRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("UnknownRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("UnknownRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -12441,13 +12492,13 @@ class NoiseRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("NoiseRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("NoiseRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
     def factory(*args_, **kwargs_):
         if CurrentSubclassModule_ is not None:
             subclass = getSubclassFromModule_(
@@ -12547,13 +12598,13 @@ class AdvertRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("AdvertRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("AdvertRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -12709,13 +12760,13 @@ class MusicRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("MusicRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("MusicRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -12868,13 +12919,13 @@ class MapRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("MapRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("MapRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
     def factory(*args_, **kwargs_):
@@ -13002,13 +13053,13 @@ class ChemRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("ChemRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("ChemRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -13165,13 +13216,13 @@ class MathsRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, bgColour=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("MathsRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("MathsRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.bgColour = _cast(None, bgColour)
@@ -13329,13 +13380,13 @@ class SeparatorRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, colour=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, colour=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("SeparatorRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("SeparatorRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.colour = _cast(None, colour)
@@ -13506,13 +13557,13 @@ class ChartRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, numColours=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("ChartRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("ChartRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -13758,13 +13809,13 @@ class TableRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, rows=None, columns=None, lineColour=None, bgColour=None, lineSeparators=None, embText=None, Grid=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("TableRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("TableRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.rows = _cast(int, rows)
@@ -14038,13 +14089,13 @@ class GraphicRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, numColours=None, embText=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, numColours=None, embText=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("GraphicRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("GraphicRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -14245,13 +14296,13 @@ class LineDrawingRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, penColour=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, penColour=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("LineDrawingRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("LineDrawingRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.penColour = _cast(None, penColour)
@@ -14453,13 +14504,13 @@ class ImageRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, colourDepth=None, bgColour=None, embText=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("ImageRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("ImageRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.colourDepth = _cast(None, colourDepth)
@@ -14735,13 +14786,13 @@ class TextRegionType(RegionType):
     ]
     subclass = None
     superclass = RegionType
-    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None, gds_collector_=None, **kwargs_):
+    def __init__(self, id=None, custom=None, comments=None, continuation=None, AlternativeImage=None, Coords=None, UserDefined=None, Labels=None, Roles=None, TextRegion=None, ImageRegion=None, LineDrawingRegion=None, GraphicRegion=None, TableRegion=None, ChartRegion=None, SeparatorRegion=None, MapRegion=None, MathsRegion=None, ChemRegion=None, MusicRegion=None, AdvertRegion=None, NoiseRegion=None, UnknownRegion=None, CustomRegion=None, orientation=None, type_=None, leading=None, readingDirection=None, textLineOrder=None, readingOrientation=None, indented=None, align=None, primaryLanguage=None, secondaryLanguage=None, primaryScript=None, secondaryScript=None, production=None, TextLine=None, TextEquiv=None, TextStyle=None, gds_collector_=None, **kwargs_):
         self.gds_collector_ = gds_collector_
         self.gds_elementtree_node_ = None
         self.original_tagname_ = None
         self.parent_object_ = kwargs_.get('parent_object_')
         self.ns_prefix_ = "pc"
-        super(globals().get("TextRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
+        super(globals().get("TextRegionType"), self).__init__(id, custom, comments, continuation, AlternativeImage, Coords, UserDefined, Labels, Roles, TextRegion, ImageRegion, LineDrawingRegion, GraphicRegion, TableRegion, ChartRegion, SeparatorRegion, MapRegion, MathsRegion, ChemRegion, MusicRegion, AdvertRegion, NoiseRegion, UnknownRegion, CustomRegion,  **kwargs_)
         self.orientation = _cast(float, orientation)
         self.orientation_nsprefix_ = "pc"
         self.type_ = _cast(None, type_)
@@ -15549,15 +15600,6 @@ NamespaceToDefMappings_ = {'http://schema.primaresearch.org/PAGE/gts/pagecontent
                                                                      ('ReadingOrderType',
                                                                       'src/ocrd_validators/page.xsd',
                                                                       'CT'),
-                                                                     ('RegionRefIndexedType',
-                                                                      'src/ocrd_validators/page.xsd',
-                                                                      'CT'),
-                                                                     ('OrderedGroupIndexedType',
-                                                                      'src/ocrd_validators/page.xsd',
-                                                                      'CT'),
-                                                                     ('UnorderedGroupIndexedType',
-                                                                      'src/ocrd_validators/page.xsd',
-                                                                      'CT'),
                                                                      ('RegionRefType',
                                                                       'src/ocrd_validators/page.xsd',
                                                                       'CT'),
@@ -15565,6 +15607,15 @@ NamespaceToDefMappings_ = {'http://schema.primaresearch.org/PAGE/gts/pagecontent
                                                                       'src/ocrd_validators/page.xsd',
                                                                       'CT'),
                                                                      ('UnorderedGroupType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('RegionRefIndexedType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('OrderedGroupIndexedType',
+                                                                      'src/ocrd_validators/page.xsd',
+                                                                      'CT'),
+                                                                     ('UnorderedGroupIndexedType',
                                                                       'src/ocrd_validators/page.xsd',
                                                                       'CT'),
                                                                      ('BorderType',
