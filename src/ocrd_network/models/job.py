@@ -13,7 +13,7 @@ class PYJobInput(BaseModel):
     workspace_id: Optional[str] = None
     description: Optional[str] = None
     input_file_grps: List[str]
-    output_file_grps: Optional[List[str]]
+    output_file_grps: Optional[List[str]] = None
     page_id: Optional[str] = None
     parameters: dict = {}  # Always set to empty dict when None, otherwise it fails ocr-d-validation
     result_queue_name: Optional[str] = None
@@ -43,12 +43,12 @@ class PYJobOutput(BaseModel):
     job_id: str
     processor_name: str
     state: JobState = JobState.unset
-    path_to_mets: Optional[str]
-    workspace_id: Optional[str]
+    path_to_mets: Optional[str] = None
+    workspace_id: Optional[str] = None
     input_file_grps: List[str]
-    output_file_grps: Optional[List[str]]
+    output_file_grps: Optional[List[str]] = None
     page_id: Optional[str] = None
-    log_file_path: Optional[str]
+    log_file_path: Optional[str] = None
 
 
 class DBProcessorJob(Document):
@@ -56,22 +56,22 @@ class DBProcessorJob(Document):
     """
     job_id: str
     processor_name: str
-    path_to_mets: Optional[str]
-    workspace_id: Optional[str]
-    description: Optional[str]
+    path_to_mets: Optional[str] = None
+    workspace_id: Optional[str] = None
+    description: Optional[str] = None
     state: JobState = JobState.unset
     input_file_grps: List[str]
-    output_file_grps: Optional[List[str]]
-    page_id: Optional[str]
-    parameters: Optional[dict]
-    depends_on: Optional[List[str]]
-    result_queue_name: Optional[str]
-    callback_url: Optional[str]
-    internal_callback_url: Optional[str]
-    start_time: Optional[datetime]
-    end_time: Optional[datetime]
-    exec_time: Optional[str]
-    log_file_path: Optional[str]
+    output_file_grps: Optional[List[str]] = None
+    page_id: Optional[str] = None
+    parameters: Optional[dict] = None
+    depends_on: Optional[List[str]] = None
+    result_queue_name: Optional[str] = None
+    callback_url: Optional[str] = None
+    internal_callback_url: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    exec_time: Optional[str] = None
+    log_file_path: Optional[str] = None
 
     class Settings:
         use_enum_values = True
@@ -100,9 +100,9 @@ class PYWorkflowJobOutput(BaseModel):
     page_id: str
     page_wise: bool = False
     job_id: str
-    path_to_mets: Optional[str]
-    workspace_id: Optional[str]
-    description: Optional[str]
+    path_to_mets: Optional[str] = None
+    workspace_id: Optional[str] = None
+    description: Optional[str] = None
 
 
 class DBWorkflowJob(Document):
@@ -115,10 +115,10 @@ class DBWorkflowJob(Document):
     # key: page_id
     # value: List of and processing job ids sorted in dependency order
     processing_job_ids: Dict
-    path_to_mets: Optional[str]
-    workspace_id: Optional[str]
-    description: Optional[str]
-    workflow_callback_url: Optional[str]
+    path_to_mets: Optional[str] = None
+    workspace_id: Optional[str] = None
+    description: Optional[str] = None
+    workflow_callback_url: Optional[str] = None
 
     class Settings:
         use_enum_values = True
