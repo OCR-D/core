@@ -1,0 +1,21 @@
+[flake8]
+per-file-ignores =
+                 src/ocrd/cli/__init__.py:E402,
+                 src/ocrd/__init__.py:F401,
+                 src/ocrd/__init__.py:F403,
+                 src/ocrd/decorators/__init__.py:F401,
+                 src/ocrd/processor/__init__.py:F401,
+                 src/ocrd_modelfactory/__init__.py:F401,
+                 src/ocrd_models/__init__.py:F401,
+                 src/ocrd_network/__init__.py:F401,
+                 src/ocrd_utils/__init__.py:F401,
+                 src/ocrd_validators/__init__.py:F401,
+                 src/ocrd_models/constants.py:E221,
+extend-ignore = E265, E261
+max-line-length = 150
+max-complexity = 10
+count = true
+exclude =
+               src/ocrd_models/ocrd_page_generateds.py,
+               src/ocrd_page_user_methods/*.py
+
