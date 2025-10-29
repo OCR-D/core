@@ -59,7 +59,7 @@ def test_add_agent(start_uds_mets_server):
         othertype=test_agent_othertype,
         notes=[]
     )
-    request_body = MpxReq.add_agent(TEST_WORKSPACE_DIR, ocrd_agent_model.dict())
+    request_body = MpxReq.add_agent(TEST_WORKSPACE_DIR, ocrd_agent_model.model_dump())
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert response_dict["name"] == test_agent_name
     assert response_dict["type"] == test_agent_type
@@ -90,7 +90,7 @@ def test_add_file(start_uds_mets_server):
         url=test_url,
         local_filename=test_local_filename
     )
-    request_body = MpxReq.add_file(TEST_WORKSPACE_DIR, ocrd_file_model.dict())
+    request_body = MpxReq.add_file(TEST_WORKSPACE_DIR, ocrd_file_model.model_dump())
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert response_dict["file_id"] == test_file_id
     assert response_dict["file_grp"] == test_file_group
@@ -106,7 +106,7 @@ def test_add_file_error(start_uds_mets_server):
         url="Test url",
         local_filename=""
     )
-    request_body = MpxReq.add_file(TEST_WORKSPACE_DIR, ocrd_file_model.dict())
+    request_body = MpxReq.add_file(TEST_WORKSPACE_DIR, ocrd_file_model.model_dump())
     response_dict = MetsServerProxy().forward_tcp_request(request_body=request_body)
     assert "error" in response_dict, "Response should contain key 'error' to indicate failure"
 

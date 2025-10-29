@@ -95,7 +95,7 @@ def create_processing_jobs_db_entries(
     for processing_request in processing_requests_list:
         requests_cache.cache_request(workspace_key=workspace_key, data=processing_request)
         db_processing_job = DBProcessorJob(
-            **processing_request.dict(exclude_unset=True, exclude_none=True),
+            **processing_request.model_dump(exclude_unset=True, exclude_none=True),
             state=JobState.cached
         )
         sync_db_create_processing_job(db_processing_job)
