@@ -13,7 +13,7 @@ per-file-ignores =
                  src/ocrd_models/constants.py:E221,
 extend-ignore = E265, E261
 max-line-length = 150
-max-complexity = 10
+max-complexity = 20
 count = true
 exclude =
                src/ocrd_models/ocrd_page_generateds.py,
