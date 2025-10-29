@@ -23,8 +23,8 @@ class PYJobInput(BaseModel):
     # If set, specifies a list of job ids this job depends on
     depends_on: Optional[List[str]] = None
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        'json_schema_extra': {
             'example': {
                 'path_to_mets': '/path/to/mets.xml',
                 'description': 'The description of this execution',
@@ -34,6 +34,7 @@ class PYJobInput(BaseModel):
                 'parameters': {}
             }
         }
+    }
 
 
 class PYJobOutput(BaseModel):
