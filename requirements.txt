@@ -9,6 +9,7 @@ fastapi>=0.78.0
 filetype
 Flask
 frozendict>=2.4.0
+gitpython
 gdown
 httpx>=0.22.0
 importlib_metadata ; python_version < '3.8'
