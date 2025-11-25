@@ -6,7 +6,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 
 Changed:
-   * :fire: upgrade and adapt `ocrd_network` to pydantic v2, #1342 
+  * :fire: upgrade and adapt `ocrd_network` to pydantic v2, #1342 
+
+Removed:
+  * :fire: drop bashlib processors, retain only the Python API, #1339
 
 ## [3.6.0] - 2025-10-15
 
