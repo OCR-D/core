@@ -5,6 +5,9 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+   * :fire: upgrade and adapt `ocrd_network` to pydantic v2, #1342 
+
 ## [3.6.0] - 2025-10-15
 
 Changed:
