@@ -75,6 +75,9 @@ _ocrdLevel2pythonLevel = {
 
 
 def tf_disable_interactive_logs():
+    """
+    Disable the interactive logging of tf/keras and set the log level to error or higher
+    """
     try:
         from os import environ  # pylint: disable=import-outside-toplevel
         # This env variable must be set before importing from Keras
