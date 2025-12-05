@@ -608,7 +608,7 @@ class Processor():
         """
         Ensure all input files for a single page are
         downloaded to the workspace, then schedule
-        :py:meth:`.process_process_file` to be run on
+        :py:meth:`.process_page_file` to be run on
         them via `executor` (enforcing a per-page time
         limit of `max_seconds`).
 
