@@ -11,21 +11,23 @@ def get_ReadingOrderGroups(self) -> dict:
     - :py:class:`.UnoderedGroupType`
     - :py:class:`.UnoderedGroupIndexedType`
     """
+    from collections import OrderedDict as odict
     def get_groupdict(group):
         regionrefs = list()
         if isinstance(group, (OrderedGroupType, OrderedGroupIndexedType)):
             regionrefs = (group.get_RegionRefIndexed() +
                           group.get_OrderedGroupIndexed() +
                           group.get_UnorderedGroupIndexed())
+            regionrefs = sorted(regionrefs, key=lambda x: x.index)
         if isinstance(group, (UnorderedGroupType, UnorderedGroupIndexedType)):
             regionrefs = (group.get_RegionRef() +
                           group.get_OrderedGroup() +
                           group.get_UnorderedGroup())
-        refdict = {}
+        refdict = odict()
         for elem in regionrefs:
             refdict[elem.get_regionRef()] = elem
             if not isinstance(elem, (RegionRefType, RegionRefIndexedType)):
-                refdict = {**refdict, **get_groupdict(elem)}
+                refdict = odict(**refdict, **get_groupdict(elem))
         return refdict
     ro = self.get_ReadingOrder()
     if ro is None:
