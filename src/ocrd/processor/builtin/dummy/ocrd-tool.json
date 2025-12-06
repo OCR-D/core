@@ -52,6 +52,16 @@
           "description": "Shell command to operate on PAGE files, with @INFILE as place-holder for the input file path(s), and @OUTFILE as place-holder for the output file path. If running on multiple input fileGrps, then @INFILE must be repeated as many times."
         }
       }
+    },
+    "ocrd-merge": {
+      "executable": "ocrd-merge",
+      "description": "Bare-bones processor merges annotations from multiple fileGrps",
+        "steps": ["layout/segmentation"],
+      "categories": [],
+      "input_file_grp_cardinality": [1, -1],
+      "output_file_grp_cardinality": 1,
+      "parameters": {
+      }
     }
   }
 }
