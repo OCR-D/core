@@ -3,6 +3,7 @@ __all__ = [
     "connect_rabbitmq_consumer",
     "connect_rabbitmq_publisher",
     "create_message_queues",
+    "get_message_queues",
     "verify_and_parse_mq_uri",
     "verify_rabbitmq_available",
     "RMQConsumer",
@@ -19,6 +20,7 @@ from .helpers import (
     connect_rabbitmq_consumer,
     connect_rabbitmq_publisher,
     create_message_queues,
+    get_message_queues,
     verify_and_parse_mq_uri,
     verify_rabbitmq_available
 )

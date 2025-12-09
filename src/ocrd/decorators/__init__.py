@@ -41,7 +41,6 @@ def ocrd_cli_wrap_processor(
     list_resources=False,
     # ocrd_network params start #
     subcommand=None,
-    address=None,
     queue=None,
     log_filename=None,
     database=None,
@@ -88,9 +87,8 @@ def ocrd_cli_wrap_processor(
     if list_resources:
         processor.list_resources()
         sys.exit()
-    if subcommand or address or queue or database:
-        # Used for checking/starting network agents for the WebAPI architecture
-        check_and_run_network_agent(processorClass, subcommand, address, database, queue)
+    if subcommand == "worker" or queue or database:
+        check_and_run_processing_worker(processorClass, database, queue)
 
     if 'parameter' in kwargs:
         # Disambiguate parameter file/literal, and resolve file
@@ -160,54 +158,26 @@ def ocrd_cli_wrap_processor(
         run_processor(processorClass, mets_url=mets, workspace=workspace, **kwargs)
 
 
-def check_and_run_network_agent(ProcessorClass, subcommand: str, address: str, database: str, queue: str):
+def check_and_run_processing_worker(ProcessorClass, database: str, queue: str):
+    """ Check/start Processing Worker for the WebAPI architecture
     """
-    """
-    from ocrd_network import ProcessingWorker, ProcessorServer, AgentType
-    SUBCOMMANDS = [AgentType.PROCESSING_WORKER, AgentType.PROCESSOR_SERVER]
-
-    if not subcommand:
-        raise ValueError("Subcommand options --address --queue and --database "
-                         f"are only valid for subcommands: {SUBCOMMANDS}")
-    if subcommand not in SUBCOMMANDS:
-        raise ValueError(f"SUBCOMMAND can only be one of {SUBCOMMANDS}")
+    from ocrd_network import ProcessingWorker
 
     if not database:
-        raise ValueError(f"Option '--database' is invalid for subcommand {subcommand}")
-
-    if subcommand == AgentType.PROCESSOR_SERVER:
-        if not address:
-            raise ValueError(f"Option '--address' required for subcommand {subcommand}")
-        if queue:
-            raise ValueError(f"Option '--queue' invalid for subcommand {subcommand}")
-    if subcommand == AgentType.PROCESSING_WORKER:
-        if address:
-            raise ValueError(f"Option '--address' invalid for subcommand {subcommand}")
-        if not queue:
-            raise ValueError(f"Option '--queue' required for subcommand {subcommand}")
+        raise ValueError("Option '--database' is required for the Processing Worker")
+    if not queue:
+        raise ValueError("Option '--queue' is required for the Processing Worker")
 
     processor = ProcessorClass(workspace=None)
-    if subcommand == AgentType.PROCESSING_WORKER:
-        processing_worker = ProcessingWorker(
-            rabbitmq_addr=queue,
-            mongodb_addr=database,
-            processor_name=processor.ocrd_tool['executable'],
-            ocrd_tool=processor.ocrd_tool,
-            processor_class=ProcessorClass,
-        )
-        # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
-        processing_worker.connect_consumer()
-        # Start consuming from the queue with name `processor_name`
-        processing_worker.start_consuming()
-    elif subcommand == AgentType.PROCESSOR_SERVER:
-        # TODO: Better validate that inside the ProcessorServer itself
-        host, port = address.split(':')
-        processor_server = ProcessorServer(
-            mongodb_addr=database,
-            processor_name=processor.ocrd_tool['executable'],
-            processor_class=ProcessorClass,
-        )
-        processor_server.run_server(host=host, port=int(port))
-    else:
-        raise ValueError(f"Unknown network agent type, must be one of: {SUBCOMMANDS}")
+    processing_worker = ProcessingWorker(
+        rabbitmq_addr=queue,
+        mongodb_addr=database,
+        processor_name=processor.ocrd_tool['executable'],
+        ocrd_tool=processor.ocrd_tool,
+        processor_class=ProcessorClass,
+    )
+    # The RMQConsumer is initialized and a connection to the RabbitMQ is performed
+    processing_worker.connect_consumer()
+    # Start consuming from the queue with name `processor_name`
+    processing_worker.start_consuming()
     sys.exit(0)

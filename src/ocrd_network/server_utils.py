@@ -124,50 +124,6 @@ async def _get_processor_job_log(logger: Logger, job_id: str) -> FileResponse:
     return FileResponse(path=log_file_path, filename=log_file_path.name)
 
 
-def request_processor_server_tool_json(logger: Logger, processor_server_base_url: str) -> Dict:
-    # Request the ocrd tool json from the Processor Server
-    try:
-        response = requests_get(
-            urljoin(base=processor_server_base_url, url="info"),
-            headers={"Content-Type": "application/json"}
-        )
-    except Exception as error:
-        message = f"Failed to retrieve ocrd tool json from: {processor_server_base_url}"
-        raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message, error)
-    if response.status_code != 200:
-        message = f"Failed to retrieve tool json from: {processor_server_base_url}, code: {response.status_code}"
-        raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
-    return response.json()
-
-
-async def forward_job_to_processor_server(
-    logger: Logger, job_input: PYJobInput, processor_server_base_url: str
-) -> PYJobOutput:
-    try:
-        json_data = dumps(job_input.dict(exclude_unset=True, exclude_none=True))
-    except Exception as error:
-        message = f"Failed to json dump the PYJobInput: {job_input}"
-        raise_http_exception(logger, status.HTTP_500_INTERNAL_SERVER_ERROR, message, error)
-
-    # TODO: The amount of pages should come as a request input
-    # TODO: cf https://github.com/OCR-D/core/pull/1030/files#r1152551161
-    #  currently, use 200 as a default
-    request_timeout = calculate_processing_request_timeout(amount_pages=200, timeout_per_page=20.0)
-
-    # Post a processing job to the Processor Server asynchronously
-    async with AsyncClient(timeout=Timeout(timeout=request_timeout, connect=30.0)) as client:
-        response = await client.post(
-            urljoin(base=processor_server_base_url, url="run"),
-            headers={"Content-Type": "application/json"},
-            json=loads(json_data)
-        )
-    if response.status_code != 202:
-        message = f"Failed to post '{job_input.processor_name}' job to: {processor_server_base_url}"
-        raise_http_exception(logger, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
-    job_output = response.json()
-    return job_output
-
-
 async def get_workflow_content(logger: Logger, workflow_id: str, workflow: Union[UploadFile, str, None]) -> str:
     if not workflow and not workflow_id:
         message = "Either 'workflow' must be uploaded as a file or 'workflow_id' must be provided. Both are missing."

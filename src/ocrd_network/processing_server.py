@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger
-from .constants import AgentType, JobState, ServerApiTags
+from .constants import JobState, ServerApiTags
 from .database import (
     initiate_database,
     db_get_processing_job,
@@ -34,14 +34,13 @@ from .models import (
 from .rabbitmq_utils import (
     check_if_queue_exists,
     connect_rabbitmq_publisher,
-    create_message_queues,
+    get_message_queues,
     OcrdProcessingMessage
 )
 from .server_cache import CacheLockedPages, CacheProcessingRequests
 from .server_utils import (
     create_processing_message,
     create_workspace_if_not_exists,
-    forward_job_to_processor_server,
     _get_processor_job,
     _get_processor_job_log,
     get_page_ids_list,
@@ -51,7 +50,6 @@ from .server_utils import (
     kill_mets_server_zombies,
     parse_workflow_tasks,
     raise_http_exception,
-    request_processor_server_tool_json,
     validate_and_return_mets_path,
     validate_first_task_input_file_groups_existence,
     validate_job_input,
@@ -104,7 +102,7 @@ class ProcessingServer(FastAPI):
         self.mets_server_proxy = MetsServerProxy()
         self.use_tcp_mets = self.deployer.use_tcp_mets
         # If set, all Mets Server UDS requests are multiplexed over TCP
-        # Used by processing workers and/or processor servers to report back the results
+        # Used by processing workers to report back the results
         if self.deployer.internal_callback_url:
             host = self.deployer.internal_callback_url
             self.internal_job_callback_url = f"{host.rstrip('/')}/result_callback"
@@ -153,16 +151,10 @@ class ProcessingServer(FastAPI):
             # The RMQPublisher is initialized and a connection to the RabbitMQ is performed
             self.rmq_publisher = connect_rabbitmq_publisher(self.log, self.rmq_data, enable_acks=True)
 
-            queue_names = self.deployer.find_matching_network_agents(
-                worker_only=True, str_names_only=True, unique_only=True
-            )
-            self.log.info(f"Creating message queues on RabbitMQ instance url: {self.rabbitmq_url}")
-            create_message_queues(logger=self.log, rmq_publisher=self.rmq_publisher, queue_names=queue_names)
-
-            self.deployer.deploy_network_agents(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
+            self.deployer.deploy_workers(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
         except Exception as error:
             self.log.exception(f"Failed to start the Processing Server, error: {error}")
-            self.log.warning("Trying to stop previously deployed services and network agents.")
+            self.log.warning("Trying to stop previously deployed services and workers.")
             self.deployer.stop_all()
             raise
         uvicorn_run(self, host=self.hostname, port=int(self.port))
@@ -225,7 +217,7 @@ class ProcessingServer(FastAPI):
         )
         processing_router.add_api_route(
             path="/processor/info/{processor_name}",
-            endpoint=self.get_network_agent_ocrd_tool,
+            endpoint=self.get_worker_ocrd_tool,
             methods=["GET"],
             tags=[ServerApiTags.PROCESSING, ServerApiTags.DISCOVERY],
             status_code=status.HTTP_200_OK,
@@ -233,7 +225,7 @@ class ProcessingServer(FastAPI):
         )
         processing_router.add_api_route(
             path="/processor/run/{processor_name}",
-            endpoint=self.validate_and_forward_job_to_network_agent,
+            endpoint=self.validate_and_forward_job_to_worker,
             methods=["POST"],
             tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
@@ -267,7 +259,7 @@ class ProcessingServer(FastAPI):
             methods=["POST"],
             tags=[ServerApiTags.PROCESSING],
             status_code=status.HTTP_200_OK,
-            summary="Callback used by a worker or processor server for reporting result of a processing request"
+            summary="Callback used by a worker for reporting result of a processing request"
         )
         self.include_router(processing_router)
 
@@ -351,68 +343,38 @@ class ProcessingServer(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.stop_all()
 
-    def query_ocrd_tool_json_from_server(self, processor_name: str) -> Dict:
-        processor_server_base_url = self.deployer.resolve_processor_server_url(processor_name)
-        if processor_server_base_url == '':
-            message = f"Processor Server URL of '{processor_name}' not found"
-            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message=message)
-        return request_processor_server_tool_json(self.log, processor_server_base_url=processor_server_base_url)
-
-    async def get_network_agent_ocrd_tool(
-        self, processor_name: str, agent_type: AgentType = AgentType.PROCESSING_WORKER
-    ) -> Dict:
+    async def get_worker_ocrd_tool(self, processor_name: str) -> Dict:
         ocrd_tool = {}
-        error_message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
-        if agent_type != AgentType.PROCESSING_WORKER and agent_type != AgentType.PROCESSOR_SERVER:
-            message = f"Unknown agent type: {agent_type}, {type(agent_type)}"
-            raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
-        if agent_type == AgentType.PROCESSING_WORKER:
-            ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
-        if agent_type == AgentType.PROCESSOR_SERVER:
-            ocrd_tool = self.query_ocrd_tool_json_from_server(processor_name)
+        ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
-            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, error_message)
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND,
+                                 f"Processing Worker '{processor_name}' not found.")
         return ocrd_tool
 
-    def network_agent_exists_server(self, processor_name: str) -> bool:
-        processor_server_url = self.deployer.resolve_processor_server_url(processor_name)
-        return bool(processor_server_url)
-
-    def network_agent_exists_worker(self, processor_name: str) -> bool:
+    def exists_worker(self, processor_name: str) -> bool:
         # TODO: Reconsider and refactor this.
         #  Added ocrd-dummy by default if not available for the integration tests.
-        #  A proper Processing Worker / Processor Server registration endpoint
-        #  is needed on the Processing Server side
+        #  A proper Processing Worker registration endpoint is needed on the Processing Server side
         if processor_name == 'ocrd-dummy':
             return True
         return bool(check_if_queue_exists(self.log, self.rmq_data, processor_name=processor_name))
 
-    def validate_agent_type_and_existence(self, processor_name: str, agent_type: AgentType) -> None:
-        agent_exists = False
-        if agent_type == AgentType.PROCESSOR_SERVER:
-            agent_exists = self.network_agent_exists_server(processor_name=processor_name)
-        elif agent_type == AgentType.PROCESSING_WORKER:
-            agent_exists = self.network_agent_exists_worker(processor_name=processor_name)
-        else:
-            message = f"Unknown agent type: {agent_type}, {type(agent_type)}"
-            raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
-        if not agent_exists:
-            message = f"Network agent of type '{agent_type}' for processor '{processor_name}' not found."
+    def validate_worker_existence(self, processor_name: str) -> None:
+        worker_exists = self.exists_worker(processor_name=processor_name)
+        if not worker_exists:
+            message = f"Processing Worker '{processor_name}' not found."
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
-    async def validate_and_forward_job_to_network_agent(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
+    async def validate_and_forward_job_to_worker(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         # Append the processor name to the request itself
         data.processor_name = processor_name
-        self.validate_agent_type_and_existence(processor_name=data.processor_name, agent_type=data.agent_type)
+        self.validate_worker_existence(processor_name=data.processor_name)
         if data.job_id:
             message = f"Processing request job id field is set but must not be: {data.job_id}"
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         # Generate processing job id
         data.job_id = generate_id()
-        ocrd_tool = await self.get_network_agent_ocrd_tool(
-            processor_name=data.processor_name,
-            agent_type=data.agent_type
-        )
+        ocrd_tool = await self.get_worker_ocrd_tool(processor_name=data.processor_name)
         validate_job_input(self.log, data.processor_name, ocrd_tool, data)
 
         if data.workspace_id:
@@ -492,19 +454,13 @@ class ProcessingServer(FastAPI):
         )
         await db_queued_job.insert()
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
-        job_output = await self.push_job_to_network_agent(data=data, db_job=db_queued_job)
+        job_output = await self.push_job_to_worker(data=data, db_job=db_queued_job)
         return job_output
 
-    async def push_job_to_network_agent(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
-        if data.agent_type != AgentType.PROCESSING_WORKER and data.agent_type != AgentType.PROCESSOR_SERVER:
-            message = f"Unknown agent type: {data.agent_type}, {type(data.agent_type)}"
-            raise_http_exception(self.log, status_code=status.HTTP_501_NOT_IMPLEMENTED, message=message)
+    async def push_job_to_worker(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
         job_output = None
-        self.log.debug(f"Pushing to {data.agent_type}: {data.processor_name}, {data.page_id}, {data.job_id}")
-        if data.agent_type == AgentType.PROCESSING_WORKER:
-            job_output = await self.push_job_to_processing_queue(db_job=db_job)
-        if data.agent_type == AgentType.PROCESSOR_SERVER:
-            job_output = await self.push_job_to_processor_server(job_input=data)
+        self.log.debug(f"Pushing to Processing Worker: {data.processor_name}, {data.page_id}, {data.job_id}")
+        job_output = await self.push_job_to_processing_queue(db_job=db_job)
         if not job_output:
             message = f"Failed to create job output for job input: {data}"
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message)
@@ -525,12 +481,6 @@ class ProcessingServer(FastAPI):
             )
             raise_http_exception(self.log, status.HTTP_500_INTERNAL_SERVER_ERROR, message, error)
         return db_job.to_job_output()
-
-    async def push_job_to_processor_server(self, job_input: PYJobInput) -> PYJobOutput:
-        processor_server_base_url = self.deployer.resolve_processor_server_url(job_input.processor_name)
-        return await forward_job_to_processor_server(
-            self.log, job_input=job_input, processor_server_base_url=processor_server_base_url
-        )
 
     async def get_processor_job(self, job_id: str) -> PYJobOutput:
         return await _get_processor_job(self.log, job_id)
@@ -557,7 +507,7 @@ class ProcessingServer(FastAPI):
             page_ids=page_ids
         )
 
-    async def push_cached_jobs_to_agents(self, processing_jobs: List[PYJobInput]) -> None:
+    async def push_cached_jobs_to_workers(self, processing_jobs: List[PYJobInput]) -> None:
         if not len(processing_jobs):
             self.log.debug("No processing jobs were consumed from the requests cache")
             return
@@ -574,7 +524,7 @@ class ProcessingServer(FastAPI):
             )
 
             self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
-            job_output = await self.push_job_to_network_agent(data=data, db_job=db_consumed_job)
+            job_output = await self.push_job_to_worker(data=data, db_job=db_consumed_job)
             if not job_output:
                 self.log.exception(f"Failed to create job output for job input data: {data}")
 
@@ -654,22 +604,16 @@ class ProcessingServer(FastAPI):
         consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
             workspace_key=workspace_key, mets_server_url=mets_server_url, path_to_mets=path_to_mets
         )
-        await self.push_cached_jobs_to_agents(processing_jobs=consumed_cached_jobs)
+        await self.push_cached_jobs_to_workers(processing_jobs=consumed_cached_jobs)
 
     async def list_processors(self) -> List[str]:
-        # There is no caching on the Processing Server side
-        processor_names_list = self.deployer.find_matching_network_agents(
-            docker_only=False, native_only=False, worker_only=False, server_only=False,
-            str_names_only=True, unique_only=True, sort=True
-        )
-        return processor_names_list
+        return get_message_queues(self.log, self.rmq_data)
 
     async def task_sequence_to_processing_jobs(
         self,
         tasks: List[ProcessorTask],
         mets_path: str,
         page_id: str,
-        agent_type: AgentType = AgentType.PROCESSING_WORKER
     ) -> List[PYJobOutput]:
         temp_file_group_cache = {}
         responses = []
@@ -688,10 +632,9 @@ class ProcessingServer(FastAPI):
                 output_file_grps=task.output_file_grps,
                 page_id=page_id,
                 parameters=task.parameters,
-                agent_type=agent_type,
                 depends_on=dependent_jobs,
             )
-            response = await self.validate_and_forward_job_to_network_agent(
+            response = await self.validate_and_forward_job_to_worker(
                 processor_name=job_input_data.processor_name,
                 data=job_input_data
             )
@@ -700,18 +643,18 @@ class ProcessingServer(FastAPI):
             responses.append(response)
         return responses
 
-    def validate_tasks_agents_existence(self, tasks: List[ProcessorTask], agent_type: AgentType) -> None:
-        missing_agents = []
+    def validate_tasks_worker_existence(self, tasks: List[ProcessorTask]) -> None:
+        missing_workers = []
         for task in tasks:
             try:
-                self.validate_agent_type_and_existence(processor_name=task.executable, agent_type=agent_type)
+                self.validate_worker_existence(processor_name=task.executable)
             except HTTPException:
                 # catching the error is not relevant here
-                missing_agents.append({task.executable, agent_type})
-        if missing_agents:
+                missing_workers.append({task.executable})
+        if missing_workers:
             message = (
-                "Workflow validation has failed. The desired network agents not found. "
-                f"Missing processing agents: {missing_agents}"
+                "Workflow validation has failed. The desired Processing Worker was not found. "
+                f"Missing Processing Workers: {missing_workers}"
             )
             raise_http_exception(self.log, status.HTTP_406_NOT_ACCEPTABLE, message)
 
@@ -720,7 +663,6 @@ class ProcessingServer(FastAPI):
         mets_path: str,
         workflow: Union[UploadFile, str, None] = File(None),
         workflow_id: str = None,
-        agent_type: AgentType = AgentType.PROCESSING_WORKER,
         page_id: str = None,
         page_wise: bool = False,
         workflow_callback_url: str = None
@@ -732,9 +674,9 @@ class ProcessingServer(FastAPI):
         # Validate the input file groups of the first task in the workflow
         validate_first_task_input_file_groups_existence(self.log, mets_path, processing_tasks[0].input_file_grps)
 
-        # Validate existence of agents (processing workers/processor servers)
+        # Validate existence of Processing Workers
         # for the ocr-d processors referenced inside tasks
-        self.validate_tasks_agents_existence(processing_tasks, agent_type)
+        self.validate_tasks_worker_existence(processing_tasks)
 
         # for page_wise mode, we need to expand the list of pages
         # for the database, it's better to keep a short string
@@ -746,7 +688,6 @@ class ProcessingServer(FastAPI):
                 tasks=processing_tasks,
                 mets_path=mets_path,
                 page_id=page_id,
-                agent_type=agent_type
             )
             processing_job_ids = [response.job_id for response in responses]
             db_workflow_job = DBWorkflowJob(
@@ -766,7 +707,6 @@ class ProcessingServer(FastAPI):
                 tasks=processing_tasks,
                 mets_path=mets_path,
                 page_id=current_page,
-                agent_type=agent_type
             )
             processing_job_ids = [response.job_id for response in responses]
             all_pages_job_ids[current_page] = processing_job_ids
