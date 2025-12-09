@@ -23,6 +23,10 @@ Fixed:
   * `ocrd_utils.list_all_resources`: no subpaths except for `cwd` location, OCR-D/spec#263, #1315
   * `ocrd_utils.list_all_resources`: filter resources via media (MIME) type, if specified, #1315
 
+Removed:
+
+  * `ocrd resmgr download`: `*` (asterisk) as wildcard for all processors removed, processor must be provided explicitly, #1319
+
 ## [3.7.0] - 2025-11-02
 
 Changed:
