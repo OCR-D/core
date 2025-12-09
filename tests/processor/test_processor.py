@@ -586,6 +586,16 @@ def workspace_sbb():
             yield workspace
     disableLogging()
 
+@pytest.fixture
+def workspace_kant():
+    initLogging()
+    with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as workdir:
+        with pushd_popd(workdir):
+            resolver = Resolver()
+            workspace = resolver.workspace_from_url('mets.xml')
+            yield workspace
+    disableLogging()
+
 def test_run_output_logging(workspace_sbb, caplog):
     caplog.set_level(10)
     def only_profile(logrec):
