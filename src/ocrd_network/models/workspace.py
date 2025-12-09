@@ -25,10 +25,10 @@ class DBWorkspace(Document):
     workspace_mets_path: str
     ocrd_identifier: str
     bagit_profile_identifier: str
-    ocrd_base_version_checksum: Optional[str]
-    ocrd_mets: Optional[str]
-    bag_info_adds: Optional[dict]
-    mets_server_url: Optional[str]
+    ocrd_base_version_checksum: Optional[str] = None
+    ocrd_mets: Optional[str] = None
+    bag_info_adds: Optional[dict] = None
+    mets_server_url: Optional[str] = None
     deleted: bool = False
 
     class Settings:

@@ -23,10 +23,25 @@ Fixed:
   * `ocrd_utils.list_all_resources`: no subpaths except for `cwd` location, OCR-D/spec#263, #1315
   * `ocrd_utils.list_all_resources`: filter resources via media (MIME) type, if specified, #1315
 
+## [3.7.0] - 2025-11-02
+
+Changed:
+  * :fire: upgrade and adapt `ocrd_network` to pydantic v2, #1342 
+
+Removed:
+  * :fire: drop bashlib processors, retain only the Python API, #1339
+
+## [3.6.0] - 2025-10-15
+
 Changed:
 
   * `ocrd network client workflow run`: Allow passing workflow as `ocrd process` tasks as alternative to a workflow file, #1264, #1335
   * Processing Server: Store page ranges as comma-separated page IDs instead of relying on `..` numeric range operator, #1333, #1334
+  * `ocrd network`: More verbose error messages instead of plain assertions, #1337
+
+Removed:
+
+  * :fire: Remove Processor Server in favor of Processing Server + Processing Workers only, #1338, OCR-D/spec#265
 
 ## [3.5.1] - 2025-07-04
 
@@ -2591,6 +2606,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.6.0]: ../../compare/v3.6.0..v3.5.1
 [3.5.1]: ../../compare/v3.5.1..v3.5.0
 [3.5.0]: ../../compare/v3.5.0..v3.4.1
 [3.4.1]: ../../compare/v3.4.1..v3.4.0

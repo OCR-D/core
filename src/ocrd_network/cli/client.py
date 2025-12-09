@@ -1,3 +1,4 @@
+import sys
 import click
 from json import dumps
 from typing import List, Optional, Tuple
@@ -10,10 +11,12 @@ from ocrd_utils import DEFAULT_METS_BASENAME
 from ocrd_utils.introspect import set_json_key_value_overrides
 from ocrd_utils.str import parse_json_string_or_file
 from ..client import Client
+from requests import RequestException
 
 
 ADDRESS_HELP = 'The URL of the Processing Server. If not provided, ' + \
     'the "OCRD_NETWORK_SERVER_ADDR_PROCESSING" environment variable is used by default'
+
 
 class URLType(click.types.StringParamType):
     name = "url"
@@ -53,7 +56,14 @@ def check_deployed_processors(address: Optional[str]):
     Each processor is shown only once regardless of the amount of deployed instances.
     """
     client = Client(server_addr_processing=address)
-    processors_list = client.check_deployed_processors()
+    try:
+        processors_list = client.check_deployed_processors()
+    except RequestException as e:
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
+        sys.exit(1)
     print(dumps(processors_list, indent=4))
 
 
@@ -65,7 +75,14 @@ def check_processor_ocrd_tool(address: Optional[str], processor_name: str):
     Get the json tool of a deployed processor specified with `processor_name`
     """
     client = Client(server_addr_processing=address)
-    ocrd_tool = client.check_deployed_processor_ocrd_tool(processor_name=processor_name)
+    try:
+        ocrd_tool = client.check_deployed_processor_ocrd_tool(processor_name=processor_name)
+    except RequestException as e:
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
+        sys.exit(1)
     print(dumps(ocrd_tool, indent=4))
 
 
@@ -85,7 +102,14 @@ def check_processing_job_log(address: Optional[str], processing_job_id: str):
     Check the log of a previously submitted processing job.
     """
     client = Client(server_addr_processing=address)
-    response = client.check_job_log(job_id=processing_job_id)
+    try:
+        response = client.check_job_log(job_id=processing_job_id)
+    except RequestException as e:
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
+        sys.exit(1)
     print(response._content.decode(encoding='utf-8'))
 
 
@@ -97,8 +121,14 @@ def check_processing_job_status(address: Optional[str], processing_job_id: str):
     Check the status of a previously submitted processing job.
     """
     client = Client(server_addr_processing=address)
-    job_status = client.check_job_status(processing_job_id)
-    assert job_status
+    try:
+        job_status = client.check_job_status(processing_job_id)
+    except RequestException as e:
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
+        sys.exit(1)
     print(f"Processing job status: {job_status}")
 
 
@@ -149,12 +179,26 @@ def send_processing_job_request(
     if callback_url:
         req_params["callback_url"] = callback_url
     client = Client(server_addr_processing=address)
-    processing_job_id = client.send_processing_job_request(
-        processor_name=processor_name, req_params=req_params)
-    assert processing_job_id
+    try:
+        processing_job_id = client.send_processing_job_request(
+            processor_name=processor_name, req_params=req_params)
+    except RequestException as e:
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
+        sys.exit(1)
     print(f"Processing job id: {processing_job_id}")
+
     if block:
-        client.poll_job_status(job_id=processing_job_id, print_state=print_state)
+        try:
+            client.poll_job_status(job_id=processing_job_id, print_state=print_state)
+        except RequestException as e:
+            print(
+                getattr(e, 'detail_message', str(e)),
+                f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+            )
+            sys.exit(1)
 
 
 @client_cli.group('workflow')
@@ -173,8 +217,14 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
     Check the status of a previously submitted workflow job.
     """
     client = Client(server_addr_processing=address)
-    job_status = client.check_workflow_status(workflow_job_id)
-    assert job_status
+    try:
+        job_status = client.check_workflow_status(workflow_job_id)
+    except RequestException as e:
+        print(
+            getattr(e, 'detail_message', str(e)),
+            f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+        )
+        sys.exit(1)
     print(f"Workflow job status: {job_status}")
 
 
@@ -204,7 +254,8 @@ def send_workflow_job_request(
     as in ``ocrd process`` tasks arguments), or via `-w` file path
     (same syntax, but newline separated).
     """
-    assert bool(path_to_workflow) != bool(len(tasks)), "requires either --path-to-workflow or task arguments"
+    if (path_to_workflow) != bool(len(tasks)):
+        raise ValueError("either -w/path-to-workflow or task argument(s) is required")
 
     client = Client(server_addr_processing=address)
     with NamedTemporaryFile() as workflow_file:
@@ -216,11 +267,17 @@ def send_workflow_job_request(
             path_to_mets=path_to_mets,
             page_wise=page_wise,
         )
-    assert workflow_job_id
     print(f"Workflow job id: {workflow_job_id}")
     if block:
         print(f"Polling state of workflow job {workflow_job_id}")
-        state = client.poll_workflow_status(job_id=workflow_job_id, print_state=print_state)
+        try:
+            state = client.poll_workflow_status(job_id=workflow_job_id, print_state=print_state)
+        except RequestException as e:
+            print(
+                getattr(e, 'detail_message', str(e)),
+                f"Requested URL: {getattr(getattr(e, 'response', ''), 'url', '')}"
+            )
+            sys.exit(1)
         if state != JobState.success:
             print(f"Workflow failed with {state}")
             exit(1)

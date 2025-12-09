@@ -12,8 +12,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   ocrd.cli.bashlib
-   ocrd.cli.log
    ocrd.cli.network
    ocrd.cli.ocrd_tool
    ocrd.cli.process

@@ -214,7 +214,7 @@ def list_all_resources(executable : str, ocrd_tool : Optional[Dict[str, Any]] = 
                     '.git/*',
                     # our stuff
                     'ocrd-tool.json',
-                    'environment.pickle', 'resource_list.yml', 'lib.bash']):
+                    'environment.pickle', 'resource_list.yml']):
                 logger.debug("ignoring module candidate '%s'", resource)
                 continue
             candidates.append(resource)
