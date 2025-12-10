@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.8.0] - 2025-11-10
+
 Added:
 
   * `ocrd-command` processor to run arbitrary PAGE transformation CLIs, #1343
@@ -2615,6 +2617,8 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.8.0]: ../../compare/v3.8.0..v3.7.0
+[3.7.0]: ../../compare/v3.7.0..v3.6.0
 [3.6.0]: ../../compare/v3.6.0..v3.5.1
 [3.5.1]: ../../compare/v3.5.1..v3.5.0
 [3.5.0]: ../../compare/v3.5.0..v3.4.1
