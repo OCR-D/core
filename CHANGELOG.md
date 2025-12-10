@@ -5,6 +5,16 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+  * `ocrd-command` processor to run arbitrary PAGE transformation CLIs
+  * various parameter presets for ocrd-command
+  * `ocrd-merge` processor to join multiple PAGE inputs by concatenation
+  * test coverage for ocrd-filter, ocrd-command, and ocrd-merge
+
+Fixed:
+  * `Page.get_ReadingOrderGroups`: sort by index, use `OrderedDict` as result
+  * `OcrdAgent.notes`: convert to dict to accommodate pydantic 2 with older lxml
+
 ## [3.7.0] - 2025-11-02
 
 Changed:
