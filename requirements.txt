@@ -3,12 +3,13 @@ beanie~=1.7
 click >=7
 cryptography < 43.0.0
 Deprecated == 1.2.0
-docker
+docker>=7.1.0
 elementpath
 fastapi>=0.78.0
 filetype
 Flask
 frozendict>=2.4.0
+gitpython
 gdown
 httpx>=0.22.0
 importlib_metadata ; python_version < '3.8'
