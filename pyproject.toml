@@ -35,6 +35,8 @@ Issues = "https://github.com/OCR-D/core/issues"
 ocrd = "ocrd.cli:cli"
 ocrd-dummy = "ocrd.processor.builtin.dummy_processor:cli"
 ocrd-filter = "ocrd.processor.builtin.filter_processor:cli"
+ocrd-command = "ocrd.processor.builtin.shell_processor:cli"
+ocrd-merge = "ocrd.processor.builtin.merge_processor:cli"
 
 [tool.setuptools]
 include-package-data = true

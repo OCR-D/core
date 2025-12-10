@@ -7,13 +7,18 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 Added:
 
+  * `ocrd-command` processor to run arbitrary PAGE transformation CLIs, #1343
+  * various parameter presets for ocrd-command, #1343
+  * `ocrd-merge` processor to join multiple PAGE inputs by concatenation, #1343
+  * test coverage for ocrd-filter, ocrd-command, and ocrd-merge, #1343
   * Resource Manager Server as `ocrd_network` analogon of `ocrd.cli.resmgr`, #1309
     * `ocrd network resmgr-server` for triggering Resource Manager Server (RMS) in the background
     * Processing Server also deploys RMS on each processing host
-    * ...
 
 Fixed:
 
+  * `Page.get_ReadingOrderGroups`: sort by index, use `OrderedDict` as result
+  * `OcrdAgent.notes`: convert to dict to accommodate pydantic 2 with older lxml
   * `ocrd.resource_manager`: ensure necessary + reduce unnecessary updates of user database
   * `ocrd.resource_manager`: deduplicate entries (newer wins) before updating user database
   * `ocrd resmgr download`: extract archives independent of whether they are URLs or local paths

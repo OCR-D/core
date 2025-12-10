@@ -1,0 +1,5 @@
+{
+    # requires https://github.com/PRImA-Research-Lab/prima-page-converter installed
+    # with the main JAR file copied to /usr/local/share/
+    "command": "java -jar /usr/local/share/PageConverter.jar -source-xml @INFILE -convert-to LATEST -target-xml @OUTFILE"
+}
