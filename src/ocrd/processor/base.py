@@ -824,51 +824,58 @@ class Processor():
         if not any(input_pcgts):
             self._base_logger.warning(f'skipping page {page_id}')
             return
-        output_file_id = make_file_id(input_files[input_pos], self.output_file_grp)
-        if input_files[input_pos].fileGrp == self.output_file_grp:
-            # input=output fileGrp: re-use ID exactly
-            output_file_id = input_files[input_pos].ID
-        output_file = next(self.workspace.mets.find_files(ID=output_file_id), None)
-        if output_file and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
+        output_file_grps = self.output_file_grp.split(',')
+        output_file_ids = [make_file_id(input_files[input_pos], output_file_grp)
+                           if input_files[input_pos].fileGrp != output_file_grp else
+                           # input=output fileGrp: re-use ID exactly
+                           input_files[input_pos].ID
+                           for output_file_grp in output_file_grps]
+        output_files = [next(self.workspace.mets.find_files(ID=output_file_id), None)
+                        for output_file_id in output_file_ids]
+        if all(output_files) and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
             # short-cut avoiding useless computation:
             raise FileExistsError(
                 f"A file with ID=={output_file_id} already exists {output_file} and neither force nor ignore are set"
             )
-        result = self.process_page_pcgts(*input_pcgts, page_id=page_id)
-        for image_result in result.images:
-            image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
-            image_file_path = join(self.output_file_grp, f'{image_file_id}.png')
-            if isinstance(image_result.alternative_image, PageType):
-                # special case: not an alternative image, but replacing the original image
-                # (this is needed by certain processors when the original's coordinate system
-                #  cannot or must not be kept)
-                image_result.alternative_image.set_imageFilename(image_file_path)
-                image_result.alternative_image.set_imageWidth(image_result.pil.width)
-                image_result.alternative_image.set_imageHeight(image_result.pil.height)
-            elif isinstance(image_result.alternative_image, AlternativeImageType):
-                image_result.alternative_image.set_filename(image_file_path)
-            elif image_result.alternative_image is None:
-                pass  # do not reference in PAGE result
-            else:
-                raise ValueError(f"process_page_pcgts returned an OcrdPageResultImage of unknown type "
-                                 f"{type(image_result.alternative_image)}")
-            self.workspace.save_image_file(
-                image_result.pil,
-                image_file_id,
-                self.output_file_grp,
+        results = self.process_page_pcgts(*input_pcgts, page_id=page_id)
+        if len(results) > len(output_file_grps):
+            self._base_logger.error(f"processor returned {len(results) - len(output_file_grps)} "
+                                    f"more results than specified output fileGrps for page {page_id}")
+        for result, output_file_id, output_file_grp in zip(results, output_file_ids, output_file_grps):
+            for image_result in result.images:
+                image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
+                image_file_path = join(output_file_grp, f'{image_file_id}.png')
+                if isinstance(image_result.alternative_image, PageType):
+                    # special case: not an alternative image, but replacing the original image
+                    # (this is needed by certain processors when the original's coordinate system
+                    #  cannot or must not be kept)
+                    image_result.alternative_image.set_imageFilename(image_file_path)
+                    image_result.alternative_image.set_imageWidth(image_result.pil.width)
+                    image_result.alternative_image.set_imageHeight(image_result.pil.height)
+                elif isinstance(image_result.alternative_image, AlternativeImageType):
+                    image_result.alternative_image.set_filename(image_file_path)
+                elif image_result.alternative_image is None:
+                    pass  # do not reference in PAGE result
+                else:
+                    raise ValueError(f"process_page_pcgts returned an OcrdPageResultImage of unknown type "
+                                     f"{type(image_result.alternative_image)}")
+                self.workspace.save_image_file(
+                    image_result.pil,
+                    image_file_id,
+                    output_file_grp,
+                    page_id=page_id,
+                    file_path=image_file_path,
+                )
+            result.pcgts.set_pcGtsId(output_file_id)
+            self.add_metadata(result.pcgts)
+            self.workspace.add_file(
+                file_id=output_file_id,
+                file_grp=output_file_grp,
                 page_id=page_id,
-                file_path=image_file_path,
+                local_filename=os.path.join(output_file_grp, output_file_id + '.xml'),
+                mimetype=MIMETYPE_PAGE,
+                content=to_xml(result.pcgts),
             )
-        result.pcgts.set_pcGtsId(output_file_id)
-        self.add_metadata(result.pcgts)
-        self.workspace.add_file(
-            file_id=output_file_id,
-            file_grp=self.output_file_grp,
-            page_id=page_id,
-            local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
-            mimetype=MIMETYPE_PAGE,
-            content=to_xml(result.pcgts),
-        )
 
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """
