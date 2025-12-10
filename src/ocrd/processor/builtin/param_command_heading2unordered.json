@@ -1,0 +1,7 @@
+{
+    # requires https://github.com/bertsky/workflow-configuration installed
+    # partitions PAGE-XML ReadingOrder from single OrderedGroup to top
+    # UnorderedGroup divided into OrderedGroups starting at every @type=heading
+    # text regions.
+    "command": "page-heading2unordered @INFILE > @OUTFILE"
+}

@@ -1,0 +1,6 @@
+{
+    # requires https://github.com/bertsky/workflow-configuration installed
+    # retrieves lines from all paragraphs and geometrically determines
+    # their average skew, annotating the result under /Page/@orientation
+    "command": "page-lines2orientation @INFILE > @OUTFILE"
+}

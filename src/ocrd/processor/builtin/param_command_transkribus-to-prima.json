@@ -1,0 +1,8 @@
+{
+    # requires https://github.com/kba/transkribus-to-prima installed
+    # converts PAGE from Transkribus dialect to PRImA standard
+    # also runs various fixes often necessary to make this work:
+    # - ensuring coordinates range within the image size
+    # - ensuring segment identifiers do not start with numbers
+    "command": "page-fix-coordinates @INFILE - | sed -e 's/ id=\"/ id=\"id/' -e 's/regionRef=\"/regionRef=\"id/' | transkribus-to-prima -V - @OUTFILE"
+}
