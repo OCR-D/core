@@ -18,6 +18,9 @@
 * [Command line tools](#command-line-tools)
 	* [`ocrd` CLI](#ocrd-cli)
 	* [`ocrd-dummy` CLI](#ocrd-dummy-cli)
+	* [`ocrd-filter` CLI](#ocrd-filter-cli)
+	* [`ocrd-command` CLI](#ocrd-command-cli)
+	* [`ocrd-merge` CLI](#ocrd-merge-cli)
 * [Configuration](#configuration)
 * [Packages](#packages)
 	* [ocrd_utils](#ocrd_utils)
@@ -26,7 +29,6 @@
 	* [ocrd_validators](#ocrd_validators)
 	* [ocrd_network](#ocrd_network)
 	* [ocrd](#ocrd)
-* [bash library](#bash-library)
 * [Testing](#testing)
 * [See Also](#see-also)
 
@@ -70,6 +72,22 @@ supported flags, options and arguments.
 ### `ocrd-dummy` CLI
 
 A minimal [OCR-D processor](https://ocr-d.de/en/user_guide#using-the-ocr-d-processors) that copies from `-I/-input-file-grp` to `-O/-output-file-grp`
+
+### `ocrd-filter` CLI
+
+A simple [OCR-D processor](https://ocr-d.de/en/user_guide#using-the-ocr-d-processors) that removes segments in PAGE-XML files from `-I/-input-file-grp` to `-O/-output-file-grp` with arbitrary selection based on powerful XPath 2.0 expressions.
+
+### `ocrd-command` CLI
+
+A simple [OCR-D processor](https://ocr-d.de/en/user_guide#using-the-ocr-d-processors) that runs arbitrary shell commands to transform PAGE-XML files from `-I/-input-file-grp` to `-O/-output-file-grp` (in effect "wrapping" them for OCR-D).
+
+### `ocrd-merge` CLI
+
+A simple [OCR-D processor](https://ocr-d.de/en/user_guide#using-the-ocr-d-processors) that (for every page) joins PAGE-XML files from multiple `-I/-input-file-grp` into a single `-O/-output-file-grp`, ensuring that
+- `Border` polygons are joined
+- all regions are concatenated, while
+- ensuring segment identifiers do not clash,
+- and the reading order simply gets concatenated.
 
 ## Configuration
 
