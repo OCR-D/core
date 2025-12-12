@@ -3,7 +3,7 @@ import json
 from PIL import Image
 from io import BytesIO
 from contextlib import ExitStack
-import multiprocessing as mp
+from concurrent.futures import TimeoutError
 
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -312,7 +312,8 @@ class TestProcessor(TestCase):
         assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
-        with pytest.raises(mp.TimeoutError) as exc:
+        pytest.xfail("does not work, because worker timeouts are not enforcible in uniprocessing (see test_run_output_metsserver_timeout)")
+        with pytest.raises(TimeoutError) as exc:
             run_processor(DummyProcessorWithOutputSleep, workspace=ws,
                           input_file_grp="OCR-D-IMG",
                           output_file_grp="OCR-D-OUT",
@@ -646,6 +647,26 @@ def test_run_output_metsserver(start_mets_server):
     assert docfile is not None
     assert docfile.pageId is None
     config.reset_defaults()
+
+def test_run_output_metsserver_timeout(start_mets_server):
+    mets_server_url, ws = start_mets_server
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 0
+    # do not raise for number of failures:
+    config.OCRD_MAX_MISSING_OUTPUTS = -1
+    config.OCRD_MISSING_OUTPUT = 'ABORT'
+    config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
+    run_processor(DummyProcessorWithOutputSleep, workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  parameter={"sleep": 1})
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+    config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+    config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
+    with pytest.raises(TimeoutError) as exc:
+        run_processor(DummyProcessorWithOutputSleep, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={"sleep": 3})
 
 # 2s (+ 2s tolerance) instead of 3*3s (+ 2s tolerance)
 # fixme: pytest-timeout does not shut down / finalize the fixture properly

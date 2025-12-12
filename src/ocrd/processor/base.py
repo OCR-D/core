@@ -27,10 +27,10 @@ from collections import defaultdict
 from frozendict import frozendict
 # concurrent.futures is buggy in py38,
 # this is where the fixes came from:
-from loky import Future, ProcessPoolExecutor
+#from loky import Future, ProcessPoolExecutor
+from pebble import ProcessFuture as Future, ProcessPool as ProcessPoolExecutor
+from concurrent.futures import TimeoutError
 import multiprocessing as mp
-from multiprocessing.pool import ThreadPool
-
 from click import wrap_text
 from deprecated import deprecated
 from requests import HTTPError
@@ -134,11 +134,15 @@ class DummyExecutor:
     def __init__(self, initializer=None, initargs=(), **kwargs):
         initializer(*initargs)
 
-    def shutdown(self, **kwargs):
+    def stop(self):
         # allow gc to catch processor instance (unless cached)
         _page_worker_set_ctxt(None, None)
 
-    def submit(self, fn, *args, **kwargs) -> DummyFuture:
+    def join(self, **kwargs):
+        pass
+
+    def submit(self, fn, timeout, *args, **kwargs) -> DummyFuture:
+        # FIXME: there is nothing we can do in uniprocessing to enforce timeouts
         return DummyFuture(fn, *args, **kwargs)
 
 
@@ -525,7 +529,7 @@ class Processor():
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
 
-                if max_workers > 1:
+                if isinstance(workspace.mets, ClientSideOcrdMets):
                     executor_cls = ProcessPoolExecutor
                     log_queue = mp.get_context('fork').Queue()
                 else:
@@ -539,7 +543,8 @@ class Processor():
                     initializer=_page_worker_set_ctxt,
                     initargs=(self, log_queue),
                 )
-                if max_workers > 1:
+                if isinstance(workspace.mets, ClientSideOcrdMets):
+                    assert executor.active # ensure pre-forking
                     # forward messages from log queue (in subprocesses) to all root handlers
                     log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers,
                                                                   respect_handler_level=True)
@@ -550,9 +555,10 @@ class Processor():
                     tasks = self.process_workspace_submit_tasks(executor, max_seconds)
                     stats = self.process_workspace_handle_tasks(tasks)
                 finally:
-                    executor.shutdown(kill_workers=True, wait=False)
+                    executor.stop()
+                    executor.join(timeout=3.0) # raises TimeoutError
                     self._base_logger.debug("stopped executor %s after %d tasks", str(executor), len(tasks) if tasks else -1)
-                    if max_workers > 1:
+                    if isinstance(workspace.mets, ClientSideOcrdMets):
                         # can cause deadlock:
                         #log_listener.stop()
                         # not much better:
@@ -726,8 +732,9 @@ class Processor():
             # but does not stop the running process/thread, and executor itself
             # offers nothing to that effect:
             # task.result(timeout=max_seconds or None)
-            # so we instead applied the timeout within the worker function
+            # so we instead passed the timeout to the submit (schedule) function
             task.result()
+            self._base_logger.debug("page worker completed for page %s", page_id)
             return True
         except NotImplementedError:
             # exclude NotImplementedError, so we can try process() below
@@ -744,7 +751,9 @@ class Processor():
         except KeyboardInterrupt:
             raise
         # broad coverage of output failures (including TimeoutError)
-        except Exception as err:
+        except (Exception, TimeoutError) as err:
+            if isinstance(err, TimeoutError):
+                self._base_logger.debug("page worker timed out for page %s", page_id)
             # FIXME: add re-usable/actionable logging
             if config.OCRD_MISSING_OUTPUT == 'ABORT':
                 self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
@@ -1174,22 +1183,12 @@ def _page_worker_set_ctxt(processor, log_queue):
         logging.root.handlers = [logging.handlers.QueueHandler(log_queue)]
 
 
-def _page_worker(timeout, *input_files):
+def _page_worker(*input_files):
     """
     Wraps a `Processor.process_page_file` call as payload (call target)
-    of the ProcessPoolExecutor workers, but also enforces the given timeout.
+    of the ProcessPoolExecutor workers.
     """
-    page_id = next((file.pageId for file in input_files
-                    if hasattr(file, 'pageId')), "")
-    pool = ThreadPool(processes=1)
-    try:
-        #_page_worker_processor.process_page_file(*input_files)
-        async_result = pool.apply_async(_page_worker_processor.process_page_file, input_files)
-        async_result.get(timeout or None)
-        _page_worker_processor.logger.debug("page worker completed for page %s", page_id)
-    except mp.TimeoutError:
-        _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
-        raise
+    _page_worker_processor.process_page_file(*input_files)
 
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
