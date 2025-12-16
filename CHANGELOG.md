@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Include `ocrd-command` and `ocrd-merge` in the `ocrd-all-tool.json`, #1347
+
 ## [3.8.0] - 2025-11-10
 
 Added:
