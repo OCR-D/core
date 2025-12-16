@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.8.1] - 2025-12-16
+
 Fixed:
 
   * Include `ocrd-command` and `ocrd-merge` in the `ocrd-all-tool.json`, #1347
@@ -2621,6 +2623,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.8.1]: ../../compare/v3.8.1..v3.8.0
 [3.8.0]: ../../compare/v3.8.0..v3.7.0
 [3.7.0]: ../../compare/v3.7.0..v3.6.0
 [3.6.0]: ../../compare/v3.6.0..v3.5.1
