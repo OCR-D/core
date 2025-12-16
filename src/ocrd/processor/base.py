@@ -835,7 +835,7 @@ class Processor():
         if all(output_files) and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
             # short-cut avoiding useless computation:
             raise FileExistsError(
-                f"A file with ID=={output_file_id} already exists {output_file} and neither force nor ignore are set"
+                f"A file with ID=={output_file_id} already exists {output_file} and OCRD_EXISTING_OUTPUT != OVERWRITE"
             )
         results = self.process_page_pcgts(*input_pcgts, page_id=page_id)
         if len(results) > len(output_file_grps):
@@ -848,7 +848,7 @@ class Processor():
                 if isinstance(image_result.alternative_image, PageType):
                     # special case: not an alternative image, but replacing the original image
                     # (this is needed by certain processors when the original's coordinate system
-                    #  cannot or must not be kept)
+                    #  cannot or must not be kept, e.g. dewarping)
                     image_result.alternative_image.set_imageFilename(image_file_path)
                     image_result.alternative_image.set_imageWidth(image_result.pil.width)
                     image_result.alternative_image.set_imageHeight(image_result.pil.height)
