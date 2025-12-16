@@ -830,13 +830,14 @@ class Processor():
                            # input=output fileGrp: re-use ID exactly
                            input_files[input_pos].ID
                            for output_file_grp in output_file_grps]
-        output_files = [next(self.workspace.mets.find_files(ID=output_file_id), None)
-                        for output_file_id in output_file_ids]
-        if all(output_files) and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
-            # short-cut avoiding useless computation:
-            raise FileExistsError(
-                f"A file with ID=={output_file_id} already exists {output_file} and OCRD_EXISTING_OUTPUT != OVERWRITE"
-            )
+        if config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
+            for output_file_id in output_file_ids:
+                if output_file := next(self.workspace.mets.find_files(ID=output_file_id), None):
+                    # short-cut avoiding useless computation:
+                    raise FileExistsError(
+                        f"A file with ID=={output_file_id} already exists {output_file}"
+                        " and OCRD_EXISTING_OUTPUT != OVERWRITE"
+                    )
         results = self.process_page_pcgts(*input_pcgts, page_id=page_id)
         if len(results) > len(output_file_grps):
             self._base_logger.error(f"processor returned {len(results) - len(output_file_grps)} "
