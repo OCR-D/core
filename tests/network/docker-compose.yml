@@ -73,7 +73,7 @@ services:
       OCRD_NETWORK_LOGS_ROOT_DIR: /ocrd-data/ocrd_network_logs
       OCRD_NETWORK_SOCKETS_ROOT_DIR: /ocrd-data/ocrd_network_sockets
     healthcheck:
-      test: curl -f http://localhost:${OCRD_PS_PORT}/
+      test: curl -f http://localhost:8000/
       interval: 1s
       timeout: 3s
       retries: 30
