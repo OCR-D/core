@@ -358,6 +358,20 @@ class TestProcessor(TestCase):
             output_pcgts0 = page_from_file(output_files[0])
             assert output_pcgts0.pcGtsId == output_files[0].ID
             assert output_pcgts0.Page.get_custom() == "right side"
+            config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            config.OCRD_EXISTING_OUTPUT = 'SKIP'
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            config.OCRD_EXISTING_OUTPUT = 'ABORT'
+            with pytest.raises(AssertionError) as exc:
+                run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                              input_file_grp="OCR-D-IMG",
+                              output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            assert "output fileGrp OCR-D-OUT-L already exists" in str(exc.value)
             with pytest.raises(AssertionError) as exc:
                 run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
                               input_file_grp="OCR-D-IMG",
