@@ -25,7 +25,7 @@ services:
       retries: 90
 
   ocrd_network_rabbit_mq:
-    image: "rabbitmq:3.12-management"
+    image: "rabbitmq:4.2-management"
     hostname: ${RABBITMQ_HOST}
     container_name: ocrd_network_rabbit_mq
     user: rabbitmq
