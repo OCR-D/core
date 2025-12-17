@@ -22,7 +22,7 @@ services:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 1s
       timeout: 3s
-      retries: 90
+      retries: 120
 
   ocrd_network_rabbit_mq:
     image: "rabbitmq:4.2-management"
@@ -43,7 +43,7 @@ services:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1s
       timeout: 3s
-      retries: 90
+      retries: 120
 
   ocrd_network_processing_server:
     image: "ocrd_core_test"
@@ -76,7 +76,7 @@ services:
       test: curl -f http://localhost:8000/
       interval: 1s
       timeout: 3s
-      retries: 30
+      retries: 120
     volumes:
       - ${OCRD_NETWORK_LOGS_ROOT}:/ocrd-data/ocrd_network_logs
       - ${OCRD_NETWORK_SOCKETS_ROOT}:/ocrd-data/ocrd_network_sockets
