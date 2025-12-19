@@ -22,6 +22,8 @@ Changed:
       * make output files (and file IDs), and save images etc for each
         output independently
   * PAGE API: `get_AllRegions` available for all region types, not just PAGE root, #1344
+  * `ocrd_network`: Update RabbitMQ from 3.12 to (latest) 4.2, #1348
+  * `ocrd_network`: Fix and improve logging for network integration tests, #1348
 
 Fixed:
 
@@ -30,6 +32,7 @@ Fixed:
 Added:
 
   * test combinations of `OCRD_*` config variables and multi-output, #1344
+  * `ocrd network client check-status` has a `--verbose` flag for more detailed job status, #1348
 
 ## [3.8.1] - 2025-12-16
 
