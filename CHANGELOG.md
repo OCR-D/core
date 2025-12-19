@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * `ocrd network client check-status` has a `--verbose` flag for more detailed job status, #1348
+
 ## [3.9.0] - 2025-12-18
 
 Changed:
