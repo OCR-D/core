@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## [3.9.0] - 2025-12-18
+
 Changed:
 
   * Support multiple output file groups for processors, #1344
@@ -2652,6 +2654,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.9.0]: ../../compare/v3.9.0..v3.8.1
 [3.8.1]: ../../compare/v3.8.1..v3.8.0
 [3.8.0]: ../../compare/v3.8.0..v3.7.0
 [3.7.0]: ../../compare/v3.7.0..v3.6.0
