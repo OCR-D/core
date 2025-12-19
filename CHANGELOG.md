@@ -5,6 +5,32 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * Support multiple output file groups for processors, #1344
+    - `OcrdPageResult`: replace by proxy class `OcrdPageResultVariadicListWrapper`
+      with list semantics and variadic constructor (with the original class now
+      under `SingleOcrdPageResult`)
+    - `Processor.process_page_file`: handle results from `process_page_pcgts`
+      as lists:
+      * split `output_file_grp` with commas (just as `input_file_grp`)
+      * iterate over output file groups and `OcrdPageResult`
+      * log error if there are more results than output file groups
+        (that _will_ get lost)
+      * raise `FileExistsError` (in order to skip actual computation)
+        iff output file exists for  _all_ output file groups
+      * make output files (and file IDs), and save images etc for each
+        output independently
+  * PAGE API: `get_AllRegions` available for all region types, not just PAGE root, #1344
+
+Fixed:
+
+  * :fire: do not log RabbitMQ credentials, #1346, #1348
+
+Added:
+
+  * test combinations of `OCRD_*` config variables and multi-output, #1344
+
 ## [3.8.1] - 2025-12-16
 
 Fixed:
