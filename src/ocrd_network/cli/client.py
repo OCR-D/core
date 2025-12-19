@@ -212,13 +212,17 @@ def workflow_cli():
 @workflow_cli.command('check-status')
 @click.option('--address', type=URL, help=ADDRESS_HELP)
 @click.option('-j', '--workflow-job-id', required=True)
-def check_workflow_job_status(address: Optional[str], workflow_job_id: str):
+@click.option('-v', '--verbose', default=False, is_flag=True)
+def check_workflow_job_status(address: Optional[str], workflow_job_id: str, verbose: bool = False):
     """
     Check the status of a previously submitted workflow job.
     """
     client = Client(server_addr_processing=address)
     try:
-        job_status = client.check_workflow_status_simple(workflow_job_id)
+        if verbose:
+            job_status = client.check_workflow_status(workflow_job_id)
+        else:
+            job_status = client.check_workflow_status_simple(workflow_job_id)
     except RequestException as e:
         print(
             getattr(e, 'detail_message', str(e)),
