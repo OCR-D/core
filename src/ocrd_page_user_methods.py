@@ -120,7 +120,9 @@ METHOD_SPECS = (
     _add_method(r'^(OrderedGroupType|OrderedGroupIndexedType)$', 'exportChildren', '_exportChildren_GroupType'),
     _add_method(r'^(UnorderedGroupType|UnorderedGroupIndexedType)$', 'get_UnorderedGroupChildren'),
     _add_method(r'^(PcGtsType|PageType)$', 'id'),
-    _add_method(r'^(PageType)$', 'get_AllRegions'),
+    _add_method(r'^(PageType|AdvertRegionType|MusicRegionType|MapRegionType|ChemRegionType|MathsRegionType'
+                r'|SeparatorRegionType|ChartRegionType|TableRegionType|GraphicRegionType|LineDrawingRegionType'
+                r'|ImageRegionType|TextRegionType)$', 'get_AllRegions'),
     _add_method(r'^(PcGtsType)$', 'get_AllAlternativeImagePaths'),
     _add_method(r'^(PageType)$', 'get_AllAlternativeImages'),
     _add_method(r'^(PcGtsType)$', 'prune_ReadingOrder'),

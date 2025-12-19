@@ -43,7 +43,8 @@ def _get_recursive_reading_order(self, rogroup):
 def get_AllRegions(self, classes=None, order='document', depth=0):
     """
     Get all the ``*Region`` elements, or only those provided by `classes`.
-    Return in document order, unless `order` is ``reading-order``.
+    Return in document order, unless the top element is ``Page`` and
+    `order` is ``reading-order``.
 
     Arguments:
         classes (list): Classes of regions that shall be returned, \
@@ -52,7 +53,8 @@ def get_AllRegions(self, classes=None, order='document', depth=0):
             return regions sorted by document order (``document``, default) or by
             reading order with regions not in the reading order at the end of the
             returned list (``reading-order``) or regions not in the reading order
-            omitted (``reading-order-only``)
+            omitted (``reading-order-only``). The latter two are only available
+            on page level.
         depth (int): Recursive depth to look for regions at, set to `0` for \
             all regions at any depth. Default: 0
 
@@ -77,7 +79,7 @@ def get_AllRegions(self, classes=None, order='document', depth=0):
     if depth < 0:
         raise Exception("Argument 'depth' must be an integer greater-or-equal 0, not '{}'".format(depth))
     ret = self._get_recursive_regions([self], depth + 1 if depth else 0, classes)
-    if order.startswith('reading-order'):
+    if self.__class__.__name__ == 'PageType' and order.startswith('reading-order'):
         reading_order = self.get_ReadingOrder()
         if reading_order:
             reading_order = reading_order.get_OrderedGroup() or reading_order.get_UnorderedGroup()

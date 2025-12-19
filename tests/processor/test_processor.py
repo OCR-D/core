@@ -13,6 +13,7 @@ from tests.data import (
     DummyProcessor,
     DummyProcessorWithRequiredParameters,
     DummyProcessorWithOutput,
+    DummyProcessorWithTwoOutputs,
     DummyProcessorWithOutputDocfile,
     DummyProcessorWithOutputLegacy,
     DummyProcessorWithOutputSleep,
@@ -340,6 +341,42 @@ class TestProcessor(TestCase):
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
+
+    def test_run_multi_output(self):
+        ws = self.workspace
+        with pushd_popd(ws.directory):
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT-L")
+            assert len(output_files) == 3
+            output_pcgts0 = page_from_file(output_files[0])
+            assert output_pcgts0.pcGtsId == output_files[0].ID
+            assert output_pcgts0.Page.get_custom() == "left side"
+            output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT-R")
+            assert len(output_files) == 3
+            output_pcgts0 = page_from_file(output_files[0])
+            assert output_pcgts0.pcGtsId == output_files[0].ID
+            assert output_pcgts0.Page.get_custom() == "right side"
+            config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            config.OCRD_EXISTING_OUTPUT = 'SKIP'
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            config.OCRD_EXISTING_OUTPUT = 'ABORT'
+            with pytest.raises(AssertionError) as exc:
+                run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                              input_file_grp="OCR-D-IMG",
+                              output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            assert "output fileGrp OCR-D-OUT-L already exists" in str(exc.value)
+            with pytest.raises(AssertionError) as exc:
+                run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                              input_file_grp="OCR-D-IMG",
+                              output_file_grp="OCR-D-OUT")
+            assert "Unexpected number of output file groups" in str(exc.value)
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
