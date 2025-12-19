@@ -25,7 +25,7 @@ def __connect_rabbitmq_client(
     except ValueError as error:
         raise Exception("Failed to parse RabbitMQ connection data") from error
     logger.info(f"Connecting client to RabbitMQ server: {rmq_host}:{rmq_port}{rmq_vhost}")
-    logger.debug(f"RabbitMQ client authenticates with username: {rmq_username}, password: {rmq_password}")
+    # logger.debug(f"RabbitMQ client authenticates with username: {rmq_username}, password: {rmq_password}")
     while attempts > 0:
         try:
             if client_type == "consumer":

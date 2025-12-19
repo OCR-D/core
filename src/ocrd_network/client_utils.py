@@ -3,6 +3,7 @@ import os
 from requests import get as request_get, post as request_post, RequestException, Response
 from requests.exceptions import JSONDecodeError
 from time import sleep
+from typing import Any
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
@@ -16,7 +17,7 @@ def _poll_endpoint_status(ps_server_host: str, job_id: str, job_type: str, tries
         if job_type == "processor":
             job_state = get_ps_processing_job_status(ps_server_host, job_id)
         if job_type == "workflow":
-            job_state = get_ps_workflow_job_status(ps_server_host, job_id)
+            job_state = get_ps_workflow_job_status_simple(ps_server_host, job_id)
         if print_state:
             print(f"State of the {job_type} job {job_id}: {job_state}")
         if job_state == JobState.success or job_state == JobState.failed:
@@ -77,7 +78,7 @@ def get_ps_processing_job_status(ps_server_host: str, processing_job_id: str) ->
     return getattr(JobState, job_state.lower())
 
 
-def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> JobState:
+def get_ps_workflow_job_status_simple(ps_server_host: str, workflow_job_id: str) -> JobState:
     request_url = f"{ps_server_host}/workflow/job-simple/{workflow_job_id}"
     response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
     _raise_if_error(response)
@@ -85,6 +86,12 @@ def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> Job
     assert job_state, "Property 'state' is expected to always have a value"
     return getattr(JobState, job_state.lower())
 
+
+def get_ps_workflow_job_status(ps_server_host: str, workflow_job_id: str) -> Any:
+    request_url = f"{ps_server_host}/workflow/job/{workflow_job_id}"
+    response = request_get(url=request_url, headers={"accept": "application/json; charset=utf-8"})
+    _raise_if_error(response)
+    return response
 
 def post_ps_processing_request(ps_server_host: str, processor: str, job_input: dict) -> str:
     request_url = f"{ps_server_host}/processor/run/{processor}"

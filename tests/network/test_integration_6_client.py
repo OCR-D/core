@@ -1,3 +1,4 @@
+from json import loads
 from pathlib import Path
 from src.ocrd_network.constants import JobState
 from tests.base import assets
@@ -22,8 +23,12 @@ def test_client_processing_processor():
     }
     processing_job_id = client.send_processing_job_request(processor_name="ocrd-dummy", req_params=req_params)
     assert processing_job_id
-    print(f"Processing job id: {processing_job_id}")
-    assert JobState.success == client.poll_job_status(processing_job_id)
+    print(f"\nProcessing job id: {processing_job_id}")
+    job_end_status = client.poll_job_status(processing_job_id)
+    print(f"\nChecking the log file of the job")
+    job_log = client.check_job_log(processing_job_id)
+    print(f"\nThe job log file returned:\n{job_log.content.decode('utf-8')}")
+    assert job_end_status == JobState.success
 
 
 def test_client_processing_workflow():
@@ -34,4 +39,19 @@ def test_client_processing_workflow():
     client = Client(PROCESSING_SERVER_URL, timeout, wait)
     wf_job_id = client.send_workflow_job_request(path_to_dummy_wf, path_to_mets)
     print(f"Workflow job id: {wf_job_id}")
-    assert JobState.success == client.poll_workflow_status(wf_job_id)
+    job_end_status = client.poll_workflow_status(wf_job_id)
+
+    print(f"\nChecking the dictionary of processing jobs")
+    response = client.check_workflow_status(wf_job_id)
+    processing_jobs = loads(response.content.decode("utf-8"))
+    print(f"processing_jobs: {processing_jobs}")
+    if "failed-processor-tasks" in processing_jobs:
+        failed_processor_tasks: dict = processing_jobs["failed-processor-tasks"]
+        for failed_processor, failed_job_ids in failed_processor_tasks.items():
+            print(f"\nChecking {failed_processor} log files")
+            for failed_job_id in failed_job_ids:
+                print(f"\nChecking the log file of failed job id: {failed_job_id['job_id']}")
+                job_log = client.check_job_log(failed_job_id['job_id'])
+                print(f"\nThe job log file returned:\n{job_log.content.decode('utf-8')}")
+
+    assert job_end_status == JobState.success
