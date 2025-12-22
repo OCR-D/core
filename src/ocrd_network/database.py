@@ -14,9 +14,8 @@ database (runs in docker) currently has no volume set.
 """
 from beanie import init_beanie
 from beanie.operators import In
-from motor.motor_asyncio import AsyncIOMotorClient
 from pathlib import Path
-from pymongo import MongoClient, uri_parser as mongo_uri_parser
+from pymongo import AsyncMongoClient, MongoClient, uri_parser as mongo_uri_parser
 from re import sub as re_sub
 from typing import List
 from uuid import uuid4
@@ -26,7 +25,7 @@ from .utils import call_sync
 
 
 async def initiate_database(db_url: str, db_name: str = 'ocrd'):
-    client = AsyncIOMotorClient(db_url)
+    client = AsyncMongoClient(db_url)
     await init_beanie(
         database=client.get_default_database(default=db_name),
         document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript]
