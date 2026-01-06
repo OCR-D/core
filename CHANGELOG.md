@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Require beanie version compatible with pydantic `>=2`,  #1342, #1349
+
 ## [3.9.1] - 2025-12-18
 
 Added:
