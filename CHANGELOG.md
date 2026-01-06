@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.9.2 - 2026-01-06
+
 Fixed:
 
   * Require beanie version compatible with pydantic `>=2`,  #1342, #1349
@@ -2664,6 +2666,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.9.2]: ../../compare/v3.9.2..v3.9.1
 [3.9.1]: ../../compare/v3.9.1..v3.9.0
 [3.9.0]: ../../compare/v3.9.0..v3.8.1
 [3.8.1]: ../../compare/v3.8.1..v3.8.0
