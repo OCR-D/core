@@ -5,6 +5,55 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.9.2 - 2026-01-06
+
+Fixed:
+
+  * Require beanie version compatible with pydantic `>=2`,  #1342, #1349
+
+## [3.9.1] - 2025-12-18
+
+Added:
+
+  * `ocrd network client check-status` has a `--verbose` flag for more detailed job status, #1348
+
+## [3.9.0] - 2025-12-18
+
+Changed:
+
+  * Support multiple output file groups for processors, #1344
+    - `OcrdPageResult`: replace by proxy class `OcrdPageResultVariadicListWrapper`
+      with list semantics and variadic constructor (with the original class now
+      under `SingleOcrdPageResult`)
+    - `Processor.process_page_file`: handle results from `process_page_pcgts`
+      as lists:
+      * split `output_file_grp` with commas (just as `input_file_grp`)
+      * iterate over output file groups and `OcrdPageResult`
+      * log error if there are more results than output file groups
+        (that _will_ get lost)
+      * raise `FileExistsError` (in order to skip actual computation)
+        iff output file exists for  _all_ output file groups
+      * make output files (and file IDs), and save images etc for each
+        output independently
+  * PAGE API: `get_AllRegions` available for all region types, not just PAGE root, #1344
+  * `ocrd_network`: Update RabbitMQ from 3.12 to (latest) 4.2, #1348
+  * `ocrd_network`: Fix and improve logging for network integration tests, #1348
+
+Fixed:
+
+  * :fire: do not log RabbitMQ credentials, #1346, #1348
+
+Added:
+
+  * test combinations of `OCRD_*` config variables and multi-output, #1344
+  * `ocrd network client check-status` has a `--verbose` flag for more detailed job status, #1348
+
+## [3.8.1] - 2025-12-16
+
+Fixed:
+
+  * Include `ocrd-command` and `ocrd-merge` in the `ocrd-all-tool.json`, #1347
+
 ## [3.8.0] - 2025-11-10
 
 Added:
@@ -2617,6 +2666,10 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.9.2]: ../../compare/v3.9.2..v3.9.1
+[3.9.1]: ../../compare/v3.9.1..v3.9.0
+[3.9.0]: ../../compare/v3.9.0..v3.8.1
+[3.8.1]: ../../compare/v3.8.1..v3.8.0
 [3.8.0]: ../../compare/v3.8.0..v3.7.0
 [3.7.0]: ../../compare/v3.7.0..v3.6.0
 [3.6.0]: ../../compare/v3.6.0..v3.5.1

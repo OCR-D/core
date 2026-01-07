@@ -2,6 +2,7 @@
 API to PAGE-XML, generated with generateDS from XML schema.
 """
 from io import StringIO
+import copy
 from typing import Dict, Union, Any
 from lxml import etree as ET
 from elementpath import XPath2Parser, XPathContext
@@ -212,6 +213,25 @@ class OcrdPage():
         self.xpath_context = XPathContext(self.etree)
         self.xpath = lambda expression: self.xpath_parser.parse(expression).get_results(self.xpath_context)
 
+    # allow copy() without infinite recursion
+    def __copy__(self):
+        return OcrdPage(
+            copy.copy(self._pcgts),
+            copy.copy(self.etree),
+            copy.copy(self.mapping),
+            copy.copy(self.revmap),
+        )
+
+    # allow deepcopy() without infinite recursion
+    def __deepcopy__(self, memo):
+        return OcrdPage(
+            copy.deepcopy(self._pcgts, memo),
+            copy.deepcopy(self.etree, memo),
+            copy.deepcopy(self.mapping, memo),
+            copy.deepcopy(self.revmap, memo),
+        )
+
+    # delegate to all members of ._pcgts
     def __getattr__(self, name):
         return getattr(self._pcgts, name)
 

@@ -1,8 +1,9 @@
+from json import loads
 from pathlib import Path
 from requests import get as request_get
 from src.ocrd_network.client_utils import (
     poll_job_status_till_timeout_fail_or_success, poll_wf_status_till_timeout_fail_or_success,
-    post_ps_processing_request, post_ps_workflow_request)
+    post_ps_processing_request, post_ps_workflow_request, get_ps_processing_job_log, get_ps_workflow_job_status)
 from src.ocrd_network.constants import JobState
 from src.ocrd_network.logging_utils import get_processing_job_logging_file_path
 from tests.base import assets
@@ -41,8 +42,11 @@ def test_processing_server_processing_request():
     }
     test_processor = "ocrd-dummy"
     process_job_id = post_ps_processing_request(PROCESSING_SERVER_URL, test_processor, test_processing_job_input)
-    job_state = poll_job_status_till_timeout_fail_or_success(PROCESSING_SERVER_URL, process_job_id, tries=10, wait=10)
-    assert job_state == JobState.success
+    job_end_status = poll_job_status_till_timeout_fail_or_success(PROCESSING_SERVER_URL, process_job_id, tries=10, wait=10)
+    print(f"\nChecking the log file of the job")
+    job_log = get_ps_processing_job_log(PROCESSING_SERVER_URL, process_job_id)
+    print(f"\nThe job log file returned:\n{job_log.content.decode('utf-8')}")
+    assert job_end_status == JobState.success
 
     # Check the existence of the results locally
     # assert Path(assets.path_to(f"{workspace_root}/{output_file_grp}")).exists()
@@ -56,8 +60,22 @@ def test_processing_server_workflow_request():
     workspace_root = "kant_aufklaerung_1784/data"
     path_to_mets = assets.path_to(f"{workspace_root}/mets.xml")
     wf_job_id = post_ps_workflow_request(PROCESSING_SERVER_URL, path_to_dummy_wf, path_to_mets)
-    job_state = poll_wf_status_till_timeout_fail_or_success(PROCESSING_SERVER_URL, wf_job_id, tries=10, wait=10)
-    assert job_state == JobState.success
+    job_end_status = poll_wf_status_till_timeout_fail_or_success(PROCESSING_SERVER_URL, wf_job_id, tries=10, wait=10)
+
+    print(f"\nChecking the dictionary of processing jobs")
+    response = get_ps_workflow_job_status(PROCESSING_SERVER_URL, wf_job_id)
+    processing_jobs = loads(response.content.decode("utf-8"))
+    print(f"processing_jobs: {processing_jobs}")
+    if "failed-processor-tasks" in processing_jobs:
+        failed_processor_tasks: dict = processing_jobs["failed-processor-tasks"]
+        for failed_processor, failed_job_ids in failed_processor_tasks.items():
+            print(f"\nChecking {failed_processor} log files")
+            for failed_job_id in failed_job_ids:
+                print(f"\nChecking the log file of failed job id: {failed_job_id['job_id']}")
+                job_log = get_ps_processing_job_log(PROCESSING_SERVER_URL, failed_job_id['job_id'])
+                print(f"\nThe job log file returned:\n{job_log.content.decode('utf-8')}")
+
+    assert job_end_status == JobState.success
 
     # Check the existence of the results locally
     # The output file groups are defined in the `path_to_dummy_wf`

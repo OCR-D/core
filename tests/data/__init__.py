@@ -1,6 +1,7 @@
 from functools import cached_property
 import json
 import os
+from copy import deepcopy
 from time import sleep
 from pytest import warns
 from ocrd import Processor, OcrdPageResult
@@ -102,6 +103,32 @@ class DummyProcessorWithOutput(Processor):
                 local_filename=os.path.join(self.output_file_grp, file_id),
                 content='CONTENT',
             )
+
+class DummyProcessorWithTwoOutputs(Processor):
+    @property
+    def ocrd_tool(self):
+        # make deep copy
+        dummy_tool = json.loads(json.dumps(DUMMY_TOOL))
+        dummy_tool['output_file_grp_cardinality'] = 2
+        return dummy_tool
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.download = False
+
+    def process_page_pcgts(self, pcgts, page_id=None):
+        left, right = pcgts, deepcopy(pcgts)
+        left.Page.set_custom("left side")
+        right.Page.set_custom("right side")
+        return OcrdPageResult(left, right)
 
 class DummyProcessorWithOutputDocfile(Processor):
     @property
