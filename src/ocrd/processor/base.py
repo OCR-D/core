@@ -25,12 +25,13 @@ import tarfile
 import io
 from collections import defaultdict
 from frozendict import frozendict
-# concurrent.futures is buggy in py38,
-# this is where the fixes came from:
-#from loky import Future, ProcessPoolExecutor
+# concurrent.futures cannot timeout-kill workers
 from pebble import ProcessFuture as Future, ProcessPool as ProcessPoolExecutor
 from concurrent.futures import TimeoutError
 import multiprocessing as mp
+import threading
+
+from cysignals import alarm
 from click import wrap_text
 from deprecated import deprecated
 from requests import HTTPError
@@ -141,9 +142,11 @@ class DummyExecutor:
     def join(self, **kwargs):
         pass
 
-    def submit(self, fn, timeout, *args, **kwargs) -> DummyFuture:
-        # FIXME: there is nothing we can do in uniprocessing to enforce timeouts
-        return DummyFuture(fn, *args, **kwargs)
+    def schedule(self, fn, args=None, kwargs=None, timeout=None) -> DummyFuture:
+        args = args or []
+        kwargs = kwargs or {}
+        timeout = timeout or 0
+        return DummyFuture(fn, *args, **kwargs, timeout=timeout)
 
 
 TFuture = Union[DummyFuture, Future]
@@ -646,7 +649,7 @@ class Processor():
                 self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
         # process page
         #executor.submit(self.process_page_file, *input_files)
-        return executor.submit(_page_worker, max_seconds, *input_files), page_id, input_files
+        return executor.schedule(_page_worker, args=input_files, timeout=max_seconds), page_id, input_files
 
     def process_workspace_handle_tasks(self, tasks: Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]) -> Tuple[
             int, int, Dict[str, int], int]:
@@ -1183,12 +1186,33 @@ def _page_worker_set_ctxt(processor, log_queue):
         logging.root.handlers = [logging.handlers.QueueHandler(log_queue)]
 
 
-def _page_worker(*input_files):
+def _page_worker(*input_files, timeout=0):
     """
     Wraps a `Processor.process_page_file` call as payload (call target)
     of the ProcessPoolExecutor workers.
     """
-    _page_worker_processor.process_page_file(*input_files)
+    #_page_worker_processor.process_page_file(*input_files)
+    page_id = next((file.pageId for file in input_files
+                    if hasattr(file, 'pageId')), "")
+    if timeout:
+        if threading.current_thread() is not threading.main_thread():
+            # does not work outside of main thread
+            # (because the exception/interrupt goes there):
+            raise ValueError("cannot apply page worker timeout outside main thread")
+        # based on setitimer() / SIGALRM - only available on Unix+Cygwin
+        # (but we need to interrupt even when in syscalls
+        #  and cannot rely on Timer threads, because
+        #  processor implementations might not work with threads),
+        alarm.alarm(timeout)
+    try:
+        _page_worker_processor.process_page_file(*input_files)
+        _page_worker_processor.logger.debug("page worker completed for page %s", page_id)
+    except alarm.AlarmInterrupt:
+        _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
+        raise TimeoutError
+    finally:
+        if timeout:
+            alarm.cancel_alarm()
 
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
