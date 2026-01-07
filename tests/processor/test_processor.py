@@ -16,6 +16,7 @@ from tests.data import (
     DummyProcessorWithOutputDocfile,
     DummyProcessorWithOutputLegacy,
     DummyProcessorWithOutputSleep,
+    DummyProcessorWithOutputTF,
     DummyProcessorWithOutputFailures,
     DummyProcessorWithOutputMultiInput,
     IncompleteProcessor
@@ -301,23 +302,30 @@ class TestProcessor(TestCase):
 
     def test_run_output_timeout(self):
         ws = self.workspace
+        args = [DummyProcessorWithOutputSleep]
+        kwargs = dict(workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={"sleep": 1})
         # do not raise for number of failures:
         config.OCRD_MAX_MISSING_OUTPUTS = -1
         config.OCRD_MISSING_OUTPUT = 'ABORT'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
-        run_processor(DummyProcessorWithOutputSleep, workspace=ws,
-                      input_file_grp="OCR-D-IMG",
-                      output_file_grp="OCR-D-OUT",
-                      parameter={"sleep": 1})
+        run_processor(*args, **kwargs)
         assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
-        pytest.xfail("does not work, because worker timeouts are not enforcible in uniprocessing (see test_run_output_metsserver_timeout)")
         with pytest.raises(TimeoutError) as exc:
-            run_processor(DummyProcessorWithOutputSleep, workspace=ws,
-                          input_file_grp="OCR-D-IMG",
-                          output_file_grp="OCR-D-OUT",
-                          parameter={"sleep": 3})
+            kwargs['parameter']['sleep'] = 3
+            run_processor(*args, **kwargs)
+        # cannot run processors multithreaded
+        from pebble import ThreadPool
+        with ThreadPool(1) as pool:
+            task = pool.schedule(run_processor, args=args, kwargs=kwargs)
+            with pytest.raises(ValueError) as exc:
+                task.result()
+            # interrupt n/a on other threads
+            assert 'main thread' in str(exc.value)
 
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
@@ -341,6 +349,44 @@ class TestProcessor(TestCase):
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
+
+    def test_run_output_tensorflow(self):
+        from pebble import ThreadPool
+        ws = self.workspace
+        args = [DummyProcessorWithOutputTF]
+        kwargs = dict(workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      instance_caching=True)
+        # do not raise for number of failures:
+        config.OCRD_MAX_MISSING_OUTPUTS = -1
+        config.OCRD_MISSING_OUTPUT = 'ABORT'
+        #config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
+        proc1 = run_processor(*args, **kwargs)
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+        config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+        config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
+        proc2 = run_processor(*args, **kwargs)
+        # instance caching works
+        assert proc1 is proc2
+        # cannot run processors multithreaded
+        with ThreadPool(1) as pool:
+            task = pool.schedule(run_processor, args=args, kwargs=kwargs)
+            with pytest.raises(ValueError) as exc:
+                task.result()
+            # interrupt n/a on other threads
+            assert 'main thread' in str(exc.value)
+        # cannot run TF1 models multithreaded
+        class ThreadedDummyProcessorWithOutputTF(DummyProcessorWithOutputTF):
+            def process_page_pcgts(self, pcgts, page_id=None):
+                with ThreadPool(1) as pool:
+                    task = pool.schedule(super().process_page_pcgts, args=[pcgts], kwargs=dict(page_id=page_id))
+                    return task.result()
+        args = [ThreadedDummyProcessorWithOutputTF]
+        with pytest.raises(ValueError) as exc:
+            proc3 = run_processor(*args, **kwargs)
+        # graph n/a on other threads
+        assert 'is not an element of this graph' in str(exc.value)
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:

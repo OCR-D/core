@@ -19,3 +19,5 @@ twine
 wheel
 # For typing-compatible lxml interface definitions
 types-lxml
+# for page worker timeouts and parallel
+tensorflow
