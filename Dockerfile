@@ -1,6 +1,6 @@
-ARG BASE_IMAGE=ubuntu:20.04
+ARG BASE_IMAGE=ubuntu:22.04
 FROM $BASE_IMAGE AS ocrd_core_base
-ARG BASE_IMAGE=ubuntu:20.04
+ARG BASE_IMAGE=ubuntu:22.04
 ARG FIXUP=echo
 ARG VCS_REF=unknown
 ARG BUILD_DATE=unknown

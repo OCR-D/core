@@ -396,7 +396,7 @@ DOCKER_BASE_TAG ?= ocrd
 DOCKER_BUILD ?= docker build --progress=plain
 
 # Build docker image
-docker: DOCKER_BASE_IMAGE = ubuntu:20.04
+docker: DOCKER_BASE_IMAGE = ubuntu:22.04
 docker: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core)
 docker: DOCKER_FILE = Dockerfile
 
