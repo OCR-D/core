@@ -25,12 +25,13 @@ import tarfile
 import io
 from collections import defaultdict
 from frozendict import frozendict
-# concurrent.futures is buggy in py38,
-# this is where the fixes came from:
-from loky import Future, ProcessPoolExecutor
+# concurrent.futures cannot timeout-kill workers
+from pebble import ProcessFuture as Future, ProcessPool as ProcessPoolExecutor
+from concurrent.futures import TimeoutError
 import multiprocessing as mp
-from multiprocessing.pool import ThreadPool
+import threading
 
+from cysignals import alarm
 from click import wrap_text
 from deprecated import deprecated
 from requests import HTTPError
@@ -113,6 +114,13 @@ class MissingInputFile(ValueError):
         super().__init__(self.message)
 
 
+class IncompleteProcessorImplementation(NotImplementedError):
+    """
+    An exception signifying the Processor subclass is incomplete,
+    because either :py:meth:`Processor.process_page_pcgts()` or
+    :py:meth:`Processor.process()` was not overridden.
+    """
+
 class DummyFuture:
     """
     Mimics some of `concurrent.futures.Future` but runs immediately.
@@ -134,12 +142,18 @@ class DummyExecutor:
     def __init__(self, initializer=None, initargs=(), **kwargs):
         initializer(*initargs)
 
-    def shutdown(self, **kwargs):
+    def stop(self):
         # allow gc to catch processor instance (unless cached)
         _page_worker_set_ctxt(None, None)
 
-    def submit(self, fn, *args, **kwargs) -> DummyFuture:
-        return DummyFuture(fn, *args, **kwargs)
+    def join(self, **kwargs):
+        pass
+
+    def schedule(self, fn, args=None, kwargs=None, timeout=None) -> DummyFuture:
+        args = args or []
+        kwargs = kwargs or {}
+        timeout = timeout or 0
+        return DummyFuture(fn, *args, **kwargs, timeout=timeout)
 
 
 TFuture = Union[DummyFuture, Future]
@@ -490,7 +504,7 @@ class Processor():
         (This contains the main functionality and needs to be
         overridden by subclasses.)
         """
-        raise NotImplementedError()
+        raise IncompleteProcessorImplementation()
 
     def process_workspace(self, workspace: Workspace) -> None:
         """
@@ -525,7 +539,7 @@ class Processor():
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
 
-                if max_workers > 1:
+                if isinstance(workspace.mets, ClientSideOcrdMets):
                     executor_cls = ProcessPoolExecutor
                     log_queue = mp.get_context('fork').Queue()
                 else:
@@ -539,7 +553,8 @@ class Processor():
                     initializer=_page_worker_set_ctxt,
                     initargs=(self, log_queue),
                 )
-                if max_workers > 1:
+                if isinstance(workspace.mets, ClientSideOcrdMets):
+                    assert executor.active # ensure pre-forking
                     # forward messages from log queue (in subprocesses) to all root handlers
                     log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers,
                                                                   respect_handler_level=True)
@@ -550,21 +565,22 @@ class Processor():
                     tasks = self.process_workspace_submit_tasks(executor, max_seconds)
                     stats = self.process_workspace_handle_tasks(tasks)
                 finally:
-                    executor.shutdown(kill_workers=True, wait=False)
+                    executor.stop()
+                    executor.join(timeout=3.0) # raises TimeoutError
                     self._base_logger.debug("stopped executor %s after %d tasks", str(executor), len(tasks) if tasks else -1)
-                    if max_workers > 1:
+                    if isinstance(workspace.mets, ClientSideOcrdMets):
                         # can cause deadlock:
                         #log_listener.stop()
                         # not much better:
                         #log_listener.enqueue_sentinel()
                         pass
 
-            except NotImplementedError:
+            except IncompleteProcessorImplementation:
                 # fall back to deprecated method
                 try:
                     self.process()
                 except Exception as err:
-                    # suppress the NotImplementedError context
+                    # suppress the IncompleteProcessorImplementation context
                     raise err from None
 
     def process_workspace_submit_tasks(self, executor: TExecutor, max_seconds: int) -> Dict[
@@ -640,7 +656,7 @@ class Processor():
                 self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
         # process page
         #executor.submit(self.process_page_file, *input_files)
-        return executor.submit(_page_worker, max_seconds, *input_files), page_id, input_files
+        return executor.schedule(_page_worker, args=input_files, timeout=max_seconds), page_id, input_files
 
     def process_workspace_handle_tasks(self, tasks: Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]) -> Tuple[
             int, int, Dict[str, int], int]:
@@ -726,11 +742,12 @@ class Processor():
             # but does not stop the running process/thread, and executor itself
             # offers nothing to that effect:
             # task.result(timeout=max_seconds or None)
-            # so we instead applied the timeout within the worker function
+            # so we instead passed the timeout to the submit (schedule) function
             task.result()
+            self._base_logger.debug("page worker completed for page %s", page_id)
             return True
-        except NotImplementedError:
-            # exclude NotImplementedError, so we can try process() below
+        except IncompleteProcessorImplementation:
+            # pass this through, so we can try process() below
             raise
         # handle input failures separately
         except FileExistsError as err:
@@ -744,7 +761,9 @@ class Processor():
         except KeyboardInterrupt:
             raise
         # broad coverage of output failures (including TimeoutError)
-        except Exception as err:
+        except (Exception, TimeoutError) as err:
+            if isinstance(err, TimeoutError):
+                self._base_logger.debug("page worker timed out for page %s", page_id)
             # FIXME: add re-usable/actionable logging
             if config.OCRD_MISSING_OUTPUT == 'ABORT':
                 self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
@@ -896,7 +915,7 @@ class Processor():
         (This contains the main functionality and must be overridden by subclasses,
         unless it does not get called by some overriden :py:meth:`.process_page_file`.)
         """
-        raise NotImplementedError()
+        raise IncompleteProcessorImplementation()
 
     def add_metadata(self, pcgts: OcrdPage) -> None:
         """
@@ -1182,22 +1201,33 @@ def _page_worker_set_ctxt(processor, log_queue):
         logging.root.handlers = [logging.handlers.QueueHandler(log_queue)]
 
 
-def _page_worker(timeout, *input_files):
+def _page_worker(*input_files, timeout=0):
     """
     Wraps a `Processor.process_page_file` call as payload (call target)
-    of the ProcessPoolExecutor workers, but also enforces the given timeout.
+    of the ProcessPoolExecutor workers.
     """
+    #_page_worker_processor.process_page_file(*input_files)
     page_id = next((file.pageId for file in input_files
                     if hasattr(file, 'pageId')), "")
-    pool = ThreadPool(processes=1)
+    if timeout:
+        if threading.current_thread() is not threading.main_thread():
+            # does not work outside of main thread
+            # (because the exception/interrupt goes there):
+            raise ValueError("cannot apply page worker timeout outside main thread")
+        # based on setitimer() / SIGALRM - only available on Unix+Cygwin
+        # (but we need to interrupt even when in syscalls
+        #  and cannot rely on Timer threads, because
+        #  processor implementations might not work with threads),
+        alarm.alarm(timeout)
     try:
-        #_page_worker_processor.process_page_file(*input_files)
-        async_result = pool.apply_async(_page_worker_processor.process_page_file, input_files)
-        async_result.get(timeout or None)
+        _page_worker_processor.process_page_file(*input_files)
         _page_worker_processor.logger.debug("page worker completed for page %s", page_id)
-    except mp.TimeoutError:
+    except alarm.AlarmInterrupt:
         _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
-        raise
+        raise TimeoutError
+    finally:
+        if timeout:
+            alarm.cancel_alarm()
 
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):
