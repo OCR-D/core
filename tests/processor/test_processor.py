@@ -1,4 +1,5 @@
 from functools import cached_property
+import sys
 import json
 from PIL import Image
 from io import BytesIO
@@ -352,6 +353,7 @@ class TestProcessor(TestCase):
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
 
+    @pytest.mark.skipif("sys.version_info >= (3,12)", reason="tf.compat n/a under Keras 3")
     def test_run_output_tensorflow(self):
         from pebble import ThreadPool
         ws = self.workspace
