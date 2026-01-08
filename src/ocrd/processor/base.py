@@ -114,6 +114,13 @@ class MissingInputFile(ValueError):
         super().__init__(self.message)
 
 
+class IncompleteProcessorImplementation(NotImplementedError):
+    """
+    An exception signifying the Processor subclass is incomplete,
+    because either :py:meth:`Processor.process_page_pcgts()` or
+    :py:meth:`Processor.process()` was not overridden.
+    """
+
 class DummyFuture:
     """
     Mimics some of `concurrent.futures.Future` but runs immediately.
@@ -497,7 +504,7 @@ class Processor():
         (This contains the main functionality and needs to be
         overridden by subclasses.)
         """
-        raise NotImplementedError()
+        raise IncompleteProcessorImplementation()
 
     def process_workspace(self, workspace: Workspace) -> None:
         """
@@ -568,12 +575,12 @@ class Processor():
                         #log_listener.enqueue_sentinel()
                         pass
 
-            except NotImplementedError:
+            except IncompleteProcessorImplementation:
                 # fall back to deprecated method
                 try:
                     self.process()
                 except Exception as err:
-                    # suppress the NotImplementedError context
+                    # suppress the IncompleteProcessorImplementation context
                     raise err from None
 
     def process_workspace_submit_tasks(self, executor: TExecutor, max_seconds: int) -> Dict[
@@ -739,8 +746,8 @@ class Processor():
             task.result()
             self._base_logger.debug("page worker completed for page %s", page_id)
             return True
-        except NotImplementedError:
-            # exclude NotImplementedError, so we can try process() below
+        except IncompleteProcessorImplementation:
+            # pass this through, so we can try process() below
             raise
         # handle input failures separately
         except FileExistsError as err:
@@ -908,7 +915,7 @@ class Processor():
         (This contains the main functionality and must be overridden by subclasses,
         unless it does not get called by some overriden :py:meth:`.process_page_file`.)
         """
-        raise NotImplementedError()
+        raise IncompleteProcessorImplementation()
 
     def add_metadata(self, pcgts: OcrdPage) -> None:
         """

@@ -29,6 +29,7 @@ from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import to_xml
 from ocrd.resolver import Resolver
 from ocrd.processor import Processor, run_processor, run_cli, NonUniqueInputFile
+from ocrd.processor.base import IncompleteProcessorImplementation
 from ocrd.processor.helpers import get_processor
 
 from unittest import mock
@@ -57,7 +58,7 @@ class TestProcessor(TestCase):
         proc.input_file_grp = 'OCR-D-IMG'
         proc.output_file_grp = 'DUMMY'
         proc.page_id = None
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(IncompleteProcessorImplementation):
             proc.process_workspace(self.workspace)
 
     def test_no_resolver(self):
