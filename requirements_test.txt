@@ -20,4 +20,4 @@ wheel
 # For typing-compatible lxml interface definitions
 types-lxml
 # for page worker timeouts and parallel
-tensorflow
+tensorflow < 2.16
