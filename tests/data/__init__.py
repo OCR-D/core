@@ -208,9 +208,8 @@ class DummyProcessorWithOutputTF(Processor):
         self.download = False
 
     def setup(self):
-        from tensorflow import keras
-        from tensorflow import compat
-        self.logger.info(keras.__version__)
+        from tensorflow import keras, compat, version
+        self.logger.info(version.VERSION)
         # problem with graph n/a on other threads does not appear in v2
         compat.v1.disable_v2_behavior()
         inputs = keras.Input(batch_shape=(32, 10))
