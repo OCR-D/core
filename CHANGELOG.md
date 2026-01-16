@@ -5,11 +5,15 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-Changed:
+Removed:
 
   * :fire: Drop support for Python 3.8, #1345
+
+Changed:
+
   * :fire: Upgrade from Ubuntu 20.04 to 22.04 for the docker base image, #1345
   * :fire: Restrict supported tensorflow version to `< 2.16` (for support for v1 compat), #1345
+  * :fire: Upgrade PAGE XML API to include PRImA-Research-Lab/PAGE-XML#24 for properly recursive `RegionType`, #1341
 
 Fixed:
 
