@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.10.0 - 2026-01-16
+
 Removed:
 
   * :fire: Drop support for Python 3.8, #1345
@@ -2683,6 +2685,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.10.0]: ../../compare/v3.10.0..v3.9.2
 [3.9.2]: ../../compare/v3.9.2..v3.9.1
 [3.9.1]: ../../compare/v3.9.1..v3.9.0
 [3.9.0]: ../../compare/v3.9.0..v3.8.1
