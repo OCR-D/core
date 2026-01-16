@@ -5,6 +5,19 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: Drop support for Python 3.8, #1345
+  * :fire: Upgrade from Ubuntu 20.04 to 22.04 for the docker base image, #1345
+  * :fire: Restrict supported tensorflow version to `< 2.16` (for support for v1 compat), #1345
+
+Fixed:
+
+  * Support timeouts (`OCRD_PROCESSING_PAGE_TIMEOUT`) for processor calls in more cases, #1345
+    * In multi-processing setup, via pebble (which replaces loky) `ProcessFuture` and `ProcessPool`
+    * With some C python extensions (such as `tesserocr`)
+    * In non-networked local processor calls via cysignals
+
 ## 3.9.2 - 2026-01-06
 
 Fixed:
