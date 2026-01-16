@@ -48,6 +48,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         wget \
         time \
         curl \
+        bzip2 \
         sudo \
         git \
     && make deps-ubuntu
