@@ -258,12 +258,12 @@ class ClientSideOcrdMets:
 
     def add_agent(self, **kwargs):
         if not self.multiplexing_mode:
-            return self.session.request("POST", f"{self.url}/agent", json=OcrdAgentModel.create(**kwargs).dict())
+            return self.session.request("POST", f"{self.url}/agent", json=OcrdAgentModel.create(**kwargs).model_dump())
         else:
             self.session.request(
                 "POST",
                 self.url,
-                json=MpxReq.add_agent(self.ws_dir_path, OcrdAgentModel.create(**kwargs).dict())
+                json=MpxReq.add_agent(self.ws_dir_path, OcrdAgentModel.create(**kwargs).model_dump())
             ).json()
             return OcrdAgentModel.create(**kwargs)
 
@@ -305,7 +305,7 @@ class ClientSideOcrdMets:
             mimetype=mimetype, url=url, local_filename=local_filename
         )
         # add force+ignore
-        kwargs = {**kwargs, **data.dict()}
+        kwargs = {**kwargs, **data.model_dump()}
 
         if not self.multiplexing_mode:
             r = self.session.request("POST", f"{self.url}/file", data=kwargs)
@@ -530,7 +530,7 @@ class OcrdMetsServer:
 
         @app.post(path='/agent', response_model=OcrdAgentModel)
         async def add_agent(agent: OcrdAgentModel):
-            kwargs = agent.dict()
+            kwargs = agent.model_dump()
             kwargs['_type'] = kwargs.pop('type')
             workspace.mets.add_agent(**kwargs)
             response = agent
@@ -575,7 +575,7 @@ class OcrdMetsServer:
                 local_filename=local_filename
             )
             # Add to workspace
-            kwargs = file_resource.dict()
+            kwargs = file_resource.model_dump()
             workspace.add_file(**kwargs, force=force)
             response = file_resource
             self.log.debug(f"POST /file -> {response.__dict__}")

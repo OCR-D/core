@@ -12,6 +12,7 @@ from ocrd_network.cli import (
     client_cli,
     processing_server_cli,
     processing_worker_cli,
+    resource_manager_server_cli
 )
 
 
@@ -26,3 +27,4 @@ def network_cli():
 network_cli.add_command(client_cli)
 network_cli.add_command(processing_server_cli)
 network_cli.add_command(processing_worker_cli)
+network_cli.add_command(resource_manager_server_cli)

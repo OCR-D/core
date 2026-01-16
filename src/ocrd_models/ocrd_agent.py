@@ -43,7 +43,7 @@ class OcrdAgent():
         self.otherrole = otherrole
         self.notes = notes
 
-    def __str__(self):
+    def __repr__(self):
         """
         String representation
         """
@@ -142,7 +142,7 @@ class OcrdAgent():
         """
         el_notes = self._el.findall(TAG_METS_NOTE)
         if el_notes is not None:
-            return [(note.attrib, note.text)
+            return [(dict(note.attrib), note.text)
                     for note in el_notes]
 
     @notes.setter
@@ -190,7 +190,7 @@ class ClientSideOcrdAgent():
         self.otherrole = otherrole
         self.notes = notes
 
-    def __str__(self):
+    def __repr__(self):
         props = ', '.join([
             '='.join([k, getattr(self, k) if getattr(self, k) else '---'])
             for k in ['type', 'othertype', 'role', 'otherrole', 'name']

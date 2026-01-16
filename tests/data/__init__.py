@@ -1,6 +1,7 @@
 from functools import cached_property
 import json
 import os
+from copy import deepcopy
 from time import sleep
 from pytest import warns
 from ocrd import Processor, OcrdPageResult
@@ -103,6 +104,32 @@ class DummyProcessorWithOutput(Processor):
                 content='CONTENT',
             )
 
+class DummyProcessorWithTwoOutputs(Processor):
+    @property
+    def ocrd_tool(self):
+        # make deep copy
+        dummy_tool = json.loads(json.dumps(DUMMY_TOOL))
+        dummy_tool['output_file_grp_cardinality'] = 2
+        return dummy_tool
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.download = False
+
+    def process_page_pcgts(self, pcgts, page_id=None):
+        left, right = pcgts, deepcopy(pcgts)
+        left.Page.set_custom("left side")
+        right.Page.set_custom("right side")
+        return OcrdPageResult(left, right)
+
 class DummyProcessorWithOutputDocfile(Processor):
     @property
     def ocrd_tool(self):
@@ -161,6 +188,41 @@ class DummyProcessorWithOutputSleep(Processor):
 
     def process_page_pcgts(self, pcgts, page_id=None):
         sleep(self.parameter['sleep'])
+        return OcrdPageResult(pcgts)
+
+class DummyProcessorWithOutputTF(Processor):
+    @property
+    def ocrd_tool(self):
+        return DUMMY_TOOL
+
+    @property
+    def version(self):
+        return '0.0.1'
+
+    @property
+    def executable(self):
+        return 'ocrd-test'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.download = False
+
+    def setup(self):
+        from tensorflow import keras, compat, version
+        self.logger.info(version.VERSION)
+        # problem with graph n/a on other threads does not appear in v2
+        compat.v1.disable_v2_behavior()
+        inputs = keras.Input(batch_shape=(32, 10))
+        outputs = keras.layers.add([inputs, inputs])
+        outputs = keras.layers.Softmax()(outputs)
+        self.model = keras.Model(inputs=inputs, outputs=outputs, name="test")
+
+    def process_page_pcgts(self, pcgts, page_id=None):
+        import numpy as np
+        x = np.random.random(self.model.input_shape)
+        y = np.sum(self.model.predict(x))
+        self.logger.info("result is: %d", y)
+        pcgts.Page.set_custom(str(int(y)))
         return OcrdPageResult(pcgts)
 
 class DummyProcessorWithOutputFailures(Processor):

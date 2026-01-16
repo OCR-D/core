@@ -1,20 +1,22 @@
 atomicwrites >= 1.3.0
-beanie~=1.7
+beanie>=2.0.1
 click >=7
 cryptography < 43.0.0
+cysignals
 Deprecated == 1.2.0
-docker
+docker>=7.1.0
 elementpath
 fastapi>=0.78.0
 filetype
 Flask
 frozendict>=2.4.0
+gitpython
 gdown
 httpx>=0.22.0
 importlib_metadata ; python_version < '3.8'
 importlib_resources ; python_version < '3.10'
 jsonschema>=4
-loky
+pebble
 lxml
 memory-profiler >= 0.58.0
 # XXX explicitly do not restrict the numpy version because different
@@ -26,7 +28,8 @@ opencv-python-headless
 paramiko
 pika>=1.2.0
 Pillow >= 7.2.0
-pydantic==1.*
+pydantic >= 2.0.0
+pymongo >= 4.15.5
 python-magic
 python-multipart
 pyyaml

@@ -70,7 +70,8 @@ Utility functions and constants usable in various circumstances.
 
     filesystem-related utilities
 
-* :py:func:`is_string`,
+* :py:func:`is_git_url`,
+  :py:func:`is_string`,
   :py:func:`membername`,
   :py:func:`concat_padded`,
   :py:func:`nth_url_segment`,
@@ -118,6 +119,7 @@ from .constants import (
     REGEX_PREFIX,
     REGEX_FILE_ID,
     RESOURCE_LOCATIONS,
+    RESOURCE_TYPES,
     LOG_FORMAT,
     LOG_TIMEFMT,
     VERSION,
@@ -184,9 +186,11 @@ from .os import (
     get_processor_resource_types,
     get_ocrd_tool_json,
     get_moduledir,
+    get_env_locations,
     guess_media_type,
     list_all_resources,
     is_file_in_directory,
+    is_git_url,
     list_resource_candidates,
     atomic_write,
     pushd_popd,

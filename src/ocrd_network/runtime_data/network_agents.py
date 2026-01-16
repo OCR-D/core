@@ -1,4 +1,5 @@
 from logging import Logger
+from time import sleep
 from typing import Any
 
 from re import search as re_search
@@ -25,7 +26,8 @@ def deploy_agent_native_get_pid_hack(logger: Logger, ssh_client, start_cmd: str)
     output = stdout.read().decode("utf-8")
     stdout.close()
     stdin.close()
-    return re_search(r"xyz([0-9]+)xyz", output).group(1)  # type: ignore
+    pid = re_search(r"xyz([0-9]+)xyz", output).group(1)  # type: ignore
+    return pid
 
 
 # TODO: Implement the actual method that is missing
@@ -50,6 +52,12 @@ class DataNetworkAgent:
         self.deployed_by_config = init_by_config
         # The id is assigned when the agent is deployed
         self.pid = pid
+
+        # Time to wait between deploying agents
+        self.wait_between_agent_deploys: float = 0.3
+
+    def __str__(self):
+        return f"{self.pid} {self.deploy_type} {self.processor_name} on host: {self.host}"
 
     def _start_native_instance(self, logger: Logger, ssh_client, start_cmd: str):
         if self.deploy_type != DeployType.NATIVE:
@@ -76,11 +84,17 @@ class DataProcessingWorker(DataNetworkAgent):
     def deploy_network_agent(self, logger: Logger, connector_client, database_url: str, queue_url: str):
         if self.deploy_type == DeployType.NATIVE:
             start_cmd = f"{self.processor_name} --database {database_url} --queue {queue_url} &"
+            assert connector_client, f"SSH client connection missing."
             self.pid = self._start_native_instance(logger, connector_client, start_cmd)
+            sleep(self.wait_between_agent_deploys)
             return self.pid
         if self.deploy_type == DeployType.DOCKER:
             # TODO: add real command to start processing worker in docker here
             start_cmd = ""
+            assert connector_client, f"Docker client connection missing."
+            if not start_cmd:
+                raise RuntimeError("Missing start command for the Processing Worker in docker mode")
             self.pid = self._start_docker_instance(logger, connector_client, start_cmd)
+            sleep(self.wait_between_agent_deploys)
             return self.pid
         raise RuntimeError(f"Unknown deploy type of {self.__dict__}")

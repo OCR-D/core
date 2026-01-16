@@ -1,9 +1,10 @@
 from functools import cached_property
+import sys
 import json
 from PIL import Image
 from io import BytesIO
 from contextlib import ExitStack
-import multiprocessing as mp
+from concurrent.futures import TimeoutError
 
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -13,9 +14,11 @@ from tests.data import (
     DummyProcessor,
     DummyProcessorWithRequiredParameters,
     DummyProcessorWithOutput,
+    DummyProcessorWithTwoOutputs,
     DummyProcessorWithOutputDocfile,
     DummyProcessorWithOutputLegacy,
     DummyProcessorWithOutputSleep,
+    DummyProcessorWithOutputTF,
     DummyProcessorWithOutputFailures,
     DummyProcessorWithOutputMultiInput,
     IncompleteProcessor
@@ -27,6 +30,7 @@ from ocrd_modelfactory import page_from_file
 from ocrd_models.ocrd_page import to_xml
 from ocrd.resolver import Resolver
 from ocrd.processor import Processor, run_processor, run_cli, NonUniqueInputFile
+from ocrd.processor.base import IncompleteProcessorImplementation
 from ocrd.processor.helpers import get_processor
 
 from unittest import mock
@@ -55,7 +59,7 @@ class TestProcessor(TestCase):
         proc.input_file_grp = 'OCR-D-IMG'
         proc.output_file_grp = 'DUMMY'
         proc.page_id = None
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(IncompleteProcessorImplementation):
             proc.process_workspace(self.workspace)
 
     def test_no_resolver(self):
@@ -301,22 +305,30 @@ class TestProcessor(TestCase):
 
     def test_run_output_timeout(self):
         ws = self.workspace
+        args = [DummyProcessorWithOutputSleep]
+        kwargs = dict(workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={"sleep": 1})
         # do not raise for number of failures:
         config.OCRD_MAX_MISSING_OUTPUTS = -1
         config.OCRD_MISSING_OUTPUT = 'ABORT'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
-        run_processor(DummyProcessorWithOutputSleep, workspace=ws,
-                      input_file_grp="OCR-D-IMG",
-                      output_file_grp="OCR-D-OUT",
-                      parameter={"sleep": 1})
+        run_processor(*args, **kwargs)
         assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
         config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
         config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
-        with pytest.raises(mp.TimeoutError) as exc:
-            run_processor(DummyProcessorWithOutputSleep, workspace=ws,
-                          input_file_grp="OCR-D-IMG",
-                          output_file_grp="OCR-D-OUT",
-                          parameter={"sleep": 3})
+        with pytest.raises(TimeoutError) as exc:
+            kwargs['parameter']['sleep'] = 3
+            run_processor(*args, **kwargs)
+        # cannot run processors multithreaded
+        from pebble import ThreadPool
+        with ThreadPool(1) as pool:
+            task = pool.schedule(run_processor, args=args, kwargs=kwargs)
+            with pytest.raises(ValueError) as exc:
+                task.result()
+            # interrupt n/a on other threads
+            assert 'main thread' in str(exc.value)
 
     def test_run_output_overwrite(self):
         with pushd_popd(tempdir=True) as tempdir:
@@ -340,6 +352,81 @@ class TestProcessor(TestCase):
                           input_file_grp="GRP1",
                           output_file_grp="OCR-D-OUT")
             assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 2
+
+    @pytest.mark.skipif("sys.version_info >= (3,12)", reason="tf.compat n/a under Keras 3")
+    def test_run_output_tensorflow(self):
+        from pebble import ThreadPool
+        ws = self.workspace
+        args = [DummyProcessorWithOutputTF]
+        kwargs = dict(workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      instance_caching=True)
+        # do not raise for number of failures:
+        config.OCRD_MAX_MISSING_OUTPUTS = -1
+        config.OCRD_MISSING_OUTPUT = 'ABORT'
+        #config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
+        proc1 = run_processor(*args, **kwargs)
+        assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+        config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+        config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
+        proc2 = run_processor(*args, **kwargs)
+        # instance caching works
+        assert proc1 is proc2
+        # cannot run processors multithreaded
+        with ThreadPool(1) as pool:
+            task = pool.schedule(run_processor, args=args, kwargs=kwargs)
+            with pytest.raises(ValueError) as exc:
+                task.result()
+            # interrupt n/a on other threads
+            assert 'main thread' in str(exc.value)
+        # cannot run TF1 models multithreaded
+        class ThreadedDummyProcessorWithOutputTF(DummyProcessorWithOutputTF):
+            def process_page_pcgts(self, pcgts, page_id=None):
+                with ThreadPool(1) as pool:
+                    task = pool.schedule(super().process_page_pcgts, args=[pcgts], kwargs=dict(page_id=page_id))
+                    return task.result()
+        args = [ThreadedDummyProcessorWithOutputTF]
+        with pytest.raises(ValueError) as exc:
+            proc3 = run_processor(*args, **kwargs)
+        # graph n/a on other threads
+        assert 'is not an element of this graph' in str(exc.value)
+
+    def test_run_multi_output(self):
+        ws = self.workspace
+        with pushd_popd(ws.directory):
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT-L")
+            assert len(output_files) == 3
+            output_pcgts0 = page_from_file(output_files[0])
+            assert output_pcgts0.pcGtsId == output_files[0].ID
+            assert output_pcgts0.Page.get_custom() == "left side"
+            output_files = ws.mets.find_all_files(fileGrp="OCR-D-OUT-R")
+            assert len(output_files) == 3
+            output_pcgts0 = page_from_file(output_files[0])
+            assert output_pcgts0.pcGtsId == output_files[0].ID
+            assert output_pcgts0.Page.get_custom() == "right side"
+            config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            config.OCRD_EXISTING_OUTPUT = 'SKIP'
+            run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                          input_file_grp="OCR-D-IMG",
+                          output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            config.OCRD_EXISTING_OUTPUT = 'ABORT'
+            with pytest.raises(AssertionError) as exc:
+                run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                              input_file_grp="OCR-D-IMG",
+                              output_file_grp="OCR-D-OUT-L,OCR-D-OUT-R")
+            assert "output fileGrp OCR-D-OUT-L already exists" in str(exc.value)
+            with pytest.raises(AssertionError) as exc:
+                run_processor(DummyProcessorWithTwoOutputs, workspace=ws,
+                              input_file_grp="OCR-D-IMG",
+                              output_file_grp="OCR-D-OUT")
+            assert "Unexpected number of output file groups" in str(exc.value)
 
     def test_run_cli(self):
         with TemporaryDirectory() as tempdir:
@@ -586,6 +673,16 @@ def workspace_sbb():
             yield workspace
     disableLogging()
 
+@pytest.fixture
+def workspace_kant():
+    initLogging()
+    with copy_of_directory(assets.path_to('kant_aufklaerung_1784/data')) as workdir:
+        with pushd_popd(workdir):
+            resolver = Resolver()
+            workspace = resolver.workspace_from_url('mets.xml')
+            yield workspace
+    disableLogging()
+
 def test_run_output_logging(workspace_sbb, caplog):
     caplog.set_level(10)
     def only_profile(logrec):
@@ -636,6 +733,26 @@ def test_run_output_metsserver(start_mets_server):
     assert docfile is not None
     assert docfile.pageId is None
     config.reset_defaults()
+
+def test_run_output_metsserver_timeout(start_mets_server):
+    mets_server_url, ws = start_mets_server
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == 0
+    # do not raise for number of failures:
+    config.OCRD_MAX_MISSING_OUTPUTS = -1
+    config.OCRD_MISSING_OUTPUT = 'ABORT'
+    config.OCRD_PROCESSING_PAGE_TIMEOUT = 3
+    run_processor(DummyProcessorWithOutputSleep, workspace=ws,
+                  input_file_grp="OCR-D-IMG",
+                  output_file_grp="OCR-D-OUT",
+                  parameter={"sleep": 1})
+    assert len(ws.mets.find_all_files(fileGrp="OCR-D-OUT")) == len(ws.mets.find_all_files(fileGrp="OCR-D-IMG"))
+    config.OCRD_EXISTING_OUTPUT = 'OVERWRITE'
+    config.OCRD_PROCESSING_PAGE_TIMEOUT = 1
+    with pytest.raises(TimeoutError) as exc:
+        run_processor(DummyProcessorWithOutputSleep, workspace=ws,
+                      input_file_grp="OCR-D-IMG",
+                      output_file_grp="OCR-D-OUT",
+                      parameter={"sleep": 3})
 
 # 2s (+ 2s tolerance) instead of 3*3s (+ 2s tolerance)
 # fixme: pytest-timeout does not shut down / finalize the fixture properly

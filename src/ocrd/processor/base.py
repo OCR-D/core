@@ -25,12 +25,13 @@ import tarfile
 import io
 from collections import defaultdict
 from frozendict import frozendict
-# concurrent.futures is buggy in py38,
-# this is where the fixes came from:
-from loky import Future, ProcessPoolExecutor
+# concurrent.futures cannot timeout-kill workers
+from pebble import ProcessFuture as Future, ProcessPool as ProcessPoolExecutor
+from concurrent.futures import TimeoutError
 import multiprocessing as mp
-from multiprocessing.pool import ThreadPool
+import threading
 
+from cysignals import alarm
 from click import wrap_text
 from deprecated import deprecated
 from requests import HTTPError
@@ -42,15 +43,14 @@ from .ocrd_page_result import OcrdPageResult
 from ocrd_utils import (
     VERSION as OCRD_VERSION,
     MIMETYPE_PAGE,
-    MIME_TO_EXT,
     config,
     getLogger,
     list_resource_candidates,
-    pushd_popd,
     list_all_resources,
     get_processor_resource_types,
     resource_filename,
     parse_json_file_with_comments,
+    pushd_popd,
     make_file_id,
     deprecation_warning
 )
@@ -114,6 +114,13 @@ class MissingInputFile(ValueError):
         super().__init__(self.message)
 
 
+class IncompleteProcessorImplementation(NotImplementedError):
+    """
+    An exception signifying the Processor subclass is incomplete,
+    because either :py:meth:`Processor.process_page_pcgts()` or
+    :py:meth:`Processor.process()` was not overridden.
+    """
+
 class DummyFuture:
     """
     Mimics some of `concurrent.futures.Future` but runs immediately.
@@ -135,12 +142,18 @@ class DummyExecutor:
     def __init__(self, initializer=None, initargs=(), **kwargs):
         initializer(*initargs)
 
-    def shutdown(self, **kwargs):
+    def stop(self):
         # allow gc to catch processor instance (unless cached)
         _page_worker_set_ctxt(None, None)
 
-    def submit(self, fn, *args, **kwargs) -> DummyFuture:
-        return DummyFuture(fn, *args, **kwargs)
+    def join(self, **kwargs):
+        pass
+
+    def schedule(self, fn, args=None, kwargs=None, timeout=None) -> DummyFuture:
+        args = args or []
+        kwargs = kwargs or {}
+        timeout = timeout or 0
+        return DummyFuture(fn, *args, **kwargs, timeout=timeout)
 
 
 TFuture = Union[DummyFuture, Future]
@@ -491,7 +504,7 @@ class Processor():
         (This contains the main functionality and needs to be
         overridden by subclasses.)
         """
-        raise NotImplementedError()
+        raise IncompleteProcessorImplementation()
 
     def process_workspace(self, workspace: Workspace) -> None:
         """
@@ -526,7 +539,7 @@ class Processor():
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
 
-                if max_workers > 1:
+                if isinstance(workspace.mets, ClientSideOcrdMets):
                     executor_cls = ProcessPoolExecutor
                     log_queue = mp.get_context('fork').Queue()
                 else:
@@ -540,7 +553,8 @@ class Processor():
                     initializer=_page_worker_set_ctxt,
                     initargs=(self, log_queue),
                 )
-                if max_workers > 1:
+                if isinstance(workspace.mets, ClientSideOcrdMets):
+                    assert executor.active # ensure pre-forking
                     # forward messages from log queue (in subprocesses) to all root handlers
                     log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers,
                                                                   respect_handler_level=True)
@@ -551,21 +565,22 @@ class Processor():
                     tasks = self.process_workspace_submit_tasks(executor, max_seconds)
                     stats = self.process_workspace_handle_tasks(tasks)
                 finally:
-                    executor.shutdown(kill_workers=True, wait=False)
+                    executor.stop()
+                    executor.join(timeout=3.0) # raises TimeoutError
                     self._base_logger.debug("stopped executor %s after %d tasks", str(executor), len(tasks) if tasks else -1)
-                    if max_workers > 1:
+                    if isinstance(workspace.mets, ClientSideOcrdMets):
                         # can cause deadlock:
                         #log_listener.stop()
                         # not much better:
                         #log_listener.enqueue_sentinel()
                         pass
 
-            except NotImplementedError:
+            except IncompleteProcessorImplementation:
                 # fall back to deprecated method
                 try:
                     self.process()
                 except Exception as err:
-                    # suppress the NotImplementedError context
+                    # suppress the IncompleteProcessorImplementation context
                     raise err from None
 
     def process_workspace_submit_tasks(self, executor: TExecutor, max_seconds: int) -> Dict[
@@ -608,7 +623,7 @@ class Processor():
         """
         Ensure all input files for a single page are
         downloaded to the workspace, then schedule
-        :py:meth:`.process_process_file` to be run on
+        :py:meth:`.process_page_file` to be run on
         them via `executor` (enforcing a per-page time
         limit of `max_seconds`).
 
@@ -641,7 +656,7 @@ class Processor():
                 self._base_logger.warning(f"failed downloading file {input_file} for page {page_id}")
         # process page
         #executor.submit(self.process_page_file, *input_files)
-        return executor.submit(_page_worker, max_seconds, *input_files), page_id, input_files
+        return executor.schedule(_page_worker, args=input_files, timeout=max_seconds), page_id, input_files
 
     def process_workspace_handle_tasks(self, tasks: Dict[TFuture, Tuple[str, List[Optional[OcrdFileType]]]]) -> Tuple[
             int, int, Dict[str, int], int]:
@@ -727,11 +742,12 @@ class Processor():
             # but does not stop the running process/thread, and executor itself
             # offers nothing to that effect:
             # task.result(timeout=max_seconds or None)
-            # so we instead applied the timeout within the worker function
+            # so we instead passed the timeout to the submit (schedule) function
             task.result()
+            self._base_logger.debug("page worker completed for page %s", page_id)
             return True
-        except NotImplementedError:
-            # exclude NotImplementedError, so we can try process() below
+        except IncompleteProcessorImplementation:
+            # pass this through, so we can try process() below
             raise
         # handle input failures separately
         except FileExistsError as err:
@@ -745,7 +761,9 @@ class Processor():
         except KeyboardInterrupt:
             raise
         # broad coverage of output failures (including TimeoutError)
-        except Exception as err:
+        except (Exception, TimeoutError) as err:
+            if isinstance(err, TimeoutError):
+                self._base_logger.debug("page worker timed out for page %s", page_id)
             # FIXME: add re-usable/actionable logging
             if config.OCRD_MISSING_OUTPUT == 'ABORT':
                 self._base_logger.error(f"Failure on page {page_id}: {str(err) or err.__class__.__name__}")
@@ -825,51 +843,59 @@ class Processor():
         if not any(input_pcgts):
             self._base_logger.warning(f'skipping page {page_id}')
             return
-        output_file_id = make_file_id(input_files[input_pos], self.output_file_grp)
-        if input_files[input_pos].fileGrp == self.output_file_grp:
-            # input=output fileGrp: re-use ID exactly
-            output_file_id = input_files[input_pos].ID
-        output_file = next(self.workspace.mets.find_files(ID=output_file_id), None)
-        if output_file and config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
-            # short-cut avoiding useless computation:
-            raise FileExistsError(
-                f"A file with ID=={output_file_id} already exists {output_file} and neither force nor ignore are set"
-            )
-        result = self.process_page_pcgts(*input_pcgts, page_id=page_id)
-        for image_result in result.images:
-            image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
-            image_file_path = join(self.output_file_grp, f'{image_file_id}.png')
-            if isinstance(image_result.alternative_image, PageType):
-                # special case: not an alternative image, but replacing the original image
-                # (this is needed by certain processors when the original's coordinate system
-                #  cannot or must not be kept)
-                image_result.alternative_image.set_imageFilename(image_file_path)
-                image_result.alternative_image.set_imageWidth(image_result.pil.width)
-                image_result.alternative_image.set_imageHeight(image_result.pil.height)
-            elif isinstance(image_result.alternative_image, AlternativeImageType):
-                image_result.alternative_image.set_filename(image_file_path)
-            elif image_result.alternative_image is None:
-                pass  # do not reference in PAGE result
-            else:
-                raise ValueError(f"process_page_pcgts returned an OcrdPageResultImage of unknown type "
-                                 f"{type(image_result.alternative_image)}")
-            self.workspace.save_image_file(
-                image_result.pil,
-                image_file_id,
-                self.output_file_grp,
+        output_file_grps = self.output_file_grp.split(',')
+        output_file_ids = [make_file_id(input_files[input_pos], output_file_grp)
+                           if input_files[input_pos].fileGrp != output_file_grp else
+                           # input=output fileGrp: re-use ID exactly
+                           input_files[input_pos].ID
+                           for output_file_grp in output_file_grps]
+        if config.OCRD_EXISTING_OUTPUT != 'OVERWRITE':
+            for output_file_id in output_file_ids:
+                if output_file := next(self.workspace.mets.find_files(ID=output_file_id), None):
+                    # short-cut avoiding useless computation:
+                    raise FileExistsError(
+                        f"A file with ID=={output_file_id} already exists {output_file}"
+                        " and OCRD_EXISTING_OUTPUT != OVERWRITE"
+                    )
+        results = self.process_page_pcgts(*input_pcgts, page_id=page_id)
+        if len(results) > len(output_file_grps):
+            self._base_logger.error(f"processor returned {len(results) - len(output_file_grps)} "
+                                    f"more results than specified output fileGrps for page {page_id}")
+        for result, output_file_id, output_file_grp in zip(results, output_file_ids, output_file_grps):
+            for image_result in result.images:
+                image_file_id = f'{output_file_id}_{image_result.file_id_suffix}'
+                image_file_path = join(output_file_grp, f'{image_file_id}.png')
+                if isinstance(image_result.alternative_image, PageType):
+                    # special case: not an alternative image, but replacing the original image
+                    # (this is needed by certain processors when the original's coordinate system
+                    #  cannot or must not be kept, e.g. dewarping)
+                    image_result.alternative_image.set_imageFilename(image_file_path)
+                    image_result.alternative_image.set_imageWidth(image_result.pil.width)
+                    image_result.alternative_image.set_imageHeight(image_result.pil.height)
+                elif isinstance(image_result.alternative_image, AlternativeImageType):
+                    image_result.alternative_image.set_filename(image_file_path)
+                elif image_result.alternative_image is None:
+                    pass  # do not reference in PAGE result
+                else:
+                    raise ValueError(f"process_page_pcgts returned an OcrdPageResultImage of unknown type "
+                                     f"{type(image_result.alternative_image)}")
+                self.workspace.save_image_file(
+                    image_result.pil,
+                    image_file_id,
+                    output_file_grp,
+                    page_id=page_id,
+                    file_path=image_file_path,
+                )
+            result.pcgts.set_pcGtsId(output_file_id)
+            self.add_metadata(result.pcgts)
+            self.workspace.add_file(
+                file_id=output_file_id,
+                file_grp=output_file_grp,
                 page_id=page_id,
-                file_path=image_file_path,
+                local_filename=os.path.join(output_file_grp, output_file_id + '.xml'),
+                mimetype=MIMETYPE_PAGE,
+                content=to_xml(result.pcgts),
             )
-        result.pcgts.set_pcGtsId(output_file_id)
-        self.add_metadata(result.pcgts)
-        self.workspace.add_file(
-            file_id=output_file_id,
-            file_grp=self.output_file_grp,
-            page_id=page_id,
-            local_filename=os.path.join(self.output_file_grp, output_file_id + '.xml'),
-            mimetype=MIMETYPE_PAGE,
-            content=to_xml(result.pcgts),
-        )
 
     def process_page_pcgts(self, *input_pcgts: Optional[OcrdPage], page_id: Optional[str] = None) -> OcrdPageResult:
         """
@@ -889,7 +915,7 @@ class Processor():
         (This contains the main functionality and must be overridden by subclasses,
         unless it does not get called by some overriden :py:meth:`.process_page_file`.)
         """
-        raise NotImplementedError()
+        raise IncompleteProcessorImplementation()
 
     def add_metadata(self, pcgts: OcrdPage) -> None:
         """
@@ -935,9 +961,8 @@ class Processor():
             cwd = self.old_pwd
         else:
             cwd = getcwd()
-        ret = [cand for cand in list_resource_candidates(executable, val,
-                                                         cwd=cwd, moduled=self.moduledir)
-               if exists(cand)]
+        ret = list(filter(exists, list_resource_candidates(executable, val,
+                                                           cwd=cwd, moduled=self.moduledir)))
         if ret:
             self._base_logger.debug("Resolved %s to absolute path %s" % (val, ret[0]))
             return ret[0]
@@ -968,17 +993,9 @@ class Processor():
         """
         List all resources found in the filesystem and matching content-type by filename suffix
         """
-        mimetypes = get_processor_resource_types(None, self.ocrd_tool)
-        for res in list_all_resources(self.ocrd_tool['executable'], moduled=self.moduledir):
+        for res in list_all_resources(self.executable, ocrd_tool=self.ocrd_tool, moduled=self.moduledir):
             res = Path(res)
-            if '*/*' not in mimetypes:
-                if res.is_dir() and 'text/directory' not in mimetypes:
-                    continue
-                # if we do not know all MIME types, then keep the file, otherwise require suffix match
-                if res.is_file() and not any(res.suffix == MIME_TO_EXT.get(mime, res.suffix)
-                                             for mime in mimetypes):
-                    continue
-            yield res
+            yield res.name
 
     @property
     def module(self):
@@ -1184,22 +1201,33 @@ def _page_worker_set_ctxt(processor, log_queue):
         logging.root.handlers = [logging.handlers.QueueHandler(log_queue)]
 
 
-def _page_worker(timeout, *input_files):
+def _page_worker(*input_files, timeout=0):
     """
     Wraps a `Processor.process_page_file` call as payload (call target)
-    of the ProcessPoolExecutor workers, but also enforces the given timeout.
+    of the ProcessPoolExecutor workers.
     """
+    #_page_worker_processor.process_page_file(*input_files)
     page_id = next((file.pageId for file in input_files
                     if hasattr(file, 'pageId')), "")
-    pool = ThreadPool(processes=1)
+    if timeout:
+        if threading.current_thread() is not threading.main_thread():
+            # does not work outside of main thread
+            # (because the exception/interrupt goes there):
+            raise ValueError("cannot apply page worker timeout outside main thread")
+        # based on setitimer() / SIGALRM - only available on Unix+Cygwin
+        # (but we need to interrupt even when in syscalls
+        #  and cannot rely on Timer threads, because
+        #  processor implementations might not work with threads),
+        alarm.alarm(timeout)
     try:
-        #_page_worker_processor.process_page_file(*input_files)
-        async_result = pool.apply_async(_page_worker_processor.process_page_file, input_files)
-        async_result.get(timeout or None)
+        _page_worker_processor.process_page_file(*input_files)
         _page_worker_processor.logger.debug("page worker completed for page %s", page_id)
-    except mp.TimeoutError:
+    except alarm.AlarmInterrupt:
         _page_worker_processor.logger.debug("page worker timed out for page %s", page_id)
-        raise
+        raise TimeoutError
+    finally:
+        if timeout:
+            alarm.cancel_alarm()
 
 
 def generate_processor_help(ocrd_tool, processor_instance=None, subcommand=None):

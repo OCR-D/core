@@ -36,7 +36,7 @@ class CustomDockerClient(DockerClient):
                 raise ValueError("Both 'password' and 'keypath' provided - one must be provided")
         if ("password" not in kwargs) and ("keypath" not in kwargs):
             raise ValueError("Missing 'password' or 'keypath' - one must be provided")
-        self.api = APIClient(base_url=f"ssh://{host}", use_ssh_client=True, version="1.41")
+        self.api = APIClient(base_url=f"ssh://{host}", use_ssh_client=True, version="auto")
         self.api.mount(
             prefix="http+docker://ssh", adapter=self.CustomSshHttpAdapter(base_url=f"ssh://{user}@{host}:22", **kwargs)
         )

@@ -318,7 +318,7 @@ network-integration-test: INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 network-integration-test: export SKIP_ASSETS = 1
 network-integration-test: assets
 	{ $(INTEGRATION_TEST_COMPOSE) up --wait --wait-timeout 60 -d && \
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py" && \
+	$(INTEGRATION_TEST_IN_DOCKER) pytest -s -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py" && \
 	err=0 || { err=$$?; $(INTEGRATION_TEST_COMPOSE) logs; }; \
 	$(INTEGRATION_TEST_COMPOSE) down --remove-orphans; exit $$err; }
 
@@ -394,7 +394,7 @@ DOCKER_BASE_TAG ?= ocrd
 DOCKER_BUILD ?= docker build --progress=plain
 
 # Build docker image
-docker: DOCKER_BASE_IMAGE = ubuntu:20.04
+docker: DOCKER_BASE_IMAGE = ubuntu:22.04
 docker: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core)
 docker: DOCKER_FILE = Dockerfile
 

@@ -11,8 +11,8 @@ class PYResultMessage(BaseModel):
     path_to_mets: Optional[str] = None
     workspace_id: Optional[str] = None
 
-    class Config:
-        schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "job_id": "d8e36726-ed28-5476-b83c-bc31d2eecf1f",
                 "state": JobState.success,
@@ -20,3 +20,4 @@ class PYResultMessage(BaseModel):
                 "workspace_id": "c7f25615-fc17-4365-a74d-ad20e1ddbd0e"
             }
         }
+    }

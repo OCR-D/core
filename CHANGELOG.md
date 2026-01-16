@@ -5,6 +5,105 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Changed:
+
+  * :fire: Drop support for Python 3.8, #1345
+  * :fire: Upgrade from Ubuntu 20.04 to 22.04 for the docker base image, #1345
+  * :fire: Restrict supported tensorflow version to `< 2.16` (for support for v1 compat), #1345
+
+Fixed:
+
+  * Support timeouts (`OCRD_PROCESSING_PAGE_TIMEOUT`) for processor calls in more cases, #1345
+    * In multi-processing setup, via pebble (which replaces loky) `ProcessFuture` and `ProcessPool`
+    * With some C python extensions (such as `tesserocr`)
+    * In non-networked local processor calls via cysignals
+
+## 3.9.2 - 2026-01-06
+
+Fixed:
+
+  * Require beanie version compatible with pydantic `>=2`,  #1342, #1349
+
+## [3.9.1] - 2025-12-18
+
+Added:
+
+  * `ocrd network client check-status` has a `--verbose` flag for more detailed job status, #1348
+
+## [3.9.0] - 2025-12-18
+
+Changed:
+
+  * Support multiple output file groups for processors, #1344
+    - `OcrdPageResult`: replace by proxy class `OcrdPageResultVariadicListWrapper`
+      with list semantics and variadic constructor (with the original class now
+      under `SingleOcrdPageResult`)
+    - `Processor.process_page_file`: handle results from `process_page_pcgts`
+      as lists:
+      * split `output_file_grp` with commas (just as `input_file_grp`)
+      * iterate over output file groups and `OcrdPageResult`
+      * log error if there are more results than output file groups
+        (that _will_ get lost)
+      * raise `FileExistsError` (in order to skip actual computation)
+        iff output file exists for  _all_ output file groups
+      * make output files (and file IDs), and save images etc for each
+        output independently
+  * PAGE API: `get_AllRegions` available for all region types, not just PAGE root, #1344
+  * `ocrd_network`: Update RabbitMQ from 3.12 to (latest) 4.2, #1348
+  * `ocrd_network`: Fix and improve logging for network integration tests, #1348
+
+Fixed:
+
+  * :fire: do not log RabbitMQ credentials, #1346, #1348
+
+Added:
+
+  * test combinations of `OCRD_*` config variables and multi-output, #1344
+  * `ocrd network client check-status` has a `--verbose` flag for more detailed job status, #1348
+
+## [3.8.1] - 2025-12-16
+
+Fixed:
+
+  * Include `ocrd-command` and `ocrd-merge` in the `ocrd-all-tool.json`, #1347
+
+## [3.8.0] - 2025-11-10
+
+Added:
+
+  * `ocrd-command` processor to run arbitrary PAGE transformation CLIs, #1343
+  * various parameter presets for ocrd-command, #1343
+  * `ocrd-merge` processor to join multiple PAGE inputs by concatenation, #1343
+  * test coverage for ocrd-filter, ocrd-command, and ocrd-merge, #1343
+  * Resource Manager Server as `ocrd_network` analogon of `ocrd.cli.resmgr`, #1309
+    * `ocrd network resmgr-server` for triggering Resource Manager Server (RMS) in the background
+    * Processing Server also deploys RMS on each processing host
+
+Fixed:
+
+  * `Page.get_ReadingOrderGroups`: sort by index, use `OrderedDict` as result
+  * `OcrdAgent.notes`: convert to dict to accommodate pydantic 2 with older lxml
+  * `ocrd.resource_manager`: ensure necessary + reduce unnecessary updates of user database
+  * `ocrd.resource_manager`: deduplicate entries (newer wins) before updating user database
+  * `ocrd resmgr download`: extract archives independent of whether they are URLs or local paths
+  * `ocrd resmgr download`: if `--overwrite`, ensure the old res gets removed
+  * `ocrd resmgr download`: default to `data` location instead of first in list of allowed
+  * `ocrd_utils.list_all_resources`: filter module non-resource files w/ more anti-patterns
+  * `ocrd_utils.list_all_resources`: no subpaths except for `cwd` location, OCR-D/spec#263, #1315
+  * `ocrd_utils.list_all_resources`: filter resources via media (MIME) type, if specified, #1315
+
+Removed:
+
+  * `ocrd resmgr download`: `*` (asterisk) as wildcard for all processors removed, processor must be provided explicitly, #1319
+
+## [3.7.0] - 2025-11-02
+
+Changed:
+  * :fire: upgrade and adapt `ocrd_network` to pydantic v2, #1342 
+
+Removed:
+  * :fire: drop bashlib processors, retain only the Python API, #1339
+
 ## [3.6.0] - 2025-10-15
 
 Changed:
@@ -2580,6 +2679,12 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.9.2]: ../../compare/v3.9.2..v3.9.1
+[3.9.1]: ../../compare/v3.9.1..v3.9.0
+[3.9.0]: ../../compare/v3.9.0..v3.8.1
+[3.8.1]: ../../compare/v3.8.1..v3.8.0
+[3.8.0]: ../../compare/v3.8.0..v3.7.0
+[3.7.0]: ../../compare/v3.7.0..v3.6.0
 [3.6.0]: ../../compare/v3.6.0..v3.5.1
 [3.5.1]: ../../compare/v3.5.1..v3.5.0
 [3.5.0]: ../../compare/v3.5.0..v3.4.1
