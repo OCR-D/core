@@ -36,7 +36,8 @@ jobs:
       - name: Remove Docker images (to save space)
         run: |
              df -h
-             docker rmi $(docker images -q)
+             docker images
+             docker rmi $(docker images -q) || echo "docker rmi failed, if \""$(docker images -q)"\" is an empty string, there are no docker images to remove"
              df -h
       - name: Remove Android and .NET (to save space)
         run: |
