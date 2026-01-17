@@ -109,7 +109,8 @@ deps-cuda: get-conda
 # but then share them with the rest of the system so native compilation/linking
 # works, too:
 	shopt -s nullglob; \
-	$(PIP) install nvidia-pyindex \
+	 $(PIP) install -U pip \
+	 && $(PIP) install nvidia-pyindex \
 	 && $(PIP) install nvidia-cudnn-cu11~=8.7 \
 	                   nvidia-cublas-cu11~=11.11 \
 	                   nvidia-cusparse-cu11~=11.7 \
