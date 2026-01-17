@@ -1,5 +1,5 @@
 # pylint: disable=missing-module-docstring,invalid-name
-from typing import Optional, get_args
+from typing import List, Optional, get_args
 import os
 import subprocess
 from tempfile import TemporaryDirectory
@@ -8,6 +8,7 @@ import click
 
 from ocrd.decorators import ocrd_cli_options, ocrd_cli_wrap_processor
 from ocrd import Processor
+from ocrd.processor.base import MissingInputFile
 from ocrd_models import OcrdPage, OcrdFileType
 from ocrd_models.ocrd_page import to_xml
 from ocrd_modelfactory import page_from_file
