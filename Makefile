@@ -181,7 +181,7 @@ deps-torch:
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	apt-get update
-	apt-get install -y python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev
+	apt-get install -y bzip2 python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev
 
 # Dependencies for deployment via Conda
 deps-conda: get-conda
