@@ -66,7 +66,8 @@ get-conda: export CONDA_PREFIX ?= /conda
 # first part of recipe: see micro.mamba.pm/install.sh
 get-conda: OS != uname
 get-conda: PLATFORM = $(subst Darwin,osx,$(subst Linux,linux,$(OS)))
-get-conda: MACHINE = $(or $(filter aarch64 arm64 ppc64le, $(ARCH)), 64)
+get-conda: ARCH != uname -m
+get-conda: MACHINE = $(or $(filter aarch64 ppc64le, $(subst arm64,aarch64,$(ARCH))), 64)
 get-conda: URL = https://micro.mamba.pm/api/micromamba/$(PLATFORM)-$(MACHINE)/latest
 get-conda:
 	curl --retry 6 -Ls $(URL) | tar -xvj bin/micromamba
