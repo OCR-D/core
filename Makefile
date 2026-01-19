@@ -110,7 +110,7 @@ deps-ubuntu:
 
 # Dependencies for deployment via Conda
 deps-conda: get-conda
-	conda install -c conda-forge python==3.8.* imagemagick geos pkgconfig
+	conda install -c conda-forge python==3.10.* imagemagick geos pkgconfig
 
 # Install test python deps via pip
 deps-test:
