@@ -98,7 +98,7 @@ workflows:
       - deploy:
           matrix:
             parameters:
-              docker-variant: ['', '-cuda', '-cuda-tf1', '-cuda-tf2', '-cuda-torch']
+              docker-variant: ['', '-cuda', '-cuda-tf2', '-cuda-torch']
           filters:
             branches:
               only: master
