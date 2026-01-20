@@ -97,7 +97,7 @@ deps-tf2:
 	$(PIP) install "tensorflow[and-cuda]"  -r requirements.txt
 
 deps-torch:
-	$(PIP) install torch==2.5.1 torchvision==0.20.1 -i https://download.pytorch.org/whl/cu124 -r requirements.txt
+	$(PIP) install torch==2.5.1 torchvision==0.20.1 --extra-index-url https://download.pytorch.org/whl/cu124 -r requirements.txt
 
 # deps-*: always mix core's requirements.txt with additional deps,
 # so pip does not ignore the older version reqs,
