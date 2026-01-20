@@ -50,9 +50,5 @@ jobs:
       with:
         username: ${{ secrets.DOCKERIO_USERNAME }}
         password: ${{ secrets.DOCKERIO_PASSWORD }}
-    - name: Build the Docker image
-      run: make docker
-    - name: Build the Docker image with GPU support
-      run: make docker-cuda
-    - name: Build the Docker images with GPU support and ML frameworks
-      run: make docker-cuda-tf2 docker-cuda-torch
+    - name: Build the Docker images
+      run: make docker docker-cuda docker-cuda-tf2 docker-cuda-torch
