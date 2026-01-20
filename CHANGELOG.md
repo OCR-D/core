@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * :fire: CUDA base images working with newer Python, Ubuntu, Tensorflow, Torch and Numpy, #1350
+
 ## 3.10.1 - 2026-01-19
 
 Fixed:
