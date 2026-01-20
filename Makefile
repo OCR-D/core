@@ -331,12 +331,6 @@ docker-cuda: DOCKER_FILE = Dockerfile.cuda
 
 docker-cuda: docker
 
-docker-cuda-tf1: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
-docker-cuda-tf1: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-tf1)
-docker-cuda-tf1: DOCKER_FILE = Dockerfile.cuda-tf1
-
-docker-cuda-tf1: docker-cuda
-
 docker-cuda-tf2: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
 docker-cuda-tf2: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-tf2)
 docker-cuda-tf2: DOCKER_FILE = Dockerfile.cuda-tf2
@@ -350,8 +344,8 @@ docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 docker-cuda-torch: docker-cuda
 
 # if the current ref is a release, then use it as tag instead of :latest
-docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch: GIT_TAG := $(strip $(shell git describe --tags | grep -x "v[0-9]\.[0-9][[0-9]\.[0-9]"))
-docker docker-cuda docker-cuda-tf1 docker-cuda-tf2 docker-cuda-torch:
+docker docker-cuda docker-cuda-tf2 docker-cuda-torch: GIT_TAG := $(strip $(shell git describe --tags | grep -x "v[0-9]\.[0-9][[0-9]\.[0-9]"))
+docker docker-cuda docker-cuda-tf2 docker-cuda-torch:
 	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) \
 	$(if $(GIT_TAG),$(DOCKER_TAG:%=-t %:$(GIT_TAG))) \
 	--target ocrd_core_base \
