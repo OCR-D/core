@@ -539,7 +539,7 @@ class Processor():
                     self._base_logger.info("limiting page timeout from %d to %d sec", max_seconds, self.max_page_seconds)
                     max_seconds = self.max_page_seconds
 
-                if isinstance(workspace.mets, ClientSideOcrdMets):
+                if max_workers > 1:
                     executor_cls = ProcessPoolExecutor
                     log_queue = mp.get_context('fork').Queue()
                 else:
@@ -553,7 +553,7 @@ class Processor():
                     initializer=_page_worker_set_ctxt,
                     initargs=(self, log_queue),
                 )
-                if isinstance(workspace.mets, ClientSideOcrdMets):
+                if max_workers > 1:
                     assert executor.active # ensure pre-forking
                     # forward messages from log queue (in subprocesses) to all root handlers
                     log_listener = logging.handlers.QueueListener(log_queue, *logging.root.handlers,
