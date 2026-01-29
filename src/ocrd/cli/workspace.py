@@ -6,7 +6,7 @@ OCR-D CLI: workspace management
     :nested: full
 """
 from os import rmdir, unlink
-from os.path import dirname, relpath, normpath, exists, join, isabs, isdir
+from os.path import abspath, dirname, relpath, normpath, exists, join, isabs, isdir
 from pathlib import Path
 from json import loads, dumps
 import sys
@@ -47,7 +47,7 @@ class WorkspaceCtx():
     def workspace(self):
         return Workspace(
             self.resolver,
-            directory=self.directory,
+            self.directory,
             mets_basename=self.mets_basename,
             automatic_backup=self.automatic_backup,
             mets_server_url=self.mets_server_url,
@@ -85,7 +85,7 @@ def workspace_cli(ctx, directory, mets, mets_basename, mets_server_url, backup):
     initLogging()
     ctx.obj = WorkspaceCtx(
         directory,
-        mets_url=mets,
+        mets,
         mets_basename=mets_basename,
         mets_server_url=mets_server_url,
         automatic_backup=backup
@@ -254,22 +254,26 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
     log.debug("Adding '%s'", fname)
     local_filename = None
     if not (fname.startswith('http://') or fname.startswith('https://')):
-        if not fname.startswith(ctx.directory):
-            if not isabs(fname) and exists(join(ctx.directory, fname)):
+        assert isabs(ctx.directory)
+        # try to resolve relative to workspace or CWD
+        if not isabs(fname):
+            if exists(join(ctx.directory, fname)):
                 fname = join(ctx.directory, fname)
             else:
-                log.debug("File '%s' is not in workspace, copying", fname)
-                try:
-                    fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
-                except FileNotFoundError:
-                    if check_file_exists:
-                        log.error("File '%s' does not exist, halt execution!" % fname)
-                        sys.exit(1)
-        if check_file_exists and not exists(fname):
-            log.error("File '%s' does not exist, halt execution!" % fname)
-            sys.exit(1)
+                fname = abspath(fname)
         if fname.startswith(ctx.directory):
+            if check_file_exists and not exists(fname):
+                log.error("File '%s' does not exist, halt execution!" % fname)
+                sys.exit(1)
             fname = relpath(fname, ctx.directory)
+        else:
+            log.debug("File '%s' is not in workspace, copying", fname)
+            try:
+                fname = ctx.resolver.download_to_directory(ctx.directory, fname, subdir=file_grp)
+            except FileNotFoundError:
+                if check_file_exists:
+                    log.error("File '%s' does not exist, halt execution!" % fname)
+                    sys.exit(1)
         local_filename = fname
 
     if not page_id:
@@ -299,8 +303,8 @@ def workspace_add_file(ctx, file_grp, file_id, mimetype, page_id, ignore, check_
 @click.option('-g', '--page-id', help="physical page ID of the file", required=False)
 @click.option('-i', '--file-id', help="ID of the file. If not provided, derive from fileGrp and filename", required=False)
 @click.option('-u', '--url', help="Remote URL of the file", required=False)
-@click.option('-l', '--local-filename', help="Local filesystem path in the workspace directory "
-              "(copied from source file if different)", required=False)
+@click.option('-l', '--local-filename', help="Relative filesystem path in the workspace directory "
+              "(copied from source path if different)", required=False)
 @click.option('-G', '--file-grp', help="File group USE of the file", required=True)
 @click.option('-n', '--dry-run', help="Don't actually do anything to the METS or filesystem, just preview",
               default=False, is_flag=True)
@@ -414,13 +418,16 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
                 raise ValueError(f"OcrdFile attribute '{param_name}' unset ({file_dict})")
             for group_name in group_dict:
                 file_dict[param_name] = file_dict[param_name].replace('{{ %s }}' % group_name, group_dict[group_name])
+            if '{{ ' in file_dict[param_name]:
+                log.warning("Probably failed to match a capture group in %s: '%s'", param_name, file_dict[param_name])
 
         # Where to copy from
         if src_path_option:
-            src_path = src_path_option
             for group_name in group_dict:
-                src_path = src_path.replace('{{ %s }}' % group_name, group_dict[group_name])
-            srcpath = Path(src_path)
+                src_path_option = src_path_option.replace('{{ %s }}' % group_name, group_dict[group_name])
+            if '{{ ' in src_path_option:
+                log.warning("Probably failed to match a capture group in source path: '%s'", src_path_option)
+            srcpath = Path(src_path_option)
         else:
             srcpath = file_path
 
@@ -436,16 +443,20 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
                           "Set --mimetype explicitly" % (srcpath.suffix, srcpath))
 
         # copy files if src != url
+        srcpath = srcpath.resolve().absolute()
         if local_filename_is_src:
-            file_dict['local_filename'] = srcpath
-        else:
-            destpath = Path(workspace.directory, file_dict['local_filename'])
-            if srcpath != destpath and not destpath.exists():
-                log.info("cp '%s' '%s'", srcpath, destpath)
-                if not dry_run:
-                    if not destpath.parent.is_dir():
-                        destpath.parent.mkdir()
-                    destpath.write_bytes(srcpath.read_bytes())
+            if str(srcpath).startswith(workspace.directory):
+                file_dict['local_filename'] = srcpath.relative_to(workspace.directory)
+            else:
+                file_dict['local_filename'] = srcpath.name # will be copied-in below
+
+        destpath = Path(workspace.directory, file_dict['local_filename'])
+        if srcpath != destpath and not destpath.exists():
+            log.info("cp '%s' '%s'", srcpath, destpath)
+            if not dry_run:
+                if not destpath.parent.is_dir():
+                    destpath.parent.mkdir()
+                destpath.write_bytes(srcpath.read_bytes())
 
         # Add to workspace (or not)
         fileGrp = file_dict.pop('file_grp')
@@ -869,7 +880,7 @@ def merge(ctx, overwrite, force, copy_files, filegrp_mapping, fileid_mapping, pa
     the same semantics as in ``ocrd workspace find``, see ``ocrd workspace find --help``
     for an explanation.
     """
-    mets_path = Path(mets_path)
+    mets_path = Path(mets_path).absolute()
     if filegrp_mapping:
         filegrp_mapping = loads(filegrp_mapping)
     assert not ctx.mets_server_url, \
