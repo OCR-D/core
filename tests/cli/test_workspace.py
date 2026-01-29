@@ -206,7 +206,7 @@ class TestCli(TestCase):
                 '--mimetype', mimetype,
                 'does-not-exist.xml'])
             self.assertEqual(exit_code, 1)
-            self.assertIn("File 'does-not-exist.xml' does not exist, halt execution!", err)
+            self.assertIn("does-not-exist.xml' does not exist, halt execution!", err)
 
     def test_add_519(self):
         """
