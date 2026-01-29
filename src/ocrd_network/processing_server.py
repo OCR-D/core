@@ -388,7 +388,7 @@ class ProcessingServer(FastAPI):
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
 
         # This check is done to return early in case a workspace_id is provided
-        # but the abs mets path cannot be queried from the DB
+        # but the mets path cannot be queried from the DB
         request_mets_path = await validate_and_return_mets_path(self.log, data)
 
         page_ids = expand_page_ids(data.page_id)
