@@ -455,6 +455,20 @@ class TestCli(TestCase):
             with self.assertRaisesRegex(ValueError, r"--mets is an http\(s\) URL but no --directory was given"):
                 self.invoke_cli(workspace_cli, ['-m', 'https://foo.bar/bla', 'init'])
 
+    def test_bulk_add_bad_regex(self):
+        with pushd_popd(tempdir=True) as wsdir:
+            self.resolver.workspace_from_nothing(directory=wsdir)
+            exit_code, _, err = self.invoke_cli(workspace_cli, [
+                'bulk-add',
+                '--regex', r'^(not closed',
+                '-g', 'foo',
+                '-G', 'foo',
+                '*'
+            ])
+            assert int(exit_code) > 0, 'should fail'
+            assert 'Invalid regex' in err
+
+
     def test_bulk_add0(self):
         NO_FILES=100
         with TemporaryDirectory() as srcdir:
@@ -501,9 +515,9 @@ class TestCli(TestCase):
                     '-m', '{{ mimetype }}',
                     '-u', "{{ url }}",
                     'a b c d e f', '1 2 3 4 5 6'])
-                print('out', out)
-                print('err', err)
-                assert 0
+                # print('out', out)
+                # print('err', err)
+                # assert 0
 
     def test_bulk_add_gen_id(self):
         with pushd_popd(tempdir=True) as wsdir:

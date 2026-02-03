@@ -476,8 +476,7 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
 @workspace_cli.command('find')
 @mets_find_options
 @click.option('-k', '--output-field', help="Output field. Repeat for multiple fields, will be joined with tab",
-              default=['local_filename'],
-              show_default=True,
+              default=['local_filename'], show_default=True,
               multiple=True,
               type=click.Choice([
                   'url',

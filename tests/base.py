@@ -7,6 +7,7 @@ import sys
 import logging
 import io
 import collections
+from typing import Tuple
 from unittest import TestCase as VanillaTestCase, skip, main as unittests_main
 import pytest
 from ocrd_utils import disableLogging, initLogging, getLogger
@@ -36,7 +37,7 @@ class CapturingTestCase(TestCase):
     def _setup_pytest_capfd(self, capfd):
         self.capfd = capfd
 
-    def invoke_cli(self, cli, args):
+    def invoke_cli(self, cli, args) -> Tuple[int, str, str]:
         """
         Substitution for click.CliRunner.invooke that works together nicely
         with unittests/pytest capturing stdout/stderr.
