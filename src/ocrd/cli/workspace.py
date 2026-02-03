@@ -427,36 +427,36 @@ def workspace_cli_bulk_add(ctx, regex, mimetype, page_id, file_id, url, local_fi
                 src_path_option = src_path_option.replace('{{ %s }}' % group_name, group_dict[group_name])
             if '{{ ' in src_path_option:
                 log.warning("Probably failed to match a capture group in source path: '%s'", src_path_option)
-            srcpath = Path(src_path_option)
+            src_path = Path(src_path_option)
         else:
-            srcpath = file_path
+            src_path = file_path
 
         # derive --file-id from filename if not --file-id not explicitly set
         if not file_id:
-            id_field = srcpath.stem if file_path != srcpath else file_path.stem
+            id_field = src_path.stem if file_path != src_path else file_path.stem
             file_dict['file_id'] = safe_filename('%s_%s' % (file_dict['file_grp'], id_field))
         if not mimetype:
             try:
-                file_dict['mimetype'] = EXT_TO_MIME[srcpath.suffix]
+                file_dict['mimetype'] = EXT_TO_MIME[src_path.suffix]
             except KeyError:
                 log.error("Cannot guess MIME type from extension '%s' for '%s'. "
-                          "Set --mimetype explicitly" % (srcpath.suffix, srcpath))
+                          "Set --mimetype explicitly" % (src_path.suffix, src_path))
 
         # copy files if src != url
-        srcpath = srcpath.resolve().absolute()
+        src_path = src_path.resolve().absolute()
         if local_filename_is_src:
-            if str(srcpath).startswith(workspace.directory):
-                file_dict['local_filename'] = srcpath.relative_to(workspace.directory)
+            if str(src_path).startswith(workspace.directory):
+                file_dict['local_filename'] = src_path.relative_to(workspace.directory)
             else:
-                file_dict['local_filename'] = srcpath.name # will be copied-in below
+                file_dict['local_filename'] = src_path.name # will be copied-in below
 
-        destpath = Path(workspace.directory, file_dict['local_filename'])
-        if srcpath != destpath and not destpath.exists():
-            log.info("cp '%s' '%s'", srcpath, destpath)
+        dest_path = Path(workspace.directory, file_dict['local_filename'])
+        if src_path != dest_path and not dest_path.exists():
+            log.info("cp '%s' '%s'", src_path, dest_path)
             if not dry_run:
-                if not destpath.parent.is_dir():
-                    destpath.parent.mkdir()
-                destpath.write_bytes(srcpath.read_bytes())
+                if not dest_path.parent.is_dir():
+                    dest_path.parent.mkdir()
+                dest_path.write_bytes(src_path.read_bytes())
 
         # Add to workspace (or not)
         fileGrp = file_dict.pop('file_grp')
