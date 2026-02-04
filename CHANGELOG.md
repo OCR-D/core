@@ -10,6 +10,10 @@ Fixed:
   * only use multiprocessing if `max_workers > 1`, not just when using METS Server, #1352
   * ensure that file paths are relative to workspace directory, #1213, #1353
 
+Removed:
+
+  * `DOCKER_RABBIT_MQ_FEATURES` env var not needed anymore, #1354
+
 ## 3.11.0 - 2026-01-20
 
 Fixed:
