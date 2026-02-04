@@ -418,7 +418,8 @@ class OcrdMetsServer:
     def create_process(mets_server_url: str, ws_dir_path: str, log_file: str) -> int:
         sub_process = Popen(
             args=["ocrd", "workspace", "-U", f"{mets_server_url}", "-d", f"{ws_dir_path}", "server", "start"],
-            stdout=open(file=log_file, mode="w"), stderr=open(file=log_file, mode="a"), cwd=ws_dir_path,
+            stdout=open(file=log_file, mode="w"), stderr=open(file=log_file, mode="a"),
+            #cwd=ws_dir_path, # rs: if relative, this will cause wrong path resolution in the subprocess
             shell=False, universal_newlines=True, start_new_session=True
         )
         # Wait for the mets server to start
@@ -446,7 +447,7 @@ class OcrdMetsServer:
                 Path(self.url).unlink()
 
     def startup(self):
-        self.log.info("Configuring the METS Server")
+        self.log.info("Configuring the METS Server for %s", self.workspace)
 
         workspace = self.workspace
 
