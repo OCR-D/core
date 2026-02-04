@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.12.0 - 2026-02-04
+
 Fixed:
 
   * only use multiprocessing if `max_workers > 1`, not just when using METS Server, #1352
@@ -2706,6 +2708,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.12.0]: ../../compare/v3.12.0..v3.11.0
 [3.11.0]: ../../compare/v3.11.0..v3.10.1
 [3.10.1]: ../../compare/v3.10.1..v3.10.0
 [3.10.0]: ../../compare/v3.10.0..v3.9.2
