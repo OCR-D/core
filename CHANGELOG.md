@@ -8,6 +8,7 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * only use multiprocessing if `max_workers > 1`, not just when using METS Server, #1352
+  * ensure that file paths are relative to workspace directory, #1213, #1353
 
 ## 3.11.0 - 2026-01-20
 
