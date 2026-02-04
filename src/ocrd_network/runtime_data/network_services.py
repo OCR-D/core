@@ -2,7 +2,7 @@ from __future__ import annotations
 from logging import Logger
 from typing import Any, Dict, List, Optional, Union
 
-from ..constants import DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ, DOCKER_RABBIT_MQ_FEATURES
+from ..constants import DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ
 from ..database import verify_mongodb_available
 from ..rabbitmq_utils import verify_rabbitmq_available
 from .connection_clients import create_docker_client
@@ -136,9 +136,7 @@ class DataRabbitMQ(DataNetworkService):
             env = [
                 # The default credentials to be used by the processing workers
                 f"RABBITMQ_DEFAULT_USER={rmq_user}",
-                f"RABBITMQ_DEFAULT_PASS={rmq_password}",
-                # These feature flags are required by default to use the newer version
-                f"RABBITMQ_FEATURE_FLAGS={DOCKER_RABBIT_MQ_FEATURES}"
+                f"RABBITMQ_DEFAULT_PASS={rmq_password}"
             ]
         if not ports_mapping:
             # 5672, 5671 - used by AMQP 0-9-1 and AMQP 1.0 clients without and with TLS
