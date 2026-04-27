@@ -289,7 +289,7 @@ class OcrdResourceManager:
     def _download_impl(log: Logger, url: str, filename):
         log.info(f"Downloading {url} to {filename}")
         try:
-            gdrive_file_id, is_gdrive_download_link = gparse_url(url, warning=False)
+            gdrive_file_id, is_gdrive_download_link = gparse_url(url)
             if gdrive_file_id:
                 if not is_gdrive_download_link:
                     url = f"https://drive.google.com/uc?id={gdrive_file_id}"

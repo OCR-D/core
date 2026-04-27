@@ -11,7 +11,8 @@ filetype
 Flask
 frozendict>=2.4.0
 gitpython
-gdown
+gdown < 6 ; python_version < '3.10'
+gdown >= 6 ; python_version >= '3.10'
 httpx>=0.22.0
 importlib_metadata ; python_version < '3.8'
 importlib_resources ; python_version < '3.10'
