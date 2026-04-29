@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Update paramiko dependency to avoid insecure cryptography package, #1357
+
 ## 3.12.2 - 2026-04-29
 
 Fixed:
