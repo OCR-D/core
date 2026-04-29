@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Compatibility with gdown `>= 6`, #1356
+
 ## 3.12.1 - 2026-02-04
 
 Fixed:
