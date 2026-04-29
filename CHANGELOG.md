@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.12.3 - 2026-04-29
+
 Fixed:
 
   * Update paramiko dependency to avoid insecure cryptography package, #1357
@@ -2722,6 +2724,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.12.3]: ../../compare/v3.12.3..v3.12.2
 [3.12.2]: ../../compare/v3.12.2..v3.12.1
 [3.12.1]: ../../compare/v3.12.1..v3.11.0
 [3.11.0]: ../../compare/v3.11.0..v3.10.1
