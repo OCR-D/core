@@ -51,6 +51,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         bzip2 \
         sudo \
         git \
+        jq \
     && make deps-ubuntu
 RUN python3 -m venv /usr/local \
     && hash -r \
