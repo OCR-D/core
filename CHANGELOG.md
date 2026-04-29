@@ -9,6 +9,10 @@ Fixed:
 
   * Compatibility with gdown `>= 6`, #1356
 
+Added:
+
+  * Install [`jq`](https://jqlang.org/) in the Docker base images, #1355
+
 ## 3.12.1 - 2026-02-04
 
 Fixed:
