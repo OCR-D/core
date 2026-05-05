@@ -258,8 +258,9 @@ def send_workflow_job_request(
     as in ``ocrd process`` tasks arguments), or via `-w` file path
     (same syntax, but newline separated).
     """
-    if (path_to_workflow) != bool(len(tasks)):
-        raise ValueError("either -w/path-to-workflow or task argument(s) is required")
+    if bool(path_to_workflow) == bool(len(tasks)):
+        diag = 'not both' if bool(path_to_workflow) else 'but neither was provided'
+        raise ValueError(f"Either -w/--path-to-workflow option or task argument(s) is required, {diag}.")
 
     client = Client(server_addr_processing=address)
     with NamedTemporaryFile() as workflow_file:
