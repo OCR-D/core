@@ -8,6 +8,14 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 Fixed:
 
   * Bug in `ocrd network client workflow run`: Check for either --path-to-workflow or tasks was broken, #1358
+  * `OCRD_MAX_MISSING_OUTPUTS`: make check work for expecting `0` output failures, #1359
+  * log messages by page workers prefixed with `pageId` to better manage non-linear logging of parallel pages, #1359
+  * `setOverrideLoglevel` do not override defaults in `LOGGING_DEFAULTS`, i.e. don't re-enable logging of libraries like PIL, #1359
+  * `PageValidator`: provide a systematic approach to sorting by reading order, #1359
+
+Added:
+
+  * `ocrd workspace validate`: Options `-q`/`-Q` to restrict/exclude file groups, consistent with other `ocrd workspace` CLI, #1359
 
 ## 3.12.3 - 2026-04-29
 
