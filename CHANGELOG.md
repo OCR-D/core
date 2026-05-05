@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * Bug in `ocrd network client workflow run`: Check for either --path-to-workflow or tasks was broken, #1358
+
 ## 3.12.3 - 2026-04-29
 
 Fixed:
