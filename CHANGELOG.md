@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.13.0 - 2026-05-05
+
 Fixed:
 
   * Bug in `ocrd network client workflow run`: Check for either --path-to-workflow or tasks was broken, #1358
@@ -2736,6 +2738,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.13.0]: ../../compare/v3.13.0..v3.12.3
 [3.12.3]: ../../compare/v3.12.3..v3.12.2
 [3.12.2]: ../../compare/v3.12.2..v3.12.1
 [3.12.1]: ../../compare/v3.12.1..v3.11.0
