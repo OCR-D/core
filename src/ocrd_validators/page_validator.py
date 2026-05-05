@@ -202,6 +202,45 @@ def page_get_reading_order(ro, rogroup):
             page_get_reading_order(ro, elem)
 
 
+def sorted_reading_order(ro, regionlist):
+    regions = {region.id: region for region in regionlist}
+    parents = {}
+    def add_parents(element):
+        parent = element.parent_object_
+        if not hasattr(parent, 'id'):
+            # reached top ReadingOrderType
+            parent = None
+        if parent in parents:
+            parents[parent].append(element)
+        else:
+            parents[parent] = [element]
+            if isinstance(parent,
+                          (OrderedGroupType,
+                           OrderedGroupIndexedType,
+                           UnorderedGroupType,
+                           UnorderedGroupIndexedType)):
+                # go up
+                add_parents(parent)
+    for region in regions:
+        add_parents(ro[region])
+    result = []
+    def add_regionrefs(elements):
+        if hasattr(elements[0], "index"):
+            elements = sorted(elements, key=lambda ref: ref.index)
+        for element in elements:
+            ref = getattr(element, "regionRef", None)
+            if ref:
+                result.append(regions[ref])
+            # go down
+            if isinstance(element,
+                          (OrderedGroupType,
+                           OrderedGroupIndexedType,
+                           UnorderedGroupType,
+                           UnorderedGroupIndexedType)):
+                add_regionrefs(parents[element])
+    add_regionrefs(parents[None])
+    return result
+
 def make_poly(polygon_points):
     """Instantiate a Polygon from a list of point pairs, or return an error string"""
     if len(polygon_points) < 4:
@@ -298,11 +337,8 @@ def validate_consistency(node, page_textequiv_consistency, page_textequiv_strate
             continue
         children = getattr(node, getter)()
         if (getter == 'get_TextRegion' and children and
-            all(child.id in readingOrder for child in children) and
-            isinstance(readingOrder[children[0].id].parent_object_,
-                       (OrderedGroupType, OrderedGroupIndexedType))):
-            children = sorted(children, key=lambda child:
-                              readingOrder[child.id].index)
+            all(child.id in readingOrder for child in children)):
+            children = sorted_reading_order(readingOrder, children)
         elif ((getter == 'get_TextLine' and textLineOrder == _ORDER[0][1]) or
               (getter in ['get_Word', 'get_Glyph'] and readingDirection == _ORDER[0][2])):
             children = list(reversed(children))

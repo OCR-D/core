@@ -31,6 +31,7 @@ from __future__ import absolute_import
 import logging
 import logging.config
 from pathlib import Path
+from itertools import accumulate
 import sys
 from os import chmod
 
@@ -124,7 +125,15 @@ def setOverrideLogLevel(lvl, silent=not config.OCRD_LOGGING_DEBUG):
         for logger_name in logging.root.manager.loggerDict:
             if not silent:
                 print(f'[LOGGING] Overriding {logger_name} log level to {lvl}', file=sys.stderr)
-            logging.getLogger(logger_name).setLevel(lvl)
+            if (not logger_name or logger_name.startswith('ocrd') or
+                # skip our default loggers (PIL etc), except for root and ocrd*
+                not any(prefix in LOGGING_DEFAULTS
+                        for prefix in map(
+                                ".".join,
+                                accumulate(
+                                    map(lambda x: (x,),
+                                        logger_name.split('.')))))):
+                logging.getLogger(logger_name).setLevel(lvl)
 
 
 def get_logging_config_files():
