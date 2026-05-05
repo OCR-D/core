@@ -107,8 +107,11 @@ def workspace_cli(ctx, directory, mets, mets_basename, mets_server_url, backup):
               default='strict', help="How strict to check PAGE multi-level textequiv consistency")
 @click.option('--page-coordinate-consistency', help="How fierce to check PAGE multi-level coordinate consistency",
               type=click.Choice(['poly', 'baseline', 'both', 'off']), default='poly')
+@click.option('-q', '--include-file-grps', 'include_fileGrp', help="fileGrps to include", default=[], multiple=True)
+@click.option('-Q', '--exclude-file-grps', 'exclude_fileGrp', help="fileGrps to exclude", default=[], multiple=True)
 @click.argument('mets_url', default=None, required=False)
-def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency):
+def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency, page_coordinate_consistency,
+                       include_fileGrp, exclude_fileGrp):
     """
     Validate a workspace
 
@@ -131,7 +134,9 @@ def workspace_validate(ctx, mets_url, download, skip, page_textequiv_consistency
         skip=skip,
         download=download,
         page_strictness=page_textequiv_consistency,
-        page_coordinate_consistency=page_coordinate_consistency
+        page_coordinate_consistency=page_coordinate_consistency,
+        include_fileGrp=include_fileGrp,
+        exclude_fileGrp=exclude_fileGrp,
     )
     print(report.to_xml())
     if not report.is_valid:
