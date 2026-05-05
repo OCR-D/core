@@ -1199,6 +1199,9 @@ def _page_worker_set_ctxt(processor, log_queue):
     if log_queue:
         # replace all log handlers with just one queue handler
         logging.root.handlers = [logging.handlers.QueueHandler(log_queue)]
+        logging.root.handlers[0].setFormatter(
+            # insert pageId before actual message
+            logging.Formatter(fmt='[%(pageId)s] %(message)s'))
 
 
 def _page_worker(*input_files, timeout=0):
@@ -1209,6 +1212,11 @@ def _page_worker(*input_files, timeout=0):
     #_page_worker_processor.process_page_file(*input_files)
     page_id = next((file.pageId for file in input_files
                     if hasattr(file, 'pageId')), "")
+    # update log records for QueueHandler formatter
+    def log_filter(record: logging.LogRecord):
+        record.pageId = page_id
+        return record
+    logging.root.handlers[0].filters = [log_filter]
     if timeout:
         if threading.current_thread() is not threading.main_thread():
             # does not work outside of main thread
