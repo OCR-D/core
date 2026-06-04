@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.13.1 - 2026-06-04
+
 Added:
 
   * base image now contains `inotify-tools`, to allow watching for new log files, #1364
@@ -2746,6 +2748,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.13.1]: ../../compare/v3.13.1..v3.13.0
 [3.13.0]: ../../compare/v3.13.0..v3.12.3
 [3.12.3]: ../../compare/v3.12.3..v3.12.2
 [3.12.2]: ../../compare/v3.12.2..v3.12.1
