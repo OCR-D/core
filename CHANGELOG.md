@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * base image now contains `inotify-tools`, to allow watching for new log files, #1364
+
 ## 3.13.0 - 2026-05-05
 
 Fixed:

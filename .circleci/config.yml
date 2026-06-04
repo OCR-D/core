@@ -103,7 +103,7 @@ workflows:
             branches:
               only: master
             tags:
-              only: /^v\d\.\d\d\.\d$/
+              only: /^v\d\.\d+\.\d+$/
   test-pull-request:
     jobs:
       - test-python39
