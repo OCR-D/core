@@ -50,6 +50,7 @@ RUN apt-get update && apt-get -y install software-properties-common \
         curl \
         bzip2 \
         sudo \
+        inotify-tools \
         git \
         jq \
     && make deps-ubuntu
