@@ -9,6 +9,10 @@ Added:
 
   * base image now contains `inotify-tools`, to allow watching for new log files, #1364
 
+Changed:
+
+  * RabbitMQ queues are now created durable, to be compatible with RabbitMQ 4.3+, #1363
+
 ## 3.13.0 - 2026-05-05
 
 Fixed:
