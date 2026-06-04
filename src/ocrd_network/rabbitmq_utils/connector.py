@@ -174,7 +174,7 @@ class RMQConnector:
 
     @staticmethod
     def queue_declare(
-        channel: BlockingChannel, queue_name: str, passive: bool = False, durable: bool = False,
+        channel: BlockingChannel, queue_name: str, passive: bool = False, durable: bool = True,
         exclusive: bool = False, auto_delete: bool = False, arguments: Optional[Any] = None
     ) -> None:
         if arguments is None:
@@ -185,7 +185,9 @@ class RMQConnector:
                 # Only check to see if the queue exists and
                 # raise ChannelClosed exception if it does not
                 passive=passive,
-                # Survive reboots of the server
+                # Survive reboots of the server 
+                # default changed to true to avoid 541, 'INTERNAL_ERROR - Feature transient_nonexcl_queues is deprecated.
+                # kba Wed Jun  3 13:26:26 CEST 2026
                 durable=durable,
                 # Only allow access by the current connection
                 exclusive=exclusive,
