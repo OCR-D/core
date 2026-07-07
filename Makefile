@@ -87,8 +87,7 @@ endif
 deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
 deps-cuda: get-conda
 # Get CUDA toolkit, including compiler and libraries with dev from NVIDIA channels
-# Get CUDNN (needed for Torch, TF etc) from conda-forge.
-# CUDA runtime libs will be pulled by `pip` for TF and Torch differently anyway,
+# CUDA runtime libs will be pulled by `pip` for ONNX, TF and Torch differently anyway,
 # so do _not_ install them here to avoid wasting space.
 	conda install -c nvidia/label/cuda-12.4.0 cuda-minimal-build \
 	&& conda clean -a && ldconfig
@@ -98,6 +97,9 @@ deps-tf2:
 
 deps-torch:
 	$(PIP) install torch==2.5.1 torchvision==0.20.1 --extra-index-url https://download.pytorch.org/whl/cu124 -r requirements.txt
+
+deps-onnx:
+	$(PIP) install "onnxruntime-gpu[cuda,cudnn]" "tensorrt_cu12<11" -r requirements.txt
 
 # deps-*: always mix core's requirements.txt with additional deps,
 # so pip does not ignore the older version reqs,
@@ -343,9 +345,15 @@ docker-cuda-torch: DOCKER_FILE = Dockerfile.cuda-torch
 
 docker-cuda-torch: docker-cuda
 
+docker-cuda-onnx: DOCKER_BASE_IMAGE = $(DOCKER_BASE_TAG)/core-cuda
+docker-cuda-onnx: DOCKER_TAG = $(DOCKER_BASE_TAG:%=%/core-cuda-onnx)
+docker-cuda-onnx: DOCKER_FILE = Dockerfile.cuda-onnx
+
+docker-cuda-onnx: docker-cuda
+
 # if the current ref is a release, then use it as tag instead of :latest
-docker docker-cuda docker-cuda-tf2 docker-cuda-torch: GIT_TAG := $(strip $(shell git describe --tags | grep -x "v[0-9]\.[0-9][[0-9]\.[0-9]"))
-docker docker-cuda docker-cuda-tf2 docker-cuda-torch:
+docker docker-cuda docker-cuda-tf2 docker-cuda-torch docker-cuda-onnx: GIT_TAG := $(strip $(shell git describe --tags | grep -x "v[0-9]\.[0-9][[0-9]\.[0-9]"))
+docker docker-cuda docker-cuda-tf2 docker-cuda-torch docker-cuda-onnx:
 	$(DOCKER_BUILD) -f $(DOCKER_FILE) $(DOCKER_TAG:%=-t %) \
 	$(if $(GIT_TAG),$(DOCKER_TAG:%=-t %:$(GIT_TAG))) \
 	--target ocrd_core_base \
