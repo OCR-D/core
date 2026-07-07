@@ -83,10 +83,15 @@ def tf_disable_interactive_logs():
         from os import environ  # pylint: disable=import-outside-toplevel
         # This env variable must be set before importing from Keras
         environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+        environ['GLOG_minloglevel'] = '3'
+        environ['GRPC_VERBOSITY'] = 'ERROR'
+        environ['KMP_AFFINITY'] = 'noverbose'
         from tensorflow.keras.utils import disable_interactive_logging  # pylint: disable=import-outside-toplevel
         # Enabled interactive logging throws an exception
         # due to a call of sys.stdout.flush()
         disable_interactive_logging()
+        logging.getLogger('tensorflow').setLevel(LOGGING_DEFAULTS['tensorflow'])
+        logging.getLogger('absl').setLevel(LOGGING_DEFAULTS['tensorflow'])
     except ImportError:
         # Nothing should be handled here if TF is not available
         pass
