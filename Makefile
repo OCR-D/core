@@ -84,7 +84,6 @@ get-conda: ;
 endif
 
 # Dependencies for CUDA installation via Conda
-deps-cuda: PYTHON_PREFIX != $(PYTHON) -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])'
 deps-cuda: get-conda
 # Get CUDA toolkit, including compiler and libraries with dev from NVIDIA channels
 # CUDA runtime libs will be pulled by `pip` for ONNX, TF and Torch differently anyway,
@@ -92,14 +91,24 @@ deps-cuda: get-conda
 	conda install -c nvidia/label/cuda-12.4.0 cuda-minimal-build \
 	&& conda clean -a && ldconfig
 
+deps-tf2: CUDA_RPATH := '$ORIGIN:$ORIGIN/../nvidia/cufft/lib:$ORIGIN/../nvidia/cudnn/lib:$ORIGIN/../nvidia/cusolver/lib:$ORIGIN/../nvidia/cublas/lib:$ORIGIN/../nvidia/cusparse/lib:$ORIGIN/../nvidia/cuda_cupti/lib:$ORIGIN/../nvidia/cuda_runtime/lib:$ORIGIN/../tensorrt_libs'
 deps-tf2:
 	$(PIP) install "tensorflow[and-cuda]"  -r requirements.txt
+	# fix missing search paths for CUDA runtime libs
+	cd $(dirname $($(PYTHON) -c 'print(__import__("tensorflow").__file__)')) && \
+	patchelf --set-rpath $(CUDA_RPATH) libtensorflow_framework.so.2 && \
+	patchelf --set-rpath $(CUDA_RPATH) libtensorflow_cc.so.2
 
 deps-torch:
 	$(PIP) install torch==2.5.1 torchvision==0.20.1 --extra-index-url https://download.pytorch.org/whl/cu124 -r requirements.txt
 
+deps-onnx: CUDA_RPATH := '$ORIGIN/../../nvidia/cudnn/lib:$ORIGIN/../../nvidia/cusolver/lib:$ORIGIN/../../nvidia/cublas/lib:$ORIGIN/../../nvidia/cufft/lib:$ORIGIN/../../nvidia/curand/lib:$ORIGIN/../../nvidia/cusparse/lib:$ORIGIN/../../nvidia/cuda_cupti/lib:$ORIGIN/../../nvidia/cuda_runtime/lib:$ORIGIN/../../tensorrt_libs'
 deps-onnx:
 	$(PIP) install "onnxruntime-gpu[cuda,cudnn]" "tensorrt_cu12<11" -r requirements.txt
+	# fix missing search paths for CUDA runtime libs
+	cd $(dirname $($(PYTHON) -c 'print(__import__("onnxruntime").__file__)'))/capi && \
+	patchelf --set-rpath $(CUDA_RPATH) libonnxruntime_providers_cuda.so && \
+	patchelf --set-rpath $(CUDA_RPATH) libonnxruntime_providers_tensorrt.so
 
 # deps-*: always mix core's requirements.txt with additional deps,
 # so pip does not ignore the older version reqs,
@@ -108,7 +117,7 @@ deps-onnx:
 # Dependencies for deployment in an ubuntu/debian linux
 deps-ubuntu:
 	apt-get update
-	apt-get install -y bzip2 python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev
+	apt-get install -y bzip2 python3 imagemagick libgeos-dev libxml2-dev libxslt-dev libssl-dev patchelf
 
 # Dependencies for deployment via Conda
 deps-conda: get-conda
