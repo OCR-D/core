@@ -83,7 +83,7 @@ def unzip_file_to_dir(path_to_zip : Union[str, PathLike], output_directory : str
 @lru_cache()
 def is_git_url(url: str) -> bool:
     try:
-        run(['git', 'ls-remote', '--exit-code', '-q', '-h', url], check=True)
+        run(['git', 'ls-remote', '--exit-code', '-q', '-h', url], check=True, capture_output=True)
     except CalledProcessError:
         return False
     return True
