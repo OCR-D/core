@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Added:
+
+  * additional base image `core-cuda-onnx` with CUDA and ONNX, #1365
+
 ## 3.13.1 - 2026-06-04
 
 Added:
