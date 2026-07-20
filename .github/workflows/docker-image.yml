@@ -54,4 +54,4 @@ jobs:
         username: ${{ secrets.DOCKERIO_USERNAME }}
         password: ${{ secrets.DOCKERIO_PASSWORD }}
     - name: Build the Docker images
-      run: make docker docker-cuda docker-cuda-tf2 docker-cuda-torch
+      run: make docker docker-cuda docker-cuda-tf2 docker-cuda-torch docker-cuda-onnx
