@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.13.2 - 2026-07-20
+
 Added:
 
   * additional base image `core-cuda-onnx` with CUDA and ONNX, #1365
@@ -2752,6 +2754,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.13.2]: ../../compare/v3.13.2..v3.13.1
 [3.13.1]: ../../compare/v3.13.1..v3.13.0
 [3.13.0]: ../../compare/v3.13.0..v3.12.3
 [3.12.3]: ../../compare/v3.12.3..v3.12.2
