@@ -13,6 +13,7 @@ from lxml import etree as ET
 
 from ocrd_utils import VERSION, MIMETYPE_PAGE, guess_media_type
 from ocrd_models import OcrdExif, OcrdFile, ClientSideOcrdFile
+from ocrd_models.constants import NAMESPACES
 from ocrd_models.ocrd_page import (
     OcrdPage, PcGtsType, PageType, MetadataType,
     parse, parseEtree
@@ -74,7 +75,9 @@ def page_from_image(input_file: Union[OcrdFile, ClientSideOcrdFile], **kwargs) -
         pcGtsId=input_file.ID
     )
     mapping = {}
-    etree: ET._Element = pcgts.to_etree(mapping_=mapping)
+    etree: ET._Element = pcgts.to_etree(mapping_=mapping,
+                                        # make sure the etree uses the same ns_prefix as the DOM object
+                                        nsmap_={pcgts.ns_prefix_: NAMESPACES["page"]})
     revmap = dict(((node, element) for element, node in mapping.items()))
     return OcrdPage(pcgts, etree, mapping, revmap)
 
@@ -107,7 +110,9 @@ def page_from_file(input_file, **kwargs) -> OcrdPage:
         # the old/default gds.reverse_node_mapping is useless
         # since 2.39.4, we can actually get the exact reverse mapping for perfect round-trip
         # but awkwardly, we have to pass the dict in for that
-        page = OcrdPage(*parseEtree(input_file.local_filename, reverse_mapping=revmap, silence=True))
+        page = OcrdPage(*parseEtree(input_file.local_filename, reverse_mapping=revmap, silence=True,
+                                    # make sure the etree uses the same ns_prefix as the DOM object
+                                    nsmap={"pc": NAMESPACES["page"]}))
         page.revmap = revmap
         return page
     raise ValueError("Unsupported mimetype '%s'" % input_file.mimetype)
