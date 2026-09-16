@@ -5,6 +5,8 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+## 3.13.3 - 2026-09-16
+
 Fixed:
 
   * `OcrdPage`: ensure consistent namespaces prefixes, #1367
@@ -2758,6 +2760,7 @@ Initial Release
 ## [3.2.0] - 2025-03-25
 
 <!-- link-labels -->
+[3.13.3]: ../../compare/v3.13.3..v3.13.2
 [3.13.2]: ../../compare/v3.13.2..v3.13.1
 [3.13.1]: ../../compare/v3.13.1..v3.13.0
 [3.13.0]: ../../compare/v3.13.0..v3.12.3
