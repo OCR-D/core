@@ -5,6 +5,10 @@ Versioned according to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+Fixed:
+
+  * `OcrdPage`: ensure consistent namespaces prefixes, #1367
+
 ## 3.13.2 - 2026-07-20
 
 Added:
