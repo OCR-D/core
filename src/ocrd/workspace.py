@@ -460,8 +460,11 @@ class Workspace():
             log.debug("Saving mets '%s'", self.mets_target)
             if self.automatic_backup:
                 WorkspaceBackupManager(self).add()
-            with atomic_write(self.mets_target) as f:
-                f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
+            try:
+                with atomic_write(self.mets_target) as f:
+                    f.write(self.mets.to_xml(xmllint=True).decode('utf-8'))
+            except FileNotFoundError as e:
+                log.exception(e)
 
     def _apply_mets_file(self, filename_or_url: str, fun: Callable):
         if not filename_or_url:
