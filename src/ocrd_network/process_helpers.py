@@ -21,7 +21,7 @@ def invoke_processor(
     parameters: dict,
     mets_server_url: Optional[str] = None,
     log_filename: Optional[Path] = None,
-    log_level: str = "DEBUG"
+    log_level: Optional[str] = None,
 ) -> None:
     if not (processor_class or executable):
         raise ValueError("Missing processor class and executable")
