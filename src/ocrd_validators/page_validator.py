@@ -91,6 +91,28 @@ POLY_TOLERANCE = 1.0
 # checking their children are properly contained?
 PARENT_SLACK = 1.5
 
+class ReadingOrderInvalidError(Exception):
+    """
+    Exception representing a reference pointing to non-existant region in the RegionOrder.
+    """
+
+    def __init__(self, group_id, region_ref, ref_index=None):
+        self.group_id = group_id
+        self.region_ref = region_ref
+        # self.ref_index = ref_index
+        # ref_index = f'with @index="{ref_index}"' if ref_index else ''
+        super().__init__(
+            f"ReadingOrder invalid: reference in group {group_id} refers to non-existant region {region_ref}")
+
+class ReadingOrderIncompleteError(Exception):
+    """
+    Exception representing an inconsitency in the ReadingOrder, where a region is in the document but not the ReadingOrder
+    """
+
+    def __init__(self, region_id):
+        self.region_id = region_id
+        super().__init__(
+            f"ReadingOrder incomplete: region {region_id} not in any of the groups of the ReadingOrder")
 
 class ConsistencyError(Exception):
     """
@@ -478,6 +500,29 @@ def set_text(node, text, page_textequiv_strategy):
         # fall back to first element
         textEquivs[0].set_Unicode(text)
 
+def validate_readingorder(pcgts, report: ValidationReport):
+    """
+    For every entry in the reading order, check whether referenced element is actually in the document (error if not)
+    For every region in the document, check whether it is part of the reading order (warning if not)
+    """
+    assert isinstance(pcgts, (PcGtsType, OcrdPage)), 'Can only validate readingorder on top-level element (PcGtsType or OcrdPage)'
+    page = pcgts.get_Page()
+    ro = page.get_ReadingOrder()
+    if not ro:
+        report.add_warning("Document has no ReadingOrder.")
+        return
+    ro_ids = {}
+    page_get_reading_order(ro_ids, ro.get_OrderedGroup() or ro.get_UnorderedGroup())
+    region_ids = [r.id for r in page.get_AllRegions(order='reading-order')]
+    for ro_id in ro_ids:
+        if ro_id not in region_ids:
+            ref = ro_ids[ro_id]
+            report.add_error(ReadingOrderInvalidError(ref.parent_object_.id, ref.regionRef, ro_id))
+        else:
+            region_ids.remove(ro_id)
+    for region_id in region_ids:
+        report.add_warning(ReadingOrderIncompleteError(region_id))
+
 
 class PageValidator():
     """
@@ -526,4 +571,5 @@ class PageValidator():
         log.info("Validating input file '%s'", file_id)
         validate_consistency(page, page_textequiv_consistency, page_textequiv_strategy, check_baseline, check_coords,
                              report, file_id)
+        validate_readingorder(page, report)
         return report
