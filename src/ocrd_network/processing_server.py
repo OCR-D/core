@@ -1,7 +1,7 @@
 from datetime import datetime
 from os import getpid
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from uvicorn import run as uvicorn_run
 
 from fastapi import APIRouter, FastAPI, File, HTTPException, Request, status, UploadFile
@@ -50,6 +50,7 @@ from .server_utils import (
     kill_mets_server_zombies,
     parse_workflow_tasks,
     raise_http_exception,
+    send_workflow_callback,
     validate_and_return_mets_path,
     validate_first_task_input_file_groups_existence,
     validate_job_input,
@@ -365,6 +366,29 @@ class ProcessingServer(FastAPI):
             message = f"Processing Worker '{processor_name}' not found."
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
 
+    async def _is_request_caching_required(
+        self, workspace_key: str, output_file_grps: list[str], page_ids: list[str], depends_on: list[str]
+    ) -> bool:
+        # A flag whether the current request must be cached
+        # This is set to true if for any output file group there
+        # is a page_id value that has been previously locked
+        cache_current_request = False
+
+        # Check if there are any dependencies of the current request
+        if depends_on:
+            cache_current_request = await self.cache_processing_requests.is_caching_required(depends_on)
+
+        # No need for further check of locked pages dependency
+        # if the request should be already cached
+        if not cache_current_request:
+            # Check if there are any locked pages for the current request
+            cache_current_request = self.cache_locked_pages.check_if_locked_pages_for_output_file_grps(
+                workspace_key=workspace_key,
+                output_file_grps=output_file_grps,
+                page_ids=page_ids
+            )
+        return cache_current_request
+
     async def validate_and_forward_job_to_worker(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         # Append the processor name to the request itself
         data.processor_name = processor_name
@@ -393,24 +417,9 @@ class ProcessingServer(FastAPI):
 
         page_ids = expand_page_ids(data.page_id)
 
-        # A flag whether the current request must be cached
-        # This is set to true if for any output file group there
-        # is a page_id value that has been previously locked
-        cache_current_request = False
-
-        # Check if there are any dependencies of the current request
-        if data.depends_on:
-            cache_current_request = await self.cache_processing_requests.is_caching_required(data.depends_on)
-
-        # No need for further check of locked pages dependency
-        # if the request should be already cached
-        if not cache_current_request:
-            # Check if there are any locked pages for the current request
-            cache_current_request = self.cache_locked_pages.check_if_locked_pages_for_output_file_grps(
-                workspace_key=workspace_key,
-                output_file_grps=data.output_file_grps,
-                page_ids=page_ids
-            )
+        cache_current_request = await self._is_request_caching_required(
+            workspace_key, data.output_file_grps, page_ids, data.depends_on
+        )
 
         if cache_current_request:
             # Cache the received request
