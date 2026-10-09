@@ -197,7 +197,7 @@ def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job
         )
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
     if not ocrd_tool:
-        message = "Failed parsing processing tasks from a workflow."
+        message = "Missing ocrd tool, failed parsing processing tasks from a workflow."
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
     try:
         report = ParameterValidator(ocrd_tool).validate(dict(job_input.parameters))

@@ -344,15 +344,19 @@ class ProcessingServer(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.stop_all()
 
-    async def get_worker_ocrd_tool(self, processor_name: str) -> Dict:
-        ocrd_tool = {}
+    async def get_worker_ocrd_tool(self, processor_name: str | None) -> Dict:
+        if not processor_name:
+            message = f"No processor name (None) was provided."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
-            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND,
-                                 f"Processing Worker '{processor_name}' not found.")
-        return ocrd_tool
+            message = f"Ocrd tool of processing Worker '{processor_name}' not found in ocrd_all_tool.json."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
+        return ocrd_tool if ocrd_tool else {}
 
-    def exists_worker(self, processor_name: str) -> bool:
+    def exists_worker(self, processor_name: str | None) -> bool:
+        if not processor_name:
+            return False
         # TODO: Reconsider and refactor this.
         #  Added ocrd-dummy by default if not available for the integration tests.
         #  A proper Processing Worker registration endpoint is needed on the Processing Server side
@@ -360,7 +364,10 @@ class ProcessingServer(FastAPI):
             return True
         return bool(check_if_queue_exists(self.log, self.rmq_data, processor_name=processor_name))
 
-    def validate_worker_existence(self, processor_name: str) -> None:
+    def validate_worker_existence(self, processor_name: str | None) -> None:
+        if not processor_name:
+            message = f"No processor name (None) was provided."
+            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         worker_exists = self.exists_worker(processor_name=processor_name)
         if not worker_exists:
             message = f"Processing Worker '{processor_name}' not found."
@@ -388,6 +395,16 @@ class ProcessingServer(FastAPI):
                 page_ids=page_ids
             )
         return cache_current_request
+
+    async def _cache_processing_job_to_db(self, workspace_key: str, data: PYJobInput) -> PYJobOutput:
+        self.cache_processing_requests.cache_request(workspace_key, data)
+        db_cached_job = DBProcessorJob(
+            **data.dict(exclude_unset=True, exclude_none=True),
+            internal_callback_url=self.internal_job_callback_url,
+            state=JobState.cached,
+        )
+        await db_cached_job.insert()
+        return db_cached_job.to_job_output()
 
     async def validate_and_forward_job_to_worker(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         # Append the processor name to the request itself
@@ -425,18 +442,8 @@ class ProcessingServer(FastAPI):
         cache_current_request = await self._is_request_caching_required(
             workspace_key, data.output_file_grps, page_ids, data.depends_on
         )
-
         if cache_current_request:
-            # Cache the received request
-            self.cache_processing_requests.cache_request(workspace_key, data)
-            # Create a cached job DB entry
-            db_cached_job = DBProcessorJob(
-                **data.dict(exclude_unset=True, exclude_none=True),
-                internal_callback_url=self.internal_job_callback_url,
-                state=JobState.cached
-            )
-            await db_cached_job.insert()
-            return db_cached_job.to_job_output()
+            return await self._cache_processing_job_to_db(workspace_key=workspace_key, data=data)
 
         return await self._dispatch_processing_job(
             data=data, workspace_key=workspace_key, page_ids=page_ids, request_mets_path=request_mets_path
@@ -649,6 +656,7 @@ class ProcessingServer(FastAPI):
                 parameters=task.parameters,
                 depends_on=dependent_jobs,
             )
+            assert job_input_data.processor_name
             response = await self.validate_and_forward_job_to_worker(
                 processor_name=job_input_data.processor_name,
                 data=job_input_data
@@ -700,9 +708,7 @@ class ProcessingServer(FastAPI):
 
         if not page_wise:
             responses = await self.task_sequence_to_processing_jobs(
-                tasks=processing_tasks,
-                mets_path=mets_path,
-                page_id=page_id,
+                tasks=processing_tasks, mets_path=mets_path, page_id=page_id
             )
             processing_job_ids = [response.job_id for response in responses]
             db_workflow_job = DBWorkflowJob(
@@ -719,9 +725,7 @@ class ProcessingServer(FastAPI):
         all_pages_job_ids = {}
         for current_page in page_ids:
             responses = await self.task_sequence_to_processing_jobs(
-                tasks=processing_tasks,
-                mets_path=mets_path,
-                page_id=current_page,
+                tasks=processing_tasks, mets_path=mets_path, page_id=current_page
             )
             processing_job_ids = [response.job_id for response in responses]
             all_pages_job_ids[current_page] = processing_job_ids

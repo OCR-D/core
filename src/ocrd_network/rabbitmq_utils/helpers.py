@@ -58,7 +58,9 @@ def connect_rabbitmq_publisher(logger: Logger, rmq_data: Dict, enable_acks: bool
     return rmq_publisher
 
 
-def check_if_queue_exists(logger: Logger, rmq_data: Dict, processor_name: str) -> bool:
+def check_if_queue_exists(logger: Logger, rmq_data: Dict, processor_name: str | None) -> bool:
+    if not processor_name:
+        return False
     rmq_publisher = connect_rabbitmq_publisher(logger, rmq_data)
     try:
         # Passively checks whether the queue name exists, if not raises ChannelClosedByBroker
