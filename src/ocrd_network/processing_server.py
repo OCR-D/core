@@ -396,22 +396,27 @@ class ProcessingServer(FastAPI):
         if data.job_id:
             message = f"Processing request job id field is set but must not be: {data.job_id}"
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
+
         # Generate processing job id
         data.job_id = generate_id()
         ocrd_tool = await self.get_worker_ocrd_tool(processor_name=data.processor_name)
         validate_job_input(self.log, data.processor_name, ocrd_tool, data)
 
         if data.workspace_id:
-            # just a check whether the workspace exists in the database or not
+            # just verify that the workspace exists
             await get_from_database_workspace(self.log, data.workspace_id)
-        else:  # data.path_to_mets provided instead
+            workspace_key = data.workspace_id
+        elif data.path_to_mets:
             await create_workspace_if_not_exists(self.log, mets_path=data.path_to_mets)
+            workspace_key = data.path_to_mets
+        else:  # data.path_to_mets provided instead
+            message = "Either 'path_to_mets' or 'workspace_id' must be set for the provided workspace."
+            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message=message)
 
-        workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
 
-        # This check is done to return early in case a workspace_id is provided
+        # This check is done to return early in case a 'workspace_id' is provided
         # but the mets path cannot be queried from the DB
         request_mets_path = await validate_and_return_mets_path(self.log, data)
 
@@ -424,7 +429,6 @@ class ProcessingServer(FastAPI):
         if cache_current_request:
             # Cache the received request
             self.cache_processing_requests.cache_request(workspace_key, data)
-
             # Create a cached job DB entry
             db_cached_job = DBProcessorJob(
                 **data.dict(exclude_unset=True, exclude_none=True),
@@ -434,25 +438,28 @@ class ProcessingServer(FastAPI):
             await db_cached_job.insert()
             return db_cached_job.to_job_output()
 
-        # Lock the pages in the request
-        self.cache_locked_pages.lock_pages(
-            workspace_key=workspace_key,
-            output_file_grps=data.output_file_grps,
-            page_ids=page_ids
+        return await self._dispatch_processing_job(
+            data=data, workspace_key=workspace_key, page_ids=page_ids, request_mets_path=request_mets_path
         )
 
-        # Start a UDS Mets Server with the current workspace
+    async def _dispatch_processing_job(
+        self, data: PYJobInput, workspace_key: str, page_ids: List[str], request_mets_path: str
+    ) -> PYJobOutput:
+        # Lock the pages in the request
+        self.cache_locked_pages.lock_pages(
+            workspace_key=workspace_key, output_file_grps=data.output_file_grps, page_ids=page_ids
+        )
+
+        # Start a UDS Mets Server with the current workspace (if not already running)
         ws_dir_path = str(Path(request_mets_path).parent)
         mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
         if self.use_tcp_mets:
             # let workers talk to mets server via tcp instead of using unix-socket
             mets_server_url = self.multiplexing_endpoint
 
-        # Assign the mets server url in the database (workers read mets_server_url from db)
+        # Assign the updated mets server url in the database (workers read mets_server_url from db)
         await db_update_workspace(
-            workspace_id=data.workspace_id,
-            workspace_mets_path=data.path_to_mets,
-            mets_server_url=mets_server_url
+            workspace_id=data.workspace_id, workspace_mets_path=data.path_to_mets, mets_server_url=mets_server_url
         )
 
         # Create a queued job DB entry
@@ -463,8 +470,7 @@ class ProcessingServer(FastAPI):
         )
         await db_queued_job.insert()
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
-        job_output = await self.push_job_to_worker(data=data, db_job=db_queued_job)
-        return job_output
+        return await self.push_job_to_worker(data=data, db_job=db_queued_job)
 
     async def push_job_to_worker(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
         job_output = None
