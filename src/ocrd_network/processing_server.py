@@ -704,40 +704,34 @@ class ProcessingServer(FastAPI):
         # for page_wise mode, we need to expand the list of pages
         # for the database, it's better to keep a short string
         page_id = page_id or ''
-        page_ids = get_page_ids_list(self.log, mets_path, page_id)
 
-        if not page_wise:
-            responses = await self.task_sequence_to_processing_jobs(
-                tasks=processing_tasks, mets_path=mets_path, page_id=page_id
-            )
-            processing_job_ids = [response.job_id for response in responses]
-            db_workflow_job = DBWorkflowJob(
-                job_id=generate_id(),
-                page_id=page_id,
-                page_wise=page_wise,
-                processing_job_ids={page_id: processing_job_ids},
-                path_to_mets=mets_path,
-                workflow_callback_url=workflow_callback_url
-            )
-            await db_workflow_job.insert()
-            return db_workflow_job.to_job_output()
-
-        all_pages_job_ids = {}
-        for current_page in page_ids:
-            responses = await self.task_sequence_to_processing_jobs(
-                tasks=processing_tasks, mets_path=mets_path, page_id=current_page
-            )
-            processing_job_ids = [response.job_id for response in responses]
-            all_pages_job_ids[current_page] = processing_job_ids
         db_workflow_job = DBWorkflowJob(
             job_id=generate_id(),
             page_id=page_id,
             page_wise=page_wise,
-            processing_job_ids=all_pages_job_ids,
+            processing_job_ids={},
             path_to_mets=mets_path,
             workflow_callback_url=workflow_callback_url
         )
         await db_workflow_job.insert()
+
+        if page_wise:
+            all_pages_job_ids = {}
+            page_ids = get_page_ids_list(self.log, mets_path, page_id)
+            for current_page in page_ids:
+                responses = await self.task_sequence_to_processing_jobs(
+                    tasks=processing_tasks, mets_path=mets_path, page_id=current_page
+                )
+                all_pages_job_ids[current_page] = [response.job_id for response in responses]
+        else:
+            responses = await self.task_sequence_to_processing_jobs(
+                tasks=processing_tasks, mets_path=mets_path, page_id=page_id
+            )
+            all_pages_job_ids = {page_id: [response.job_id for response in responses]}
+
+        db_workflow_job.processing_job_ids = all_pages_job_ids
+        db_workflow_job.submission_complete = True
+        await db_workflow_job.save()
         return db_workflow_job.to_job_output()
 
     @staticmethod

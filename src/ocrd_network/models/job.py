@@ -103,6 +103,7 @@ class PYWorkflowJobOutput(BaseModel):
     path_to_mets: Optional[str] = None
     workspace_id: Optional[str] = None
     description: Optional[str] = None
+    workflow_callback_url: Optional[str] = None
 
 
 class DBWorkflowJob(Document):
@@ -119,6 +120,12 @@ class DBWorkflowJob(Document):
     workspace_id: Optional[str] = None
     description: Optional[str] = None
     workflow_callback_url: Optional[str] = None
+    state: JobState = JobState.unset
+    # Tracks if all sub processing jobs are already submitted or still submitting
+    # Prevents early finishing of the workflow if there are still related processing jobs to be submitted
+    submission_complete: bool = False
+    # Tracks whether the mets server related to this workflow has been stopped
+    mets_server_stopped: bool = False
 
     class Settings:
         use_enum_values = True
