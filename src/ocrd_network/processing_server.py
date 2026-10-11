@@ -556,6 +556,41 @@ class ProcessingServer(FastAPI):
             processing_job_id=job_id
         )
 
+    async def _maybe_stop_mets_server(self, workspace_key: str, mets_server_url: str, path_to_mets: str) -> bool:
+        # Do not stop while processing jobs are outstanding.
+        if self.cache_processing_requests.processing_counter.get(workspace_key, 0) > 0:
+            return False
+
+        # Do not stop while requests are waiting in the queue.
+        if self.cache_processing_requests.processing_requests.get(workspace_key):
+            return False
+
+        # A workflow may still be submitting additional jobs.
+        workflow_submitting = await DBWorkflowJob.find_one(
+            DBWorkflowJob.path_to_mets == path_to_mets,
+            DBWorkflowJob.submission_complete == False
+        )
+        if workflow_submitting:
+            self.log.debug(f"Deferring METS server shutdown for {path_to_mets}: workflow submission is incomplete")
+            return False
+
+        self.log.debug(f"Stopping the METS server: {mets_server_url}")
+        self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
+
+        # A workflow record is optional: standalone processing jobs have none.
+        workflow_job = await DBWorkflowJob.find_one(
+            DBWorkflowJob.path_to_mets == path_to_mets,
+            DBWorkflowJob.mets_server_stopped == False
+        )
+        if workflow_job:
+            workflow_job.mets_server_stopped = True
+            await workflow_job.save()
+            await self._maybe_finish_workflow(workflow_job.job_id)
+
+        # Remove the empty queue, if it exists.
+        self.cache_processing_requests.processing_requests.pop(workspace_key, None)
+        return True
+
     async def _consume_cached_jobs_of_workspace(
         self, workspace_key: str, mets_server_url: str, path_to_mets: str
     ) -> List[PYJobInput]:
@@ -564,32 +599,11 @@ class ProcessingServer(FastAPI):
             workspace_key=workspace_key, by_value=-1
         )
         self.log.debug(f"Internal processing job cache counter value: {request_counter}")
-        if (workspace_key not in self.cache_processing_requests.processing_requests or
-            not len(self.cache_processing_requests.processing_requests[workspace_key])):
+        if not self.cache_processing_requests.processing_requests.get(workspace_key):
             if request_counter <= 0:
-                # Shut down the Mets Server for the workspace_key since no
-                # more internal callbacks are expected for that workspace
-                self.log.debug(f"Stopping the mets server: {mets_server_url}")
-                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
-
-                workflow_job = await DBWorkflowJob.find_one(
-                    DBWorkflowJob.path_to_mets == path_to_mets,
-                    DBWorkflowJob.mets_server_stopped == False
+                await self._maybe_stop_mets_server(
+                    workspace_key=workspace_key, mets_server_url=mets_server_url, path_to_mets=path_to_mets
                 )
-
-                if workflow_job:
-                    workflow_job.mets_server_stopped = True
-                    await workflow_job.save()
-                    await self._maybe_finish_workflow(workflow_job.job_id)
-                else:
-                    self.log.warning(
-                        f"No workflow job was found for `path_to_mets`: {path_to_mets} with an active mets server")
-
-                try:
-                    # The queue is empty - delete it
-                    del self.cache_processing_requests.processing_requests[workspace_key]
-                except KeyError:
-                    self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
 
                 # For debugging purposes it is good to see if any locked pages are left
                 self.log.debug(f"Contents of the locked pages cache for: {workspace_key}")
@@ -777,6 +791,13 @@ class ProcessingServer(FastAPI):
         db_workflow_job.processing_job_ids = all_pages_job_ids
         db_workflow_job.submission_complete = True
         await db_workflow_job.save()
+
+        db_workspace = await get_from_database_workspace(self.log, workspace_mets_path=mets_path)
+        workspace_key = mets_path if mets_path else db_workspace.workspace_id
+
+        await self._maybe_stop_mets_server(
+            workspace_key=workspace_key, mets_server_url=db_workspace.mets_server_url, path_to_mets=mets_path
+        )
         return db_workflow_job.to_job_output()
 
     @staticmethod
