@@ -159,7 +159,7 @@ def parse_workflow_tasks(logger: Logger, workflow_content: str) -> List[Processo
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message, error)
 
 
-async def send_workflow_callback(logger: Logger, workflow_job: DBWorkflowJob, state: JobState) -> None:
+async def send_workflow_callback(logger: Logger, workflow_job: DBWorkflowJob, state: JobState) -> bool:
     """Notify the callback URL about a workflow's terminal state.
 
     Args:
@@ -169,15 +169,17 @@ async def send_workflow_callback(logger: Logger, workflow_job: DBWorkflowJob, st
     """
     callback_url = workflow_job.workflow_callback_url
     if not callback_url:
-        return
+        return True
     payload = {"job_id": workflow_job.job_id, "state": state}
     try:
         async with AsyncClient(timeout=Timeout(10.0)) as client:
             response = await client.post(callback_url, json=payload)
             response.raise_for_status()
         logger.info(f"Workflow callback delivered for workflow {workflow_job.job_id} (state={state.value})")
+        return True
     except Exception:
         logger.exception(f"Failed to deliver workflow callback for workflow {workflow_job.job_id}")
+        return False
 
 
 def raise_http_exception(logger: Logger, status_code: int, message: str, error: Exception = None) -> None:

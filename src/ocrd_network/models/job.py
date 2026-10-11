@@ -126,6 +126,7 @@ class DBWorkflowJob(Document):
     submission_complete: bool = False
     # Tracks whether the mets server related to this workflow has been stopped
     mets_server_stopped: bool = False
+    callback_sent: bool = False
 
     class Settings:
         use_enum_values = True

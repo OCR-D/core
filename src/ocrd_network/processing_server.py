@@ -572,6 +572,19 @@ class ProcessingServer(FastAPI):
                 self.log.debug(f"Stopping the mets server: {mets_server_url}")
                 self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
 
+                workflow_job = await DBWorkflowJob.find_one(
+                    DBWorkflowJob.path_to_mets == path_to_mets,
+                    DBWorkflowJob.mets_server_stopped == False
+                )
+
+                if workflow_job:
+                    workflow_job.mets_server_stopped = True
+                    await workflow_job.save()
+                    await self._maybe_finish_workflow(workflow_job.job_id)
+                else:
+                    self.log.warning(
+                        f"No workflow job was found for `path_to_mets`: {path_to_mets} with an active mets server")
+
                 try:
                     # The queue is empty - delete it
                     del self.cache_processing_requests.processing_requests[workspace_key]
@@ -630,6 +643,38 @@ class ProcessingServer(FastAPI):
 
     async def list_processors(self) -> List[str]:
         return get_message_queues(self.log, self.rmq_data)
+
+    async def _maybe_finish_workflow(self, workflow_job_id: str) -> None:
+        workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
+        if workflow_job.callback_sent:
+            return
+        if not workflow_job.submission_complete:
+            return
+        if not workflow_job.mets_server_stopped:
+            return
+
+        job_ids = [job_id for ids in workflow_job.processing_job_ids.values() for job_id in ids]
+        if not job_ids:
+            self.log.warning(f"Workflow {workflow_job_id} has no processing job IDs")
+            return
+
+        processing_jobs = await db_get_processing_jobs(job_ids)
+
+        # Do not report completion if any expected job is missing.
+        if len(processing_jobs) != len(job_ids):
+            self.log.warning(f"Workflow {workflow_job_id}: not all processing jobs are available in the database yet")
+            return
+
+        state = self._produce_workflow_status_simple_response(processing_jobs)
+
+        if state not in (JobState.success, JobState.failed):
+            return
+
+        delivered = await send_workflow_callback(self.log, workflow_job, state)
+
+        if delivered:
+            workflow_job.callback_sent = True
+            await workflow_job.save()
 
     async def task_sequence_to_processing_jobs(
         self,
