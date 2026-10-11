@@ -60,6 +60,9 @@ class DBProcessorJob(Document):
     workspace_id: Optional[str] = None
     description: Optional[str] = None
     state: JobState = JobState.unset
+    result_callback_processed: bool = False
+    result_callback_in_progress: bool = False
+    result_callback_counter_decremented: bool = False
     input_file_grps: List[str]
     output_file_grps: Optional[List[str]] = None
     page_id: Optional[str] = None

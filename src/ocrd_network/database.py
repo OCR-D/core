@@ -15,7 +15,7 @@ database (runs in docker) currently has no volume set.
 from beanie import init_beanie
 from beanie.operators import In
 from pathlib import Path
-from pymongo import AsyncMongoClient, MongoClient, uri_parser as mongo_uri_parser
+from pymongo import AsyncMongoClient, MongoClient, ReturnDocument, uri_parser as mongo_uri_parser
 from re import sub as re_sub
 from typing import List
 from uuid import uuid4
@@ -184,6 +184,71 @@ async def db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
 @call_sync
 async def sync_db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
     return await db_update_processing_job(job_id=job_id, **kwargs)
+
+
+async def db_claim_result_callback(job_id: str) -> bool:
+    """
+    Atomically claim a result callback for processing.
+    Returns True only if the callback has not already been processed
+    and is not currently being processed.
+    """
+    result = await DBProcessorJob.get_pymongo_collection().find_one_and_update(
+        {
+            "job_id": job_id,
+            "result_callback_processed": {"$ne": True},
+            "result_callback_in_progress": {"$ne": True},
+        },
+        {"$set": {"result_callback_in_progress": True}},
+        return_document=ReturnDocument.BEFORE,
+    )
+    return result is not None
+
+async def db_claim_result_counter_decrement(job_id: str) -> bool:
+    """
+    Atomically claim the result callback's counter decrement.
+    Returns True only once per processing job.
+    """
+    result = await DBProcessorJob.get_pymongo_collection().find_one_and_update(
+        {
+            "job_id": job_id,
+            "result_callback_counter_decremented": {"$ne": True},
+        },
+        {"$set": {"result_callback_counter_decremented": True}},
+        return_document=ReturnDocument.BEFORE,
+    )
+    return result is not None
+
+
+async def db_release_result_callback_claim(job_id: str) -> None:
+    """Release an in-progress callback claim after processing fails."""
+    await DBProcessorJob.get_pymongo_collection().update_one(
+        {
+            "job_id": job_id,
+            "result_callback_processed": {"$ne": True},
+        },
+        {"$set": {"result_callback_in_progress": False}},
+    )
+
+
+async def db_complete_result_callback(job_id: str) -> bool:
+    """
+    Mark a claimed result callback as fully processed.
+    Returns True if the callback was successfully marked complete.
+    """
+    result = await DBProcessorJob.get_pymongo_collection().update_one(
+        {
+            "job_id": job_id,
+            "result_callback_in_progress": True,
+            "result_callback_processed": {"$ne": True},
+        },
+        {
+            "$set": {
+                "result_callback_processed": True,
+                "result_callback_in_progress": False,
+            }
+        },
+    )
+    return result.modified_count == 1
 
 
 async def db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkflowJob:
