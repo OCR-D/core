@@ -793,10 +793,8 @@ class ProcessingServer(FastAPI):
         await db_workflow_job.save()
 
         db_workspace = await get_from_database_workspace(self.log, workspace_mets_path=mets_path)
-        workspace_key = mets_path if mets_path else db_workspace.workspace_id
-
         await self._maybe_stop_mets_server(
-            workspace_key=workspace_key, mets_server_url=db_workspace.mets_server_url, path_to_mets=mets_path
+            workspace_key=mets_path, mets_server_url=db_workspace.mets_server_url, path_to_mets=mets_path
         )
         return db_workflow_job.to_job_output()
 
