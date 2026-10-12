@@ -352,7 +352,7 @@ class ProcessingServer(FastAPI):
     async def stop_deployed_agents(self) -> None:
         self.deployer.stop_all()
 
-    async def get_worker_ocrd_tool(self, processor_name: str | None) -> Dict:
+    async def get_worker_ocrd_tool(self, processor_name: Optional[str]) -> Dict:
         if not processor_name:
             message = f"No processor name (None) was provided."
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
@@ -362,7 +362,7 @@ class ProcessingServer(FastAPI):
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
         return ocrd_tool if ocrd_tool else {}
 
-    def exists_worker(self, processor_name: str | None) -> bool:
+    def exists_worker(self, processor_name: Optional[str]) -> bool:
         if not processor_name:
             return False
         # TODO: Reconsider and refactor this.
@@ -372,7 +372,7 @@ class ProcessingServer(FastAPI):
             return True
         return bool(check_if_queue_exists(self.log, self.rmq_data, processor_name=processor_name))
 
-    def validate_worker_existence(self, processor_name: str | None) -> None:
+    def validate_worker_existence(self, processor_name: Optional[str]) -> None:
         if not processor_name:
             message = f"No processor name (None) was provided."
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)

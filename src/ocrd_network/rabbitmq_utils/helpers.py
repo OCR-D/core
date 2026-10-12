@@ -3,7 +3,7 @@ from pika import URLParameters
 from pika.exceptions import AMQPConnectionError, ChannelClosedByBroker
 from re import match as re_match
 from time import sleep
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 from requests import get
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import RequestException, HTTPError
@@ -58,7 +58,7 @@ def connect_rabbitmq_publisher(logger: Logger, rmq_data: Dict, enable_acks: bool
     return rmq_publisher
 
 
-def check_if_queue_exists(logger: Logger, rmq_data: Dict, processor_name: str | None) -> bool:
+def check_if_queue_exists(logger: Logger, rmq_data: Dict,  processor_name: Optional[str]) -> bool:
     if not processor_name:
         return False
     rmq_publisher = connect_rabbitmq_publisher(logger, rmq_data)
