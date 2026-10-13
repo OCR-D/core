@@ -190,6 +190,13 @@ class ProcessingServer(FastAPI):
             summary="Get information about the processing server"
         )
         others_router.add_api_route(
+            path="/user_workflow_callback_test",
+            endpoint=self.user_workflow_callback_test,
+            methods=["POST"],
+            status_code=status.HTTP_200_OK,
+            summary="Used for testing the user workflow callback mechanism without requiring a separate server"
+        )
+        others_router.add_api_route(
             path="/stop",
             endpoint=self.stop_deployed_agents,
             methods=["POST"],
@@ -348,6 +355,14 @@ class ProcessingServer(FastAPI):
             "time": datetime.now().strftime("%Y-%m-%d %H:%M")
         }
         return json_message
+
+    async def user_workflow_callback_test(self, request: Request):
+        """ Test endpoint for receiving workflow completion callbacks. """
+        payload = await request.json()
+        job_id = payload.get("job_id")
+        state = payload.get("state")
+        self.log.info(f"Received test workflow callback: job_id={job_id}, state={state}")
+        return JSONResponse(status_code=200, content={"received": True, "job_id": job_id, "state": state})
 
     async def stop_deployed_agents(self) -> None:
         self.deployer.stop_all()
