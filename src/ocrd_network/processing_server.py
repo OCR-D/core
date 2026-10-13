@@ -1,7 +1,8 @@
+import asyncio
 from datetime import datetime
 from os import getpid
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 from uvicorn import run as uvicorn_run
 
 from fastapi import APIRouter, FastAPI, File, HTTPException, Request, status, UploadFile
@@ -13,6 +14,10 @@ from ocrd_utils import initLogging, getLogger
 from .constants import JobState, ServerApiTags
 from .database import (
     initiate_database,
+    db_claim_result_callback,
+    db_claim_result_counter_decrement,
+    db_complete_result_callback,
+    db_release_result_callback_claim,
     db_get_processing_job,
     db_get_processing_jobs,
     db_update_processing_job,
@@ -50,6 +55,7 @@ from .server_utils import (
     kill_mets_server_zombies,
     parse_workflow_tasks,
     raise_http_exception,
+    send_workflow_callback,
     validate_and_return_mets_path,
     validate_first_task_input_file_groups_existence,
     validate_job_input,
@@ -127,6 +133,9 @@ class ProcessingServer(FastAPI):
         # Used for keeping track of cached processing requests
         self.cache_processing_requests = CacheProcessingRequests()
 
+        # Serialize job submission and METS server shutdown per workspace.
+        self.workspace_locks: Dict[str, asyncio.Lock] = {}
+
         # Used for keeping track of locked/unlocked pages of a workspace
         self.cache_locked_pages = CacheLockedPages()
 
@@ -179,6 +188,13 @@ class ProcessingServer(FastAPI):
             methods=["GET"],
             status_code=status.HTTP_200_OK,
             summary="Get information about the processing server"
+        )
+        others_router.add_api_route(
+            path="/user_workflow_callback_test",
+            endpoint=self.user_workflow_callback_test,
+            methods=["POST"],
+            status_code=status.HTTP_200_OK,
+            summary="Used for testing the user workflow callback mechanism without requiring a separate server"
         )
         others_router.add_api_route(
             path="/stop",
@@ -340,18 +356,30 @@ class ProcessingServer(FastAPI):
         }
         return json_message
 
+    async def user_workflow_callback_test(self, request: Request):
+        """ Test endpoint for receiving workflow completion callbacks. """
+        payload = await request.json()
+        job_id = payload.get("job_id")
+        state = payload.get("state")
+        self.log.info(f"Received test workflow callback: job_id={job_id}, state={state}")
+        return JSONResponse(status_code=200, content={"received": True, "job_id": job_id, "state": state})
+
     async def stop_deployed_agents(self) -> None:
         self.deployer.stop_all()
 
-    async def get_worker_ocrd_tool(self, processor_name: str) -> Dict:
-        ocrd_tool = {}
+    async def get_worker_ocrd_tool(self, processor_name: Optional[str]) -> Dict:
+        if not processor_name:
+            message = f"No processor name (None) was provided."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
         ocrd_tool = self.ocrd_all_tool_json.get(processor_name, None)
         if not ocrd_tool:
-            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND,
-                                 f"Processing Worker '{processor_name}' not found.")
-        return ocrd_tool
+            message = f"Ocrd tool of processing Worker '{processor_name}' not found in ocrd_all_tool.json."
+            raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message)
+        return ocrd_tool if ocrd_tool else {}
 
-    def exists_worker(self, processor_name: str) -> bool:
+    def exists_worker(self, processor_name: Optional[str]) -> bool:
+        if not processor_name:
+            return False
         # TODO: Reconsider and refactor this.
         #  Added ocrd-dummy by default if not available for the integration tests.
         #  A proper Processing Worker registration endpoint is needed on the Processing Server side
@@ -359,11 +387,47 @@ class ProcessingServer(FastAPI):
             return True
         return bool(check_if_queue_exists(self.log, self.rmq_data, processor_name=processor_name))
 
-    def validate_worker_existence(self, processor_name: str) -> None:
+    def validate_worker_existence(self, processor_name: Optional[str]) -> None:
+        if not processor_name:
+            message = f"No processor name (None) was provided."
+            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
         worker_exists = self.exists_worker(processor_name=processor_name)
         if not worker_exists:
             message = f"Processing Worker '{processor_name}' not found."
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
+
+    async def _is_request_caching_required(
+        self, workspace_key: str, output_file_grps: list[str], page_ids: list[str], depends_on: list[str]
+    ) -> bool:
+        # A flag whether the current request must be cached
+        # This is set to true if for any output file group there
+        # is a page_id value that has been previously locked
+        cache_current_request = False
+
+        # Check if there are any dependencies of the current request
+        if depends_on:
+            cache_current_request = await self.cache_processing_requests.is_caching_required(depends_on)
+
+        # No need for further check of locked pages dependency
+        # if the request should be already cached
+        if not cache_current_request:
+            # Check if there are any locked pages for the current request
+            cache_current_request = self.cache_locked_pages.check_if_locked_pages_for_output_file_grps(
+                workspace_key=workspace_key,
+                output_file_grps=output_file_grps,
+                page_ids=page_ids
+            )
+        return cache_current_request
+
+    async def _cache_processing_job_to_db(self, workspace_key: str, data: PYJobInput) -> PYJobOutput:
+        self.cache_processing_requests.cache_request(workspace_key, data)
+        db_cached_job = DBProcessorJob(
+            **data.dict(exclude_unset=True, exclude_none=True),
+            internal_callback_url=self.internal_job_callback_url,
+            state=JobState.cached,
+        )
+        await db_cached_job.insert()
+        return db_cached_job.to_job_output()
 
     async def validate_and_forward_job_to_worker(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
         # Append the processor name to the request itself
@@ -372,90 +436,72 @@ class ProcessingServer(FastAPI):
         if data.job_id:
             message = f"Processing request job id field is set but must not be: {data.job_id}"
             raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
+
         # Generate processing job id
         data.job_id = generate_id()
         ocrd_tool = await self.get_worker_ocrd_tool(processor_name=data.processor_name)
         validate_job_input(self.log, data.processor_name, ocrd_tool, data)
 
         if data.workspace_id:
-            # just a check whether the workspace exists in the database or not
+            # just verify that the workspace exists
             await get_from_database_workspace(self.log, data.workspace_id)
-        else:  # data.path_to_mets provided instead
+            workspace_key = data.workspace_id
+        elif data.path_to_mets:
             await create_workspace_if_not_exists(self.log, mets_path=data.path_to_mets)
+            workspace_key = data.path_to_mets
+        else:  # data.path_to_mets provided instead
+            message = "Either 'path_to_mets' or 'workspace_id' must be set for the provided workspace."
+            raise_http_exception(self.log, status.HTTP_422_UNPROCESSABLE_ENTITY, message=message)
 
-        workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
         # initialize the request counter for the workspace_key
         self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=0)
 
-        # This check is done to return early in case a workspace_id is provided
+        # This check is done to return early in case a 'workspace_id' is provided
         # but the mets path cannot be queried from the DB
         request_mets_path = await validate_and_return_mets_path(self.log, data)
 
         page_ids = expand_page_ids(data.page_id)
 
-        # A flag whether the current request must be cached
-        # This is set to true if for any output file group there
-        # is a page_id value that has been previously locked
-        cache_current_request = False
+        cache_current_request = await self._is_request_caching_required(
+            workspace_key, data.output_file_grps, page_ids, data.depends_on
+        )
+        if cache_current_request:
+            return await self._cache_processing_job_to_db(workspace_key=workspace_key, data=data)
 
-        # Check if there are any dependencies of the current request
-        if data.depends_on:
-            cache_current_request = await self.cache_processing_requests.is_caching_required(data.depends_on)
+        return await self._dispatch_processing_job(
+            data=data, workspace_key=workspace_key, page_ids=page_ids, request_mets_path=request_mets_path
+        )
 
-        # No need for further check of locked pages dependency
-        # if the request should be already cached
-        if not cache_current_request:
-            # Check if there are any locked pages for the current request
-            cache_current_request = self.cache_locked_pages.check_if_locked_pages_for_output_file_grps(
-                workspace_key=workspace_key,
-                output_file_grps=data.output_file_grps,
-                page_ids=page_ids
+    async def _dispatch_processing_job(
+        self, data: PYJobInput, workspace_key: str, page_ids: List[str], request_mets_path: str
+    ) -> PYJobOutput:
+        async with self._get_workspace_lock(workspace_key):
+            # Lock the pages in the request
+            self.cache_locked_pages.lock_pages(
+                workspace_key=workspace_key, output_file_grps=data.output_file_grps, page_ids=page_ids
             )
 
-        if cache_current_request:
-            # Cache the received request
-            self.cache_processing_requests.cache_request(workspace_key, data)
+            # Start a UDS Mets Server with the current workspace (if not already running)
+            ws_dir_path = str(Path(request_mets_path).parent)
+            mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
+            if self.use_tcp_mets:
+                # let workers talk to mets server via tcp instead of using unix-socket
+                mets_server_url = self.multiplexing_endpoint
 
-            # Create a cached job DB entry
-            db_cached_job = DBProcessorJob(
+            # Assign the updated mets server url in the database (workers read mets_server_url from db)
+            await db_update_workspace(
+                workspace_id=data.workspace_id, workspace_mets_path=data.path_to_mets, mets_server_url=mets_server_url
+            )
+
+            # Create a queued job DB entry
+            db_queued_job = DBProcessorJob(
                 **data.dict(exclude_unset=True, exclude_none=True),
                 internal_callback_url=self.internal_job_callback_url,
-                state=JobState.cached
+                state=JobState.queued
             )
-            await db_cached_job.insert()
-            return db_cached_job.to_job_output()
-
-        # Lock the pages in the request
-        self.cache_locked_pages.lock_pages(
-            workspace_key=workspace_key,
-            output_file_grps=data.output_file_grps,
-            page_ids=page_ids
-        )
-
-        # Start a UDS Mets Server with the current workspace
-        ws_dir_path = str(Path(request_mets_path).parent)
-        mets_server_url = self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
-        if self.use_tcp_mets:
-            # let workers talk to mets server via tcp instead of using unix-socket
-            mets_server_url = self.multiplexing_endpoint
-
-        # Assign the mets server url in the database (workers read mets_server_url from db)
-        await db_update_workspace(
-            workspace_id=data.workspace_id,
-            workspace_mets_path=data.path_to_mets,
-            mets_server_url=mets_server_url
-        )
-
-        # Create a queued job DB entry
-        db_queued_job = DBProcessorJob(
-            **data.dict(exclude_unset=True, exclude_none=True),
-            internal_callback_url=self.internal_job_callback_url,
-            state=JobState.queued
-        )
-        await db_queued_job.insert()
-        self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
-        job_output = await self.push_job_to_worker(data=data, db_job=db_queued_job)
-        return job_output
+            await db_queued_job.insert()
+            self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
+            return await self.push_job_to_worker(data=data, db_job=db_queued_job)
 
     async def push_job_to_worker(self, data: PYJobInput, db_job: DBProcessorJob) -> PYJobOutput:
         job_output = None
@@ -523,7 +569,6 @@ class ProcessingServer(FastAPI):
                 page_ids=expand_page_ids(data.page_id)
             )
 
-            self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=1)
             job_output = await self.push_job_to_worker(data=data, db_job=db_consumed_job)
             if not job_output:
                 self.log.exception(f"Failed to create job output for job input data: {data}")
@@ -534,27 +579,67 @@ class ProcessingServer(FastAPI):
             processing_job_id=job_id
         )
 
+    def _get_workspace_lock(self, workspace_key: str) -> asyncio.Lock:
+        if workspace_key not in self.workspace_locks:
+            self.workspace_locks[workspace_key] = asyncio.Lock()
+        return self.workspace_locks[workspace_key]
+
+    async def _maybe_stop_mets_server_locked(self, workspace_key: str, mets_server_url: str, path_to_mets: str) -> bool:
+        # Do not stop while processing jobs are outstanding.
+        if self.cache_processing_requests.processing_counter.get(workspace_key, 0) > 0:
+            return False
+
+        # Do not stop while requests are waiting in the queue.
+        if self.cache_processing_requests.processing_requests.get(workspace_key):
+            return False
+
+        # A workflow may still be submitting additional jobs.
+        workflow_submitting = await DBWorkflowJob.find_one(
+            DBWorkflowJob.path_to_mets == path_to_mets,
+            DBWorkflowJob.submission_complete == False
+        )
+        if workflow_submitting:
+            self.log.debug(f"Deferring METS server shutdown for {path_to_mets}: workflow submission is incomplete")
+            return False
+
+        self.log.debug(f"Stopping the METS server: {mets_server_url}")
+        self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
+
+        # A workflow record is optional: standalone processing jobs have none.
+        workflow_job = await DBWorkflowJob.find_one(
+            DBWorkflowJob.path_to_mets == path_to_mets,
+            DBWorkflowJob.mets_server_stopped == False
+        )
+        if workflow_job:
+            workflow_job.mets_server_stopped = True
+            await workflow_job.save()
+            await self._maybe_finish_workflow(workflow_job.job_id)
+
+        # Remove the empty queue, if it exists.
+        self.cache_processing_requests.processing_requests.pop(workspace_key, None)
+        return True
+
+    async def _maybe_stop_mets_server(
+            self, workspace_key: str, mets_server_url: str, path_to_mets: str
+    ) -> bool:
+        async with self._get_workspace_lock(workspace_key):
+            return await self._maybe_stop_mets_server_locked(
+                workspace_key=workspace_key,
+                mets_server_url=mets_server_url,
+                path_to_mets=path_to_mets,
+            )
+
     async def _consume_cached_jobs_of_workspace(
         self, workspace_key: str, mets_server_url: str, path_to_mets: str
     ) -> List[PYJobInput]:
-        # decrease the internal cache counter by 1
-        request_counter = self.cache_processing_requests.update_request_counter(
-            workspace_key=workspace_key, by_value=-1
-        )
-        self.log.debug(f"Internal processing job cache counter value: {request_counter}")
-        if (workspace_key not in self.cache_processing_requests.processing_requests or
-            not len(self.cache_processing_requests.processing_requests[workspace_key])):
-            if request_counter <= 0:
-                # Shut down the Mets Server for the workspace_key since no
-                # more internal callbacks are expected for that workspace
-                self.log.debug(f"Stopping the mets server: {mets_server_url}")
-                self.deployer.stop_uds_mets_server(mets_server_url=mets_server_url, path_to_mets=path_to_mets)
+        # Check whether the workspace has queued requests.
+        if not self.cache_processing_requests.processing_requests.get(workspace_key):
+            request_counter = self.cache_processing_requests.processing_counter.get(workspace_key, 0)
 
-                try:
-                    # The queue is empty - delete it
-                    del self.cache_processing_requests.processing_requests[workspace_key]
-                except KeyError:
-                    self.log.warning(f"Trying to delete non-existing internal queue with key: {workspace_key}")
+            if request_counter <= 0:
+                await self._maybe_stop_mets_server_locked(
+                    workspace_key=workspace_key, mets_server_url=mets_server_url, path_to_mets=path_to_mets
+                )
 
                 # For debugging purposes it is good to see if any locked pages are left
                 self.log.debug(f"Contents of the locked pages cache for: {workspace_key}")
@@ -582,32 +667,89 @@ class ProcessingServer(FastAPI):
         mets_server_url = db_workspace.mets_server_url
         workspace_key = path_to_mets if path_to_mets else workspace_id
 
-        if result_job_state == JobState.failed:
-            await self._cancel_cached_dependent_jobs(workspace_key, result_job_id)
-
-        if result_job_state != JobState.success:
-            # TODO: Handle other potential error cases
-            pass
-
         try:
             db_result_job = await db_get_processing_job(result_job_id)
-            # Unlock the output file group pages for the result processing request
-            await self._unlock_pages_of_workspace(
-                workspace_key=workspace_key,
-                output_file_grps=db_result_job.output_file_grps,
-                page_ids=expand_page_ids(db_result_job.page_id)
-            )
         except ValueError as error:
             message = f"Processing result job with id '{result_job_id}' not found in the DB."
             raise_http_exception(self.log, status.HTTP_404_NOT_FOUND, message, error)
 
-        consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
-            workspace_key=workspace_key, mets_server_url=mets_server_url, path_to_mets=path_to_mets
-        )
-        await self.push_cached_jobs_to_workers(processing_jobs=consumed_cached_jobs)
+        if not await db_claim_result_callback(result_job_id):
+            self.log.info(f"Ignoring duplicate result callback for job {result_job_id}")
+            return
+
+        try:
+            if result_job_state == JobState.failed:
+                await self._cancel_cached_dependent_jobs(workspace_key, result_job_id)
+
+            if result_job_state != JobState.success:
+                # TODO: Handle other potential error cases
+                pass
+
+            async with self._get_workspace_lock(workspace_key):
+                # Unlock the output file group pages for the completed processing job.
+                await self._unlock_pages_of_workspace(
+                    workspace_key=workspace_key,
+                    output_file_grps=db_result_job.output_file_grps,
+                    page_ids=expand_page_ids(db_result_job.page_id),
+                )
+
+                if await db_claim_result_counter_decrement(result_job_id):
+                    self.cache_processing_requests.update_request_counter(workspace_key=workspace_key, by_value=-1)
+
+                consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
+                    workspace_key=workspace_key, mets_server_url=mets_server_url, path_to_mets=path_to_mets
+                )
+
+                # Reserve consumed jobs before releasing the lock, so shutdown
+                # cannot mistake the workspace for idle.
+                if consumed_cached_jobs:
+                    self.cache_processing_requests.update_request_counter(
+                        workspace_key=workspace_key, by_value=len(consumed_cached_jobs)
+                    )
+
+            await self.push_cached_jobs_to_workers(processing_jobs=consumed_cached_jobs)
+
+            if not await db_complete_result_callback(result_job_id):
+                raise RuntimeError(f"Failed to mark result callback as processed for job {result_job_id}")
+
+        except Exception:
+            await db_release_result_callback_claim(result_job_id)
+            raise
 
     async def list_processors(self) -> List[str]:
         return get_message_queues(self.log, self.rmq_data)
+
+    async def _maybe_finish_workflow(self, workflow_job_id: str) -> None:
+        workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
+        if workflow_job.callback_sent:
+            return
+        if not workflow_job.submission_complete:
+            return
+        if not workflow_job.mets_server_stopped:
+            return
+
+        job_ids = [job_id for ids in workflow_job.processing_job_ids.values() for job_id in ids]
+        if not job_ids:
+            self.log.warning(f"Workflow {workflow_job_id} has no processing job IDs")
+            return
+
+        processing_jobs = await db_get_processing_jobs(job_ids)
+
+        # Do not report completion if any expected job is missing.
+        if len(processing_jobs) != len(job_ids):
+            self.log.warning(f"Workflow {workflow_job_id}: not all processing jobs are available in the database yet")
+            return
+
+        state = self._produce_workflow_status_simple_response(processing_jobs)
+
+        if state not in (JobState.success, JobState.failed):
+            return
+
+        delivered = await send_workflow_callback(self.log, workflow_job, state)
+
+        if delivered:
+            workflow_job.callback_sent = True
+            await workflow_job.save()
 
     async def task_sequence_to_processing_jobs(
         self,
@@ -634,6 +776,7 @@ class ProcessingServer(FastAPI):
                 parameters=task.parameters,
                 depends_on=dependent_jobs,
             )
+            assert job_input_data.processor_name
             response = await self.validate_and_forward_job_to_worker(
                 processor_name=job_input_data.processor_name,
                 data=job_input_data
@@ -681,44 +824,39 @@ class ProcessingServer(FastAPI):
         # for page_wise mode, we need to expand the list of pages
         # for the database, it's better to keep a short string
         page_id = page_id or ''
-        page_ids = get_page_ids_list(self.log, mets_path, page_id)
 
-        if not page_wise:
-            responses = await self.task_sequence_to_processing_jobs(
-                tasks=processing_tasks,
-                mets_path=mets_path,
-                page_id=page_id,
-            )
-            processing_job_ids = [response.job_id for response in responses]
-            db_workflow_job = DBWorkflowJob(
-                job_id=generate_id(),
-                page_id=page_id,
-                page_wise=page_wise,
-                processing_job_ids={page_id: processing_job_ids},
-                path_to_mets=mets_path,
-                workflow_callback_url=workflow_callback_url
-            )
-            await db_workflow_job.insert()
-            return db_workflow_job.to_job_output()
-
-        all_pages_job_ids = {}
-        for current_page in page_ids:
-            responses = await self.task_sequence_to_processing_jobs(
-                tasks=processing_tasks,
-                mets_path=mets_path,
-                page_id=current_page,
-            )
-            processing_job_ids = [response.job_id for response in responses]
-            all_pages_job_ids[current_page] = processing_job_ids
         db_workflow_job = DBWorkflowJob(
             job_id=generate_id(),
             page_id=page_id,
             page_wise=page_wise,
-            processing_job_ids=all_pages_job_ids,
+            processing_job_ids={},
             path_to_mets=mets_path,
             workflow_callback_url=workflow_callback_url
         )
         await db_workflow_job.insert()
+
+        if page_wise:
+            all_pages_job_ids = {}
+            page_ids = get_page_ids_list(self.log, mets_path, page_id)
+            for current_page in page_ids:
+                responses = await self.task_sequence_to_processing_jobs(
+                    tasks=processing_tasks, mets_path=mets_path, page_id=current_page
+                )
+                all_pages_job_ids[current_page] = [response.job_id for response in responses]
+        else:
+            responses = await self.task_sequence_to_processing_jobs(
+                tasks=processing_tasks, mets_path=mets_path, page_id=page_id
+            )
+            all_pages_job_ids = {page_id: [response.job_id for response in responses]}
+
+        db_workflow_job.processing_job_ids = all_pages_job_ids
+        db_workflow_job.submission_complete = True
+        await db_workflow_job.save()
+
+        db_workspace = await get_from_database_workspace(self.log, workspace_mets_path=mets_path)
+        await self._maybe_stop_mets_server(
+            workspace_key=mets_path, mets_server_url=db_workspace.mets_server_url, path_to_mets=mets_path
+        )
         return db_workflow_job.to_job_output()
 
     @staticmethod

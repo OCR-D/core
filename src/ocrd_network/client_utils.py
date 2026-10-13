@@ -2,8 +2,9 @@ import json
 import os
 from requests import get as request_get, post as request_post, RequestException, Response
 from requests.exceptions import JSONDecodeError
+from urllib.parse import urlencode
 from time import sleep
-from typing import Any
+from typing import Any, Optional
 from .constants import JobState, NETWORK_PROTOCOLS
 
 
@@ -111,21 +112,36 @@ def post_ps_workflow_request(
     path_to_wf: str,
     path_to_mets: str,
     page_wise: bool = False,
+    callback_url: Optional[str] = None,
 ) -> str:
-    request_url = f"{ps_server_host}/workflow/run?mets_path={path_to_mets}&page_wise={'True' if page_wise else 'False'}"
-    response = request_post(
-        url=request_url,
-        headers={"accept": "application/json; charset=utf-8"},
-        files={"workflow": open(path_to_wf, "rb") if os.path.exists(path_to_wf) else path_to_wf}
-    )
-    # print(response.json())
-    # print(response.__dict__)
-    json_resp_raw = response.text
-    # print(f'post_ps_workflow_request >> {response.status_code}')
-    # print(f'post_ps_workflow_request >> {json_resp_raw}')
+    params = {"mets_path": path_to_mets, "page_wise": page_wise}
+    if callback_url:
+        params["workflow_callback_url"] = callback_url
+
+    request_url = f"{ps_server_host}/workflow/run?{urlencode(params)}"
+    workflow_file = open(path_to_wf, "rb") if os.path.exists(path_to_wf) else path_to_wf
+
+    if hasattr(workflow_file, "read"):
+        try:
+            response = request_post(
+                url=request_url,
+                headers={"accept": "application/json; charset=utf-8"},
+                files={"workflow": workflow_file}
+            )
+        finally:
+            workflow_file.close()
+    else:
+        response = request_post(
+            url=request_url,
+            headers={"accept": "application/json; charset=utf-8"},
+            files={"workflow": workflow_file}
+        )
+
     _raise_if_error(response)
-    wf_job_id = json.loads(json_resp_raw)["job_id"]
+
+    wf_job_id = json.loads(response.text)["job_id"]
     assert wf_job_id, "Property 'job_id' is expected to always have a value"
+
     return wf_job_id
 
 
