@@ -48,17 +48,23 @@ class OcrdEnvVariable():
     def __str__(self):
         return f'{self.name}: {self.description}'
 
-    def describe(self, wrap_text=True, indent_text=True):
+    def describe(self, wrap_text=True, indent_text=True, evaluate_defaults=True):
         """
         Output help information on a config option.
 
         If ``option.description`` is a multiline string with complex formatting
         (e.g. markdown lists), replace empty lines with ``\b`` and set
         ``wrap_text`` to ``False``.
+
+        Set ``evaluate_defaults`` to ``False`` to describe callable defaults
+        without invoking them, for example during configuration registration.
         """
         desc = self.description
         if self.has_default:
-            default = self.default() if callable(self.default) else self.default
+            if callable(self.default):
+                default = self.default() if evaluate_defaults else "<computed on access>"
+            else:
+                default = self.default
             if not desc.endswith('\n'):
                 desc += ' '
             desc += f'(Default: "{default}")'
@@ -80,7 +86,7 @@ class OcrdEnvConfig():
     def add(self, name, *args, **kwargs):
         var = OcrdEnvVariable(name, *args, **kwargs)
         # make visible in ocrd_utils.config docstring (apidoc)
-        txt = var.describe(wrap_text=False, indent_text=True)
+        txt = var.describe(wrap_text=False, indent_text=True, evaluate_defaults=False)
         globals()['__doc__'] += "\n\n - " + txt + "\n\n"
         self._variables[name] = var
         return self._variables[name]
@@ -286,7 +292,7 @@ proposed by broker. Use 0 to deactivate heartbeat.
 config.add(name="OCRD_NETWORK_SOCKETS_ROOT_DIR",
            description="The root directory where all mets server related socket files are created",
            parser=lambda val: Path(val),
-           default=(True, Path(gettempdir(), "ocrd_network_sockets")))
+           default=(True, lambda: Path(gettempdir(), "ocrd_network_sockets")))
 config.OCRD_NETWORK_SOCKETS_ROOT_DIR.mkdir(mode=0o777, parents=True, exist_ok=True)
 try:
     config.OCRD_NETWORK_SOCKETS_ROOT_DIR.chmod(0o777)
@@ -297,7 +303,7 @@ except PermissionError:
 config.add(name="OCRD_NETWORK_LOGS_ROOT_DIR",
            description="The root directory where all ocrd_network related file logs are stored",
            parser=lambda val: Path(val),
-           default=(True, Path(gettempdir(), "ocrd_network_logs")))
+           default=(True, lambda: Path(gettempdir(), "ocrd_network_logs")))
 config.OCRD_NETWORK_LOGS_ROOT_DIR.mkdir(mode=0o777, parents=True, exist_ok=True)
 try:
     config.OCRD_NETWORK_LOGS_ROOT_DIR.chmod(0o777)
