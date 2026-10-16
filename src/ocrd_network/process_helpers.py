@@ -2,7 +2,7 @@ from contextlib import nullcontext
 from json import dumps
 from pathlib import Path
 from typing import List, Optional
-from tempfile import NamedTemporaryFile
+from io import StringIO
 from logging.config import fileConfig
 
 from ocrd.processor.helpers import run_cli, run_processor
@@ -30,7 +30,7 @@ def invoke_processor(
 
     workspace = get_ocrd_workspace_instance(mets_path=abs_path_to_mets, mets_server_url=mets_server_url)
     if processor_class:
-        with NamedTemporaryFile(mode='w') as cfgfile:
+        with StringIO() as cfgfile:
             cfgfile.write("""
 [loggers]
 keys=root,ocrd,ocrd_network,tensorflow,shapely_geos
@@ -65,9 +65,9 @@ args=('{log_filename}','a+')
 format=%(asctime)s.%(msecs)03d %(levelname)s %(name)s - %(message)s
 datefmt=%H:%M:%S
 """.format(log_filename=log_filename))
-            cfgfile.flush()
+            cfgfile.seek(0)
             # deletes all existing handlers
-            fileConfig(cfgfile.name)
+            fileConfig(cfgfile)
         try:
             run_processor(
                 processorClass=processor_class,
