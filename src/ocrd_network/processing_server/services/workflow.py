@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Callable, Dict, List, Union
 
 from fastapi import File, HTTPException, UploadFile
 from fastapi.responses import PlainTextResponse
@@ -29,10 +29,14 @@ from ...utils import generate_id, generate_workflow_content, generate_workflow_c
 class WorkflowService:
     """Manage workflow parsing, execution, status and workflow scripts."""
 
-    def __init__(self, log, processing_service, workspace_service):
+    def __init__(
+        self, log, processing_job_callback: Callable,
+        worker_validation_callback: Callable, stop_mets_server_callback: Callable
+    ):
         self.log = log
-        self.processing_service = processing_service
-        self.workspace_service = workspace_service
+        self.processing_job_callback = processing_job_callback
+        self.worker_validation_callback = worker_validation_callback
+        self.stop_mets_server_callback = stop_mets_server_callback
 
     async def maybe_finish_workflow(self, workflow_job_id: str) -> None:
         workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
@@ -93,7 +97,7 @@ class WorkflowService:
             )
             assert job_input_data.processor_name
 
-            response = await self.processing_service.validate_and_forward_job_to_worker(
+            response = await self.processing_job_callback(
                 processor_name=job_input_data.processor_name,
                 data=job_input_data,
             )
@@ -107,9 +111,7 @@ class WorkflowService:
         missing_workers = []
         for task in tasks:
             try:
-                self.processing_service.validate_worker_existence(
-                    processor_name=task.executable
-                )
+                self.worker_validation_callback(processor_name=task.executable)
             except HTTPException:
                 missing_workers.append({task.executable})
 
@@ -179,7 +181,7 @@ class WorkflowService:
         db_workspace = await get_from_database_workspace(
             self.log, workspace_mets_path=mets_path
         )
-        await self.workspace_service.maybe_stop_mets_server(
+        await self.stop_mets_server_callback(
             workspace_key=mets_path,
             mets_server_url=db_workspace.mets_server_url,
             path_to_mets=mets_path,

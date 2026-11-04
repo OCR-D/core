@@ -93,8 +93,9 @@ class ProcessingServer(FastAPI):
         )
         self.workflow_service = WorkflowService(
             log=self.log,
-            processing_service=self.processing_service,
-            workspace_service=self.workspace_service,
+            processing_job_callback=self.validate_and_forward_job_to_worker,
+            worker_validation_callback=self.validate_worker_existence,
+            stop_mets_server_callback=self.workspace_service.maybe_stop_mets_server,
         )
         self.workspace_service.set_services(processing_service=self.processing_service)
         self.workspace_service.set_workflow_completion_callback(self.workflow_service.maybe_finish_workflow)
