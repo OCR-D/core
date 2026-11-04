@@ -94,7 +94,7 @@ class ProcessingServer(FastAPI):
         self.workflow_service = WorkflowService(
             log=self.log,
             processing_job_callback=self.validate_and_forward_job_to_worker,
-            worker_validation_callback=self.validate_worker_existence,
+            worker_validation_callback=self.processing_service.validate_worker_existence,
             stop_mets_server_callback=self.workspace_service.maybe_stop_mets_server,
         )
         self.workspace_service.set_cached_jobs_callback(self.push_cached_jobs_to_workers)
@@ -185,12 +185,6 @@ class ProcessingServer(FastAPI):
 
     async def get_worker_ocrd_tool(self, processor_name: Optional[str]) -> Dict:
         return await self.processing_service.get_worker_ocrd_tool(processor_name)
-
-    def exists_worker(self, processor_name: Optional[str]) -> bool:
-        return self.processing_service.exists_worker(processor_name)
-
-    def validate_worker_existence(self, processor_name: Optional[str]) -> None:
-        self.processing_service.validate_worker_existence(processor_name)
 
     async def _is_request_caching_required(
         self, workspace_key: str, output_file_grps: list[str],
@@ -306,12 +300,6 @@ class ProcessingServer(FastAPI):
                 data=data, db_job=db_queued_job
             )
 
-    async def push_job_to_worker(self, data, db_job):
-        return await self.processing_service.push_job_to_worker(data, db_job)
-
-    async def push_job_to_processing_queue(self, db_job):
-        return await self.processing_service.push_job_to_processing_queue(db_job)
-
     async def get_processor_job(self, job_id: str):
         return await self.processing_service.get_processor_job(job_id)
 
@@ -322,16 +310,6 @@ class ProcessingServer(FastAPI):
         return await self.processing_service.list_processors()
 
     # Workspace service delegation
-
-    async def _lock_pages_of_workspace(
-        self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
-    ) -> None:
-        await self.workspace_service._lock_pages_of_workspace(workspace_key, output_file_grps, page_ids)
-
-    async def _unlock_pages_of_workspace(
-        self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
-    ) -> None:
-        await self.workspace_service._unlock_pages_of_workspace(workspace_key, output_file_grps, page_ids)
 
     async def push_cached_jobs_to_workers(
             self, processing_jobs: List[PYJobInput]
@@ -362,27 +340,6 @@ class ProcessingServer(FastAPI):
                 self.log.exception(
                     f"Failed to create job output for job input data: {data}"
                 )
-
-    async def _cancel_cached_dependent_jobs(self, workspace_key: str, job_id: str) -> None:
-        await self.workspace_service._cancel_cached_dependent_jobs(workspace_key, job_id)
-
-    def _get_workspace_lock(self, workspace_key: str):
-        return self.workspace_service.get_workspace_lock(workspace_key)
-
-    async def _maybe_stop_mets_server_locked(
-        self, workspace_key: str, mets_server_url: str, path_to_mets: str
-    ) -> bool:
-        return await self.workspace_service._maybe_stop_mets_server_locked(workspace_key, mets_server_url, path_to_mets)
-
-    async def _maybe_stop_mets_server(
-        self, workspace_key: str, mets_server_url: str, path_to_mets: str
-    ) -> bool:
-        return await self.workspace_service.maybe_stop_mets_server(workspace_key, mets_server_url, path_to_mets)
-
-    async def _consume_cached_jobs_of_workspace(self, workspace_key: str, mets_server_url: str, path_to_mets: str):
-        return await self.workspace_service._consume_cached_jobs_of_workspace(
-            workspace_key, mets_server_url, path_to_mets
-        )
 
     async def remove_job_from_request_cache(self, result_message: PYResultMessage) -> None:
         await self.workspace_service.remove_job_from_request_cache(result_message)
