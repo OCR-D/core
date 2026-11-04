@@ -10,7 +10,7 @@ from ocrd_utils import initLogging, getLogger
 from uvicorn import run as uvicorn_run
 
 from ..constants import JobState
-from ..database import db_update_workspace, initiate_database
+from ..database import db_update_processing_job, db_update_workspace, initiate_database
 from ..logging_utils import (
     configure_file_handler_with_formatter,
     get_processing_server_logging_file_path,
@@ -97,7 +97,7 @@ class ProcessingServer(FastAPI):
             worker_validation_callback=self.validate_worker_existence,
             stop_mets_server_callback=self.workspace_service.maybe_stop_mets_server,
         )
-        self.workspace_service.set_services(processing_service=self.processing_service)
+        self.workspace_service.set_cached_jobs_callback(self.push_cached_jobs_to_workers)
         self.workspace_service.set_workflow_completion_callback(self.workflow_service.maybe_finish_workflow)
 
         self.cache_processing_requests = self.workspace_service.cache_processing_requests
@@ -333,8 +333,35 @@ class ProcessingServer(FastAPI):
     ) -> None:
         await self.workspace_service._unlock_pages_of_workspace(workspace_key, output_file_grps, page_ids)
 
-    async def push_cached_jobs_to_workers(self, processing_jobs):
-        return await self.workspace_service.push_cached_jobs_to_workers(processing_jobs)
+    async def push_cached_jobs_to_workers(
+            self, processing_jobs: List[PYJobInput]
+    ) -> None:
+        if not processing_jobs:
+            self.log.debug("No processing jobs were consumed from the requests cache")
+            return
+
+        for data in processing_jobs:
+            self.log.info(
+                f"Changing the job status of: {data.job_id} "
+                f"from {JobState.cached} to {JobState.queued}"
+            )
+            db_consumed_job = await db_update_processing_job(
+                job_id=data.job_id, state=JobState.queued
+            )
+            workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
+
+            await self.workspace_service._lock_pages_of_workspace(
+                workspace_key=workspace_key,
+                output_file_grps=data.output_file_grps,
+                page_ids=expand_page_ids(data.page_id),
+            )
+            job_output = await self.processing_service.push_job_to_worker(
+                data=data, db_job=db_consumed_job
+            )
+            if not job_output:
+                self.log.exception(
+                    f"Failed to create job output for job input data: {data}"
+                )
 
     async def _cancel_cached_dependent_jobs(self, workspace_key: str, job_id: str) -> None:
         await self.workspace_service._cancel_cached_dependent_jobs(workspace_key, job_id)

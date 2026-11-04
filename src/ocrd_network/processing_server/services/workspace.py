@@ -27,11 +27,11 @@ class WorkspaceService:
         self.workspace_locks: Dict[str, asyncio.Lock] = {}
         self.cache_locked_pages = CacheLockedPages()
         self.cache_processing_requests = CacheProcessingRequests()
-        self.processing_service = None
         self.workflow_completion_callback = None
+        self.cached_jobs_callback = None
 
-    def set_services(self, processing_service) -> None:
-        self.processing_service = processing_service
+    def set_cached_jobs_callback(self, callback) -> None:
+        self.cached_jobs_callback = callback
 
     def set_workflow_completion_callback(self, callback) -> None:
         self.workflow_completion_callback = callback
@@ -168,38 +168,6 @@ class WorkspaceService:
             workspace_key, mets_server_url, path_to_mets
         )
 
-    async def push_cached_jobs_to_workers(
-        self, processing_jobs: List[PYJobInput]
-    ) -> None:
-        if not processing_jobs:
-            self.log.debug("No processing jobs were consumed from the requests cache")
-            return
-        if self.processing_service is None:
-            raise RuntimeError("ProcessingService has not been connected")
-
-        for data in processing_jobs:
-            self.log.info(
-                f"Changing the job status of: {data.job_id} "
-                f"from {JobState.cached} to {JobState.queued}"
-            )
-            db_consumed_job = await db_update_processing_job(
-                job_id=data.job_id, state=JobState.queued
-            )
-            workspace_key = data.path_to_mets if data.path_to_mets else data.workspace_id
-
-            await self._lock_pages_of_workspace(
-                workspace_key=workspace_key,
-                output_file_grps=data.output_file_grps,
-                page_ids=expand_page_ids(data.page_id),
-            )
-            job_output = await self.processing_service.push_job_to_worker(
-                data=data, db_job=db_consumed_job
-            )
-            if not job_output:
-                self.log.exception(
-                    f"Failed to create job output for job input data: {data}"
-                )
-
     async def cancel_cached_dependent_jobs(
         self, workspace_key: str, job_id: str
     ) -> None:
@@ -268,7 +236,8 @@ class WorkspaceService:
                         by_value=len(consumed_cached_jobs),
                     )
 
-            await self.push_cached_jobs_to_workers(consumed_cached_jobs)
+            if consumed_cached_jobs and self.cached_jobs_callback is not None:
+                await self.cached_jobs_callback(consumed_cached_jobs)
 
             if not await db_complete_result_callback(result_job_id):
                 raise RuntimeError(
