@@ -88,10 +88,8 @@ class ProcessingServer(FastAPI):
             processing_service=self.processing_service,
             workspace_service=self.workspace_service,
         )
-        self.workspace_service.set_services(
-            processing_service=self.processing_service,
-            workflow_service=self.workflow_service,
-        )
+        self.workspace_service.set_services(processing_service=self.processing_service)
+        self.workspace_service.set_workflow_completion_callback(self.workflow_service.maybe_finish_workflow)
 
         self.cache_processing_requests = self.workspace_service.cache_processing_requests
         self.cache_locked_pages = self.workspace_service.cache_locked_pages

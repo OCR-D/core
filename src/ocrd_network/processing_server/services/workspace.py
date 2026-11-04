@@ -28,11 +28,13 @@ class WorkspaceService:
         self.cache_locked_pages = CacheLockedPages()
         self.cache_processing_requests = CacheProcessingRequests()
         self.processing_service = None
-        self.workflow_service = None
+        self.workflow_completion_callback = None
 
-    def set_services(self, processing_service, workflow_service) -> None:
+    def set_services(self, processing_service) -> None:
         self.processing_service = processing_service
-        self.workflow_service = workflow_service
+
+    def set_workflow_completion_callback(self, callback) -> None:
+        self.workflow_completion_callback = callback
 
     def get_workspace_lock(self, workspace_key: str) -> asyncio.Lock:
         if workspace_key not in self.workspace_locks:
@@ -117,8 +119,8 @@ class WorkspaceService:
         if workflow_job:
             workflow_job.mets_server_stopped = True
             await workflow_job.save()
-            if self.workflow_service is not None:
-                await self.workflow_service.maybe_finish_workflow(workflow_job.job_id)
+            if self.workflow_completion_callback is not None:
+                await self.workflow_completion_callback(workflow_job.job_id)
 
         self.cache_processing_requests.processing_requests.pop(workspace_key, None)
         return True
