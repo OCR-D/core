@@ -1,21 +1,14 @@
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import status
 
 from ...constants import JobState
-from ...database import db_update_workspace
 from ...models import DBProcessorJob, PYJobInput, PYJobOutput
 from ...rabbitmq_utils import check_if_queue_exists, get_message_queues, OcrdProcessingMessage
 from ...server_utils import (
     create_processing_message,
-    create_workspace_if_not_exists,
-    get_from_database_workspace,
     raise_http_exception,
-    validate_and_return_mets_path,
-    validate_job_input,
 )
-from ...utils import expand_page_ids, generate_id
 
 
 class ProcessingService:

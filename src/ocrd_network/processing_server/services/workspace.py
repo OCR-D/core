@@ -10,7 +10,6 @@ from ...database import (
     db_complete_result_callback,
     db_release_result_callback_claim,
     db_get_processing_job,
-    db_update_processing_job,
 )
 from ...models import DBWorkflowJob, PYJobInput, PYResultMessage
 from ...server_cache import CacheLockedPages, CacheProcessingRequests
