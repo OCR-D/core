@@ -60,6 +60,9 @@ class DBProcessorJob(Document):
     workspace_id: Optional[str] = None
     description: Optional[str] = None
     state: JobState = JobState.unset
+    result_callback_processed: bool = False
+    result_callback_in_progress: bool = False
+    result_callback_counter_decremented: bool = False
     input_file_grps: List[str]
     output_file_grps: Optional[List[str]] = None
     page_id: Optional[str] = None
@@ -103,6 +106,7 @@ class PYWorkflowJobOutput(BaseModel):
     path_to_mets: Optional[str] = None
     workspace_id: Optional[str] = None
     description: Optional[str] = None
+    workflow_callback_url: Optional[str] = None
 
 
 class DBWorkflowJob(Document):
@@ -119,6 +123,14 @@ class DBWorkflowJob(Document):
     workspace_id: Optional[str] = None
     description: Optional[str] = None
     workflow_callback_url: Optional[str] = None
+    state: JobState = JobState.unset
+    # Tracks if all sub processing jobs are already submitted or still submitting
+    # Prevents premature shutdown of the related METS server
+    submission_complete: bool = False
+    # Prevents workflow completion before the METS server has stopped
+    mets_server_stopped: bool = False
+    # Prevents sending the workflow callback more than once
+    callback_sent: bool = False
 
     class Settings:
         use_enum_values = True

@@ -64,7 +64,9 @@ class Client:
         return post_ps_processing_request(
             ps_server_host=self.server_addr_processing, processor=processor_name, job_input=req_params)
 
-    def send_workflow_job_request(self, path_to_wf: str, path_to_mets: str, page_wise: bool = False):
+    def send_workflow_job_request(
+        self, path_to_wf: str, path_to_mets: str, page_wise: bool = False, callback_url: Optional[str] = None
+    ):
         return post_ps_workflow_request(
             ps_server_host=self.server_addr_processing, path_to_wf=path_to_wf, path_to_mets=path_to_mets,
-            page_wise=page_wise)
+            page_wise=page_wise, callback_url=callback_url)

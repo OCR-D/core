@@ -19,6 +19,8 @@ from ocrd.task_sequence import ProcessorTask
 from ocrd.workspace import Workspace
 from ocrd_validators import ParameterValidator
 
+from .constants import JobState
+
 from .database import (
     db_create_workspace,
     db_get_processing_job,
@@ -157,6 +159,29 @@ def parse_workflow_tasks(logger: Logger, workflow_content: str) -> List[Processo
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message, error)
 
 
+async def send_workflow_callback(logger: Logger, workflow_job: DBWorkflowJob, state: JobState) -> bool:
+    """Notify the callback URL about a workflow's terminal state.
+
+    Args:
+        logger: Logger used to report callback delivery.
+        workflow_job: The completed workflow job.
+        state: The final workflow state (SUCCESS or FAILED).
+    """
+    callback_url = workflow_job.workflow_callback_url
+    if not callback_url:
+        return True
+    payload = {"job_id": workflow_job.job_id, "state": state}
+    try:
+        async with AsyncClient(timeout=Timeout(10.0)) as client:
+            response = await client.post(callback_url, json=payload)
+            response.raise_for_status()
+        logger.info(f"Workflow callback delivered for workflow {workflow_job.job_id} (state={state.value})")
+        return True
+    except Exception:
+        logger.exception(f"Failed to deliver workflow callback for workflow {workflow_job.job_id}")
+        return False
+
+
 def raise_http_exception(logger: Logger, status_code: int, message: str, error: Exception = None) -> None:
     if error:
         message = f"{message} {error}"
@@ -174,7 +199,7 @@ def validate_job_input(logger: Logger, processor_name: str, ocrd_tool: dict, job
         )
         raise_http_exception(logger, status.HTTP_422_UNPROCESSABLE_ENTITY, message)
     if not ocrd_tool:
-        message = "Failed parsing processing tasks from a workflow."
+        message = "Missing ocrd tool, failed parsing processing tasks from a workflow."
         raise_http_exception(logger, status.HTTP_404_NOT_FOUND, message)
     try:
         report = ParameterValidator(ocrd_tool).validate(dict(job_input.parameters))

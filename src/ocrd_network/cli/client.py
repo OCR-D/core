@@ -241,6 +241,7 @@ def check_workflow_job_status(address: Optional[str], workflow_job_id: str, verb
               help='If set, the client will block till job timeout, fail or success.')
 @click.option('-p', '--print-state', default=False, is_flag=True,
               help='If set, the client will print job states by each iteration.')
+@click.option('--callback-url', type=URL, required=False, help="URL to call when the workflow finishes.")
 @click.argument('tasks', nargs=-1)
 def send_workflow_job_request(
     address: Optional[str],
@@ -249,6 +250,7 @@ def send_workflow_job_request(
     page_wise: bool,
     block: bool,
     print_state: bool,
+    callback_url: Optional[str],
     tasks: List[str]
 ):
     """
@@ -271,6 +273,7 @@ def send_workflow_job_request(
             path_to_wf=path_to_workflow or workflow_file.name,
             path_to_mets=path_to_mets,
             page_wise=page_wise,
+            callback_url=callback_url
         )
     print(f"Workflow job id: {workflow_job_id}")
     if block:

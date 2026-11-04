@@ -163,7 +163,7 @@ class CacheProcessingRequests:
         """
         # If a record counter of this workspace key does not exist
         # in the requests counter cache yet, create one and assign 0
-        if not self.processing_counter.get(workspace_key, None):
+        if workspace_key not in self.processing_counter:
             self.log.info(f"Creating an internal request counter for workspace key: {workspace_key}")
             self.processing_counter[workspace_key] = 0
         self.processing_counter[workspace_key] = self.processing_counter[workspace_key] + by_value
