@@ -1,31 +1,40 @@
 from datetime import datetime
 from os import getpid
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, File, UploadFile, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from uvicorn import run as uvicorn_run
 from ocrd_utils import initLogging, getLogger
+from uvicorn import run as uvicorn_run
 
-from ..database import initiate_database
+from ..constants import JobState
+from ..database import db_update_workspace, initiate_database
 from ..logging_utils import (
     configure_file_handler_with_formatter,
     get_processing_server_logging_file_path,
 )
-from ..models import PYResultMessage, PYJobInput
+from ..models import DBProcessorJob, PYJobInput, PYJobOutput, PYResultMessage
 from ..rabbitmq_utils import connect_rabbitmq_publisher
 from ..runtime_data import Deployer
-from ..server_utils import kill_mets_server_zombies
+from ..server_utils import (
+    create_workspace_if_not_exists,
+    get_from_database_workspace,
+    kill_mets_server_zombies,
+    raise_http_exception,
+    validate_and_return_mets_path,
+    validate_job_input,
+)
 from ..tcp_to_uds_mets_proxy import MetsServerProxy
-from ..utils import load_ocrd_all_tool_json
+from ..utils import expand_page_ids, generate_id, load_ocrd_all_tool_json
 
-from .services.processing import ProcessingService
-from .services.workflow import WorkflowService
-from .services.workspace import WorkspaceService
 from .routers.others import create_others_router
 from .routers.processing import create_processing_router
 from .routers.workflow import create_workflow_router
+from .services.processing import ProcessingService
+from .services.workflow import WorkflowService
+from .services.workspace import WorkspaceService
 
 
 class ProcessingServer(FastAPI):
@@ -79,7 +88,6 @@ class ProcessingServer(FastAPI):
             rmq_data=self.rmq_data,
             internal_job_callback_url=self.internal_job_callback_url,
             deployer=self.deployer,
-            workspace_service=self.workspace_service,
             use_tcp_mets=self.use_tcp_mets,
             multiplexing_endpoint=self.multiplexing_endpoint,
         )
@@ -187,24 +195,115 @@ class ProcessingServer(FastAPI):
         self, workspace_key: str, output_file_grps: list[str],
         page_ids: list[str], depends_on: list[str]
     ) -> bool:
-        return await self.processing_service.is_request_caching_required(
-            workspace_key, output_file_grps, page_ids, depends_on
-        )
+        cache = self.workspace_service.cache_processing_requests
+        cache_current_request = False
 
-    async def _cache_processing_job_to_db(self, workspace_key: str, data):
-        return await self.processing_service.cache_processing_job_to_db(
+        if depends_on:
+            cache_current_request = await cache.is_caching_required(depends_on)
+
+        if not cache_current_request:
+            cache_current_request = (
+                self.workspace_service.cache_locked_pages
+                .check_if_locked_pages_for_output_file_grps(
+                    workspace_key=workspace_key,
+                    output_file_grps=output_file_grps,
+                    page_ids=page_ids,
+                )
+            )
+        return cache_current_request
+
+    async def _cache_processing_job_to_db(
+        self, workspace_key: str, data: PYJobInput
+    ) -> PYJobOutput:
+        self.workspace_service.cache_processing_requests.cache_request(
             workspace_key, data
         )
+        return await self.processing_service.cache_processing_job_to_db(data)
 
-    async def validate_and_forward_job_to_worker(self, processor_name: str, data: PYJobInput):
-        return await self.processing_service.validate_and_forward_job_to_worker(processor_name, data)
+    async def validate_and_forward_job_to_worker(
+        self, processor_name: str, data: PYJobInput
+    ) -> PYJobOutput:
+        data.processor_name = processor_name
+        self.processing_service.validate_worker_existence(data.processor_name)
+
+        if data.job_id:
+            raise_http_exception(
+                self.log, status.HTTP_422_UNPROCESSABLE_ENTITY,
+                f"Processing request job id field is set but must not be: {data.job_id}"
+            )
+
+        data.job_id = generate_id()
+        ocrd_tool = await self.processing_service.get_worker_ocrd_tool(data.processor_name)
+        validate_job_input(self.log, data.processor_name, ocrd_tool, data)
+
+        if data.workspace_id:
+            await get_from_database_workspace(self.log, data.workspace_id)
+            workspace_key = data.workspace_id
+        elif data.path_to_mets:
+            await create_workspace_if_not_exists(self.log, mets_path=data.path_to_mets)
+            workspace_key = data.path_to_mets
+        else:
+            raise_http_exception(
+                self.log, status.HTTP_422_UNPROCESSABLE_ENTITY,
+                "Either 'path_to_mets' or 'workspace_id' must be set for the provided workspace."
+            )
+
+        self.workspace_service.cache_processing_requests.update_request_counter(
+            workspace_key=workspace_key, by_value=0
+        )
+
+        request_mets_path = await validate_and_return_mets_path(self.log, data)
+        page_ids = expand_page_ids(data.page_id)
+        cache_current_request = await self._is_request_caching_required(
+            workspace_key, data.output_file_grps, page_ids, data.depends_on
+        )
+
+        if cache_current_request:
+            return await self._cache_processing_job_to_db(workspace_key, data)
+
+        return await self._dispatch_processing_job(
+            data=data,
+            workspace_key=workspace_key,
+            page_ids=page_ids,
+            request_mets_path=request_mets_path,
+        )
 
     async def _dispatch_processing_job(
-        self, data, workspace_key: str, page_ids: List[str], request_mets_path: str
-    ):
-        return await self.processing_service.dispatch_processing_job(
-            data, workspace_key, page_ids, request_mets_path
-        )
+        self, data: PYJobInput, workspace_key: str,
+        page_ids: List[str], request_mets_path: str
+    ) -> PYJobOutput:
+        async with self.workspace_service.get_workspace_lock(workspace_key):
+            self.workspace_service.lock_pages(
+                workspace_key=workspace_key,
+                output_file_grps=data.output_file_grps,
+                page_ids=page_ids,
+            )
+            ws_dir_path = str(Path(request_mets_path).parent)
+            mets_server_url = self.deployer.start_uds_mets_server(
+                ws_dir_path=ws_dir_path
+            )
+
+            if self.use_tcp_mets:
+                mets_server_url = self.multiplexing_endpoint
+
+            await db_update_workspace(
+                workspace_id=data.workspace_id,
+                workspace_mets_path=data.path_to_mets,
+                mets_server_url=mets_server_url,
+            )
+
+            db_queued_job = DBProcessorJob(
+                **data.dict(exclude_unset=True, exclude_none=True),
+                internal_callback_url=self.internal_job_callback_url,
+                state=JobState.queued,
+            )
+            await db_queued_job.insert()
+            self.workspace_service.cache_processing_requests.update_request_counter(
+                workspace_key=workspace_key, by_value=1
+            )
+            return await self.processing_service.push_job_to_worker(
+                data=data, db_job=db_queued_job
+            )
 
     async def push_job_to_worker(self, data, db_job):
         return await self.processing_service.push_job_to_worker(data, db_job)
