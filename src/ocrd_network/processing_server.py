@@ -861,6 +861,8 @@ class ProcessingServer(FastAPI):
 
     @staticmethod
     def _produce_workflow_status_response(processing_jobs: List[DBProcessorJob]) -> Dict:
+        if not processing_jobs:
+            return {}
         response = {}
         failed_tasks = {}
         failed_tasks_key = "failed-processor-tasks"
@@ -879,6 +881,8 @@ class ProcessingServer(FastAPI):
 
     @staticmethod
     def _produce_workflow_status_simple_response(processing_jobs: List[DBProcessorJob]) -> JobState:
+        if not processing_jobs:
+            return JobState.unset
         workflow_job_state = JobState.unset
         success_jobs = 0
         for p_job in processing_jobs:
