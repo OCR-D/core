@@ -11,8 +11,8 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger
-from .constants import JobState, ServerApiTags
-from .database import (
+from ..constants import JobState, ServerApiTags
+from ..database import (
     initiate_database,
     db_claim_result_callback,
     db_claim_result_counter_decrement,
@@ -25,9 +25,9 @@ from .database import (
     db_get_workflow_script,
     db_find_first_workflow_script_by_content
 )
-from .runtime_data import Deployer
-from .logging_utils import configure_file_handler_with_formatter, get_processing_server_logging_file_path
-from .models import (
+from ..runtime_data import Deployer
+from ..logging_utils import configure_file_handler_with_formatter, get_processing_server_logging_file_path
+from ..models import (
     DBProcessorJob,
     DBWorkflowJob,
     DBWorkflowScript,
@@ -36,14 +36,14 @@ from .models import (
     PYResultMessage,
     PYWorkflowJobOutput
 )
-from .rabbitmq_utils import (
+from ..rabbitmq_utils import (
     check_if_queue_exists,
     connect_rabbitmq_publisher,
     get_message_queues,
     OcrdProcessingMessage
 )
-from .server_cache import CacheLockedPages, CacheProcessingRequests
-from .server_utils import (
+from ..server_cache import CacheLockedPages, CacheProcessingRequests
+from ..server_utils import (
     create_processing_message,
     create_workspace_if_not_exists,
     _get_processor_job,
@@ -61,8 +61,8 @@ from .server_utils import (
     validate_job_input,
     validate_workflow
 )
-from .tcp_to_uds_mets_proxy import MetsServerProxy
-from .utils import (
+from ..tcp_to_uds_mets_proxy import MetsServerProxy
+from ..utils import (
     load_ocrd_all_tool_json,
     expand_page_ids,
     generate_id,
