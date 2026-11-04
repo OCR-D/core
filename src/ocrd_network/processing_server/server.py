@@ -2,7 +2,7 @@ from datetime import datetime
 from os import getpid
 from typing import Dict, List, Optional
 
-from fastapi import FastAPI, File, UploadFile, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from ocrd_utils import initLogging, getLogger
@@ -13,7 +13,6 @@ from ..logging_utils import (
     configure_file_handler_with_formatter,
     get_processing_server_logging_file_path,
 )
-from ..models import PYJobInput, PYJobOutput, PYResultMessage
 from ..rabbitmq_utils import connect_rabbitmq_publisher
 from ..runtime_data import Deployer
 from ..server_utils import kill_mets_server_zombies
@@ -103,8 +102,14 @@ class ProcessingServer(FastAPI):
         self.workspace_service.set_workflow_completion_callback(self.workflow_service.maybe_finish_workflow)
 
         self.include_router(create_others_router(self))
-        self.include_router(create_processing_router(self))
-        self.include_router(create_workflow_router(self))
+        self.include_router(
+            create_processing_router(
+                processing_service=self.processing_service,
+                processing_coordinator=self.processing_coordinator,
+                workspace_service=self.workspace_service,
+            )
+        )
+        self.include_router(create_workflow_router(self.workflow_service))
 
         @self.exception_handler(RequestValidationError)
         async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -178,68 +183,3 @@ class ProcessingServer(FastAPI):
         self, minutes_ago: Optional[int] = None, dry_run: Optional[bool] = None
     ) -> List[int]:
         return kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)
-
-    # Processing service delegation
-
-    async def get_worker_ocrd_tool(self, processor_name: Optional[str]) -> Dict:
-        return await self.processing_service.get_worker_ocrd_tool(processor_name)
-
-    async def validate_and_forward_job_to_worker(self, processor_name: str, data: PYJobInput) -> PYJobOutput:
-        return await self.processing_coordinator.validate_and_forward_job_to_worker(processor_name, data)
-
-    async def get_processor_job(self, job_id: str):
-        return await self.processing_service.get_processor_job(job_id)
-
-    async def get_processor_job_log(self, job_id: str):
-        return await self.processing_service.get_processor_job_log(job_id)
-
-    async def list_processors(self) -> List[str]:
-        return await self.processing_service.list_processors()
-
-    # Workspace service delegation
-
-    async def remove_job_from_request_cache(self, result_message: PYResultMessage) -> None:
-        await self.workspace_service.remove_job_from_request_cache(result_message)
-
-    # Workflow service delegation
-
-    async def run_workflow(
-        self,
-        mets_path: str,
-        workflow: UploadFile = File(None),
-        workflow_id: str = None,
-        page_id: str = None,
-        page_wise: bool = False,
-        workflow_callback_url: str = None
-    ):
-        return await self.workflow_service.run_workflow(
-            mets_path=mets_path,
-            workflow=workflow,
-            workflow_id=workflow_id,
-            page_id=page_id,
-            page_wise=page_wise,
-            workflow_callback_url=workflow_callback_url
-        )
-
-    @staticmethod
-    def _produce_workflow_status_response(processing_jobs):
-        return WorkflowService.produce_workflow_status_response(processing_jobs)
-
-    @staticmethod
-    def _produce_workflow_status_simple_response(processing_jobs):
-        return WorkflowService.produce_workflow_status_simple_response(processing_jobs)
-
-    async def get_workflow_info(self, workflow_job_id):
-        return await self.workflow_service.get_workflow_info(workflow_job_id)
-
-    async def get_workflow_info_simple(self, workflow_job_id):
-        return await self.workflow_service.get_workflow_info_simple(workflow_job_id)
-
-    async def upload_workflow(self, workflow):
-        return await self.workflow_service.upload_workflow(workflow)
-
-    async def replace_workflow(self, workflow_id, workflow):
-        return await self.workflow_service.replace_workflow(workflow_id, workflow)
-
-    async def download_workflow(self, workflow_id):
-        return await self.workflow_service.download_workflow(workflow_id)
