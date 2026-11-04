@@ -1,6 +1,5 @@
 from datetime import datetime
 from os import getpid
-from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, File, UploadFile, Request, status
@@ -9,25 +8,17 @@ from fastapi.responses import JSONResponse
 from ocrd_utils import initLogging, getLogger
 from uvicorn import run as uvicorn_run
 
-from ..constants import JobState
-from ..database import db_update_processing_job, db_update_workspace, initiate_database
+from ..database import initiate_database
 from ..logging_utils import (
     configure_file_handler_with_formatter,
     get_processing_server_logging_file_path,
 )
-from ..models import DBProcessorJob, PYJobInput, PYJobOutput, PYResultMessage
+from ..models import PYJobInput, PYJobOutput, PYResultMessage
 from ..rabbitmq_utils import connect_rabbitmq_publisher
 from ..runtime_data import Deployer
-from ..server_utils import (
-    create_workspace_if_not_exists,
-    get_from_database_workspace,
-    kill_mets_server_zombies,
-    raise_http_exception,
-    validate_and_return_mets_path,
-    validate_job_input,
-)
+from ..server_utils import kill_mets_server_zombies
 from ..tcp_to_uds_mets_proxy import MetsServerProxy
-from ..utils import expand_page_ids, generate_id, load_ocrd_all_tool_json
+from ..utils import load_ocrd_all_tool_json
 
 from .routers.others import create_others_router
 from .routers.processing import create_processing_router
@@ -110,10 +101,6 @@ class ProcessingServer(FastAPI):
 
         self.workspace_service.set_cached_jobs_callback(self.processing_coordinator.push_cached_jobs_to_workers)
         self.workspace_service.set_workflow_completion_callback(self.workflow_service.maybe_finish_workflow)
-
-        self.cache_processing_requests = self.workspace_service.cache_processing_requests
-        self.cache_locked_pages = self.workspace_service.cache_locked_pages
-        self.workspace_locks = self.workspace_service.workspace_locks
 
         self.include_router(create_others_router(self))
         self.include_router(create_processing_router(self))
@@ -215,17 +202,6 @@ class ProcessingServer(FastAPI):
         await self.workspace_service.remove_job_from_request_cache(result_message)
 
     # Workflow service delegation
-
-    async def _maybe_finish_workflow(self, workflow_job_id: str) -> None:
-        await self.workflow_service.maybe_finish_workflow(workflow_job_id)
-
-    async def task_sequence_to_processing_jobs(self, tasks, mets_path: str, page_id: str):
-        return await self.workflow_service.task_sequence_to_processing_jobs(
-            tasks, mets_path, page_id
-        )
-
-    def validate_tasks_worker_existence(self, tasks) -> None:
-        self.workflow_service.validate_tasks_worker_existence(tasks)
 
     async def run_workflow(
         self,
