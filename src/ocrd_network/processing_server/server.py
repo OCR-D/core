@@ -5,13 +5,13 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from uvicorn import run as uvicorn_run
 
-from fastapi import APIRouter, FastAPI, File, HTTPException, Request, status, UploadFile
+from fastapi import FastAPI, File, HTTPException, Request, status, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 
 from ocrd.task_sequence import ProcessorTask
 from ocrd_utils import initLogging, getLogger
-from ..constants import JobState, ServerApiTags
+from ..constants import JobState
 from ..database import (
     initiate_database,
     db_claim_result_callback,
@@ -69,6 +69,10 @@ from ..utils import (
     generate_workflow_content,
     generate_workflow_content_hash
 )
+
+from .routers.others import create_others_router
+from .routers.processing import create_processing_router
+from .routers.workflow import create_workflow_router
 
 
 class ProcessingServer(FastAPI):
@@ -139,9 +143,9 @@ class ProcessingServer(FastAPI):
         # Used for keeping track of locked/unlocked pages of a workspace
         self.cache_locked_pages = CacheLockedPages()
 
-        self.add_api_routes_others()
-        self.add_api_routes_processing()
-        self.add_api_routes_workflow()
+        self.include_router(create_others_router(self))
+        self.include_router(create_processing_router(self))
+        self.include_router(create_workflow_router(self))
 
         @self.exception_handler(RequestValidationError)
         async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -179,161 +183,6 @@ class ProcessingServer(FastAPI):
         - connect to hosts and kill pids
         """
         await self.stop_deployed_agents()
-
-    def add_api_routes_others(self):
-        others_router = APIRouter()
-        others_router.add_api_route(
-            path="/",
-            endpoint=self.home_page,
-            methods=["GET"],
-            status_code=status.HTTP_200_OK,
-            summary="Get information about the processing server"
-        )
-        others_router.add_api_route(
-            path="/user_workflow_callback_test",
-            endpoint=self.user_workflow_callback_test,
-            methods=["POST"],
-            status_code=status.HTTP_200_OK,
-            summary="Used for testing the user workflow callback mechanism without requiring a separate server"
-        )
-        others_router.add_api_route(
-            path="/stop",
-            endpoint=self.stop_deployed_agents,
-            methods=["POST"],
-            tags=[ServerApiTags.TOOLS],
-            summary="Stop database, queue and processing-workers"
-        )
-        others_router.add_api_route(
-            path="/tcp_mets",
-            methods=["POST"],
-            endpoint=self.forward_tcp_request_to_uds_mets_server,
-            tags=[ServerApiTags.WORKSPACE],
-            summary="Forward a TCP request to UDS mets server"
-        )
-        others_router.add_api_route(
-            path="/kill_mets_server_zombies",
-            endpoint=self.kill_mets_server_zombies,
-            methods=["DELETE"],
-            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="!! Workaround Do Not Use Unless You Have A Reason "
-            "!! Kill all METS servers on this machine that have been created more than 60 minutes ago."
-        )
-        self.include_router(others_router)
-
-    def add_api_routes_processing(self):
-        processing_router = APIRouter()
-        processing_router.add_api_route(
-            path="/processor",
-            endpoint=self.list_processors,
-            methods=["GET"],
-            tags=[ServerApiTags.PROCESSING, ServerApiTags.DISCOVERY],
-            status_code=status.HTTP_200_OK,
-            summary="Get a list of all available processors"
-        )
-        processing_router.add_api_route(
-            path="/processor/info/{processor_name}",
-            endpoint=self.get_worker_ocrd_tool,
-            methods=["GET"],
-            tags=[ServerApiTags.PROCESSING, ServerApiTags.DISCOVERY],
-            status_code=status.HTTP_200_OK,
-            summary="Get information about this processor"
-        )
-        processing_router.add_api_route(
-            path="/processor/run/{processor_name}",
-            endpoint=self.validate_and_forward_job_to_worker,
-            methods=["POST"],
-            tags=[ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Submit a job to this processor",
-            response_model=PYJobOutput,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
-        )
-        processing_router.add_api_route(
-            path="/processor/job/{job_id}",
-            endpoint=self.get_processor_job,
-            methods=["GET"],
-            tags=[ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Get information about a job based on its ID",
-            response_model=PYJobOutput,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
-        )
-        processing_router.add_api_route(
-            path="/processor/log/{job_id}",
-            endpoint=self.get_processor_job_log,
-            methods=["GET"],
-            tags=[ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Get the log file of a job id"
-        )
-        processing_router.add_api_route(
-            path="/result_callback",
-            endpoint=self.remove_job_from_request_cache,
-            methods=["POST"],
-            tags=[ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Callback used by a worker for reporting result of a processing request"
-        )
-        self.include_router(processing_router)
-
-    def add_api_routes_workflow(self):
-        workflow_router = APIRouter()
-        workflow_router.add_api_route(
-            path="/workflow",
-            endpoint=self.upload_workflow,
-            methods=["POST"],
-            tags=[ServerApiTags.WORKFLOW],
-            status_code=status.HTTP_201_CREATED,
-            summary="Upload/Register a new workflow script"
-        )
-        workflow_router.add_api_route(
-            path="/workflow/{workflow_id}",
-            endpoint=self.download_workflow,
-            methods=["GET"],
-            tags=[ServerApiTags.WORKFLOW],
-            status_code=status.HTTP_200_OK,
-            summary="Download a workflow script"
-        )
-        workflow_router.add_api_route(
-            path="/workflow/{workflow_id}",
-            endpoint=self.replace_workflow,
-            methods=["PUT"],
-            tags=[ServerApiTags.WORKFLOW],
-            status_code=status.HTTP_200_OK,
-            summary="Update/Replace a workflow script"
-        )
-        workflow_router.add_api_route(
-            path="/workflow/run",
-            endpoint=self.run_workflow,
-            methods=["POST"],
-            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Run a workflow",
-            response_model=PYWorkflowJobOutput,
-            response_model_exclude_defaults=True,
-            response_model_exclude_unset=True,
-            response_model_exclude_none=True
-        )
-        workflow_router.add_api_route(
-            path="/workflow/job-simple/{workflow_job_id}",
-            endpoint=self.get_workflow_info_simple,
-            methods=["GET"],
-            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Get simplified overall job status"
-        )
-        workflow_router.add_api_route(
-            path="/workflow/job/{workflow_job_id}",
-            endpoint=self.get_workflow_info,
-            methods=["GET"],
-            tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
-            status_code=status.HTTP_200_OK,
-            summary="Get information about a workflow run"
-        )
-        self.include_router(workflow_router)
 
     async def forward_tcp_request_to_uds_mets_server(self, request: Request) -> Dict:
         """Forward mets-server-request
