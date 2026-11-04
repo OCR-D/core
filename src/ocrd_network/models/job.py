@@ -125,10 +125,11 @@ class DBWorkflowJob(Document):
     workflow_callback_url: Optional[str] = None
     state: JobState = JobState.unset
     # Tracks if all sub processing jobs are already submitted or still submitting
-    # Prevents early finishing of the workflow if there are still related processing jobs to be submitted
+    # Prevents premature shutdown of the related METS server
     submission_complete: bool = False
-    # Tracks whether the mets server related to this workflow has been stopped
+    # Prevents workflow completion before the METS server has stopped
     mets_server_stopped: bool = False
+    # Prevents sending the workflow callback more than once
     callback_sent: bool = False
 
     class Settings:
