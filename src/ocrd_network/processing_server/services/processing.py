@@ -8,7 +8,9 @@ from ...constants import JobState
 from ...models import DBProcessorJob, PYJobInput, PYJobOutput
 from ...rabbitmq_utils import check_if_queue_exists, get_message_queues, OcrdProcessingMessage
 from ...runtime_data import Deployer
-from ...server_utils import create_processing_message, _get_processor_job, _get_processor_job_log, raise_http_exception
+
+from ..helpers.common import raise_http_exception
+from ..helpers.processing import create_processing_message, get_processor_job, get_processor_job_log
 
 
 class ProcessingService:
@@ -124,10 +126,10 @@ class ProcessingService:
         return db_job.to_job_output()
 
     async def get_processor_job(self, job_id: str) -> PYJobOutput:
-        return await _get_processor_job(self.log, job_id)
+        return await get_processor_job(self.log, job_id)
 
     async def get_processor_job_log(self, job_id: str) -> FileResponse:
-        return await _get_processor_job_log(self.log, job_id)
+        return await get_processor_job_log(self.log, job_id)
 
     async def list_processors(self) -> List[str]:
         return get_message_queues(self.log, self.rmq_data)

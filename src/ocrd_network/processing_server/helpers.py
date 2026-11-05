@@ -19,18 +19,18 @@ from ocrd.task_sequence import ProcessorTask
 from ocrd.workspace import Workspace
 from ocrd_validators import ParameterValidator
 
-from .constants import JobState
+from ocrd_network.constants import JobState
 
-from .database import (
+from ocrd_network.database import (
     db_create_workspace,
     db_get_processing_job,
     db_get_workflow_job,
     db_get_workflow_script,
     db_get_workspace
 )
-from .models import DBProcessorJob, DBWorkflowJob, DBWorkspace, PYJobInput, PYJobOutput
-from .rabbitmq_utils import OcrdProcessingMessage
-from .utils import (
+from ocrd_network.models import DBProcessorJob, DBWorkflowJob, DBWorkspace, PYJobInput, PYJobOutput
+from ocrd_network.rabbitmq_utils import OcrdProcessingMessage
+from ocrd_network.utils import (
     calculate_processing_request_timeout,
     expand_page_ids,
     generate_created_time,

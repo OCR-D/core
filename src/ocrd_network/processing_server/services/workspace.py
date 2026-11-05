@@ -15,8 +15,10 @@ from ...database import (
 from ...models import DBWorkflowJob, PYJobInput, PYResultMessage
 from ...runtime_data import Deployer
 from ...server_cache import CacheLockedPages, CacheProcessingRequests
-from ...server_utils import get_from_database_workspace, raise_http_exception
 from ...utils import expand_page_ids
+
+from ..helpers.common import raise_http_exception
+from ..helpers.workspace import get_from_database_workspace
 
 
 class WorkspaceService:

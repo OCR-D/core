@@ -2,19 +2,15 @@ from datetime import datetime
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from logging import Logger
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
 
 from ocrd_network.constants import ServerApiTags
-from ocrd_network.server_utils import kill_mets_server_zombies
+from ocrd_network.processing_server.helpers.maintenance import kill_mets_server_zombies
+
 
 if TYPE_CHECKING:
     from ..server import ProcessingServer
 
-
-async def kill_mets_server_zombies_endpoint(
-    minutes_ago: Optional[int] = None, dry_run: Optional[bool] = None
-) -> List[int]:
-    return kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)
 
 def create_others_router(server: "ProcessingServer", log: Logger) -> APIRouter:
     router = APIRouter()

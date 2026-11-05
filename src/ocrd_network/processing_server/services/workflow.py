@@ -7,19 +7,22 @@ from ocrd.task_sequence import ProcessorTask
 from ...constants import JobState
 from ...database import db_find_first_workflow_script_by_content, db_get_processing_jobs, db_get_workflow_script
 from ...models import DBProcessorJob, DBWorkflowJob, DBWorkflowScript, PYJobInput, PYJobOutput, PYWorkflowJobOutput
-from ...server_utils import (
-    create_workspace_if_not_exists,
+from ...utils import generate_id, generate_workflow_content, generate_workflow_content_hash
+
+from ..helpers.common import raise_http_exception
+from ..helpers.workflow import (
     get_from_database_workflow_job,
-    get_from_database_workspace,
     get_page_ids_list,
     get_workflow_content,
     parse_workflow_tasks,
     send_workflow_callback,
-    validate_first_task_input_file_groups_existence,
-    validate_workflow,
-    raise_http_exception,
+    validate_workflow
 )
-from ...utils import generate_id, generate_workflow_content, generate_workflow_content_hash
+from ..helpers.workspace import (
+    create_workspace_if_not_exists,
+    get_from_database_workspace,
+    validate_first_task_input_file_groups_existence
+)
 
 
 class ProcessingJobCallback(Protocol):
