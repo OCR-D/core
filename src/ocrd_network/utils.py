@@ -166,6 +166,7 @@ def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str) -> 
         response = Session_TCP().post(url=f"{mets_server_url}", json=request_json)
         return response.status_code == 200
     elif protocol == "uds":
+        mets_server_url = convert_url_to_uds_format(mets_server_url)
         logger.info(f"Sending DELETE request to: {mets_server_url}/")
         response = Session_UDS().delete(url=f"{mets_server_url}/")
         return response.status_code == 200
