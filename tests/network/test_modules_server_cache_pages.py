@@ -1,5 +1,5 @@
 from typing import List
-from src.ocrd_network.server_cache import CacheLockedPages
+from ocrd_network.processing_server.cache import CacheLockedPages
 
 
 def assert_locked_all_pages(pages_cache: CacheLockedPages, workspace_key: str, output_file_grps: List[str]):
