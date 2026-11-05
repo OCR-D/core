@@ -52,13 +52,16 @@ class DataHost:
             self.needs_docker_connector = True
             self.workers_docker.append(worker_data)
 
-    def __parse_workers(self, processing_workers: List[Dict]):
+    def __parse_workers(self, processing_workers: List[Dict]) -> None:
         for worker in processing_workers:
-            worker_data = DataProcessingWorker(
-                processor_name=worker["name"], deploy_type=worker.get("deploy_type", "native"),
-                host=self.host, init_by_config=True, pid=None
-            )
             for _ in range(int(worker["number_of_instance"])):
+                worker_data = DataProcessingWorker(
+                    processor_name=worker["name"],
+                    deploy_type=worker.get("deploy_type", "native"),
+                    host=self.host,
+                    init_by_config=True,
+                    pid=None
+                )
                 self.__append_workers_to_lists(worker_data=worker_data)
 
     def create_connection_client(self, client_type: str):
