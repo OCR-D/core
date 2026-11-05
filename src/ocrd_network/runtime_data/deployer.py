@@ -112,7 +112,14 @@ class Deployer:
         mets_server_url_uds = self.mets_servers_paths[workspace_path]
         mets_server_pid = self.mets_servers[mets_server_url_uds]
         self.log.info(f"Terminating mets server with pid: {mets_server_pid}")
-        p = psutil.Process(mets_server_pid)
+
+        try:
+            p = psutil.Process(mets_server_pid)
+        except psutil.NoSuchProcess:
+            self.log.info(f"METS server with pid {mets_server_pid} has already terminated.")
+            del self.mets_servers_paths[workspace_path]
+            del self.mets_servers[mets_server_url_uds]
+            return
         if not stop_mets_server(self.log, mets_server_url=mets_server_url, ws_dir_path=workspace_path):
             raise RuntimeError(f"Failed to stop METS server at {mets_server_url}")
         if p.is_running():

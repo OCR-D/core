@@ -1,6 +1,6 @@
 from unittest.mock import Mock, patch
 from paramiko import SSHClient
-from psutil import TimeoutExpired
+from psutil import NoSuchProcess, TimeoutExpired
 import pytest
 
 from ocrd_network.processing_server.server import ProcessingServer
@@ -334,3 +334,19 @@ def test_stop_uds_mets_server_preserves_tracking_when_process_times_out():
     process.wait.assert_called_once_with(timeout=METS_SERVER_SHUTDOWN_TIMEOUT)
     assert deployer.mets_servers == {"/tmp/workspace.sock": 12345}
     assert deployer.mets_servers_paths == {"/tmp/workspace": "/tmp/workspace.sock"}
+
+
+def test_stop_uds_mets_server_cleans_tracking_when_process_is_gone():
+    deployer = Deployer.__new__(Deployer)
+    deployer.log = Mock()
+    deployer.mets_servers = {"/tmp/workspace.sock": 12345}
+    deployer.mets_servers_paths = {"/tmp/workspace": "/tmp/workspace.sock"}
+
+    with patch("ocrd_network.runtime_data.deployer.psutil.Process", side_effect=NoSuchProcess(12345)):
+        deployer.stop_uds_mets_server(
+            mets_server_url="/tmp/workspace.sock",
+            path_to_mets="/tmp/workspace/objects.xml"
+        )
+
+    assert deployer.mets_servers == {}
+    assert deployer.mets_servers_paths == {}
