@@ -1,3 +1,4 @@
+from logging import Logger
 from pathlib import Path
 from typing import List
 
@@ -6,14 +7,18 @@ from fastapi import status
 from ...constants import JobState
 from ...database import db_update_processing_job, db_update_workspace
 from ...models import DBProcessorJob, PYJobInput, PYJobOutput
+from ...runtime_data import Deployer
 from ...server_utils import (
     create_workspace_if_not_exists,
     get_from_database_workspace,
     raise_http_exception,
     validate_and_return_mets_path,
-    validate_job_input,
+    validate_job_input
 )
 from ...utils import expand_page_ids, generate_id
+
+from .processing import ProcessingService
+from .workspace import WorkspaceService
 
 
 class ProcessingCoordinator:
@@ -21,13 +26,13 @@ class ProcessingCoordinator:
 
     def __init__(
         self,
-        log,
-        deployer,
-        processing_service,
-        workspace_service,
+        log: Logger,
+        deployer: Deployer,
+        processing_service: ProcessingService,
+        workspace_service: WorkspaceService,
         internal_job_callback_url: str,
         use_tcp_mets: bool,
-        multiplexing_endpoint: str,
+        multiplexing_endpoint: str
     ):
         self.log = log
         self.deployer = deployer
@@ -40,9 +45,9 @@ class ProcessingCoordinator:
     async def _is_request_caching_required(
         self,
         workspace_key: str,
-        output_file_grps: list[str],
-        page_ids: list[str],
-        depends_on: list[str],
+        output_file_grps: List[str],
+        page_ids: List[str],
+        depends_on: List[str],
     ) -> bool:
         cache = self.workspace_service.cache_processing_requests
         cache_current_request = False
@@ -132,7 +137,7 @@ class ProcessingCoordinator:
         request_mets_path: str,
     ) -> PYJobOutput:
         async with self.workspace_service.get_workspace_lock(workspace_key):
-            self.workspace_service.lock_pages(
+            self.workspace_service.lock_pages_of_workspace(
                 workspace_key=workspace_key,
                 output_file_grps=data.output_file_grps,
                 page_ids=page_ids,
@@ -183,7 +188,7 @@ class ProcessingCoordinator:
                 data.path_to_mets if data.path_to_mets else data.workspace_id
             )
 
-            await self.workspace_service.lock_pages_of_workspace(
+            self.workspace_service.lock_pages_of_workspace(
                 workspace_key=workspace_key,
                 output_file_grps=data.output_file_grps,
                 page_ids=expand_page_ids(data.page_id),

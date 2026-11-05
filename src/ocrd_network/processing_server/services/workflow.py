@@ -1,16 +1,12 @@
-from typing import Callable, Dict, List, Union
+from typing import Awaitable, Dict, List, Optional, Protocol, Union
 
 from fastapi import File, HTTPException, UploadFile
 from fastapi.responses import PlainTextResponse
 from ocrd.task_sequence import ProcessorTask
 
 from ...constants import JobState
-from ...database import (
-    db_find_first_workflow_script_by_content,
-    db_get_processing_jobs,
-    db_get_workflow_script,
-)
-from ...models import DBProcessorJob, DBWorkflowJob, DBWorkflowScript, PYJobInput, PYWorkflowJobOutput
+from ...database import db_find_first_workflow_script_by_content, db_get_processing_jobs, db_get_workflow_script
+from ...models import DBProcessorJob, DBWorkflowJob, DBWorkflowScript, PYJobInput, PYJobOutput, PYWorkflowJobOutput
 from ...server_utils import (
     create_workspace_if_not_exists,
     get_from_database_workflow_job,
@@ -26,12 +22,24 @@ from ...server_utils import (
 from ...utils import generate_id, generate_workflow_content, generate_workflow_content_hash
 
 
+class ProcessingJobCallback(Protocol):
+    def __call__(self, *, processor_name: str, data: PYJobInput) -> Awaitable[PYJobOutput]: ...
+
+class WorkerValidationCallback(Protocol):
+    def __call__(self, *, processor_name: str) -> None: ...
+
+class StopMetsServerCallback(Protocol):
+    def __call__(self, *, workspace_key: str, mets_server_url: str, path_to_mets: str) -> Awaitable[bool]: ...
+
 class WorkflowService:
     """Manage workflow parsing, execution, status and workflow scripts."""
 
     def __init__(
-        self, log, processing_job_callback: Callable,
-        worker_validation_callback: Callable, stop_mets_server_callback: Callable
+        self,
+        log,
+        processing_job_callback: ProcessingJobCallback,
+        worker_validation_callback: WorkerValidationCallback,
+        stop_mets_server_callback: StopMetsServerCallback
     ):
         self.log = log
         self.processing_job_callback = processing_job_callback
@@ -76,7 +84,7 @@ class WorkflowService:
 
     async def task_sequence_to_processing_jobs(
         self, tasks: List[ProcessorTask], mets_path: str, page_id: str
-    ):
+    ) -> List[PYJobOutput]:
         temp_file_group_cache = {}
         responses = []
 
@@ -127,10 +135,10 @@ class WorkflowService:
         self,
         mets_path: str,
         workflow: Union[UploadFile, str, None] = File(None),
-        workflow_id: str = None,
-        page_id: str = None,
+        workflow_id: Optional[str] = None,
+        page_id: Optional[str] = None,
         page_wise: bool = False,
-        workflow_callback_url: str = None,
+        workflow_callback_url: Optional[str] = None,
     ) -> PYWorkflowJobOutput:
         await create_workspace_if_not_exists(self.log, mets_path=mets_path)
         workflow_content = await get_workflow_content(self.log, workflow_id, workflow)
@@ -214,9 +222,7 @@ class WorkflowService:
         return response
 
     @staticmethod
-    def produce_workflow_status_simple_response(
-        processing_jobs: List[DBProcessorJob]
-    ) -> JobState:
+    def produce_workflow_status_simple_response(processing_jobs: List[DBProcessorJob]) -> JobState:
         if not processing_jobs:
             return JobState.unset
 
@@ -248,7 +254,7 @@ class WorkflowService:
         jobs = await db_get_processing_jobs(job_ids)
         return self.produce_workflow_status_response(jobs)
 
-    async def get_workflow_info_simple(self, workflow_job_id: str) -> Dict:
+    async def get_workflow_info_simple(self, workflow_job_id: str) -> Dict[str, JobState]:
         workflow_job = await get_from_database_workflow_job(self.log, workflow_job_id)
         job_ids = [
             job_id

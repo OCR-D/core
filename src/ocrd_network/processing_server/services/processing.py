@@ -1,23 +1,29 @@
-from typing import Dict, List, Optional
+from logging import Logger
+from typing import Dict, List, Optional, Union
 
 from fastapi import status
+from fastapi.responses import FileResponse
 
 from ...constants import JobState
 from ...models import DBProcessorJob, PYJobInput, PYJobOutput
 from ...rabbitmq_utils import check_if_queue_exists, get_message_queues, OcrdProcessingMessage
-from ...server_utils import (
-    create_processing_message,
-    raise_http_exception,
-)
+from ...runtime_data import Deployer
+from ...server_utils import create_processing_message, _get_processor_job, _get_processor_job_log, raise_http_exception
 
 
 class ProcessingService:
     """Discover processing workers and submit processing jobs."""
 
     def __init__(
-        self, log, ocrd_all_tool_json, rmq_data, internal_job_callback_url,
-        deployer, use_tcp_mets, multiplexing_endpoint
-    ):
+        self,
+        log: Logger,
+        ocrd_all_tool_json: Dict[str, Dict],
+        rmq_data: Dict[str, Union[str, int]],
+        internal_job_callback_url: str,
+        deployer: Deployer,
+        use_tcp_mets: bool,
+        multiplexing_endpoint: str
+    ) -> None:
         self.log = log
         self.ocrd_all_tool_json = ocrd_all_tool_json
         self.rmq_data = rmq_data
@@ -118,11 +124,9 @@ class ProcessingService:
         return db_job.to_job_output()
 
     async def get_processor_job(self, job_id: str) -> PYJobOutput:
-        from ...server_utils import _get_processor_job
         return await _get_processor_job(self.log, job_id)
 
-    async def get_processor_job_log(self, job_id: str):
-        from ...server_utils import _get_processor_job_log
+    async def get_processor_job_log(self, job_id: str) -> FileResponse:
         return await _get_processor_job_log(self.log, job_id)
 
     async def list_processors(self) -> List[str]:

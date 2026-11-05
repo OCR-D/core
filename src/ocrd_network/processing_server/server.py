@@ -1,5 +1,5 @@
 from os import getpid
-from typing import Dict
+from typing import Any, Dict
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -107,14 +107,11 @@ class ProcessingServer(FastAPI):
         self.include_router(create_workflow_router(self.workflow_service))
 
         @self.exception_handler(RequestValidationError)
-        async def validation_exception_handler(request: Request, exc: RequestValidationError):
+        async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
             exc_str = str(exc).replace("\n", " ").replace("   ", " ")
             self.log.error(f"{request}: {exc_str}")
             content = {"status_code": 10422, "message": exc_str, "data": None}
-            return JSONResponse(
-                content=content,
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
-            )
+            return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
     # Application lifecycle
 
@@ -132,14 +129,14 @@ class ProcessingServer(FastAPI):
             raise
         uvicorn_run(self, host=self.hostname, port=int(self.port))
 
-    async def on_startup(self):
+    async def on_startup(self) -> None:
         self.log.info(f"Initializing the Database on: {self.mongodb_url}")
         await initiate_database(db_url=self.mongodb_url)
 
     async def on_shutdown(self) -> None:
         self.deployer.stop_all()
 
-    async def forward_tcp_request_to_uds_mets_server(self, request: Request) -> Dict:
+    async def forward_tcp_request_to_uds_mets_server(self, request: Request) -> Dict[str, Any]:
         request_body = await request.json()
         ws_dir_path = request_body["workspace_path"]
         self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)

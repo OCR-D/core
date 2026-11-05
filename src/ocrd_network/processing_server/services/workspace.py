@@ -1,5 +1,6 @@
 import asyncio
-from typing import Dict, List
+from logging import Logger
+from typing import Awaitable, Callable, Dict, List, Optional
 
 from fastapi import status
 
@@ -9,9 +10,10 @@ from ...database import (
     db_claim_result_counter_decrement,
     db_complete_result_callback,
     db_release_result_callback_claim,
-    db_get_processing_job,
+    db_get_processing_job
 )
 from ...models import DBWorkflowJob, PYJobInput, PYResultMessage
+from ...runtime_data import Deployer
 from ...server_cache import CacheLockedPages, CacheProcessingRequests
 from ...server_utils import get_from_database_workspace, raise_http_exception
 from ...utils import expand_page_ids
@@ -20,19 +22,19 @@ from ...utils import expand_page_ids
 class WorkspaceService:
     """Manage workspace locks, page locks and cached processing requests."""
 
-    def __init__(self, log, deployer):
+    def __init__(self, log: Logger, deployer: Deployer) -> None:
         self.log = log
         self.deployer = deployer
         self.workspace_locks: Dict[str, asyncio.Lock] = {}
         self.cache_locked_pages = CacheLockedPages()
         self.cache_processing_requests = CacheProcessingRequests()
-        self.workflow_completion_callback = None
-        self.cached_jobs_callback = None
+        self.workflow_completion_callback: Optional[Callable[[str], Awaitable[None]]] = None
+        self.cached_jobs_callback: Optional[Callable[[List[PYJobInput]], Awaitable[None]]] = None
 
-    def set_cached_jobs_callback(self, callback) -> None:
+    def set_cached_jobs_callback(self, callback: Callable[[List[PYJobInput]], Awaitable[None]]) -> None:
         self.cached_jobs_callback = callback
 
-    def set_workflow_completion_callback(self, callback) -> None:
+    def set_workflow_completion_callback(self, callback: Callable[[str], Awaitable[None]]) -> None:
         self.workflow_completion_callback = callback
 
     def get_workspace_lock(self, workspace_key: str) -> asyncio.Lock:
