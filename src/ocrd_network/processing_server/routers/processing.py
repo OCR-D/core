@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
-from ocrd_network.constants import ServerApiTags
-from ocrd_network.models import PYJobOutput
+from ...constants import ServerApiTags
+from ...models import PYJobOutput
 
 from ..services.coordinator import ProcessingCoordinator
 from ..services.processing import ProcessingService

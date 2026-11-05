@@ -4,8 +4,8 @@ from fastapi.responses import JSONResponse
 from logging import Logger
 from typing import Dict, TYPE_CHECKING
 
-from ocrd_network.constants import ServerApiTags
-from ocrd_network.processing_server.helpers.maintenance import kill_mets_server_zombies
+from ...constants import ServerApiTags
+from ..helpers.maintenance import kill_mets_server_zombies
 
 
 if TYPE_CHECKING:

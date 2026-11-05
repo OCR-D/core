@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
-from ocrd_network.constants import ServerApiTags
-from ocrd_network.models import PYWorkflowJobOutput
+from ...constants import ServerApiTags
+from ...models import PYWorkflowJobOutput
 
 from ..services.workflow import WorkflowService
 
