@@ -35,6 +35,19 @@ class DataNetworkService:
         self.pid = pid
 
     @staticmethod
+    def _redact_environment(env: Optional[List[str]]) -> List[str]:
+        safe_env = []
+        for item in env or []:
+            key, separator, _ = item.partition("=")
+            if separator and any(
+                secret in key.upper() for secret in ("PASSWORD", "PASS", "SECRET", "TOKEN", "KEY")
+            ):
+                safe_env.append(f"{key}=<redacted>")
+            else:
+                safe_env.append(item)
+        return safe_env
+
+    @staticmethod
     def deploy_docker_service(
         logger: Logger, service_data: Union[DataMongoDB, DataRabbitMQ], image: str, env: Optional[List[str]],
         ports_mapping: Optional[Dict], detach: bool = True, remove: bool = True
@@ -45,7 +58,8 @@ class DataNetworkService:
             raise RuntimeError(message)
         logger.info(f"Deploying '{image}' service on '{service_data.host}', detach={detach}, remove={remove}")
         logger.info(f"Ports mapping: {ports_mapping}")
-        logger.info(f"Environment: {env}")
+        logger.info(f"Environment: {DataNetworkService._redact_environment(env)}")
+
         client = create_docker_client(
             service_data.host, service_data.ssh_username, service_data.ssh_password, service_data.ssh_keypath
         )
