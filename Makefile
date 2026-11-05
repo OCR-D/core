@@ -260,8 +260,10 @@ network-integration-test: assets
 			--ignore-glob="tests/network/*ocrd_all*.py" && \
 		err=0 || { \
 			err=$$?; \
-			$(INTEGRATION_TEST_COMPOSE) logs $$($(INTEGRATION_TEST_COMPOSE) config --services | \
-				grep -Ev '^(ocrd_network_mongo_db|ocrd_network_rabbit_mq)$$'); \
+			$(INTEGRATION_TEST_COMPOSE) logs \
+				ocrd_network_processing_server \
+				ocrd_dummy_processing_worker \
+				ocrd_network_core_test; \
 		}; \
 		$(INTEGRATION_TEST_COMPOSE) down --remove-orphans; \
 		exit $$err; \
