@@ -113,26 +113,29 @@ class DataHost:
             logger.info(f"Deployed: {data_worker}")
 
     def deploy_workers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str) -> None:
-        if self.needs_ssh_connector and not self.ssh_client:
-            logger.debug("Creating missing ssh connector before deploying")
-            client = self.create_connection_client(client_type="ssh")
-            assert isinstance(client, SSHClient)
-            self.ssh_client = client
-        if self.needs_docker_connector:
-            logger.debug("Creating missing docker connector before deploying")
-            client = self.create_connection_client(client_type="docker")
-            assert isinstance(client, CustomDockerClient)
-            self.docker_client = client
-
-        self.__deploy_network_agent_resource_manager_server(logger)
-        self.__deploy_all_workers(logger=logger, mongodb_url=mongodb_url, rabbitmq_url=rabbitmq_url)
-
-        if self.ssh_client:
-            self.ssh_client.close()
+        try:
+            if self.needs_ssh_connector and not self.ssh_client:
+                logger.debug("Creating missing ssh connector before deploying")
+                client = self.create_connection_client(client_type="ssh")
+                assert isinstance(client, SSHClient)
+                self.ssh_client = client
+            if self.needs_docker_connector:
+                logger.debug("Creating missing docker connector before deploying")
+                client = self.create_connection_client(client_type="docker")
+                assert isinstance(client, CustomDockerClient)
+                self.docker_client = client
+            self.__deploy_network_agent_resource_manager_server(logger)
+            self.__deploy_all_workers(logger=logger, mongodb_url=mongodb_url, rabbitmq_url=rabbitmq_url)
+        finally:
+            clients = (self.ssh_client, self.docker_client)
             self.ssh_client = None
-        if self.docker_client:
-            self.docker_client.close()
             self.docker_client = None
+            for client in clients:
+                if client:
+                    try:
+                        client.close()
+                    except Exception:
+                        logger.exception("Failed to close a connection client")
 
     def __stop_network_agent_resource_manager_server(self, logger: Logger):
         logger.info(f"Stopping OCR-D Resource Manager Server [{self.resource_manager_pid}]: "
@@ -154,33 +157,37 @@ class DataHost:
             assert self.docker_client, "Docker client connection missing"
             self.docker_client.containers.get(pid).stop()
 
-    def stop_workers(self, logger: Logger):
-        if self.needs_ssh_connector and not self.ssh_client:
-            logger.debug("Creating missing ssh connector before stopping")
-            client = self.create_connection_client(client_type="ssh")
-            assert isinstance(client, SSHClient)
-            self.ssh_client = client
-        if self.needs_docker_connector and not self.docker_client:
-            logger.debug("Creating missing docker connector before stopping")
-            client = self.create_connection_client(client_type="docker")
-            assert isinstance(client, CustomDockerClient)
-            self.docker_client = client
-        self.__stop_network_agent_resource_manager_server(logger=logger)
+    def stop_workers(self, logger: Logger) -> None:
+        try:
+            if self.needs_ssh_connector and not self.ssh_client:
+                logger.debug("Creating missing ssh connector before stopping")
+                client = self.create_connection_client(client_type="ssh")
+                assert isinstance(client, SSHClient)
+                self.ssh_client = client
+            if self.needs_docker_connector and not self.docker_client:
+                logger.debug("Creating missing docker connector before stopping")
+                client = self.create_connection_client(client_type="docker")
+                assert isinstance(client, CustomDockerClient)
+                self.docker_client = client
+            self.__stop_network_agent_resource_manager_server(logger=logger)
 
-        logger.info(f"Stopping processing workers on host: {self.host}")
-        amount_workers = len(self.workers_native) + len(self.workers_docker)
-        if not amount_workers:
-            logger.warning("No active processing workers to be stopped.")
-        for worker in self.workers_native:
-            self.__stop_worker(logger, worker.processor_name, worker.deploy_type, worker.pid)
-        self.workers_native = []
-        for worker in self.workers_docker:
-            self.__stop_worker(logger, worker.processor_name, worker.deploy_type, worker.pid)
-        self.workers_docker = []
-
-        if self.ssh_client:
-            self.ssh_client.close()
+            logger.info(f"Stopping processing workers on host: {self.host}")
+            amount_workers = len(self.workers_native) + len(self.workers_docker)
+            if not amount_workers:
+                logger.warning("No active processing workers to be stopped.")
+            for worker in self.workers_native:
+                self.__stop_worker(logger, worker.processor_name, worker.deploy_type, worker.pid)
+            self.workers_native = []
+            for worker in self.workers_docker:
+                self.__stop_worker(logger, worker.processor_name, worker.deploy_type, worker.pid)
+            self.workers_docker = []
+        finally:
+            clients = (self.ssh_client, self.docker_client)
             self.ssh_client = None
-        if self.docker_client:
-            self.docker_client.close()
             self.docker_client = None
+            for client in clients:
+                if client:
+                    try:
+                        client.close()
+                    except Exception:
+                        logger.exception("Failed to close a connection client")
