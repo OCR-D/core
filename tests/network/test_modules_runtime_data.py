@@ -4,6 +4,7 @@ import pytest
 
 from ocrd_network.runtime_data.connection_clients import CustomDockerClient
 from ocrd_network.runtime_data.hosts import DataHost
+from ocrd_network.runtime_data.network_agents import deploy_agent_native_get_pid_hack
 
 
 def test_worker_instances_are_independent():
@@ -143,3 +144,39 @@ def test_custom_docker_client_closes_api_when_version_detection_fails(monkeypatc
     with pytest.raises(RuntimeError, match="Version detection failed"):
         CustomDockerClient(user="user", host="localhost", password="secret")
     api.close.assert_called_once()
+
+
+def test_deploy_agent_native_extracts_pid_and_closes_channel():
+    ssh_client = Mock()
+    channel = Mock()
+    stdin = Mock()
+    stdout = Mock()
+
+    ssh_client.invoke_shell.return_value = channel
+    channel.makefile.side_effect = [stdin, stdout]
+    stdout.read.return_value = b"command output xyz12345xyz"
+
+    pid = deploy_agent_native_get_pid_hack(Mock(), ssh_client, "start-worker")
+
+    assert pid == "12345"
+    stdin.close.assert_called_once()
+    stdout.close.assert_called_once()
+    channel.close.assert_called_once()
+
+
+def test_deploy_agent_native_closes_channel_when_pid_is_missing():
+    ssh_client = Mock()
+    channel = Mock()
+    stdin = Mock()
+    stdout = Mock()
+
+    ssh_client.invoke_shell.return_value = channel
+    channel.makefile.side_effect = [stdin, stdout]
+    stdout.read.return_value = b"command failed"
+
+    with pytest.raises(RuntimeError, match="Could not determine the PID"):
+        deploy_agent_native_get_pid_hack(Mock(), ssh_client, "start-worker")
+
+    stdin.close.assert_called_once()
+    stdout.close.assert_called_once()
+    channel.close.assert_called_once()
