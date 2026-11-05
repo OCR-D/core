@@ -3,6 +3,7 @@ from typing import Iterable, Tuple
 from pytest import fixture, raises
 import pytest
 from tests.base import assets
+from unittest.mock import Mock, patch
 
 from itertools import repeat
 from multiprocessing import Process, Pool, Pipe, set_start_method
@@ -278,3 +279,49 @@ def test_reload(start_mets_server : Tuple[str, Workspace]):
     print(workspace_server.mets.reload())
     assert len(workspace_server.mets.find_all_files()) == 36, '36 files total'
 
+
+@patch("ocrd.mets_server.sleep")
+@patch("ocrd.mets_server.Popen")
+def test_create_process_returns_pid_when_process_is_running(
+    mock_popen, mock_sleep, tmp_path
+):
+    process = Mock()
+    process.pid = 12345
+    process.poll.return_value = None
+    mock_popen.return_value = process
+
+    log_file = str(tmp_path / "mets_server.log")
+
+    pid = OcrdMetsServer.create_process(
+        mets_server_url="/tmp/workspace.sock",
+        ws_dir_path="/tmp/workspace",
+        log_file=log_file,
+    )
+
+    assert pid == 12345
+    mock_sleep.assert_called_once_with(2)
+    process.poll.assert_called_once()
+
+
+@pytest.mark.parametrize("exit_code", [0, 1, 2])
+@patch("ocrd.mets_server.sleep")
+@patch("ocrd.mets_server.Popen")
+def test_create_process_raises_when_process_has_exited(
+    mock_popen, mock_sleep, tmp_path, exit_code
+):
+    process = Mock()
+    process.pid = 12345
+    process.poll.return_value = exit_code
+    mock_popen.return_value = process
+
+    log_file = str(tmp_path / "mets_server.log")
+
+    with pytest.raises(RuntimeError, match=f"exit code {exit_code}"):
+        OcrdMetsServer.create_process(
+            mets_server_url="/tmp/workspace.sock",
+            ws_dir_path="/tmp/workspace",
+            log_file=log_file,
+        )
+
+    mock_sleep.assert_called_once_with(2)
+    process.poll.assert_called_once()

@@ -424,8 +424,9 @@ class OcrdMetsServer:
         )
         # Wait for the mets server to start
         sleep(2)
-        if sub_process.poll():
-            raise RuntimeError(f"Starting METS Server failed. See {log_file} for errors")
+        exit_code = sub_process.poll()
+        if exit_code is not None:
+            raise RuntimeError(f"Starting METS Server failed with exit code {exit_code}. See {log_file} for errors")
         return sub_process.pid
 
     @staticmethod
