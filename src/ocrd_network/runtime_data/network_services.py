@@ -1,6 +1,6 @@
 from __future__ import annotations
 from logging import Logger
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from ..constants import DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ
 from ..database import verify_mongodb_available
@@ -10,8 +10,17 @@ from .connection_clients import create_docker_client
 
 class DataNetworkService:
     def __init__(
-        self, host: str, port: int, ssh_username: str, ssh_keypath: str, ssh_password: str,
-        cred_username: str, cred_password: str, service_url: str, skip_deployment: bool, pid: Optional[Any]
+        self,
+        host: str,
+        port: int,
+        ssh_username: Optional[str],
+        ssh_keypath: Optional[str],
+        ssh_password: Optional[str],
+        cred_username: Optional[str],
+        cred_password: Optional[str],
+        service_url: str,
+        skip_deployment: bool,
+        pid: Optional[str]
     ) -> None:
         self.host = host
         self.port = port
@@ -31,7 +40,7 @@ class DataNetworkService:
     ) -> None:
         if not service_data or not service_data.host:
             message = f"Deploying '{image}' has failed - missing service configurations."
-            logger.exception(message)
+            logger.error(message)
             raise RuntimeError(message)
         logger.info(f"Deploying '{image}' service on '{service_data.host}', detach={detach}, remove={remove}")
         logger.info(f"Ports mapping: {ports_mapping}")
@@ -45,7 +54,7 @@ class DataNetworkService:
             )
             if not result or not result.id:
                 message = f"Failed to deploy '{image}' service on host: {service_data.host}"
-                logger.exception(message)
+                logger.error(message)
                 raise RuntimeError(message)
             service_data.pid = result.id
         finally:
