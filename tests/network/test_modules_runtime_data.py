@@ -1,10 +1,11 @@
 from unittest.mock import Mock, patch
 from paramiko import SSHClient
+from psutil import TimeoutExpired
 import pytest
 
 from ocrd_network.processing_server.server import ProcessingServer
 from ocrd_network.runtime_data.connection_clients import CustomDockerClient
-from ocrd_network.runtime_data.deployer import Deployer
+from ocrd_network.runtime_data.deployer import Deployer, METS_SERVER_SHUTDOWN_TIMEOUT
 from ocrd_network.runtime_data.hosts import DataHost
 from ocrd_network.runtime_data.network_agents import deploy_agent_native_get_pid_hack
 from ocrd_network.runtime_data.network_services import DataMongoDB, DataRabbitMQ
@@ -306,5 +307,30 @@ def test_stop_uds_mets_server_preserves_tracking_when_shutdown_fails():
             )
 
     process_mock.assert_called_once_with(12345)
+    assert deployer.mets_servers == {"/tmp/workspace.sock": 12345}
+    assert deployer.mets_servers_paths == {"/tmp/workspace": "/tmp/workspace.sock"}
+
+
+def test_stop_uds_mets_server_preserves_tracking_when_process_times_out():
+    deployer = Deployer.__new__(Deployer)
+    deployer.log = Mock()
+    deployer.mets_servers = {"/tmp/workspace.sock": 12345}
+    deployer.mets_servers_paths = {"/tmp/workspace": "/tmp/workspace.sock"}
+
+    process = Mock()
+    process.is_running.return_value = True
+    process.wait.side_effect = TimeoutExpired(METS_SERVER_SHUTDOWN_TIMEOUT, pid=12345)
+
+    with (
+        patch("ocrd_network.runtime_data.deployer.psutil.Process", return_value=process),
+        patch("ocrd_network.runtime_data.deployer.stop_mets_server", return_value=True)
+    ):
+        with pytest.raises(TimeoutExpired):
+            deployer.stop_uds_mets_server(
+                mets_server_url="/tmp/workspace.sock",
+                path_to_mets="/tmp/workspace/objects.xml"
+            )
+
+    process.wait.assert_called_once_with(timeout=METS_SERVER_SHUTDOWN_TIMEOUT)
     assert deployer.mets_servers == {"/tmp/workspace.sock": 12345}
     assert deployer.mets_servers_paths == {"/tmp/workspace": "/tmp/workspace.sock"}

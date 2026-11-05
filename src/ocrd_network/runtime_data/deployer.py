@@ -19,6 +19,9 @@ from .config_parser import parse_hosts_data, parse_mongodb_data, parse_rabbitmq_
 from .hosts import DataHost
 from .network_services import DataMongoDB, DataRabbitMQ
 
+# A more proper value as a timeout may be needed
+METS_SERVER_SHUTDOWN_TIMEOUT = 15
+
 
 class Deployer:
     def __init__(self, config_path: str) -> None:
@@ -113,7 +116,7 @@ class Deployer:
         if not stop_mets_server(self.log, mets_server_url=mets_server_url, ws_dir_path=workspace_path):
             raise RuntimeError(f"Failed to stop METS server at {mets_server_url}")
         if p.is_running():
-            p.wait()
+            p.wait(timeout=METS_SERVER_SHUTDOWN_TIMEOUT)
             self.log.info(f"Terminated mets server with pid: {mets_server_pid}")
         else:
             self.log.info(f"Mets server with pid: {mets_server_pid} has already terminated.")
