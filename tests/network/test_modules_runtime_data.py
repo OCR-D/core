@@ -1,4 +1,4 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 from paramiko import SSHClient
 import pytest
 
@@ -287,3 +287,24 @@ def test_stop_workers_attempts_every_host_when_cleanup_fails():
     first_host.stop_workers.assert_called_once_with(logger=deployer.log)
     second_host.stop_workers.assert_called_once_with(logger=deployer.log)
     third_host.stop_workers.assert_called_once_with(logger=deployer.log)
+
+
+def test_stop_uds_mets_server_preserves_tracking_when_shutdown_fails():
+    deployer = Deployer.__new__(Deployer)
+    deployer.log = Mock()
+    deployer.mets_servers = {"/tmp/workspace.sock": 12345}
+    deployer.mets_servers_paths = {"/tmp/workspace": "/tmp/workspace.sock"}
+
+    with (
+        patch("ocrd_network.runtime_data.deployer.psutil.Process") as process_mock,
+        patch("ocrd_network.runtime_data.deployer.stop_mets_server", return_value=False)
+    ):
+        with pytest.raises(RuntimeError, match="Failed to stop METS server"):
+            deployer.stop_uds_mets_server(
+                mets_server_url="/tmp/workspace.sock",
+                path_to_mets="/tmp/workspace/objects.xml"
+            )
+
+    process_mock.assert_called_once_with(12345)
+    assert deployer.mets_servers == {"/tmp/workspace.sock": 12345}
+    assert deployer.mets_servers_paths == {"/tmp/workspace": "/tmp/workspace.sock"}
