@@ -12,7 +12,8 @@ from .network_agents import (
 
 class DataHost:
     def __init__(
-        self, host: str, username: str, password: str, keypath: str, workers: List[Dict], servers: List[Dict]
+        self, host: str, username: str, password: Optional[str], keypath: Optional[str],
+        workers: List[Dict], servers: List[Dict]
     ) -> None:
         self.host = host
         self.resource_manager_port = RESOURCE_MANAGER_SERVER_PORT

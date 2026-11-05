@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Any, Dict, List
 from yaml import safe_load
 
 from ocrd_validators import ProcessingServerConfigValidator
@@ -6,18 +6,18 @@ from .hosts import DataHost
 from .network_services import DataMongoDB, DataRabbitMQ
 
 
-def validate_and_load_config(config_path: str) -> Dict:
+def validate_and_load_config(config_path: str) -> Dict[str, Any]:
     # Load and validate the config
     with open(config_path) as fin:
         ps_config = safe_load(fin)
     report = ProcessingServerConfigValidator.validate(ps_config)
     if not report.is_valid:
-        raise Exception(f"Processing-Server configuration file is invalid:\n{report.errors}")
+        raise ValueError(f"Processing-Server configuration file is invalid:\n{report.errors}")
     return ps_config
 
 
 # Parse MongoDB data from the Processing Server configuration file
-def parse_mongodb_data(db_config: Dict) -> DataMongoDB:
+def parse_mongodb_data(db_config: Dict[str, Any]) -> DataMongoDB:
     db_ssh = db_config.get("ssh", {})
     db_credentials = db_config.get("credentials", {})
     return DataMongoDB(
@@ -29,7 +29,7 @@ def parse_mongodb_data(db_config: Dict) -> DataMongoDB:
 
 
 # Parse RabbitMQ data from the Processing Server configuration file
-def parse_rabbitmq_data(rmq_config: Dict) -> DataRabbitMQ:
+def parse_rabbitmq_data(rmq_config: Dict[str, Any]) -> DataRabbitMQ:
     rmq_ssh = rmq_config.get("ssh", {})
     rmq_credentials = rmq_config.get("credentials", {})
     return DataRabbitMQ(
@@ -40,7 +40,7 @@ def parse_rabbitmq_data(rmq_config: Dict) -> DataRabbitMQ:
     )
 
 
-def parse_hosts_data(hosts_config: Dict) -> List[DataHost]:
+def parse_hosts_data(hosts_config: List[Dict[str, Any]]) -> List[DataHost]:
     hosts_data: List[DataHost] = []
     for host_config in hosts_config:
         hosts_data.append(

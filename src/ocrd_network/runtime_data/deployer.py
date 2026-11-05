@@ -26,12 +26,13 @@ class Deployer:
         ps_config = validate_and_load_config(config_path)
         self.data_mongo: DataMongoDB = parse_mongodb_data(ps_config["database"])
         self.data_queue: DataRabbitMQ = parse_rabbitmq_data(ps_config["process_queue"])
-        self.data_hosts: List[DataHost] = parse_hosts_data(ps_config["hosts"])
+        self.data_hosts: List[DataHost] = parse_hosts_data(ps_config.get("hosts", []))
         self.internal_callback_url = ps_config.get("internal_callback_url", None)
         self.mets_servers: Dict = {}  # {"mets_server_url": "mets_server_pid"}
         # This is required to store UDS urls that are multiplexed through the TCP proxy and are not preserved anywhere
         self.mets_servers_paths: Dict = {}  # {"ws_dir_path": "mets_server_url"}
         self.use_tcp_mets = ps_config.get("use_tcp_mets", False)
+
 
     def deploy_workers(self, mongodb_url: str, rabbitmq_url: str) -> None:
         self.log.debug("Deploying processing workers...")
