@@ -76,9 +76,16 @@ class DataNetworkService:
 
 class DataMongoDB(DataNetworkService):
     def __init__(
-        self, host: str, port: int, ssh_username: Optional[str], ssh_keypath: Optional[str],
-        ssh_password: Optional[str], cred_username: Optional[str], cred_password: Optional[str],
-        skip_deployment: bool, protocol: str = "mongodb"
+        self,
+        host: str,
+        port: int,
+        ssh_username: Optional[str],
+        ssh_keypath: Optional[str],
+        ssh_password: Optional[str],
+        cred_username: Optional[str],
+        cred_password: Optional[str],
+        skip_deployment: bool,
+        protocol: str = "mongodb"
     ) -> None:
         service_url = f"{protocol}://{host}:{port}"
         if cred_username and cred_password:
@@ -123,9 +130,17 @@ class DataMongoDB(DataNetworkService):
 
 class DataRabbitMQ(DataNetworkService):
     def __init__(
-        self, host: str, port: int, ssh_username: Optional[str], ssh_keypath: Optional[str],
-        ssh_password: Optional[str], cred_username: Optional[str], cred_password: Optional[str],
-        skip_deployment: bool, protocol: str = "amqp", vhost: str = "/"
+        self,
+        host: str,
+        port: int,
+        ssh_username: Optional[str],
+        ssh_keypath: Optional[str],
+        ssh_password: Optional[str],
+        cred_username: Optional[str],
+        cred_password: Optional[str],
+        skip_deployment: bool,
+        protocol: str = "amqp",
+        vhost: str = "/"
     ) -> None:
         self.vhost = f"/{vhost}" if vhost != "/" else vhost
         service_url = f"{protocol}://{host}:{port}{self.vhost}"
@@ -147,6 +162,8 @@ class DataRabbitMQ(DataNetworkService):
             logger.debug("RabbitMQ is managed externally. Skipping deployment.")
             verify_rabbitmq_available(logger=logger, rabbitmq_address=self.service_url)
             return self.service_url
+        if not self.cred_username or not self.cred_password:
+            raise ValueError("Deploying RabbitMQ requires both a username and a password")
         if not env:
             env = [
                 # The default credentials to be used by the processing workers
