@@ -39,13 +39,17 @@ class DataNetworkService:
         client = create_docker_client(
             service_data.host, service_data.ssh_username, service_data.ssh_password, service_data.ssh_keypath
         )
-        result = client.containers.run(image=image, detach=detach, remove=remove, ports=ports_mapping, environment=env)
-        if not result or not result.id:
-            message = f"Failed to deploy '{image}' service on host: {service_data.host}"
-            logger.exception(message)
-            raise RuntimeError(message)
-        service_data.pid = result.id
-        client.close()
+        try:
+            result = client.containers.run(
+                image=image, detach=detach, remove=remove, ports=ports_mapping, environment=env
+            )
+            if not result or not result.id:
+                message = f"Failed to deploy '{image}' service on host: {service_data.host}"
+                logger.exception(message)
+                raise RuntimeError(message)
+            service_data.pid = result.id
+        finally:
+            client.close()
 
     @staticmethod
     def stop_docker_service(logger: Logger, service_data: Union[DataMongoDB, DataRabbitMQ]) -> None:
@@ -55,8 +59,10 @@ class DataNetworkService:
         client = create_docker_client(
             service_data.host, service_data.ssh_username, service_data.ssh_password, service_data.ssh_keypath
         )
-        client.containers.get(service_data.pid).stop()
-        client.close()
+        try:
+            client.containers.get(service_data.pid).stop()
+        finally:
+            client.close()
 
 
 class DataMongoDB(DataNetworkService):
