@@ -6,9 +6,9 @@ import re
 from os import chmod
 import signal
 from typing import Dict, Optional, Union, List, Tuple
-from time import sleep
+from time import monotonic, sleep
 from pathlib import Path
-from subprocess import Popen
+from subprocess import Popen, TimeoutExpired
 from urllib.parse import urlparse
 import socket
 import atexit
@@ -16,7 +16,7 @@ import atexit
 from fastapi import FastAPI, Request, Form, Response
 from fastapi.responses import JSONResponse
 from requests import Session as requests_session
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, RequestException
 from requests_unixsocket import Session as requests_unixsocket_session
 from pydantic import BaseModel, Field, ValidationError
 
@@ -406,6 +406,9 @@ class MpxReq:
 # Server
 #
 
+METS_SERVER_STARTUP_TIMEOUT = 30.0
+METS_SERVER_STARTUP_POLL_INTERVAL = 0.5
+METS_SERVER_STARTUP_REQUEST_TIMEOUT = 1.0
 
 class OcrdMetsServer:
     def __init__(self, workspace, url):
@@ -423,11 +426,68 @@ class OcrdMetsServer:
             shell=False, universal_newlines=True, start_new_session=True
         )
         # Wait for the mets server to start
-        sleep(2)
+        OcrdMetsServer._wait_for_server_ready(
+            sub_process=sub_process,
+            mets_server_url=mets_server_url,
+            ws_dir_path=ws_dir_path,
+            log_file=log_file
+        )
+        return sub_process.pid
+
+    @staticmethod
+    def _wait_for_server_ready(
+        sub_process: Popen,
+        mets_server_url: str,
+        ws_dir_path: str,
+        log_file: str,
+        startup_timeout: float = METS_SERVER_STARTUP_TIMEOUT,
+    ) -> None:
         exit_code = sub_process.poll()
         if exit_code is not None:
             raise RuntimeError(f"Starting METS Server failed with exit code {exit_code}. See {log_file} for errors")
-        return sub_process.pid
+        if mets_server_url.startswith(("http://", "https://")):
+            session = requests_session()
+            readiness_url = f"{mets_server_url.rstrip('/')}/workspace_path"
+        else:
+            session = requests_unixsocket_session()
+            socket_url = f"http+unix://{mets_server_url.replace('/', '%2F').replace('.', '%2E')}"
+            readiness_url = f"{socket_url}/workspace_path"
+
+        deadline = monotonic() + startup_timeout
+        last_error = None
+
+        try:
+            while monotonic() < deadline:
+                exit_code = sub_process.poll()
+                if exit_code is not None:
+                    raise RuntimeError(
+                        f"Starting METS Server failed with exit code {exit_code}. See {log_file} for errors"
+                    )
+                remaining = deadline - monotonic()
+                try:
+                    response = session.get(readiness_url, timeout=min(METS_SERVER_STARTUP_REQUEST_TIMEOUT, remaining))
+                    if response.status_code == 200 and response.text == ws_dir_path:
+                        if sub_process.poll() is None:
+                            return
+                except RequestException as error:
+                    last_error = error
+                remaining = deadline - monotonic()
+                if remaining > 0:
+                    sleep(min(METS_SERVER_STARTUP_POLL_INTERVAL, remaining))
+
+            if sub_process.poll() is None:
+                sub_process.terminate()
+                try:
+                    sub_process.wait(timeout=5)
+                except TimeoutExpired:
+                    sub_process.kill()
+                    sub_process.wait()
+            raise RuntimeError(
+                f"METS Server did not become ready within {startup_timeout} seconds. "
+                f"See {log_file} for errors. Last connection error: {last_error}"
+            )
+        finally:
+            session.close()
 
     @staticmethod
     def kill_process(mets_server_pid: int):

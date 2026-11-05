@@ -21,7 +21,7 @@ import stat
 from uuid import uuid4
 
 from requests.exceptions import ConnectionError
-
+from subprocess import TimeoutExpired
 from ocrd import Resolver, OcrdMetsServer, Workspace
 from ocrd_utils import pushd_popd, MIMETYPE_PAGE, initLogging, setOverrideLogLevel, disableLogging, getLogger
 
@@ -280,14 +280,13 @@ def test_reload(start_mets_server : Tuple[str, Workspace]):
     assert len(workspace_server.mets.find_all_files()) == 36, '36 files total'
 
 
-@patch("ocrd.mets_server.sleep")
+@patch("ocrd.mets_server.OcrdMetsServer._wait_for_server_ready")
 @patch("ocrd.mets_server.Popen")
 def test_create_process_returns_pid_when_process_is_running(
-    mock_popen, mock_sleep, tmp_path
+    mock_popen, mock_wait_for_ready, tmp_path
 ):
     process = Mock()
     process.pid = 12345
-    process.poll.return_value = None
     mock_popen.return_value = process
 
     log_file = str(tmp_path / "mets_server.log")
@@ -295,33 +294,132 @@ def test_create_process_returns_pid_when_process_is_running(
     pid = OcrdMetsServer.create_process(
         mets_server_url="/tmp/workspace.sock",
         ws_dir_path="/tmp/workspace",
-        log_file=log_file,
+        log_file=log_file
     )
 
     assert pid == 12345
-    mock_sleep.assert_called_once_with(2)
-    process.poll.assert_called_once()
+    mock_wait_for_ready.assert_called_once_with(
+        sub_process=process,
+        mets_server_url="/tmp/workspace.sock",
+        ws_dir_path="/tmp/workspace",
+        log_file=log_file
+    )
+
+
+@patch("ocrd.mets_server.requests_unixsocket_session")
+def test_wait_for_server_ready_uds(mock_session_factory):
+    session = Mock()
+    response = Mock(status_code=200, text="/tmp/workspace")
+    session.get.return_value = response
+    mock_session_factory.return_value = session
+
+    process = Mock()
+    process.poll.return_value = None
+    process.pid = 12345
+
+    OcrdMetsServer._wait_for_server_ready(
+        sub_process=process,
+        mets_server_url="/tmp/workspace.sock",
+        ws_dir_path="/tmp/workspace",
+        log_file="/tmp/mets-server.log"
+    )
+
+    session.get.assert_called_once_with("http+unix://%2Ftmp%2Fworkspace%2Esock/workspace_path", timeout=1.0)
+    session.close.assert_called_once()
+
+
+@patch("ocrd.mets_server.requests_session")
+def test_wait_for_server_ready_tcp(mock_session_factory):
+    session = Mock()
+    session.get.return_value = Mock(status_code=200, text="/tmp/workspace")
+    mock_session_factory.return_value = session
+
+    process = Mock()
+    process.poll.return_value = None
+
+    OcrdMetsServer._wait_for_server_ready(
+        sub_process=process,
+        mets_server_url="http://127.0.0.1:12345",
+        ws_dir_path="/tmp/workspace",
+        log_file="/tmp/mets-server.log"
+    )
+
+    session.get.assert_called_once_with("http://127.0.0.1:12345/workspace_path", timeout=1.0)
+    session.close.assert_called_once()
 
 
 @pytest.mark.parametrize("exit_code", [0, 1, 2])
-@patch("ocrd.mets_server.sleep")
-@patch("ocrd.mets_server.Popen")
-def test_create_process_raises_when_process_has_exited(
-    mock_popen, mock_sleep, tmp_path, exit_code
-):
+@patch("ocrd.mets_server.requests_unixsocket_session")
+def test_wait_for_server_ready_raises_when_process_exits(mock_session_factory, exit_code):
     process = Mock()
-    process.pid = 12345
     process.poll.return_value = exit_code
-    mock_popen.return_value = process
 
-    log_file = str(tmp_path / "mets_server.log")
-
-    with pytest.raises(RuntimeError, match=f"exit code {exit_code}"):
-        OcrdMetsServer.create_process(
+    with raises(RuntimeError, match=f"exit code {exit_code}"):
+        OcrdMetsServer._wait_for_server_ready(
+            sub_process=process,
             mets_server_url="/tmp/workspace.sock",
             ws_dir_path="/tmp/workspace",
-            log_file=log_file,
+            log_file="/tmp/mets-server.log"
         )
 
-    mock_sleep.assert_called_once_with(2)
-    process.poll.assert_called_once()
+    mock_session_factory.assert_not_called()
+
+
+@patch("ocrd.mets_server.sleep")
+@patch("ocrd.mets_server.monotonic", side_effect=[0, 0, 0, 0.5, 0.5, 0.5, 1.1, 1.1])
+@patch("ocrd.mets_server.requests_unixsocket_session")
+def test_wait_for_server_ready_raises_on_timeout(
+    mock_session_factory, mock_monotonic, mock_sleep
+):
+    session = Mock()
+    session.get.side_effect = ConnectionError("Server not ready")
+    mock_session_factory.return_value = session
+
+    process = Mock()
+    process.poll.return_value = None
+
+    with raises(RuntimeError, match="did not become ready"):
+        OcrdMetsServer._wait_for_server_ready(
+            sub_process=process,
+            mets_server_url="/tmp/workspace.sock",
+            ws_dir_path="/tmp/workspace",
+            log_file="/tmp/mets-server.log",
+            startup_timeout=1.0
+        )
+
+    assert session.get.call_count == 2
+    session.close.assert_called_once()
+    mock_sleep.assert_called_once_with(0.5)
+
+    process.terminate.assert_called_once()
+    process.wait.assert_called_once_with(timeout=5)
+    process.kill.assert_not_called()
+
+
+@patch("ocrd.mets_server.sleep")
+@patch("ocrd.mets_server.monotonic", side_effect=[0, 0, 0, 0.5, 0.5, 0.5, 1.1, 1.1])
+@patch("ocrd.mets_server.requests_unixsocket_session")
+def test_wait_for_server_ready_kills_process_after_termination_timeout(
+    mock_session_factory, mock_monotonic, mock_sleep
+):
+    session = Mock()
+    session.get.side_effect = ConnectionError("Server not ready")
+    mock_session_factory.return_value = session
+
+    process = Mock()
+    process.poll.return_value = None
+    process.wait.side_effect = [TimeoutExpired(cmd="mets-server", timeout=5), None]
+
+    with raises(RuntimeError, match="did not become ready"):
+        OcrdMetsServer._wait_for_server_ready(
+            sub_process=process,
+            mets_server_url="/tmp/workspace.sock",
+            ws_dir_path="/tmp/workspace",
+            log_file="/tmp/mets-server.log",
+            startup_timeout=1.0
+        )
+
+    process.terminate.assert_called_once()
+    assert process.wait.call_count == 2
+    process.kill.assert_called_once()
+    session.close.assert_called_once()
