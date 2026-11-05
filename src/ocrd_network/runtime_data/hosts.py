@@ -115,7 +115,7 @@ class DataHost:
 
     def deploy_workers(self, logger: Logger, mongodb_url: str, rabbitmq_url: str) -> None:
         try:
-            if self.needs_ssh_connector and not self.ssh_client:
+            if not self.ssh_client:
                 logger.debug("Creating missing ssh connector before deploying")
                 client = self.create_connection_client(client_type="ssh")
                 assert isinstance(client, SSHClient)
@@ -160,7 +160,7 @@ class DataHost:
 
     def stop_workers(self, logger: Logger) -> None:
         try:
-            if self.needs_ssh_connector and not self.ssh_client:
+            if not self.ssh_client:
                 logger.debug("Creating missing ssh connector before stopping")
                 client = self.create_connection_client(client_type="ssh")
                 assert isinstance(client, SSHClient)
