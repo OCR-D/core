@@ -1,6 +1,7 @@
 from __future__ import annotations
 from logging import Logger
 from typing import Dict, List, Optional, Union
+from urllib.parse import quote
 
 from ..constants import DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ
 from ..database import verify_mongodb_available
@@ -89,7 +90,9 @@ class DataMongoDB(DataNetworkService):
     ) -> None:
         service_url = f"{protocol}://{host}:{port}"
         if cred_username and cred_password:
-            service_url = f"{protocol}://{cred_username}:{cred_password}@{host}:{port}"
+            username = quote(cred_username, safe="")
+            password = quote(cred_password, safe="")
+            service_url = f"{protocol}://{username}:{password}@{host}:{port}"
         super().__init__(
             host=host, port=port, ssh_username=ssh_username, ssh_keypath=ssh_keypath, ssh_password=ssh_password,
             cred_username=cred_username, cred_password=cred_password, service_url=service_url,
@@ -143,9 +146,12 @@ class DataRabbitMQ(DataNetworkService):
         vhost: str = "/"
     ) -> None:
         self.vhost = f"/{vhost}" if vhost != "/" else vhost
-        service_url = f"{protocol}://{host}:{port}{self.vhost}"
+        encoded_vhost = quote(vhost, safe="")
+        service_url = f"{protocol}://{host}:{port}/{encoded_vhost}"
         if cred_username and cred_password:
-            service_url = f"{protocol}://{cred_username}:{cred_password}@{host}:{port}{self.vhost}"
+            username = quote(cred_username, safe="")
+            password = quote(cred_password, safe="")
+            service_url = f"{protocol}://{username}:{password}@{host}:{port}/{encoded_vhost}"
         super().__init__(
             host=host, port=port, ssh_username=ssh_username, ssh_keypath=ssh_keypath, ssh_password=ssh_password,
             cred_username=cred_username, cred_password=cred_password, service_url=service_url,

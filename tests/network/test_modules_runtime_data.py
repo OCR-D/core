@@ -5,6 +5,7 @@ import pytest
 from ocrd_network.runtime_data.connection_clients import CustomDockerClient
 from ocrd_network.runtime_data.hosts import DataHost
 from ocrd_network.runtime_data.network_agents import deploy_agent_native_get_pid_hack
+from ocrd_network.runtime_data.network_services import DataMongoDB, DataRabbitMQ
 
 
 def test_worker_instances_are_independent():
@@ -180,3 +181,53 @@ def test_deploy_agent_native_closes_channel_when_pid_is_missing():
     stdin.close.assert_called_once()
     stdout.close.assert_called_once()
     channel.close.assert_called_once()
+
+
+def test_mongodb_url_encodes_credentials():
+    service = DataMongoDB(
+        host="localhost",
+        port=27017,
+        ssh_username=None,
+        ssh_keypath=None,
+        ssh_password=None,
+        cred_username="user@name",
+        cred_password="p:a/ss#word",
+        skip_deployment=True
+    )
+
+    assert service.service_url == (
+        "mongodb://user%40name:p%3Aa%2Fss%23word@localhost:27017"
+    )
+
+
+def test_rabbitmq_url_encodes_credentials_and_default_vhost():
+    service = DataRabbitMQ(
+        host="localhost",
+        port=5672,
+        ssh_username=None,
+        ssh_keypath=None,
+        ssh_password=None,
+        cred_username="user@name",
+        cred_password="p:a/ss#word",
+        skip_deployment=True
+    )
+
+    assert service.service_url == (
+        "amqp://user%40name:p%3Aa%2Fss%23word@localhost:5672/%2F"
+    )
+
+
+def test_rabbitmq_url_encodes_custom_vhost():
+    service = DataRabbitMQ(
+        host="localhost",
+        port=5672,
+        ssh_username=None,
+        ssh_keypath=None,
+        ssh_password=None,
+        cred_username="worker",
+        cred_password="secret",
+        skip_deployment=True,
+        vhost="team/name"
+    )
+
+    assert service.service_url == "amqp://worker:secret@localhost:5672/team%2Fname"
