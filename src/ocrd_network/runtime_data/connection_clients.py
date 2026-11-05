@@ -31,15 +31,28 @@ class CustomDockerClient(DockerClient):
         # The APIClient is provided here as a replacement for what the super-constructor does
         if not (user and host):
             raise ValueError("Missing 'user' and 'host' - both must be provided")
-        if ("password" in kwargs) and ("keypath" in kwargs):
-            if kwargs["password"] and kwargs["keypath"]:
-                raise ValueError("Both 'password' and 'keypath' provided - one must be provided")
-        if ("password" not in kwargs) and ("keypath" not in kwargs):
-            raise ValueError("Missing 'password' or 'keypath' - one must be provided")
-        self.api = APIClient(base_url=f"ssh://{host}", use_ssh_client=True, version="auto")
-        self.api.mount(
-            prefix="http+docker://ssh", adapter=self.CustomSshHttpAdapter(base_url=f"ssh://{user}@{host}:22", **kwargs)
-        )
+
+        password = kwargs.get("password")
+        keypath = kwargs.get("keypath")
+
+        if not password and not keypath:
+            raise ValueError("Missing credentials: provide either 'password' or 'keypath'")
+        if password and keypath:
+            raise ValueError("Conflicting credentials: provide either 'password' or 'keypath', not both")
+
+        self.api = APIClient(base_url=f"ssh://{host}", use_ssh_client=True, version="1.44")
+        try:
+            self.api.mount(
+                prefix="http+docker://ssh",
+                adapter=self.CustomSshHttpAdapter(base_url=f"ssh://{user}@{host}:22", **kwargs)
+            )
+            self.api._version = self.api._retrieve_server_version()
+        except Exception:
+            try:
+                self.api.close()
+            except Exception:
+                pass
+            raise
 
     class CustomSshHttpAdapter(SSHHTTPAdapter):
         def __init__(self, base_url, password: str = "", keypath: str = "") -> None:
