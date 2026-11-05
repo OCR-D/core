@@ -2,15 +2,16 @@ from __future__ import annotations
 from typing import Dict, List
 
 from ocrd_utils import getLogger
-from ocrd_network.constants import JobState, SERVER_ALL_PAGES_PLACEHOLDER
-from ocrd_network.database import db_get_processing_job, db_update_processing_job
-from ocrd_network.logging_utils import (
+
+from ..constants import JobState, SERVER_ALL_PAGES_PLACEHOLDER
+from ..database import db_get_processing_job, db_update_processing_job
+from ..logging_utils import (
     configure_file_handler_with_formatter,
     get_cache_locked_pages_logging_file_path,
     get_cache_processing_requests_logging_file_path
 )
-from ocrd_network.models import PYJobInput
-from ocrd_network.utils import call_sync
+from ..models import PYJobInput
+from ..utils import call_sync
 
 
 class CacheLockedPages:
