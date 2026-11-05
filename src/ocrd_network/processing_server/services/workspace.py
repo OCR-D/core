@@ -40,10 +40,7 @@ class WorkspaceService:
             self.workspace_locks[workspace_key] = asyncio.Lock()
         return self.workspace_locks[workspace_key]
 
-    def _get_workspace_lock(self, workspace_key: str) -> asyncio.Lock:
-        return self.get_workspace_lock(workspace_key)
-
-    def lock_pages(
+    def lock_pages_of_workspace(
         self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
     ) -> None:
         self.cache_locked_pages.lock_pages(
@@ -52,7 +49,7 @@ class WorkspaceService:
             page_ids=page_ids,
         )
 
-    def unlock_pages(
+    def unlock_pages_of_workspace(
         self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
     ) -> None:
         self.cache_locked_pages.unlock_pages(
@@ -61,16 +58,6 @@ class WorkspaceService:
             page_ids=page_ids,
         )
 
-    async def _lock_pages_of_workspace(
-        self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
-    ) -> None:
-        self.lock_pages(workspace_key, output_file_grps, page_ids)
-
-    async def _unlock_pages_of_workspace(
-        self, workspace_key: str, output_file_grps: List[str], page_ids: List[str]
-    ) -> None:
-        self.unlock_pages(workspace_key, output_file_grps, page_ids)
-
     async def maybe_stop_mets_server(
         self, workspace_key: str, mets_server_url: str, path_to_mets: str
     ) -> bool:
@@ -78,13 +65,6 @@ class WorkspaceService:
             return await self._maybe_stop_mets_server_locked(
                 workspace_key, mets_server_url, path_to_mets
             )
-
-    async def _maybe_stop_mets_server(
-        self, workspace_key: str, mets_server_url: str, path_to_mets: str
-    ) -> bool:
-        return await self.maybe_stop_mets_server(
-            workspace_key, mets_server_url, path_to_mets
-        )
 
     async def _maybe_stop_mets_server_locked(
         self, workspace_key: str, mets_server_url: str, path_to_mets: str
@@ -160,13 +140,6 @@ class WorkspaceService:
             workspace_key=workspace_key
         )
 
-    async def _consume_cached_jobs_of_workspace(
-        self, workspace_key: str, mets_server_url: str, path_to_mets: str
-    ) -> List[PYJobInput]:
-        return await self.consume_cached_jobs_of_workspace(
-            workspace_key, mets_server_url, path_to_mets
-        )
-
     async def cancel_cached_dependent_jobs(
         self, workspace_key: str, job_id: str
     ) -> None:
@@ -174,11 +147,6 @@ class WorkspaceService:
             workspace_key=workspace_key,
             processing_job_id=job_id,
         )
-
-    async def _cancel_cached_dependent_jobs(
-        self, workspace_key: str, job_id: str
-    ) -> None:
-        await self.cancel_cached_dependent_jobs(workspace_key, job_id)
 
     async def remove_job_from_request_cache(
         self, result_message: PYResultMessage
@@ -210,10 +178,10 @@ class WorkspaceService:
 
         try:
             if result_job_state == JobState.failed:
-                await self._cancel_cached_dependent_jobs(workspace_key, result_job_id)
+                await self.cancel_cached_dependent_jobs(workspace_key, result_job_id)
 
             async with self.get_workspace_lock(workspace_key):
-                await self._unlock_pages_of_workspace(
+                self.unlock_pages_of_workspace(
                     workspace_key=workspace_key,
                     output_file_grps=db_result_job.output_file_grps,
                     page_ids=expand_page_ids(db_result_job.page_id),
@@ -224,7 +192,7 @@ class WorkspaceService:
                         workspace_key=workspace_key, by_value=-1
                     )
 
-                consumed_cached_jobs = await self._consume_cached_jobs_of_workspace(
+                consumed_cached_jobs = await self.consume_cached_jobs_of_workspace(
                     workspace_key=workspace_key,
                     mets_server_url=mets_server_url,
                     path_to_mets=path_to_mets,

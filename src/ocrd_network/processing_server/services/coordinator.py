@@ -183,7 +183,7 @@ class ProcessingCoordinator:
                 data.path_to_mets if data.path_to_mets else data.workspace_id
             )
 
-            await self.workspace_service._lock_pages_of_workspace(
+            await self.workspace_service.lock_pages_of_workspace(
                 workspace_key=workspace_key,
                 output_file_grps=data.output_file_grps,
                 page_ids=expand_page_ids(data.page_id),
