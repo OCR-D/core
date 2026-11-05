@@ -254,10 +254,18 @@ network-integration-test: INTEGRATION_TEST_IN_DOCKER = docker exec core_test
 # but copy the assets from the build context instead:
 network-integration-test: export SKIP_ASSETS = 1
 network-integration-test: assets
-	{ $(INTEGRATION_TEST_COMPOSE) up --wait --wait-timeout 60 -d && \
-	$(INTEGRATION_TEST_IN_DOCKER) pytest -s -k 'test_integration_' -v --ignore-glob="tests/network/*ocrd_all*.py" && \
-	err=0 || { err=$$?; $(INTEGRATION_TEST_COMPOSE) logs; }; \
-	$(INTEGRATION_TEST_COMPOSE) down --remove-orphans; exit $$err; }
+	{ \
+		$(INTEGRATION_TEST_COMPOSE) up --wait --wait-timeout 60 -d && \
+		$(INTEGRATION_TEST_IN_DOCKER) pytest -s -k 'test_integration_' -v \
+			--ignore-glob="tests/network/*ocrd_all*.py" && \
+		err=0 || { \
+			err=$$?; \
+			$(INTEGRATION_TEST_COMPOSE) logs $$($(INTEGRATION_TEST_COMPOSE) config --services | \
+				grep -Ev '^(ocrd_network_mongo_db|ocrd_network_rabbit_mq)$$'); \
+		}; \
+		$(INTEGRATION_TEST_COMPOSE) down --remove-orphans; \
+		exit $$err; \
+	}
 
 benchmark:
 	$(PYTHON) -m pytest $(TESTDIR)/model/test_ocrd_mets_bench.py
