@@ -2,7 +2,9 @@ from unittest.mock import Mock
 from paramiko import SSHClient
 import pytest
 
+from ocrd_network.processing_server.server import ProcessingServer
 from ocrd_network.runtime_data.connection_clients import CustomDockerClient
+from ocrd_network.runtime_data.deployer import Deployer
 from ocrd_network.runtime_data.hosts import DataHost
 from ocrd_network.runtime_data.network_agents import deploy_agent_native_get_pid_hack
 from ocrd_network.runtime_data.network_services import DataMongoDB, DataRabbitMQ
@@ -231,3 +233,57 @@ def test_rabbitmq_url_encodes_custom_vhost():
     )
 
     assert service.service_url == "amqp://worker:secret@localhost:5672/team%2Fname"
+
+
+def test_stop_all_attempts_every_service_when_cleanup_fails():
+    deployer = Deployer.__new__(Deployer)
+    deployer.log = Mock()
+    deployer.stop_workers = Mock(side_effect=RuntimeError("Worker shutdown failed"))
+    deployer.stop_mongodb = Mock()
+    deployer.stop_rabbitmq = Mock()
+
+    with pytest.raises(RuntimeError, match="Worker shutdown failed"):
+        deployer.stop_all()
+
+    deployer.stop_workers.assert_called_once()
+    deployer.stop_mongodb.assert_called_once()
+    deployer.stop_rabbitmq.assert_called_once()
+
+
+def test_start_preserves_startup_error_when_cleanup_fails():
+    server = ProcessingServer.__new__(ProcessingServer)
+    server.log = Mock()
+    server.deployer = Mock()
+
+    startup_error = RuntimeError("RabbitMQ deployment failed")
+    cleanup_error = RuntimeError("Worker shutdown failed")
+
+    server.deployer.deploy_rabbitmq.side_effect = startup_error
+    server.deployer.stop_all.side_effect = cleanup_error
+
+    with pytest.raises(RuntimeError) as exc_info:
+        server.start()
+
+    assert exc_info.value is startup_error
+    server.deployer.stop_all.assert_called_once()
+
+
+def test_stop_workers_attempts_every_host_when_cleanup_fails():
+    deployer = Deployer.__new__(Deployer)
+    deployer.log = Mock()
+
+    first_host = Mock()
+    second_host = Mock()
+    third_host = Mock()
+    first_error = RuntimeError("First host shutdown failed")
+
+    first_host.stop_workers.side_effect = first_error
+    deployer.data_hosts = [first_host, second_host, third_host]
+
+    with pytest.raises(RuntimeError) as exc_info:
+        deployer.stop_workers()
+
+    assert exc_info.value is first_error
+    first_host.stop_workers.assert_called_once_with(logger=deployer.log)
+    second_host.stop_workers.assert_called_once_with(logger=deployer.log)
+    third_host.stop_workers.assert_called_once_with(logger=deployer.log)

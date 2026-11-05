@@ -125,7 +125,10 @@ class ProcessingServer(FastAPI):
         except Exception as error:
             self.log.exception(f"Failed to start the Processing Server, error: {error}")
             self.log.warning("Trying to stop previously deployed services and workers.")
-            self.deployer.stop_all()
+            try:
+                self.deployer.stop_all()
+            except Exception:
+                self.log.exception("Cleanup after startup failure also failed.")
             raise
         uvicorn_run(self, host=self.hostname, port=int(self.port))
 

@@ -9,7 +9,7 @@ Each Processing Worker is an instance of an OCR-D processor.
 from __future__ import annotations
 from pathlib import Path
 import psutil
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from ocrd import OcrdMetsServer
 from ocrd_utils import getLogger
@@ -41,8 +41,16 @@ class Deployer:
 
     def stop_workers(self) -> None:
         self.log.debug("Stopping processing workers...")
+        first_error: Optional[Exception] = None
         for host_data in self.data_hosts:
-            host_data.stop_workers(logger=self.log)
+            try:
+                host_data.stop_workers(logger=self.log)
+            except Exception as error:
+                self.log.exception("Failed to stop processing workers on a host")
+                if first_error is None:
+                    first_error = error
+        if first_error is not None:
+            raise first_error
 
     def deploy_rabbitmq(self) -> str:
         self.data_queue.deploy_rabbitmq(self.log)
@@ -60,13 +68,18 @@ class Deployer:
 
     def stop_all(self) -> None:
         """
-        The order of stopping is important to optimize graceful shutdown in the future.
-        If RabbitMQ server is stopped before stopping Processing Workers that may have
-        a bad outcome and leave Processing Workers in an unpredictable state.
+        Stop all deployed services, attempting every cleanup operation even if one fails.
         """
-        self.stop_workers()
-        self.stop_mongodb()
-        self.stop_rabbitmq()
+        first_error = None
+        for stop_service in (self.stop_workers, self.stop_mongodb, self.stop_rabbitmq):
+            try:
+                stop_service()
+            except Exception as error:
+                self.log.exception("Failed to stop a deployed service")
+                if first_error is None:
+                    first_error = error
+        if first_error is not None:
+            raise first_error
 
     def start_uds_mets_server(self, ws_dir_path: str) -> Path:
         log_file = get_mets_server_logging_file_path(mets_path=ws_dir_path)
