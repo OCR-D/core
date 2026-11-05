@@ -6,7 +6,9 @@
 !VERSION
 !LICENSE
 !README.md
-!.git
+# Git metadata is not required for building or testing the package.
+# Excluding it avoids unnecessary build-context changes when switching branches or committing.
+# !.git
 !tests
 !requirements_test.txt
 !.gitmodules

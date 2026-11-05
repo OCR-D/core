@@ -57,7 +57,9 @@ RUN python3 -m venv /usr/local \
     && pip install -r requirements.txt
 
 COPY src ./src
-COPY .git ./.git
+# Git metadata is only needed by image publishing targets, not for installing or testing the package.
+# Excluding it keeps commits and branch changes from invalidating cached build layers.
+# COPY .git ./.git
 
 RUN mv ./src/ocrd_utils/ocrd_logging.conf /etc \
     && make install-dev \
