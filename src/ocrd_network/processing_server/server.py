@@ -1,6 +1,5 @@
-from datetime import datetime
 from os import getpid
-from typing import Dict, List, Optional
+from typing import Dict
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -9,13 +8,9 @@ from ocrd_utils import initLogging, getLogger
 from uvicorn import run as uvicorn_run
 
 from ..database import initiate_database
-from ..logging_utils import (
-    configure_file_handler_with_formatter,
-    get_processing_server_logging_file_path,
-)
+from ..logging_utils import configure_file_handler_with_formatter, get_processing_server_logging_file_path
 from ..rabbitmq_utils import connect_rabbitmq_publisher
 from ..runtime_data import Deployer
-from ..server_utils import kill_mets_server_zombies
 from ..tcp_to_uds_mets_proxy import MetsServerProxy
 from ..utils import load_ocrd_all_tool_json
 
@@ -37,7 +32,7 @@ class ProcessingServer(FastAPI):
             title=self.title,
             on_startup=[self.on_startup],
             on_shutdown=[self.on_shutdown],
-            description="OCR-D Processing Server",
+            description="OCR-D Processing Server"
         )
 
         initLogging()
@@ -68,7 +63,7 @@ class ProcessingServer(FastAPI):
             "port": self.deployer.data_queue.port,
             "vhost": "/",
             "username": self.deployer.data_queue.cred_username,
-            "password": self.deployer.data_queue.cred_password,
+            "password": self.deployer.data_queue.cred_password
         }
         self.rmq_publisher = None
 
@@ -80,7 +75,7 @@ class ProcessingServer(FastAPI):
             internal_job_callback_url=self.internal_job_callback_url,
             deployer=self.deployer,
             use_tcp_mets=self.use_tcp_mets,
-            multiplexing_endpoint=self.multiplexing_endpoint,
+            multiplexing_endpoint=self.multiplexing_endpoint
         )
         self.processing_coordinator = ProcessingCoordinator(
             log=self.log,
@@ -89,24 +84,24 @@ class ProcessingServer(FastAPI):
             workspace_service=self.workspace_service,
             internal_job_callback_url=self.internal_job_callback_url,
             use_tcp_mets=self.use_tcp_mets,
-            multiplexing_endpoint=self.multiplexing_endpoint,
+            multiplexing_endpoint=self.multiplexing_endpoint
         )
         self.workflow_service = WorkflowService(
             log=self.log,
             processing_job_callback=self.processing_coordinator.validate_and_forward_job_to_worker,
             worker_validation_callback=self.processing_service.validate_worker_existence,
-            stop_mets_server_callback=self.workspace_service.maybe_stop_mets_server,
+            stop_mets_server_callback=self.workspace_service.maybe_stop_mets_server
         )
 
         self.workspace_service.set_cached_jobs_callback(self.processing_coordinator.push_cached_jobs_to_workers)
         self.workspace_service.set_workflow_completion_callback(self.workflow_service.maybe_finish_workflow)
 
-        self.include_router(create_others_router(self))
+        self.include_router(create_others_router(self, self.log))
         self.include_router(
             create_processing_router(
                 processing_service=self.processing_service,
                 processing_coordinator=self.processing_coordinator,
-                workspace_service=self.workspace_service,
+                workspace_service=self.workspace_service
             )
         )
         self.include_router(create_workflow_router(self.workflow_service))
@@ -118,7 +113,7 @@ class ProcessingServer(FastAPI):
             content = {"status_code": 10422, "message": exc_str, "data": None}
             return JSONResponse(
                 content=content,
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
             )
 
     # Application lifecycle
@@ -127,20 +122,14 @@ class ProcessingServer(FastAPI):
         try:
             self.rabbitmq_url = self.deployer.deploy_rabbitmq()
             self.mongodb_url = self.deployer.deploy_mongodb()
-            self.rmq_publisher = connect_rabbitmq_publisher(
-                self.log, self.rmq_data, enable_acks=True
-            )
+            self.rmq_publisher = connect_rabbitmq_publisher(self.log, self.rmq_data, enable_acks=True)
             self.processing_service.rmq_publisher = self.rmq_publisher
-            self.deployer.deploy_workers(
-                mongodb_url=self.mongodb_url,
-                rabbitmq_url=self.rabbitmq_url,
-            )
+            self.deployer.deploy_workers(mongodb_url=self.mongodb_url, rabbitmq_url=self.rabbitmq_url)
         except Exception as error:
             self.log.exception(f"Failed to start the Processing Server, error: {error}")
             self.log.warning("Trying to stop previously deployed services and workers.")
             self.deployer.stop_all()
             raise
-
         uvicorn_run(self, host=self.hostname, port=int(self.port))
 
     async def on_startup(self):
@@ -148,38 +137,10 @@ class ProcessingServer(FastAPI):
         await initiate_database(db_url=self.mongodb_url)
 
     async def on_shutdown(self) -> None:
-        await self.stop_deployed_agents()
-
-    async def stop_deployed_agents(self) -> None:
         self.deployer.stop_all()
-
-    # Other endpoints
 
     async def forward_tcp_request_to_uds_mets_server(self, request: Request) -> Dict:
         request_body = await request.json()
         ws_dir_path = request_body["workspace_path"]
         self.deployer.start_uds_mets_server(ws_dir_path=ws_dir_path)
         return self.mets_server_proxy.forward_tcp_request(request_body=request_body)
-
-    async def home_page(self):
-        return {
-            "message": f"The home page of the {self.title}",
-            "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        }
-
-    async def user_workflow_callback_test(self, request: Request):
-        payload = await request.json()
-        job_id = payload.get("job_id")
-        state = payload.get("state")
-        self.log.info(
-            f"Received test workflow callback: job_id={job_id}, state={state}"
-        )
-        return JSONResponse(
-            status_code=200,
-            content={"received": True, "job_id": job_id, "state": state},
-        )
-
-    async def kill_mets_server_zombies(
-        self, minutes_ago: Optional[int] = None, dry_run: Optional[bool] = None
-    ) -> List[int]:
-        return kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)

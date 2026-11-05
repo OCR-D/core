@@ -1,18 +1,43 @@
-from fastapi import APIRouter
-from typing import TYPE_CHECKING
+from datetime import datetime
+from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
+from logging import Logger
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 from ocrd_network.constants import ServerApiTags
+from ocrd_network.server_utils import kill_mets_server_zombies
 
 if TYPE_CHECKING:
     from ..server import ProcessingServer
 
 
-def create_others_router(server: "ProcessingServer") -> APIRouter:
+async def kill_mets_server_zombies_endpoint(
+    minutes_ago: Optional[int] = None, dry_run: Optional[bool] = None
+) -> List[int]:
+    return kill_mets_server_zombies(minutes_ago=minutes_ago, dry_run=dry_run)
+
+def create_others_router(server: "ProcessingServer", log: Logger) -> APIRouter:
     router = APIRouter()
+
+    async def home_page() -> Dict[str, str]:
+        return {
+            "message": f"The home page of the {server.title}",
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        }
+
+    async def user_workflow_callback_test(request: Request) -> JSONResponse:
+        payload = await request.json()
+        job_id = payload.get("job_id")
+        state = payload.get("state")
+        log.info(f"Received test workflow callback: job_id={job_id}, state={state}")
+        return JSONResponse(
+            status_code=200,
+            content={"received": True, "job_id": job_id, "state": state}
+        )
 
     router.add_api_route(
         path="/",
-        endpoint=server.home_page,
+        endpoint=home_page,
         methods=["GET"],
         status_code=200,
         summary="Get information about the processing server"
@@ -20,7 +45,7 @@ def create_others_router(server: "ProcessingServer") -> APIRouter:
 
     router.add_api_route(
         path="/user_workflow_callback_test",
-        endpoint=server.user_workflow_callback_test,
+        endpoint=user_workflow_callback_test,
         methods=["POST"],
         status_code=200,
         summary="Used for testing the user workflow callback mechanism without requiring a separate server"
@@ -28,7 +53,7 @@ def create_others_router(server: "ProcessingServer") -> APIRouter:
 
     router.add_api_route(
         path="/stop",
-        endpoint=server.stop_deployed_agents,
+        endpoint=server.on_shutdown,
         methods=["POST"],
         tags=[ServerApiTags.TOOLS],
         summary="Stop database, queue and processing-workers"
@@ -44,7 +69,7 @@ def create_others_router(server: "ProcessingServer") -> APIRouter:
 
     router.add_api_route(
         path="/kill_mets_server_zombies",
-        endpoint=server.kill_mets_server_zombies,
+        endpoint=kill_mets_server_zombies,
         methods=["DELETE"],
         tags=[ServerApiTags.WORKFLOW, ServerApiTags.PROCESSING],
         status_code=200,
