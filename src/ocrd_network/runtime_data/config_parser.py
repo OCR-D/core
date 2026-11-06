@@ -16,28 +16,29 @@ def validate_and_load_config(config_path: str) -> Dict[str, Any]:
     return ps_config
 
 
+def _parse_network_service_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    ssh = config.get("ssh", {})
+    credentials = config.get("credentials", {})
+    return {
+        "host": config["address"],
+        "port": int(config["port"]),
+        "ssh_username": ssh.get("username"),
+        "ssh_keypath": ssh.get("path_to_privkey"),
+        "ssh_password": ssh.get("password"),
+        "cred_username": credentials.get("username"),
+        "cred_password": credentials.get("password"),
+        "skip_deployment": config.get("skip_deployment", False)
+    }
+
+
 # Parse MongoDB data from the Processing Server configuration file
 def parse_mongodb_data(db_config: Dict[str, Any]) -> DataMongoDB:
-    db_ssh = db_config.get("ssh", {})
-    db_credentials = db_config.get("credentials", {})
-    return DataMongoDB(
-        host=db_config["address"], port=int(db_config["port"]), ssh_username=db_ssh.get("username", None),
-        ssh_keypath=db_ssh.get("path_to_privkey", None), ssh_password=db_ssh.get("password", None),
-        cred_username=db_credentials.get("username", None), cred_password=db_credentials.get("password", None),
-        skip_deployment=db_config.get("skip_deployment", False)
-    )
+    return DataMongoDB(**_parse_network_service_config(db_config))
 
 
 # Parse RabbitMQ data from the Processing Server configuration file
 def parse_rabbitmq_data(rmq_config: Dict[str, Any]) -> DataRabbitMQ:
-    rmq_ssh = rmq_config.get("ssh", {})
-    rmq_credentials = rmq_config.get("credentials", {})
-    return DataRabbitMQ(
-        host=rmq_config["address"], port=int(rmq_config["port"]), ssh_username=rmq_ssh.get("username", None),
-        ssh_keypath=rmq_ssh.get("path_to_privkey", None), ssh_password=rmq_ssh.get("password", None),
-        cred_username=rmq_credentials.get("username", None), cred_password=rmq_credentials.get("password", None),
-        skip_deployment=rmq_config.get("skip_deployment", False)
-    )
+    return DataRabbitMQ(**_parse_network_service_config(rmq_config))
 
 
 def parse_hosts_data(hosts_config: List[Dict[str, Any]]) -> List[DataHost]:
