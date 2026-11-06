@@ -1,7 +1,8 @@
 from requests_unixsocket import Session as requests_unixsocket_session
-from .utils import get_uds_path, convert_url_to_uds_format
-from typing import Dict
+from typing import Any, Dict
 from ocrd_utils import getLogger
+
+from .utils import get_uds_path, convert_url_to_uds_format
 
 SUPPORTED_METHOD_TYPES = ["GET", "POST", "PUT", "DELETE"]
 
@@ -11,7 +12,7 @@ class MetsServerProxy:
         self.session: requests_unixsocket_session = requests_unixsocket_session()
         self.log = getLogger("ocrd_network.tcp_to_uds_mets_proxy")
 
-    def forward_tcp_request(self, request_body) -> Dict:
+    def forward_tcp_request(self, request_body: Dict[str, Any]) -> Dict[str, Any]:
         """Forward request to uds mets server
 
         The caller of the function must know how the request has to be translated.

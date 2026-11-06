@@ -83,15 +83,16 @@ def generate_workflow_content_hash(workflow_content: str, encoding: str = "utf-8
     return md5(workflow_content.encode(encoding)).hexdigest()
 
 
-def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3) -> bool:
+def is_url_responsive(url: str, tries: int = 1, wait_time: int = 3, timeout: float = 5.0) -> bool:
     while tries > 0:
         try:
-            if requests_get(url).status_code == 200:
+            if requests_get(url, timeout=timeout).status_code == 200:
                 return True
         except Exception:
-            continue
-        sleep(wait_time)
+            pass
         tries -= 1
+        if tries:
+            sleep(wait_time)
     return False
 
 
@@ -166,6 +167,7 @@ def stop_mets_server(logger: Logger, mets_server_url: str, ws_dir_path: str) -> 
         response = Session_TCP().post(url=f"{mets_server_url}", json=request_json)
         return response.status_code == 200
     elif protocol == "uds":
+        mets_server_url = convert_url_to_uds_format(mets_server_url)
         logger.info(f"Sending DELETE request to: {mets_server_url}/")
         response = Session_UDS().delete(url=f"{mets_server_url}/")
         return response.status_code == 200

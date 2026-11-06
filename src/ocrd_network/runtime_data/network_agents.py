@@ -8,11 +8,6 @@ from ..constants import DeployType
 
 # TODO: Find appropriate replacement for the hack
 def deploy_agent_native_get_pid_hack(logger: Logger, ssh_client, start_cmd: str):
-    channel = ssh_client.invoke_shell()
-    stdin, stdout = channel.makefile("wb"), channel.makefile("rb")
-    # TODO: set back to debug
-    logger.info(f"Executing command: {start_cmd}")
-
     # TODO: This hack should still be fixed
     #   Note left from @joschrew
     #   the only way (I could find) to make it work to start a process in the background and
@@ -21,13 +16,24 @@ def deploy_agent_native_get_pid_hack(logger: Logger, ssh_client, start_cmd: str)
     #   `xyz` before and after the code to easily be able to filter out the pid via regex when
     #   returning from the function
 
-    stdin.write(f"{start_cmd}\n")
-    stdin.write("echo xyz$!xyz \n exit \n")
-    output = stdout.read().decode("utf-8")
-    stdout.close()
-    stdin.close()
-    pid = re_search(r"xyz([0-9]+)xyz", output).group(1)  # type: ignore
-    return pid
+    channel = ssh_client.invoke_shell()
+    try:
+        stdin, stdout = channel.makefile("wb"), channel.makefile("rb")
+        try:
+            logger.info(f"Executing command: {start_cmd}")
+            stdin.write(f"{start_cmd}\n")
+            stdin.write("echo xyz$!xyz \n exit \n")
+            output = stdout.read().decode("utf-8")
+        finally:
+            stdout.close()
+            stdin.close()
+    finally:
+        channel.close()
+
+    match = re_search(r"xyz([0-9]+)xyz", output)
+    if match is None:
+        raise RuntimeError("Could not determine the PID of the deployed network agent")
+    return match.group(1)
 
 
 # TODO: Implement the actual method that is missing
@@ -38,7 +44,7 @@ def deploy_agent_docker_template(logger: Logger, docker_client, start_cmd: str):
     assert res and res.id, f"Starting docker network agent has failed with command: {start_cmd}"
     return res.id
     """
-    raise Exception("Deploying docker type agents is not supported yet!")
+    raise NotImplementedError("Deploying Docker-type agents is not supported yet.")
 
 
 class DataNetworkAgent:

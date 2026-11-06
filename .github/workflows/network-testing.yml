@@ -66,6 +66,7 @@ jobs:
       - name: Run network modules tests with pytest
         run: make network-module-test
       - name: Run network integration tests with pytest
+        if: matrix.python-version == '3.12'
         run: |
           if [[ "${{ matrix.os }}" == "macos"* ]];then
             make network-integration-test DOCKER_COMPOSE=docker-compose

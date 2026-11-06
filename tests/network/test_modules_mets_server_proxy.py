@@ -13,7 +13,7 @@ WORKSPACE_UNIQUE_IDENTIFIER = "http://resolver.staatsbibliothek-berlin.de/SBB000
 TEST_WORKSPACE_DIR = "/tmp/ocrd-mets-server-proxy"
 
 
-@fixture(scope="function", name="start_uds_mets_server")
+@fixture(scope="module", name="start_uds_mets_server")
 def fixture_start_uds_mets_server() -> Path:
     if exists(TEST_WORKSPACE_DIR):
         rmtree(TEST_WORKSPACE_DIR, ignore_errors=True)
@@ -21,8 +21,14 @@ def fixture_start_uds_mets_server() -> Path:
 
     deployer = Deployer(config_path=PS_CONFIG_PATH)
     mets_server_url = deployer.start_uds_mets_server(ws_dir_path=TEST_WORKSPACE_DIR)
-    yield mets_server_url
-    rmtree(TEST_WORKSPACE_DIR, ignore_errors=True)
+    try:
+        yield mets_server_url
+    finally:
+        deployer.stop_uds_mets_server(
+            mets_server_url=str(mets_server_url),
+            path_to_mets=str(Path(TEST_WORKSPACE_DIR) / "mets.xml"),
+        )
+        rmtree(TEST_WORKSPACE_DIR, ignore_errors=True)
 
 
 def test_unique_identifier(start_uds_mets_server):
