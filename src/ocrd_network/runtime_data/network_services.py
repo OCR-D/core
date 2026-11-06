@@ -48,6 +48,17 @@ class DataNetworkService:
         return safe_env
 
     @staticmethod
+    def _build_service_url(
+        protocol: str, host: str, port: int,
+        username: Optional[str] = None, password: Optional[str] = None,
+        path: Optional[str] = None
+    ) -> str:
+        credentials = ""
+        if username and password:
+            credentials = f"{quote(username, safe='')}:{quote(password, safe='')}@"
+        return f"{protocol}://{credentials}{host}:{port}{path or ''}"
+
+    @staticmethod
     def deploy_docker_service(
         logger: Logger, service_data: Union[DataMongoDB, DataRabbitMQ], image: str, env: Optional[List[str]],
         ports_mapping: Optional[Dict], detach: bool = True, remove: bool = True
@@ -88,6 +99,12 @@ class DataNetworkService:
         finally:
             client.close()
 
+    def _stop_service(self, logger: Logger, service_name: str) -> None:
+        logger.info(f"Stopping the {service_name} service...")
+        self.stop_docker_service(logger, service_data=self)
+        self.pid = None
+        logger.info(f"The {service_name} service is stopped")
+
 
 class DataMongoDB(DataNetworkService):
     def __init__(
@@ -104,11 +121,7 @@ class DataMongoDB(DataNetworkService):
     ) -> None:
         if bool(cred_username) != bool(cred_password):
             raise ValueError("MongoDB credentials require both a username and a password")
-        service_url = f"{protocol}://{host}:{port}"
-        if cred_username and cred_password:
-            username = quote(cred_username, safe="")
-            password = quote(cred_password, safe="")
-            service_url = f"{protocol}://{username}:{password}@{host}:{port}"
+        service_url = self._build_service_url(protocol, host, port, cred_username, cred_password)
         super().__init__(
             host=host, port=port, ssh_username=ssh_username, ssh_keypath=ssh_keypath, ssh_password=ssh_password,
             cred_username=cred_username, cred_password=cred_password, service_url=service_url,
@@ -141,10 +154,7 @@ class DataMongoDB(DataNetworkService):
     def stop_service_mongodb(self, logger: Logger) -> None:
         if self.skip_deployment:
             return
-        logger.info("Stopping the MongoDB service...")
-        self.stop_docker_service(logger, service_data=self)
-        self.pid = None
-        logger.info("The MongoDB service is stopped")
+        self._stop_service(logger, "MongoDB")
 
 
 class DataRabbitMQ(DataNetworkService):
@@ -163,11 +173,9 @@ class DataRabbitMQ(DataNetworkService):
     ) -> None:
         self.vhost = f"/{vhost}" if vhost != "/" else vhost
         encoded_vhost = quote(vhost, safe="")
-        service_url = f"{protocol}://{host}:{port}/{encoded_vhost}"
-        if cred_username and cred_password:
-            username = quote(cred_username, safe="")
-            password = quote(cred_password, safe="")
-            service_url = f"{protocol}://{username}:{password}@{host}:{port}/{encoded_vhost}"
+        service_url = self._build_service_url(
+            protocol, host, port, cred_username, cred_password, f"/{encoded_vhost}"
+        )
         super().__init__(
             host=host, port=port, ssh_username=ssh_username, ssh_keypath=ssh_keypath, ssh_password=ssh_password,
             cred_username=cred_username, cred_password=cred_password, service_url=service_url,
@@ -206,7 +214,4 @@ class DataRabbitMQ(DataNetworkService):
     def stop_service_rabbitmq(self, logger: Logger) -> None:
         if self.skip_deployment:
             return
-        logger.info("Stopping the RabbitMQ service...")
-        self.stop_docker_service(logger, service_data=self)
-        self.pid = None
-        logger.info("The RabbitMQ service is stopped")
+        self._stop_service(logger, "RabbitMQ")
