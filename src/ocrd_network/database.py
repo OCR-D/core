@@ -1,57 +1,37 @@
-""" The database is used to store information regarding jobs and workspaces.
+"""The database stores information regarding jobs and workspaces.
 
-Jobs: for every process-request a job is inserted into the database with an uuid, status and
-information about the process like parameters and file groups. It is mainly used to track the status
-(`ocrd_network.constants.JobState`) of a job so that the state of a job can be queried. Finished
+Jobs: For every process request, a job is inserted into the database with a UUID, status and
+information about the process, such as parameters and file groups. It is mainly used to track the
+status (`ocrd_network.constants.JobState`) of a job so that its state can be queried. Finished
 jobs are not deleted from the database.
 
-Workspaces: A job or a processor always runs on a workspace. So a processor needs the information
-where the workspace is available. This information can be set with providing an absolute path or a
-workspace_id. With the latter, the database is used to convert the workspace_id to a path.
+Workspaces: A job or processor always runs on a workspace. A processor therefore needs to know
+where the workspace is available. This information can be set by providing an absolute path or a
+workspace_id. With the latter, the database converts the workspace_id to a path.
 
 XXX: Currently the information is not preserved after the processing-server shuts down as the
-database (runs in docker) currently has no volume set.
+database (runs in Docker) currently has no volume set.
 """
-from beanie import init_beanie
-from beanie.operators import In
 from pathlib import Path
-from pymongo import AsyncMongoClient, MongoClient, ReturnDocument, uri_parser as mongo_uri_parser
 from re import sub as re_sub
 from typing import List
 from uuid import uuid4
 
-from .models import DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript
+from beanie import init_beanie
+from beanie.operators import In
+from pymongo import AsyncMongoClient, MongoClient, ReturnDocument, uri_parser as mongo_uri_parser
+
+from .models import DBProcessorJob, DBWorkflowJob, DBWorkflowScript, DBWorkspace
 from .utils import call_sync
 
 
 UPDATABLE_WORKSPACE_FIELDS = {
-    "workspace_id",
-    "workspace_mets_path",
-    "ocrd_identifier",
-    "bagit_profile_identifier",
-    "ocrd_base_version_checksum",
-    "ocrd_mets",
-    "bag_info_adds",
-    "deleted",
-    "mets_server_url",
+    "workspace_id", "workspace_mets_path", "ocrd_identifier", "bagit_profile_identifier",
+    "ocrd_base_version_checksum", "ocrd_mets", "bag_info_adds", "deleted", "mets_server_url",
 }
-
 UPDATABLE_PROCESSING_JOB_FIELDS = {
-    "state",
-    "start_time",
-    "end_time",
-    "path_to_mets",
-    "exec_time",
-    "log_file_path",
+    "state", "start_time", "end_time", "path_to_mets", "exec_time", "log_file_path",
 }
-
-
-async def initiate_database(db_url: str, db_name: str = 'ocrd'):
-    client = AsyncMongoClient(db_url)
-    await init_beanie(
-        database=client.get_default_database(default=db_name),
-        document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript]
-    )
 
 
 async def _get_document(model, query, error_message):
@@ -73,14 +53,25 @@ async def _update_document(document, updates, updatable_fields):
     return document
 
 
+# Database initialization
+
+async def initiate_database(db_url: str, db_name: str = 'ocrd'):
+    client = AsyncMongoClient(db_url)
+    await init_beanie(
+        database=client.get_default_database(default=db_name),
+        document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript]
+    )
+
+
 @call_sync
 async def sync_initiate_database(db_url: str, db_name: str = 'ocrd'):
     await initiate_database(db_url, db_name)
 
 
+# Workspace operations
+
 async def db_create_workspace(mets_path: str) -> DBWorkspace:
-    """ Create a workspace-database entry only from a mets-path
-    """
+    """Create a workspace-database entry only from a mets-path."""
     if not Path(mets_path).exists():
         raise FileNotFoundError(f'Cannot create DB workspace entry, `{mets_path}` does not exist!')
     try:
@@ -108,14 +99,12 @@ async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = 
     workspace = None
     if workspace_id:
         workspace = await _get_document(
-            DBWorkspace,
-            DBWorkspace.workspace_id == workspace_id,
+            DBWorkspace, DBWorkspace.workspace_id == workspace_id,
             f'Workspace with id "{workspace_id}" not in the DB.',
         )
     if workspace_mets_path:
         workspace = await _get_document(
-            DBWorkspace,
-            DBWorkspace.workspace_mets_path == workspace_mets_path,
+            DBWorkspace, DBWorkspace.workspace_mets_path == workspace_mets_path,
             f'Workspace with path "{workspace_mets_path}" not in the DB.',
         )
     return workspace
@@ -132,14 +121,12 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
         raise ValueError('Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
     if workspace_id:
         workspace = await _get_document(
-            DBWorkspace,
-            DBWorkspace.workspace_id == workspace_id,
+            DBWorkspace, DBWorkspace.workspace_id == workspace_id,
             f'Workspace with id "{workspace_id}" not in the DB.',
         )
     if workspace_mets_path:
         workspace = await _get_document(
-            DBWorkspace,
-            DBWorkspace.workspace_mets_path == workspace_mets_path,
+            DBWorkspace, DBWorkspace.workspace_mets_path == workspace_mets_path,
             f'Workspace with path "{workspace_mets_path}" not in the DB.',
         )
     return await _update_document(workspace, kwargs, UPDATABLE_WORKSPACE_FIELDS)
@@ -149,6 +136,8 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
 async def sync_db_update_workspace(workspace_id: str = None, workspace_mets_path: str = None, **kwargs) -> DBWorkspace:
     return await db_update_workspace(workspace_id=workspace_id, workspace_mets_path=workspace_mets_path, **kwargs)
 
+
+# Processing job operations
 
 async def db_create_processing_job(db_processing_job: DBProcessorJob) -> DBProcessorJob:
     return await db_processing_job.insert()
@@ -161,8 +150,7 @@ async def sync_db_create_processing_job(db_processing_job: DBProcessorJob) -> DB
 
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
     return await _get_document(
-        DBProcessorJob,
-        DBProcessorJob.job_id == job_id,
+        DBProcessorJob, DBProcessorJob.job_id == job_id,
         f'Processing job with id "{job_id}" not in the DB.'
     )
 
@@ -182,12 +170,19 @@ async def sync_db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob
     return await db_update_processing_job(job_id=job_id, **kwargs)
 
 
+async def db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
+    return await DBProcessorJob.find(In(DBProcessorJob.job_id, job_ids)).to_list()
+
+
+@call_sync
+async def sync_db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
+    return await db_get_processing_jobs(job_ids)
+
+
+# Processing job callbacks
+
 async def db_claim_result_callback(job_id: str) -> bool:
-    """
-    Atomically claim a result callback for processing.
-    Returns True only if the callback has not already been processed
-    and is not currently being processed.
-    """
+    """Atomically claim a result callback for processing."""
     result = await DBProcessorJob.get_pymongo_collection().find_one_and_update(
         {
             "job_id": job_id,
@@ -199,11 +194,9 @@ async def db_claim_result_callback(job_id: str) -> bool:
     )
     return result is not None
 
+
 async def db_claim_result_counter_decrement(job_id: str) -> bool:
-    """
-    Atomically claim the result callback's counter decrement.
-    Returns True only once per processing job.
-    """
+    """Atomically claim the result callback's counter decrement."""
     result = await DBProcessorJob.get_pymongo_collection().find_one_and_update(
         {
             "job_id": job_id,
@@ -227,10 +220,7 @@ async def db_release_result_callback_claim(job_id: str) -> None:
 
 
 async def db_complete_result_callback(job_id: str) -> bool:
-    """
-    Mark a claimed result callback as fully processed.
-    Returns True if the callback was successfully marked complete.
-    """
+    """Mark a claimed result callback as fully processed."""
     result = await DBProcessorJob.get_pymongo_collection().update_one(
         {
             "job_id": job_id,
@@ -247,6 +237,8 @@ async def db_complete_result_callback(job_id: str) -> bool:
     return result.modified_count == 1
 
 
+# Workflow job operations
+
 async def db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkflowJob:
     return await db_workflow_job.insert()
 
@@ -258,8 +250,7 @@ async def sync_db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkf
 
 async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return await _get_document(
-        DBWorkflowJob,
-        DBWorkflowJob.job_id == job_id,
+        DBWorkflowJob, DBWorkflowJob.job_id == job_id,
         f'Workflow job with id "{job_id}" not in the DB.',
     )
 
@@ -269,15 +260,7 @@ async def sync_db_get_workflow_job(job_id: str) -> DBWorkflowJob:
     return await db_get_workflow_job(job_id)
 
 
-async def db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
-    jobs = await DBProcessorJob.find(In(DBProcessorJob.job_id, job_ids)).to_list()
-    return jobs
-
-
-@call_sync
-async def sync_db_get_processing_jobs(job_ids: List[str]) -> List[DBProcessorJob]:
-    return await db_get_processing_jobs(job_ids)
-
+# Workflow script operations
 
 async def db_create_workflow_script(db_workflow_script: DBWorkflowScript) -> DBWorkflowScript:
     return await db_workflow_script.insert()
@@ -290,8 +273,7 @@ async def sync_db_create_workflow_script(db_workflow_script: DBWorkflowScript) -
 
 async def db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
     return await _get_document(
-        DBWorkflowScript,
-        DBWorkflowScript.workflow_id == workflow_id,
+        DBWorkflowScript, DBWorkflowScript.workflow_id == workflow_id,
         f'Workflow-script with id "{workflow_id}" not in the DB.',
     )
 
@@ -303,8 +285,7 @@ async def sync_db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
 
 async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkflowScript:
     return await _get_document(
-        DBWorkflowScript,
-        DBWorkflowScript.content_hash == content_hash,
+        DBWorkflowScript, DBWorkflowScript.content_hash == content_hash,
         f'Workflow-script with content_hash "{content_hash}" not in the DB.',
     )
 
@@ -314,9 +295,10 @@ async def sync_db_find_first_workflow_script_by_content(content_hash: str) -> DB
     return await db_find_first_workflow_script_by_content(content_hash)
 
 
+# Database validation
+
 def verify_database_uri(mongodb_address: str) -> str:
     try:
-        # perform validation check
         mongo_uri_parser.parse_uri(uri=mongodb_address, validate=True)
     except Exception as error:
         raise ValueError(f"The MongoDB address '{mongodb_address}' is in wrong format, {error}")
@@ -331,7 +313,6 @@ def verify_mongodb_available(mongo_url: str) -> None:
         return
     raise RuntimeError(f"Verifying connection has failed: {mongodb_test_url}")
     """
-
     try:
         client = MongoClient(mongo_url, serverSelectionTimeoutMS=60000.0)
         client.admin.command("ismaster")
