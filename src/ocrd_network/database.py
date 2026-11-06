@@ -310,10 +310,9 @@ async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkf
     return workflow
 
 
-# TODO: Resolve the inconsistency between the async and sync versions of the same method
 @call_sync
-async def sync_db_find_first_workflow_script_by_content(workflow_id: str) -> DBWorkflowScript:
-    return await db_get_workflow_script(workflow_id)
+async def sync_db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkflowScript:
+    return await db_find_first_workflow_script_by_content(content_hash)
 
 
 def verify_database_uri(mongodb_address: str) -> str:
