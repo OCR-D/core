@@ -102,6 +102,8 @@ class DataMongoDB(DataNetworkService):
         skip_deployment: bool,
         protocol: str = "mongodb"
     ) -> None:
+        if bool(cred_username) != bool(cred_password):
+            raise ValueError("MongoDB credentials require both a username and a password")
         service_url = f"{protocol}://{host}:{port}"
         if cred_username and cred_password:
             username = quote(cred_username, safe="")

@@ -443,3 +443,38 @@ def test_stop_workers_attempts_docker_workers_when_ssh_connection_fails(monkeypa
     assert host.workers_native == [native_worker]
     assert host.workers_docker == []
     docker_client.close.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "cred_username, cred_password",
+    [
+        ("user", None),
+        (None, "secret"),
+    ]
+)
+def test_mongodb_rejects_incomplete_credentials(cred_username, cred_password):
+    with pytest.raises(ValueError, match="MongoDB credentials require both"):
+        DataMongoDB(
+            host="localhost",
+            port=27017,
+            ssh_username=None,
+            ssh_keypath=None,
+            ssh_password=None,
+            cred_username=cred_username,
+            cred_password=cred_password,
+            skip_deployment=True
+        )
+
+
+def test_mongodb_accepts_missing_credentials():
+    service = DataMongoDB(
+        host="localhost",
+        port=27017,
+        ssh_username=None,
+        ssh_keypath=None,
+        ssh_password=None,
+        cred_username=None,
+        cred_password=None,
+        skip_deployment=True
+    )
+    assert service.service_url == "mongodb://localhost:27017"
