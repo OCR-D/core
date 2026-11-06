@@ -86,6 +86,16 @@ class DataNetworkService:
         finally:
             client.close()
 
+    def _deploy_service(
+        self, logger: Logger, image: str, env: Optional[List[str]],
+        ports_mapping: Optional[Dict], verifier, service_description: str,
+        detach: bool, remove: bool
+    ) -> str:
+        self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
+        verifier()
+        logger.info(f"The {service_description} was deployed on host: {self.host}")
+        return self.service_url
+
     @staticmethod
     def stop_docker_service(logger: Logger, service_data: Union[DataMongoDB, DataRabbitMQ]) -> None:
         if not service_data.pid:
@@ -145,11 +155,10 @@ class DataMongoDB(DataNetworkService):
                 ]
         if not ports_mapping:
             ports_mapping = {27017: self.port}
-        self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
-        verify_mongodb_available(self.service_url)
-        mongodb_host_info = f"{self.host}:{self.port}"
-        logger.info(f"The MongoDB was deployed on host: {mongodb_host_info}")
-        return self.service_url
+        return self._deploy_service(
+            logger, image, env, ports_mapping, lambda: verify_mongodb_available(self.service_url),
+            "MongoDB service", detach, remove
+        )
 
     def stop_service_mongodb(self, logger: Logger) -> None:
         if self.skip_deployment:
@@ -206,10 +215,11 @@ class DataRabbitMQ(DataNetworkService):
             # 25672: used for internode and CLI tools communication and is allocated from
             # a dynamic range (limited to a single port by default, computed as AMQP port + 20000)
             ports_mapping = {5672: self.port, 15672: 15672, 25672: 25672}
-        self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
-        verify_rabbitmq_available(logger=logger, rabbitmq_address=self.service_url)
-        logger.info(f"The RabbitMQ server was deployed on host: {rmq_host}:{rmq_port}{rmq_vhost}")
-        return self.service_url
+        return self._deploy_service(
+            logger, image, env, ports_mapping,
+            lambda: verify_rabbitmq_available(logger=logger, rabbitmq_address=self.service_url),
+            f"RabbitMQ server on {self.host}:{self.port}{self.vhost}", detach, remove
+        )
 
     def stop_service_rabbitmq(self, logger: Logger) -> None:
         if self.skip_deployment:
