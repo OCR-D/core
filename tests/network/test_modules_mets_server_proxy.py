@@ -13,7 +13,7 @@ WORKSPACE_UNIQUE_IDENTIFIER = "http://resolver.staatsbibliothek-berlin.de/SBB000
 TEST_WORKSPACE_DIR = "/tmp/ocrd-mets-server-proxy"
 
 
-@fixture(scope="function", name="start_uds_mets_server")
+@fixture(scope="module", name="start_uds_mets_server")
 def fixture_start_uds_mets_server() -> Path:
     if exists(TEST_WORKSPACE_DIR):
         rmtree(TEST_WORKSPACE_DIR, ignore_errors=True)
