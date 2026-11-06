@@ -24,12 +24,53 @@ from .models import DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript
 from .utils import call_sync
 
 
+UPDATABLE_WORKSPACE_FIELDS = {
+    "workspace_id",
+    "workspace_mets_path",
+    "ocrd_identifier",
+    "bagit_profile_identifier",
+    "ocrd_base_version_checksum",
+    "ocrd_mets",
+    "bag_info_adds",
+    "deleted",
+    "mets_server_url",
+}
+
+UPDATABLE_PROCESSING_JOB_FIELDS = {
+    "state",
+    "start_time",
+    "end_time",
+    "path_to_mets",
+    "exec_time",
+    "log_file_path",
+}
+
+
 async def initiate_database(db_url: str, db_name: str = 'ocrd'):
     client = AsyncMongoClient(db_url)
     await init_beanie(
         database=client.get_default_database(default=db_name),
         document_models=[DBProcessorJob, DBWorkflowJob, DBWorkspace, DBWorkflowScript]
     )
+
+
+async def _get_document(model, query, error_message):
+    document = await model.find_one(query)
+    if not document:
+        raise ValueError(error_message)
+    return document
+
+
+async def _update_document(document, updates, updatable_fields):
+    document_keys = document.__dict__.keys()
+    for key, value in updates.items():
+        if key not in document_keys:
+            raise ValueError(f'Field "{key}" is not available.')
+        if key not in updatable_fields:
+            raise ValueError(f'Field "{key}" is not updatable.')
+        setattr(document, key, value)
+    await document.save()
+    return document
 
 
 @call_sync
@@ -62,21 +103,21 @@ async def sync_db_create_workspace(mets_path: str) -> DBWorkspace:
 
 
 async def db_get_workspace(workspace_id: str = None, workspace_mets_path: str = None) -> DBWorkspace:
-    workspace = None
     if not workspace_id and not workspace_mets_path:
         raise ValueError('Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
+    workspace = None
     if workspace_id:
-        workspace = await DBWorkspace.find_one(
-            DBWorkspace.workspace_id == workspace_id
+        workspace = await _get_document(
+            DBWorkspace,
+            DBWorkspace.workspace_id == workspace_id,
+            f'Workspace with id "{workspace_id}" not in the DB.',
         )
-        if not workspace:
-            raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
     if workspace_mets_path:
-        workspace = await DBWorkspace.find_one(
-            DBWorkspace.workspace_mets_path == workspace_mets_path
+        workspace = await _get_document(
+            DBWorkspace,
+            DBWorkspace.workspace_mets_path == workspace_mets_path,
+            f'Workspace with path "{workspace_mets_path}" not in the DB.',
         )
-        if not workspace:
-            raise ValueError(f'Workspace with path "{workspace_mets_path}" not in the DB.')
     return workspace
 
 
@@ -90,40 +131,18 @@ async def db_update_workspace(workspace_id: str = None, workspace_mets_path: str
     if not workspace_id and not workspace_mets_path:
         raise ValueError('Either `workspace_id` or `workspace_mets_path` field must be used as a search key')
     if workspace_id:
-        workspace = await DBWorkspace.find_one(DBWorkspace.workspace_id == workspace_id)
-        if not workspace:
-            raise ValueError(f'Workspace with id "{workspace_id}" not in the DB.')
+        workspace = await _get_document(
+            DBWorkspace,
+            DBWorkspace.workspace_id == workspace_id,
+            f'Workspace with id "{workspace_id}" not in the DB.',
+        )
     if workspace_mets_path:
-        workspace = await DBWorkspace.find_one(DBWorkspace.workspace_mets_path == workspace_mets_path)
-        if not workspace:
-            raise ValueError(f'Workspace with path "{workspace_mets_path}" not in the DB.')
-
-    job_keys = list(workspace.__dict__.keys())
-    for key, value in kwargs.items():
-        if key not in job_keys:
-            raise ValueError(f'Field "{key}" is not available.')
-        if key == 'workspace_id':
-            workspace.workspace_id = value
-        elif key == 'workspace_mets_path':
-            workspace.workspace_mets_path = value
-        elif key == 'ocrd_identifier':
-            workspace.ocrd_identifier = value
-        elif key == 'bagit_profile_identifier':
-            workspace.bagit_profile_identifier = value
-        elif key == 'ocrd_base_version_checksum':
-            workspace.ocrd_base_version_checksum = value
-        elif key == 'ocrd_mets':
-            workspace.ocrd_mets = value
-        elif key == 'bag_info_adds':
-            workspace.bag_info_adds = value
-        elif key == 'deleted':
-            workspace.deleted = value
-        elif key == 'mets_server_url':
-            workspace.mets_server_url = value
-        else:
-            raise ValueError(f'Field "{key}" is not updatable.')
-    await workspace.save()
-    return workspace
+        workspace = await _get_document(
+            DBWorkspace,
+            DBWorkspace.workspace_mets_path == workspace_mets_path,
+            f'Workspace with path "{workspace_mets_path}" not in the DB.',
+        )
+    return await _update_document(workspace, kwargs, UPDATABLE_WORKSPACE_FIELDS)
 
 
 @call_sync
@@ -141,11 +160,11 @@ async def sync_db_create_processing_job(db_processing_job: DBProcessorJob) -> DB
 
 
 async def db_get_processing_job(job_id: str) -> DBProcessorJob:
-    job = await DBProcessorJob.find_one(
-        DBProcessorJob.job_id == job_id)
-    if not job:
-        raise ValueError(f'Processing job with id "{job_id}" not in the DB.')
-    return job
+    return await _get_document(
+        DBProcessorJob,
+        DBProcessorJob.job_id == job_id,
+        f'Processing job with id "{job_id}" not in the DB.'
+    )
 
 
 @call_sync
@@ -154,31 +173,8 @@ async def sync_db_get_processing_job(job_id: str) -> DBProcessorJob:
 
 
 async def db_update_processing_job(job_id: str, **kwargs) -> DBProcessorJob:
-    job = await DBProcessorJob.find_one(
-        DBProcessorJob.job_id == job_id)
-    if not job:
-        raise ValueError(f'Processing job with id "{job_id}" not in the DB.')
-
-    job_keys = list(job.__dict__.keys())
-    for key, value in kwargs.items():
-        if key not in job_keys:
-            raise ValueError(f'Field "{key}" is not available.')
-        if key == 'state':
-            job.state = value
-        elif key == 'start_time':
-            job.start_time = value
-        elif key == 'end_time':
-            job.end_time = value
-        elif key == 'path_to_mets':
-            job.path_to_mets = value
-        elif key == 'exec_time':
-            job.exec_time = value
-        elif key == 'log_file_path':
-            job.log_file_path = value
-        else:
-            raise ValueError(f'Field "{key}" is not updatable.')
-    await job.save()
-    return job
+    job = await db_get_processing_job(job_id)
+    return await _update_document(job, kwargs, UPDATABLE_PROCESSING_JOB_FIELDS)
 
 
 @call_sync
@@ -261,10 +257,11 @@ async def sync_db_create_workflow_job(db_workflow_job: DBWorkflowJob) -> DBWorkf
 
 
 async def db_get_workflow_job(job_id: str) -> DBWorkflowJob:
-    job = await DBWorkflowJob.find_one(DBWorkflowJob.job_id == job_id)
-    if not job:
-        raise ValueError(f'Workflow job with id "{job_id}" not in the DB.')
-    return job
+    return await _get_document(
+        DBWorkflowJob,
+        DBWorkflowJob.job_id == job_id,
+        f'Workflow job with id "{job_id}" not in the DB.',
+    )
 
 
 @call_sync
@@ -292,10 +289,11 @@ async def sync_db_create_workflow_script(db_workflow_script: DBWorkflowScript) -
 
 
 async def db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
-    workflow = await DBWorkflowScript.find_one(DBWorkflowScript.workflow_id == workflow_id)
-    if not workflow:
-        raise ValueError(f'Workflow-script with id "{workflow_id}" not in the DB.')
-    return workflow
+    return await _get_document(
+        DBWorkflowScript,
+        DBWorkflowScript.workflow_id == workflow_id,
+        f'Workflow-script with id "{workflow_id}" not in the DB.',
+    )
 
 
 @call_sync
@@ -304,10 +302,11 @@ async def sync_db_get_workflow_script(workflow_id: str) -> DBWorkflowScript:
 
 
 async def db_find_first_workflow_script_by_content(content_hash: str) -> DBWorkflowScript:
-    workflow = await DBWorkflowScript.find_one(DBWorkflowScript.content_hash == content_hash)
-    if not workflow:
-        raise ValueError(f'Workflow-script with content_hash "{content_hash}" not in the DB.')
-    return workflow
+    return await _get_document(
+        DBWorkflowScript,
+        DBWorkflowScript.content_hash == content_hash,
+        f'Workflow-script with content_hash "{content_hash}" not in the DB.',
+    )
 
 
 @call_sync
