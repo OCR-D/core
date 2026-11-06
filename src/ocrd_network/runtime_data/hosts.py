@@ -67,7 +67,7 @@ class DataHost:
         if client_type == "ssh":
             self.ssh_client = create_ssh_client(self.host, self.username, self.password, self.keypath)
             return self.ssh_client
-        if client_type == "docker":
+        else:
             self.docker_client = create_docker_client(self.host, self.username, self.password, self.keypath)
             return self.docker_client
 
@@ -146,7 +146,7 @@ class DataHost:
         if deploy_type == DeployType.NATIVE:
             assert self.ssh_client, "SSH client connection missing"
             self.ssh_client.exec_command(f"kill {pid}")
-        if deploy_type == DeployType.DOCKER:
+        elif deploy_type == DeployType.DOCKER:
             assert self.docker_client, "Docker client connection missing"
             self.docker_client.containers.get(pid).stop()
 
