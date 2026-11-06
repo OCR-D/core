@@ -2,7 +2,14 @@ from __future__ import annotations
 from docker import APIClient, DockerClient
 from docker.transport import SSHHTTPAdapter
 from paramiko import AutoAddPolicy, SSHClient
+from typing import Optional
 
+
+def _validate_ssh_credentials(password: Optional[str], keypath: Optional[str]) -> None:
+    if not password and not keypath:
+        raise ValueError("Missing credentials: provide either 'password' or 'keypath'")
+    if password and keypath:
+        raise ValueError("Conflicting credentials: provide either 'password' or 'keypath', not both")
 
 class CustomDockerClient(DockerClient):
     """Wrapper for docker.DockerClient to use an own SshHttpAdapter.
@@ -31,14 +38,7 @@ class CustomDockerClient(DockerClient):
         # The APIClient is provided here as a replacement for what the super-constructor does
         if not (user and host):
             raise ValueError("Missing 'user' and 'host' - both must be provided")
-
-        password = kwargs.get("password")
-        keypath = kwargs.get("keypath")
-
-        if not password and not keypath:
-            raise ValueError("Missing credentials: provide either 'password' or 'keypath'")
-        if password and keypath:
-            raise ValueError("Conflicting credentials: provide either 'password' or 'keypath', not both")
+        _validate_ssh_credentials(kwargs.get("password"), kwargs.get("keypath"))
 
         self.api = APIClient(base_url=f"ssh://{host}", use_ssh_client=True, version="1.44")
         try:
@@ -58,10 +58,7 @@ class CustomDockerClient(DockerClient):
         def __init__(self, base_url, password: str = "", keypath: str = "") -> None:
             self.password = password
             self.keypath = keypath
-            if not self.password and not self.keypath:
-                raise Exception("Missing 'password' or 'keypath' - one must be provided")
-            if self.password and self.keypath:
-                raise Exception("Both 'password' and 'keypath' provided - one must be provided")
+            _validate_ssh_credentials(self.password, self.keypath)
             super().__init__(base_url)
 
         def _create_paramiko_client(self, base_url: str) -> None:
