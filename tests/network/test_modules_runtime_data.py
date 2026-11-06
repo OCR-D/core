@@ -350,3 +350,96 @@ def test_stop_uds_mets_server_cleans_tracking_when_process_is_gone():
 
     assert deployer.mets_servers == {}
     assert deployer.mets_servers_paths == {}
+
+
+def test_stop_workers_attempts_all_workers_and_retains_failed_workers(monkeypatch):
+    host = DataHost(
+        host="localhost",
+        username="user",
+        password="password",
+        keypath="",
+        workers=[
+            {"name": "ocrd-example", "number_of_instance": 3, "deploy_type": "native"}
+        ],
+        servers=[]
+    )
+
+    workers = host.workers_native
+    workers[0].pid = "123"
+    workers[1].pid = "456"
+    workers[2].pid = "789"
+
+    ssh_client = Mock(spec=SSHClient)
+    monkeypatch.setattr("ocrd_network.runtime_data.hosts.create_ssh_client", lambda *args: ssh_client)
+    failed_worker_error = RuntimeError("Failed to stop worker")
+
+    def stop_worker(logger, name, deploy_type, pid):
+        if pid == "123":
+            raise failed_worker_error
+
+    monkeypatch.setattr(host, "_DataHost__stop_worker", stop_worker)
+    with pytest.raises(RuntimeError) as exc_info:
+        host.stop_workers(Mock())
+
+    assert exc_info.value is failed_worker_error
+    assert host.workers_native == [workers[0]]
+    ssh_client.close.assert_called_once()
+
+
+def test_resource_manager_pid_is_retained_when_stop_fails(monkeypatch):
+    host = DataHost(
+        host="localhost",
+        username="user",
+        password="password",
+        keypath="",
+        workers=[],
+        servers=[]
+    )
+    host.resource_manager_pid = "12345"
+
+    ssh_client = Mock(spec=SSHClient)
+    monkeypatch.setattr("ocrd_network.runtime_data.hosts.create_ssh_client", lambda *args: ssh_client)
+
+    error = RuntimeError("Resource manager shutdown failed")
+    monkeypatch.setattr(host, "_DataHost__stop_network_agent_resource_manager_server", Mock(side_effect=error))
+
+    with pytest.raises(RuntimeError) as exc_info:
+        host.stop_workers(Mock())
+
+    assert exc_info.value is error
+    assert host.resource_manager_pid == "12345"
+    ssh_client.close.assert_called_once()
+
+
+def test_stop_workers_attempts_docker_workers_when_ssh_connection_fails(monkeypatch):
+    host = DataHost(
+        host="localhost",
+        username="user",
+        password="password",
+        keypath="",
+        workers=[
+            {"name": "ocrd-native", "number_of_instance": 1, "deploy_type": "native"},
+            {"name": "ocrd-docker", "number_of_instance": 1, "deploy_type": "docker"}
+        ],
+        servers=[]
+    )
+
+    native_worker = host.workers_native[0]
+    docker_worker = host.workers_docker[0]
+    native_worker.pid = "123"
+    docker_worker.pid = "container-456"
+
+    docker_client = Mock(spec=CustomDockerClient)
+    monkeypatch.setattr(
+        "ocrd_network.runtime_data.hosts.create_ssh_client", Mock(side_effect=RuntimeError("SSH connection failed"))
+    )
+    monkeypatch.setattr("ocrd_network.runtime_data.hosts.create_docker_client", lambda *args: docker_client)
+
+    with pytest.raises(RuntimeError, match="SSH connection failed"):
+        host.stop_workers(Mock())
+
+    docker_client.containers.get.assert_called_once_with("container-456")
+    docker_client.containers.get.return_value.stop.assert_called_once()
+    assert host.workers_native == [native_worker]
+    assert host.workers_docker == []
+    docker_client.close.assert_called_once()
