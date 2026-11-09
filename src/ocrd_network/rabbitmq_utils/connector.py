@@ -37,7 +37,10 @@ class RMQConnector:
         self._gracefully_stopped = False
 
     def close_connection(self, reply_code: int = 200, reply_text: str = "Normal shutdown"):
-        self._connection.close(reply_code=reply_code, reply_text=reply_text)
+        if self._connection and self._connection.is_open:
+            self._connection.close(reply_code=reply_code, reply_text=reply_text)
+        self._channel = None
+        self._connection = None
 
     @staticmethod
     def declare_and_bind_defaults(connection: BlockingConnection, channel: BlockingChannel) -> None:
@@ -85,14 +88,21 @@ class RMQConnector:
     def _authenticate_and_connect(self, username: str, password: str) -> None:
         # Delete credentials once connected
         credentials = PlainCredentials(username=username, password=password, erase_on_connect=False)
-        self._connection = RMQConnector.open_blocking_connection(
-            host=self._host, port=self._port, vhost=self._vhost, credentials=credentials,
-        )
-        self._channel = RMQConnector.open_blocking_channel(self._connection)
-        if not self._connection:
-            raise ConnectionError("The connection is missing or closed.")
-        if not self._channel:
-            raise ConnectionError("The channel is missing or closed.")
+        try:
+            self._connection = RMQConnector.open_blocking_connection(
+                host=self._host, port=self._port, vhost=self._vhost, credentials=credentials,
+            )
+            self._channel = RMQConnector.open_blocking_channel(self._connection)
+            if not self._connection:
+                raise ConnectionError("The connection is missing or closed.")
+            if not self._channel:
+                raise ConnectionError("The channel is missing or closed.")
+        except Exception:
+            if self._connection and self._connection.is_open:
+                self._connection.close()
+            self._connection = None
+            self._channel = None
+            raise
 
     @staticmethod
     def exchange_bind(
@@ -218,6 +228,8 @@ class RMQConnector:
     def queue_purge(channel: BlockingChannel, queue_name: str) -> None:
         if channel and channel.is_open:
             channel.queue_purge(queue=queue_name)
+            return
+        raise ConnectionError(f"Failed to purge queue: {queue_name}. The channel is missing or closed.")
 
     @staticmethod
     def queue_unbind(

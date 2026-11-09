@@ -1,6 +1,7 @@
 from __future__ import annotations
 from logging import Logger
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
+from urllib.parse import quote
 
 from ..constants import DOCKER_IMAGE_MONGO_DB, DOCKER_IMAGE_RABBIT_MQ
 from ..database import verify_mongodb_available
@@ -10,8 +11,17 @@ from .connection_clients import create_docker_client
 
 class DataNetworkService:
     def __init__(
-        self, host: str, port: int, ssh_username: str, ssh_keypath: str, ssh_password: str,
-        cred_username: str, cred_password: str, service_url: str, skip_deployment: bool, pid: Optional[Any]
+        self,
+        host: str,
+        port: int,
+        ssh_username: Optional[str],
+        ssh_keypath: Optional[str],
+        ssh_password: Optional[str],
+        cred_username: Optional[str],
+        cred_password: Optional[str],
+        service_url: str,
+        skip_deployment: bool,
+        pid: Optional[str]
     ) -> None:
         self.host = host
         self.port = port
@@ -25,27 +35,66 @@ class DataNetworkService:
         self.pid = pid
 
     @staticmethod
+    def _redact_environment(env: Optional[List[str]]) -> List[str]:
+        safe_env = []
+        for item in env or []:
+            key, separator, _ = item.partition("=")
+            if separator and any(
+                secret in key.upper() for secret in ("PASSWORD", "PASS", "SECRET", "TOKEN", "KEY")
+            ):
+                safe_env.append(f"{key}=<redacted>")
+            else:
+                safe_env.append(item)
+        return safe_env
+
+    @staticmethod
+    def _build_service_url(
+        protocol: str, host: str, port: int,
+        username: Optional[str] = None, password: Optional[str] = None,
+        path: Optional[str] = None
+    ) -> str:
+        credentials = ""
+        if username and password:
+            credentials = f"{quote(username, safe='')}:{quote(password, safe='')}@"
+        return f"{protocol}://{credentials}{host}:{port}{path or ''}"
+
+    @staticmethod
     def deploy_docker_service(
         logger: Logger, service_data: Union[DataMongoDB, DataRabbitMQ], image: str, env: Optional[List[str]],
         ports_mapping: Optional[Dict], detach: bool = True, remove: bool = True
     ) -> None:
         if not service_data or not service_data.host:
             message = f"Deploying '{image}' has failed - missing service configurations."
-            logger.exception(message)
+            logger.error(message)
             raise RuntimeError(message)
         logger.info(f"Deploying '{image}' service on '{service_data.host}', detach={detach}, remove={remove}")
         logger.info(f"Ports mapping: {ports_mapping}")
-        logger.info(f"Environment: {env}")
+        logger.info(f"Environment: {DataNetworkService._redact_environment(env)}")
+
         client = create_docker_client(
             service_data.host, service_data.ssh_username, service_data.ssh_password, service_data.ssh_keypath
         )
-        result = client.containers.run(image=image, detach=detach, remove=remove, ports=ports_mapping, environment=env)
-        if not result or not result.id:
-            message = f"Failed to deploy '{image}' service on host: {service_data.host}"
-            logger.exception(message)
-            raise RuntimeError(message)
-        service_data.pid = result.id
-        client.close()
+        try:
+            result = client.containers.run(
+                image=image, detach=detach, remove=remove, ports=ports_mapping, environment=env
+            )
+            if not result or not result.id:
+                message = f"Failed to deploy '{image}' service on host: {service_data.host}"
+                logger.error(message)
+                raise RuntimeError(message)
+            service_data.pid = result.id
+        finally:
+            client.close()
+
+    def _deploy_service(
+        self, logger: Logger, image: str, env: Optional[List[str]],
+        ports_mapping: Optional[Dict], verifier, service_description: str,
+        detach: bool, remove: bool
+    ) -> str:
+        self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
+        verifier()
+        logger.info(f"The {service_description} was deployed on host: {self.host}")
+        return self.service_url
 
     @staticmethod
     def stop_docker_service(logger: Logger, service_data: Union[DataMongoDB, DataRabbitMQ]) -> None:
@@ -55,19 +104,34 @@ class DataNetworkService:
         client = create_docker_client(
             service_data.host, service_data.ssh_username, service_data.ssh_password, service_data.ssh_keypath
         )
-        client.containers.get(service_data.pid).stop()
-        client.close()
+        try:
+            client.containers.get(service_data.pid).stop()
+        finally:
+            client.close()
+
+    def _stop_service(self, logger: Logger, service_name: str) -> None:
+        logger.info(f"Stopping the {service_name} service...")
+        self.stop_docker_service(logger, service_data=self)
+        self.pid = None
+        logger.info(f"The {service_name} service is stopped")
 
 
 class DataMongoDB(DataNetworkService):
     def __init__(
-        self, host: str, port: int, ssh_username: Optional[str], ssh_keypath: Optional[str],
-        ssh_password: Optional[str], cred_username: Optional[str], cred_password: Optional[str],
-        skip_deployment: bool, protocol: str = "mongodb"
+        self,
+        host: str,
+        port: int,
+        ssh_username: Optional[str],
+        ssh_keypath: Optional[str],
+        ssh_password: Optional[str],
+        cred_username: Optional[str],
+        cred_password: Optional[str],
+        skip_deployment: bool,
+        protocol: str = "mongodb"
     ) -> None:
-        service_url = f"{protocol}://{host}:{port}"
-        if cred_username and cred_password:
-            service_url = f"{protocol}://{cred_username}:{cred_password}@{host}:{port}"
+        if bool(cred_username) != bool(cred_password):
+            raise ValueError("MongoDB credentials require both a username and a password")
+        service_url = self._build_service_url(protocol, host, port, cred_username, cred_password)
         super().__init__(
             host=host, port=port, ssh_username=ssh_username, ssh_keypath=ssh_keypath, ssh_password=ssh_password,
             cred_username=cred_username, cred_password=cred_password, service_url=service_url,
@@ -91,31 +155,36 @@ class DataMongoDB(DataNetworkService):
                 ]
         if not ports_mapping:
             ports_mapping = {27017: self.port}
-        self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
-        verify_mongodb_available(self.service_url)
-        mongodb_host_info = f"{self.host}:{self.port}"
-        logger.info(f"The MongoDB was deployed on host: {mongodb_host_info}")
-        return self.service_url
+        return self._deploy_service(
+            logger, image, env, ports_mapping, lambda: verify_mongodb_available(self.service_url),
+            "MongoDB service", detach, remove
+        )
 
     def stop_service_mongodb(self, logger: Logger) -> None:
         if self.skip_deployment:
             return
-        logger.info("Stopping the MongoDB service...")
-        self.stop_docker_service(logger, service_data=self)
-        self.pid = None
-        logger.info("The MongoDB service is stopped")
+        self._stop_service(logger, "MongoDB")
 
 
 class DataRabbitMQ(DataNetworkService):
     def __init__(
-        self, host: str, port: int, ssh_username: Optional[str], ssh_keypath: Optional[str],
-        ssh_password: Optional[str], cred_username: Optional[str], cred_password: Optional[str],
-        skip_deployment: bool, protocol: str = "amqp", vhost: str = "/"
+        self,
+        host: str,
+        port: int,
+        ssh_username: Optional[str],
+        ssh_keypath: Optional[str],
+        ssh_password: Optional[str],
+        cred_username: Optional[str],
+        cred_password: Optional[str],
+        skip_deployment: bool,
+        protocol: str = "amqp",
+        vhost: str = "/"
     ) -> None:
         self.vhost = f"/{vhost}" if vhost != "/" else vhost
-        service_url = f"{protocol}://{host}:{port}{self.vhost}"
-        if cred_username and cred_password:
-            service_url = f"{protocol}://{cred_username}:{cred_password}@{host}:{port}{self.vhost}"
+        encoded_vhost = quote(vhost, safe="")
+        service_url = self._build_service_url(
+            protocol, host, port, cred_username, cred_password, f"/{encoded_vhost}"
+        )
         super().__init__(
             host=host, port=port, ssh_username=ssh_username, ssh_keypath=ssh_keypath, ssh_password=ssh_password,
             cred_username=cred_username, cred_password=cred_password, service_url=service_url,
@@ -132,6 +201,8 @@ class DataRabbitMQ(DataNetworkService):
             logger.debug("RabbitMQ is managed externally. Skipping deployment.")
             verify_rabbitmq_available(logger=logger, rabbitmq_address=self.service_url)
             return self.service_url
+        if not self.cred_username or not self.cred_password:
+            raise ValueError("Deploying RabbitMQ requires both a username and a password")
         if not env:
             env = [
                 # The default credentials to be used by the processing workers
@@ -144,15 +215,13 @@ class DataRabbitMQ(DataNetworkService):
             # 25672: used for internode and CLI tools communication and is allocated from
             # a dynamic range (limited to a single port by default, computed as AMQP port + 20000)
             ports_mapping = {5672: self.port, 15672: 15672, 25672: 25672}
-        self.deploy_docker_service(logger, self, image, env, ports_mapping, detach, remove)
-        verify_rabbitmq_available(logger=logger, rabbitmq_address=self.service_url)
-        logger.info(f"The RabbitMQ server was deployed on host: {rmq_host}:{rmq_port}{rmq_vhost}")
-        return self.service_url
+        return self._deploy_service(
+            logger, image, env, ports_mapping,
+            lambda: verify_rabbitmq_available(logger=logger, rabbitmq_address=self.service_url),
+            f"RabbitMQ server on {self.host}:{self.port}{self.vhost}", detach, remove
+        )
 
     def stop_service_rabbitmq(self, logger: Logger) -> None:
         if self.skip_deployment:
             return
-        logger.info("Stopping the RabbitMQ service...")
-        self.stop_docker_service(logger, service_data=self)
-        self.pid = None
-        logger.info("The RabbitMQ service is stopped")
+        self._stop_service(logger, "RabbitMQ")

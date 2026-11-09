@@ -5,6 +5,7 @@ type: object
 additionalProperties: false
 required:
   - process_queue
+  - database
 properties:
   internal_callback_url:
     description: optionally set the host for the internal_callback_url, for example "http://172.17.0.1:8080"

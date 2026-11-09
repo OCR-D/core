@@ -6,7 +6,7 @@ from src.ocrd_network.database import (
     sync_db_update_processing_job
 )
 from src.ocrd_network.models import DBProcessorJob, PYJobInput
-from src.ocrd_network.server_cache import CacheProcessingRequests
+from src.ocrd_network.processing_server import CacheProcessingRequests
 from src.ocrd_network.utils import generate_id
 
 

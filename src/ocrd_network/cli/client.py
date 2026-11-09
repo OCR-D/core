@@ -6,11 +6,12 @@ from urllib.parse import urlparse
 from tempfile import NamedTemporaryFile
 
 from ocrd.decorators.parameter_option import parameter_option, parameter_override_option
-from ocrd_network.constants import JobState
+
 from ocrd_utils import DEFAULT_METS_BASENAME
 from ocrd_utils.introspect import set_json_key_value_overrides
 from ocrd_utils.str import parse_json_string_or_file
 from ..client import Client
+from ..constants import JobState
 from requests import RequestException
 
 

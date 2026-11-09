@@ -27,15 +27,12 @@ ENV PIP=pip
 
 WORKDIR /build/core
 
-COPY src ./src
 COPY pyproject.toml .
 COPY VERSION ./VERSION
 COPY requirements.txt ./requirements.txt
-RUN mv ./src/ocrd_utils/ocrd_logging.conf /etc
 COPY Makefile .
 COPY README.md .
 COPY LICENSE .
-COPY .git ./.git
 
 RUN echo 'APT::Install-Recommends "0"; APT::Install-Suggests "0";' >/etc/apt/apt.conf.d/ocr-d.conf
 RUN apt-get update && apt-get -y install software-properties-common \
@@ -54,10 +51,20 @@ RUN apt-get update && apt-get -y install software-properties-common \
         git \
         jq \
     && make deps-ubuntu
+
 RUN python3 -m venv /usr/local \
     && hash -r \
+    && pip install -r requirements.txt
+
+COPY src ./src
+# Git metadata is only needed by image publishing targets, not for installing or testing the package.
+# Excluding it keeps commits and branch changes from invalidating cached build layers.
+# COPY .git ./.git
+
+RUN mv ./src/ocrd_utils/ocrd_logging.conf /etc \
     && make install-dev \
     && eval $FIXUP
+
 # Smoke Test
 RUN ocrd --version
 
@@ -70,9 +77,9 @@ FROM ocrd_core_base AS ocrd_core_test
 ARG SKIP_ASSETS
 WORKDIR /build/core
 RUN if test -z "$SKIP_ASSETS" || test $SKIP_ASSETS -eq 0 ; then make assets ; fi
-COPY tests ./tests
 COPY requirements_test.txt .
 RUN pip install -r requirements_test.txt
+COPY tests ./tests
 RUN mkdir /ocrd-data && chmod 777 /ocrd-data
 
 CMD ["make", "test", "network-integration-test"]
