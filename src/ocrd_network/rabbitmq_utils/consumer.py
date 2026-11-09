@@ -21,17 +21,21 @@ class RMQConsumer(RMQConnector):
 
     def authenticate_and_connect(self, username: str, password: str) -> None:
         super()._authenticate_and_connect(username=username, password=password)
-        RMQConnector.set_qos(self._channel)
-        self.log.info("Set QoS for the consumer")
+        try:
+            RMQConnector.set_qos(self._channel)
+            self.log.info("Set QoS for the consumer")
+        except Exception:
+            self.close_connection()
+            raise
 
     def setup_defaults(self) -> None:
         RMQConnector.declare_and_bind_defaults(self._connection, self._channel)
 
     def get_one_message(self, queue_name: str, auto_ack: bool = False) -> Union[Any, None]:
-        message = None
         if self._channel and self._channel.is_open:
             message = self._channel.basic_get(queue=queue_name, auto_ack=auto_ack)
-        return message
+            return message
+        raise ConnectionError("The channel is missing or closed.")
 
     def configure_consuming(self, queue_name: str, callback_method: Any) -> None:
         self.log.debug(f"Configuring consuming from queue: {queue_name}")

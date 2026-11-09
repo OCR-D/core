@@ -22,7 +22,7 @@ def __connect_rabbitmq_client(
         rmq_vhost: str = rmq_data["vhost"]
         rmq_username: str = rmq_data["username"]
         rmq_password: str = rmq_data["password"]
-    except ValueError as error:
+    except (ValueError, KeyError) as error:
         raise Exception("Failed to parse RabbitMQ connection data") from error
     logger.info(f"Connecting client to RabbitMQ server: {rmq_host}:{rmq_port}{rmq_vhost}")
     # logger.debug(f"RabbitMQ client authenticates with username: {rmq_username}, password: {rmq_password}")
@@ -51,16 +51,21 @@ def connect_rabbitmq_consumer(logger: Logger, rmq_data: Dict) -> RMQConsumer:
 
 def connect_rabbitmq_publisher(logger: Logger, rmq_data: Dict, enable_acks: bool = True) -> RMQPublisher:
     rmq_publisher = __connect_rabbitmq_client(logger=logger, client_type="publisher", rmq_data=rmq_data)
-    if enable_acks:
-        rmq_publisher.enable_delivery_confirmations()
-        logger.info("Delivery confirmations are enabled")
-    logger.info("Successfully connected RMQPublisher")
-    return rmq_publisher
+    try:
+        if enable_acks:
+            rmq_publisher.enable_delivery_confirmations()
+            logger.info("Delivery confirmations are enabled")
+        logger.info("Successfully connected RMQPublisher")
+        return rmq_publisher
+    except Exception:
+        rmq_publisher.close_connection()
+        raise
 
 
 def check_if_queue_exists(logger: Logger, rmq_data: Dict,  processor_name: Optional[str]) -> bool:
     if not processor_name:
         return False
+    # Create a temporal connection just to check queue existence
     rmq_publisher = connect_rabbitmq_publisher(logger, rmq_data)
     try:
         # Passively checks whether the queue name exists, if not raises ChannelClosedByBroker
@@ -70,6 +75,9 @@ def check_if_queue_exists(logger: Logger, rmq_data: Dict,  processor_name: Optio
         # The created connection was forcibly closed by the RabbitMQ Server
         logger.warning(f"Process queue with id '{processor_name}' not existing: {error}")
         return False
+    finally:
+        # close the temporal connection since it is used only for this method
+        rmq_publisher.close_connection()
 
 
 def create_message_queues(logger: Logger, rmq_publisher: RMQPublisher, queue_names: List[str]) -> None:
